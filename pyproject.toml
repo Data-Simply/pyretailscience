@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "pyretailscience"
+version = "0.1.0"
+description = "Retail Data Science Tools"
+authors = ["Murray Vanwyk <2493311+mvanwyk@users.noreply.github.com>"]
+readme = "README.md"
+license = "Elastic-2.0"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+pandas = "^2.1.4"
+pyarrow = "^14.0.2"
+matplotlib = "^3.8.2"
+numpy = "^1.26.3"
+click = "^8.1.7"
+seaborn = "^0.13.1"
+strictyaml = "^1.7.3"
+loguru = "^0.7.2"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+flake8 = "^7.0.0"
+isort = "^5.13.2"
+flake8-isort = "^6.1.1"
+
+
+[tool.poetry.group.examples.dependencies]
+jupyterlab = "^4.0.10"
+tqdm = "^4.66.1"
+
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.5.4"
+mkquartodocs = "^0.5.8"
+mkdocstrings = {extras = ["python"], version = "^0.24.0"}
+mkdocs = "^1.5.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+pyretailscience = "pyretailscience.data.cli:generate"
+
+[tool.black]
+line-length = 120
