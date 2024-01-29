@@ -4,9 +4,9 @@ on:
     branches:
       - main
       - feature/pipeline
-    paths:
-      - "**.md"
-      - "mkdocs.yml"
+    # paths:
+    #   - "**.md"
+    #   - "mkdocs.yml"
   workflow_dispatch:
 
 permissions:
