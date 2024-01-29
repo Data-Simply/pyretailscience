@@ -22,7 +22,7 @@ jobs:
       - name: Install Poetry Package 
         run: |
           pip install --upgrade pip
-          pip install poetry mkdocs mkdocs-gen-files
+          pip install poetry mkdocs mkdocs-gen-files materialx
       - name: Install Dependencies
         run: poetry install --with docs
       - name: Set User
