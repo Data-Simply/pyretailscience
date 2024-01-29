@@ -3,10 +3,9 @@ on:
   push:
     branches:
       - main
-      - feature/pipeline
-    # paths:
-    #   - "**.md"
-    #   - "mkdocs.yml"
+    paths:
+      - "**.md"
+      - "mkdocs.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,9 +19,9 @@ concurrency:
 
 jobs:
   docs:
-    # environment:
-    #   name: github-pages
-    #   url: ${{ steps.deployment.outputs.page_url }}
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
