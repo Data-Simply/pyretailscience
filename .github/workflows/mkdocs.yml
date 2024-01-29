@@ -20,9 +20,9 @@ concurrency:
 
 jobs:
   docs:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    # environment:
+    #   name: github-pages
+    #   url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,8 +37,6 @@ jobs:
           pip install poetry mkdocs mkdocs-gen-files
       - name: Install Dependencies
         run: poetry install --with docs
-      # - name: Set User
-      #   run: git config user.name 'github-actions[bot]' && git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Publish docs
         run: mkdocs build
       - name: Setup Pages
