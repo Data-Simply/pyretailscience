@@ -1,8 +1,9 @@
-name: Release
+name: Page Deploy
 on:
   push:
     branches:
       - main
+      - feature/pipeline
     paths:
       - "**.md"
       - "mkdocs.yml"
