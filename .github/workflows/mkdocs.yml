@@ -8,9 +8,21 @@ on:
     #   - "**.md"
     #   - "mkdocs.yml"
   workflow_dispatch:
-  
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   docs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,10 +34,19 @@ jobs:
       - name: Install Poetry Package 
         run: |
           pip install --upgrade pip
-          pip install poetry mkdocs mkdocs-gen-files materialx
+          pip install poetry mkdocs mkdocs-gen-files
       - name: Install Dependencies
         run: poetry install --with docs
-      - name: Set User
-        run: git config user.name 'github-actions[bot]' && git config user.email 'github-actions[bot]@users.noreply.github.com'
+      # - name: Set User
+      #   run: git config user.name 'github-actions[bot]' && git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Publish docs
-        run: mkdocs gh-deploy
+        run: mkdocs build
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'sites/'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
