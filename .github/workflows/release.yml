@@ -63,7 +63,7 @@ jobs:
     needs: build
     environment:
         name: production
-        url: "https://pypi.org/p/<your-pypi-project-name>"
+        url: "https://pypi.org/project/pyretailscience"
     permissions:
         id-token: write
     if: github.event_name == 'release' && github.event.action == 'created'
