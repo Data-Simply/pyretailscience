@@ -1,0 +1,76 @@
+
+name: PyPi Package Deploy
+
+on:
+  push:
+    branches: 
+        - main
+  release:
+    types: [created]
+  workflow_dispatch:
+
+concurrency:
+  group: "release"
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' 
+      - name: Install Poetry Package 
+        run: |
+          pip install --upgrade pip
+          pip install poetry pytest pytest-cov
+          poetry install 
+      - name: Test with pytest
+        continue-on-error: true
+        run: |
+            pytest
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' 
+      - name: Install Poetry Package 
+        run: |
+          pip install --upgrade pip
+          pip install build
+      - name: Build package
+        run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist/
+          retention-days: 1
+
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+        name: production
+        url: "https://pypi.org/project/pyretailscience"
+    permissions:
+        id-token: write
+    if: github.event_name == 'release' && github.event.action == 'created'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: dist
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
