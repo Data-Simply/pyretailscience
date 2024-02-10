@@ -35,7 +35,7 @@ def generate(
 
     logger.info("Generating data...")
 
-    sim = simulation.Simulation(seed=seed, config_file=config_file)
+    sim = simulation.Simulation.from_config_file(seed=seed, config_file=config_file)
     sim.run()
     sim.save_transactions(output_file)
 
