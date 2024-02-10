@@ -13,17 +13,17 @@ customers:
   # Probability that a customer will churn after their last purchase
   churn_probability: 0.10
   # Average days between purchases for a customer
-  average_time_between_purchases: 30
+  average_days_between_purchases: 30
   # Average number of new customers per day
   average_new_customers_per_day: 5
 products:
-  - category_0: Toys
+  - category_0_name: Toys
     category_0_id: 1
     subcategories:
-    - category_1: Action Figures
+    - category_1_name: Action Figures
       category_1_id: 1
       brands:
-      - brand: Hasbro
+      - brand_name: Hasbro
         brand_id: 1
         products:
         - product_name: Iron Man Figure
@@ -41,7 +41,7 @@ products:
         - product_name: GI Joe Snake Eyes
           product_id: 5
           unit_price: 24.99
-      - brand: Mattel
+      - brand_name: Mattel
         brand_id: 2
         products:
         - product_name: Barbie Gymnastics Doll
@@ -59,7 +59,7 @@ products:
         - product_name: Magic 8 Ball
           product_id: 10
           unit_price: 6.99
-      - brand: McFarlane Toys
+      - brand_name: McFarlane Toys
         brand_id: 3
         products:
         - product_name: Walking Dead Figures
@@ -77,7 +77,7 @@ products:
         - product_name: Spawn Figure
           product_id: 15
           unit_price: 27.99
-      - brand: Playmobil
+      - brand_name: Playmobil
         brand_id: 4
         products:
         - product_name: Pirate Ship
@@ -95,7 +95,7 @@ products:
         - product_name: Hospital Playset
           product_id: 20
           unit_price: 99.99
-      - brand: Bandai
+      - brand_name: Bandai
         brand_id: 5
         products:
         - product_name: Power Rangers Megazord
@@ -113,10 +113,10 @@ products:
         - product_name: Tamagotchi
           product_id: 25
           unit_price: 19.99
-    - category_1: Dolls and Plush
+    - category_1_name: Dolls and Plush
       category_1_id: 2
       brands:
-      - brand: American Girl
+      - brand_name: American Girl
         brand_id: 6
         products:
         - product_name: Classic Doll Samantha
@@ -134,7 +134,7 @@ products:
         - product_name: Doll Scooter
           product_id: 30
           unit_price: 50.00
-      - brand: Ty
+      - brand_name: Ty
         brand_id: 7
         products:
         - product_name: Beanie Baby Bear
@@ -152,7 +152,7 @@ products:
         - product_name: Ty Puffies Rainbow
           product_id: 35
           unit_price: 3.99
-      - brand: LEGO
+      - brand_name: LEGO
         brand_id: 8
         products:
         - product_name: LEGO Friends Heartlake City
@@ -170,7 +170,7 @@ products:
         - product_name: LEGO Creator Caravan
           product_id: 40
           unit_price: 69.99
-      - brand: Fisher-Price
+      - brand_name: Fisher-Price
         brand_id: 9
         products:
         - product_name: Little People Disney Castle
@@ -188,7 +188,7 @@ products:
         - product_name: Dance & Groove Rockit
           product_id: 45
           unit_price: 42.99
-      - brand: Barbie
+      - brand_name: Barbie
         brand_id: 10
         products:
         - product_name: Barbie Dreamhouse
@@ -206,10 +206,10 @@ products:
         - product_name: Fantasy Hair Doll
           product_id: 50
           unit_price: 17.99
-    - category_1: Building Sets and Blocks
+    - category_1_name: Building Sets and Blocks
       category_1_id: 3
       brands:
-      - brand: LEGO
+      - brand_name: LEGO
         brand_id: 11
         products:
         - product_name: LEGO City Police Station
@@ -227,7 +227,7 @@ products:
         - product_name: LEGO Creator Expert Corner Garage
           product_id: 55
           unit_price: 199.99
-      - brand: Mega Bloks
+      - brand_name: Mega Bloks
         brand_id: 12
         products:
         - product_name: First Builders Big Building Bag
@@ -245,7 +245,7 @@ products:
         - product_name: Barbie Build 'n Style Luxury Mansion
           product_id: 60
           unit_price: 79.99
-      - brand: K'NEX
+      - brand_name: K'NEX
         brand_id: 13
         products:
         - product_name: Thrill Rides - 3-in-1 Classic Amusement Park
@@ -263,7 +263,7 @@ products:
         - product_name: Lincoln Logs Oak Creek Lodge
           product_id: 65
           unit_price: 39.99
-      - brand: Magformers
+      - brand_name: Magformers
         brand_id: 14
         products:
         - product_name: Standard Set Magnetic Building Blocks
@@ -281,7 +281,7 @@ products:
         - product_name: Space Traveler Set
           product_id: 70
           unit_price: 79.99
-      - brand: Nanoblock
+      - brand_name: Nanoblock
         brand_id: 15
         products:
         - product_name: Deluxe Himeji Castle
@@ -299,10 +299,10 @@ products:
         - product_name: Sagrada Familia
           product_id: 75
           unit_price: 29.99
-    - category_1: Educational Toys
+    - category_1_name: Educational Toys
       category_1_id: 4
       brands:
-      - brand: VTech
+      - brand_name: VTech
         brand_id: 16
         products:
         - product_name: Sit-to-Stand Learning Walker
@@ -320,7 +320,7 @@ products:
         - product_name: Turn & Learn Driver
           product_id: 80
           unit_price: 14.99
-      - brand: LeapFrog
+      - brand_name: LeapFrog
         brand_id: 17
         products:
         - product_name: My Pal Scout
@@ -338,7 +338,7 @@ products:
         - product_name: Choppin' Fun Learning Pot
           product_id: 85
           unit_price: 19.99
-      - brand: Melissa & Doug
+      - brand_name: Melissa & Doug
         brand_id: 18
         products:
         - product_name: Deluxe Wooden Standing Art Easel
@@ -356,7 +356,7 @@ products:
         - product_name: Catch & Count Fishing Game
           product_id: 90
           unit_price: 24.99
-      - brand: Fisher-Price
+      - brand_name: Fisher-Price
         brand_id: 19
         products:
         - product_name: Think & Learn Code-a-pillar
@@ -374,7 +374,7 @@ products:
         - product_name: Laugh & Learn Servin' Up Fun Food Truck
           product_id: 95
           unit_price: 69.99
-      - brand: Osmo
+      - brand_name: Osmo
         brand_id: 20
         products:
         - product_name: Genius Starter Kit for iPad
@@ -392,10 +392,10 @@ products:
         - product_name: 'Detective Agency: A Search & Find Mystery Game'
           product_id: 100
           unit_price: 39.99
-    - category_1: Puzzles
+    - category_1_name: Puzzles
       category_1_id: 5
       brands:
-      - brand: Ravensburger
+      - brand_name: Ravensburger
         brand_id: 21
         products:
         - product_name: Krypt Silver 654 Piece Blank Puzzle Challenge
@@ -413,7 +413,7 @@ products:
         - product_name: African Animals 3000 Piece Puzzle
           product_id: 105
           unit_price: 34.99
-      - brand: Buffalo Games
+      - brand_name: Buffalo Games
         brand_id: 22
         products:
         - product_name: Cinque Terre 1000 Piece Puzzle
@@ -431,7 +431,7 @@ products:
         - product_name: 'Aimee Stewart: Family Vacation 2000 Piece Puzzle'
           product_id: 110
           unit_price: 19.99
-      - brand: White Mountain Puzzles
+      - brand_name: White Mountain Puzzles
         brand_id: 23
         products:
         - product_name: Best Places In America 1000 Piece Puzzle
@@ -449,7 +449,7 @@ products:
         - product_name: Autumn Harvest 1000 Piece Puzzle
           product_id: 115
           unit_price: 15.99
-      - brand: Pomegranate
+      - brand_name: Pomegranate
         brand_id: 24
         products:
         - product_name: Charley Harper - Glacier Bay, Alaska Puzzle
@@ -467,7 +467,7 @@ products:
         - product_name: M.C. Escher - Waterfall Puzzle
           product_id: 120
           unit_price: 19.99
-      - brand: Galison
+      - brand_name: Galison
         brand_id: 25
         products:
         - product_name: Andy Warhol Soup Cans 500 Piece Puzzle
@@ -485,10 +485,10 @@ products:
         - product_name: Michael Storrings Jazz Age 1000 Piece Puzzle
           product_id: 125
           unit_price: 16.99
-    - category_1: Games and Cards
+    - category_1_name: Games and Cards
       category_1_id: 6
       brands:
-      - brand: Asmodee
+      - brand_name: Asmodee
         brand_id: 26
         products:
         - product_name: Catan Board Game
@@ -506,7 +506,7 @@ products:
         - product_name: Carcassonne
           product_id: 130
           unit_price: 34.99
-      - brand: Exploding Kittens
+      - brand_name: Exploding Kittens
         brand_id: 27
         products:
         - product_name: Exploding Kittens Card Game
@@ -524,7 +524,7 @@ products:
         - product_name: Poetry for Neanderthals
           product_id: 135
           unit_price: 19.99
-      - brand: Hasbro
+      - brand_name: Hasbro
         brand_id: 28
         products:
         - product_name: Monopoly Classic Game
@@ -542,7 +542,7 @@ products:
         - product_name: Clue Board Game
           product_id: 140
           unit_price: 19.99
-      - brand: Mattel
+      - brand_name: Mattel
         brand_id: 29
         products:
         - product_name: UNO Card Game
@@ -560,7 +560,7 @@ products:
         - product_name: Apples to Apples Party Box
           product_id: 145
           unit_price: 19.99
-      - brand: Days of Wonder
+      - brand_name: Days of Wonder
         brand_id: 30
         products:
         - product_name: 'Ticket to Ride: Europe'
@@ -578,10 +578,10 @@ products:
         - product_name: Memoir '44
           product_id: 150
           unit_price: 59.99
-    - category_1: Arts and Crafts
+    - category_1_name: Arts and Crafts
       category_1_id: 7
       brands:
-      - brand: Crayola
+      - brand_name: Crayola
         brand_id: 31
         products:
         - product_name: Ultimate Crayon Collection
@@ -599,7 +599,7 @@ products:
         - product_name: Air Dry Clay 25lb Bucket
           product_id: 155
           unit_price: 29.99
-      - brand: Melissa & Doug
+      - brand_name: Melissa & Doug
         brand_id: 32
         products:
         - product_name: Deluxe Happy Handle Stamp Set
@@ -617,7 +617,7 @@ products:
         - product_name: Deluxe Combo Scratch Art Set
           product_id: 160
           unit_price: 19.99
-      - brand: Kinetic Sand
+      - brand_name: Kinetic Sand
         brand_id: 33
         products:
         - product_name: Kinetic Sand Folding Sand Box
@@ -635,7 +635,7 @@ products:
         - product_name: Kinetic Sand Dino Dig Playset
           product_id: 165
           unit_price: 24.99
-      - brand: Play-Doh
+      - brand_name: Play-Doh
         brand_id: 34
         products:
         - product_name: Play-Doh Modeling Compound 36-Pack
@@ -653,7 +653,7 @@ products:
         - product_name: Play-Doh Touch Shape to Life Studio
           product_id: 170
           unit_price: 24.99
-      - brand: Faber-Castell
+      - brand_name: Faber-Castell
         brand_id: 35
         products:
         - product_name: Do Art Travel Easel
@@ -671,13 +671,13 @@ products:
         - product_name: Young Artist Coloring Gift Set
           product_id: 175
           unit_price: 24.99
-  - category_0: Grocery
+  - category_0_name: Grocery
     category_0_id: 2
     subcategories:
-    - category_1: Beverages
+    - category_1_name: Beverages
       category_1_id: 8
       brands:
-      - brand: Coca-Cola
+      - brand_name: Coca-Cola
         brand_id: 36
         products:
         - product_name: Coke
@@ -695,7 +695,7 @@ products:
         - product_name: Vanilla Coke
           product_id: 180
           unit_price: 1.99
-      - brand: Pepsi
+      - brand_name: Pepsi
         brand_id: 37
         products:
         - product_name: Pepsi
@@ -713,7 +713,7 @@ products:
         - product_name: Pepsi Vanilla
           product_id: 185
           unit_price: 1.99
-      - brand: Lipton
+      - brand_name: Lipton
         brand_id: 38
         products:
         - product_name: Iced Tea Lemon
@@ -731,7 +731,7 @@ products:
         - product_name: Raspberry Iced Tea
           product_id: 190
           unit_price: 1.49
-      - brand: Snapple
+      - brand_name: Snapple
         brand_id: 39
         products:
         - product_name: Lemon Tea
@@ -749,7 +749,7 @@ products:
         - product_name: Mango Tea
           product_id: 195
           unit_price: 2.29
-      - brand: Starbucks
+      - brand_name: Starbucks
         brand_id: 40
         products:
         - product_name: Frappuccino
@@ -767,10 +767,10 @@ products:
         - product_name: Cold Brew
           product_id: 200
           unit_price: 2.99
-    - category_1: Snack Foods
+    - category_1_name: Snack Foods
       category_1_id: 9
       brands:
-      - brand: Lay's
+      - brand_name: Lay's
         brand_id: 41
         products:
         - product_name: Classic Potato Chips
@@ -788,7 +788,7 @@ products:
         - product_name: Cheddar & Sour Cream
           product_id: 205
           unit_price: 3.49
-      - brand: Doritos
+      - brand_name: Doritos
         brand_id: 42
         products:
         - product_name: Nacho Cheese
@@ -806,7 +806,7 @@ products:
         - product_name: Spicy Nacho
           product_id: 210
           unit_price: 3.49
-      - brand: Pringles
+      - brand_name: Pringles
         brand_id: 43
         products:
         - product_name: Original
@@ -824,7 +824,7 @@ products:
         - product_name: Pizza
           product_id: 215
           unit_price: 2.99
-      - brand: Cheetos
+      - brand_name: Cheetos
         brand_id: 44
         products:
         - product_name: Crunchy
@@ -842,7 +842,7 @@ products:
         - product_name: Cheddar Jalapeño
           product_id: 220
           unit_price: 3.49
-      - brand: Ritz
+      - brand_name: Ritz
         brand_id: 45
         products:
         - product_name: Original Crackers
@@ -860,10 +860,10 @@ products:
         - product_name: Hint of Salt
           product_id: 225
           unit_price: 2.99
-    - category_1: Canned Goods
+    - category_1_name: Canned Goods
       category_1_id: 10
       brands:
-      - brand: Green Giant
+      - brand_name: Green Giant
         brand_id: 46
         products:
         - product_name: Sweet Corn
@@ -881,7 +881,7 @@ products:
         - product_name: Mixed Vegetables
           product_id: 230
           unit_price: 1.59
-      - brand: Bush's
+      - brand_name: Bush's
         brand_id: 47
         products:
         - product_name: Original Baked Beans
@@ -899,7 +899,7 @@ products:
         - product_name: Brown Sugar Hickory Baked Beans
           product_id: 235
           unit_price: 2.29
-      - brand: Heinz
+      - brand_name: Heinz
         brand_id: 48
         products:
         - product_name: Tomato Ketchup
@@ -917,7 +917,7 @@ products:
         - product_name: Potato & Leek Soup
           product_id: 240
           unit_price: 2.49
-      - brand: Campbell's
+      - brand_name: Campbell's
         brand_id: 49
         products:
         - product_name: Tomato Soup
@@ -935,7 +935,7 @@ products:
         - product_name: Minestrone Soup
           product_id: 245
           unit_price: 1.99
-      - brand: Progresso
+      - brand_name: Progresso
         brand_id: 50
         products:
         - product_name: Traditional Chicken Noodle
@@ -953,10 +953,10 @@ products:
         - product_name: Italian-Style Wedding
           product_id: 250
           unit_price: 2.99
-    - category_1: Bakery
+    - category_1_name: Bakery
       category_1_id: 11
       brands:
-      - brand: Sara Lee
+      - brand_name: Sara Lee
         brand_id: 51
         products:
         - product_name: Classic White Bread
@@ -974,7 +974,7 @@ products:
         - product_name: Artesano Bakery Bread
           product_id: 255
           unit_price: 3.49
-      - brand: Pepperidge Farm
+      - brand_name: Pepperidge Farm
         brand_id: 52
         products:
         - product_name: Farmhouse Hearty White Bread
@@ -992,7 +992,7 @@ products:
         - product_name: Swirl Rye Bread
           product_id: 260
           unit_price: 3.99
-      - brand: Entenmann's
+      - brand_name: Entenmann's
         brand_id: 53
         products:
         - product_name: Doughnuts
@@ -1010,7 +1010,7 @@ products:
         - product_name: Little Bites Blueberry Muffins
           product_id: 265
           unit_price: 5.29
-      - brand: King's Hawaiian
+      - brand_name: King's Hawaiian
         brand_id: 54
         products:
         - product_name: Original Hawaiian Sweet Rolls
@@ -1028,7 +1028,7 @@ products:
         - product_name: Hawaiian Sweet Sliced Bread
           product_id: 270
           unit_price: 5.29
-      - brand: Hostess
+      - brand_name: Hostess
         brand_id: 55
         products:
         - product_name: CupCakes
@@ -1046,10 +1046,10 @@ products:
         - product_name: Donettes
           product_id: 275
           unit_price: 2.99
-    - category_1: Frozen Foods
+    - category_1_name: Frozen Foods
       category_1_id: 12
       brands:
-      - brand: DiGiorno
+      - brand_name: DiGiorno
         brand_id: 56
         products:
         - product_name: Rising Crust Pepperoni Pizza
@@ -1067,7 +1067,7 @@ products:
         - product_name: Pizzeria! Four Cheese Pizza
           product_id: 280
           unit_price: 7.49
-      - brand: Ben & Jerry's
+      - brand_name: Ben & Jerry's
         brand_id: 57
         products:
         - product_name: Cherry Garcia
@@ -1085,7 +1085,7 @@ products:
         - product_name: Phish Food
           product_id: 285
           unit_price: 4.99
-      - brand: Birds Eye
+      - brand_name: Birds Eye
         brand_id: 58
         products:
         - product_name: Steamfresh Mixed Vegetables
@@ -1104,7 +1104,7 @@ products:
             Florets
           product_id: 290
           unit_price: 1.99
-      - brand: Hot Pockets
+      - brand_name: Hot Pockets
         brand_id: 59
         products:
         - product_name: Pepperoni Pizza
@@ -1122,7 +1122,7 @@ products:
         - product_name: Lean Pockets Ham & Cheddar
           product_id: 295
           unit_price: 2.69
-      - brand: Amy's
+      - brand_name: Amy's
         brand_id: 60
         products:
         - product_name: Cheese Pizza
@@ -1140,10 +1140,10 @@ products:
         - product_name: Vegetable Lasagna
           product_id: 300
           unit_price: 4.29
-    - category_1: Dairy
+    - category_1_name: Dairy
       category_1_id: 13
       brands:
-      - brand: Chobani
+      - brand_name: Chobani
         brand_id: 61
         products:
         - product_name: Strawberry Greek Yogurt
@@ -1161,7 +1161,7 @@ products:
         - product_name: Mango Greek Yogurt
           product_id: 305
           unit_price: 1.25
-      - brand: Kraft
+      - brand_name: Kraft
         brand_id: 62
         products:
         - product_name: Cheddar Cheese Block
@@ -1179,7 +1179,7 @@ products:
         - product_name: Parmesan Grated Cheese
           product_id: 310
           unit_price: 3.49
-      - brand: Land O'Lakes
+      - brand_name: Land O'Lakes
         brand_id: 63
         products:
         - product_name: Salted Butter
@@ -1197,7 +1197,7 @@ products:
         - product_name: Heavy Whipping Cream
           product_id: 315
           unit_price: 2.99
-      - brand: Dannon
+      - brand_name: Dannon
         brand_id: 64
         products:
         - product_name: Light & Fit Vanilla Yogurt
@@ -1215,7 +1215,7 @@ products:
         - product_name: All Natural Plain Yogurt
           product_id: 320
           unit_price: 2.79
-      - brand: Horizon Organic
+      - brand_name: Horizon Organic
         brand_id: 65
         products:
         - product_name: Whole Organic Milk
@@ -1233,10 +1233,10 @@ products:
         - product_name: Organic Cottage Cheese
           product_id: 325
           unit_price: 4.99
-    - category_1: Meat & Seafood
+    - category_1_name: Meat & Seafood
       category_1_id: 14
       brands:
-      - brand: Oscar Mayer
+      - brand_name: Oscar Mayer
         brand_id: 66
         products:
         - product_name: Deli Fresh Smoked Turkey Breast
@@ -1254,7 +1254,7 @@ products:
         - product_name: Lunchables Turkey & Cheddar
           product_id: 330
           unit_price: 2.99
-      - brand: Tyson
+      - brand_name: Tyson
         brand_id: 67
         products:
         - product_name: Chicken Breasts
@@ -1272,7 +1272,7 @@ products:
         - product_name: Any'tizers Hot Wings
           product_id: 335
           unit_price: 9.99
-      - brand: Hillshire Farm
+      - brand_name: Hillshire Farm
         brand_id: 68
         products:
         - product_name: Smoked Sausage
@@ -1290,7 +1290,7 @@ products:
         - product_name: Beef Summer Sausage
           product_id: 340
           unit_price: 5.49
-      - brand: Perdue
+      - brand_name: Perdue
         brand_id: 69
         products:
         - product_name: Boneless Skinless Chicken Breasts
@@ -1308,7 +1308,7 @@ products:
         - product_name: Fit & Easy Ground Turkey
           product_id: 345
           unit_price: 5.49
-      - brand: Gorton's
+      - brand_name: Gorton's
         brand_id: 70
         products:
         - product_name: Fish Sticks
@@ -1326,13 +1326,13 @@ products:
         - product_name: Crunchy Butterfly Shrimp
           product_id: 350
           unit_price: 7.49
-  - category_0: Electronics
+  - category_0_name: Electronics
     category_0_id: 3
     subcategories:
-    - category_1: Smartphones
+    - category_1_name: Smartphones
       category_1_id: 15
       brands:
-      - brand: Apple
+      - brand_name: Apple
         brand_id: 71
         products:
         - product_name: iPhone 14 Pro Max
@@ -1350,7 +1350,7 @@ products:
         - product_name: iPhone 12
           product_id: 355
           unit_price: 699.00
-      - brand: Samsung
+      - brand_name: Samsung
         brand_id: 72
         products:
         - product_name: Galaxy S22 Ultra
@@ -1368,7 +1368,7 @@ products:
         - product_name: Galaxy Z Flip
           product_id: 360
           unit_price: 999.99
-      - brand: Google
+      - brand_name: Google
         brand_id: 73
         products:
         - product_name: Pixel 7 Pro
@@ -1386,7 +1386,7 @@ products:
         - product_name: Pixel 4a
           product_id: 365
           unit_price: 349.00
-      - brand: OnePlus
+      - brand_name: OnePlus
         brand_id: 74
         products:
         - product_name: OnePlus 9 Pro
@@ -1404,7 +1404,7 @@ products:
         - product_name: OnePlus 7T
           product_id: 370
           unit_price: 599.00
-      - brand: Xiaomi
+      - brand_name: Xiaomi
         brand_id: 75
         products:
         - product_name: Mi 11 Ultra
@@ -1422,10 +1422,10 @@ products:
         - product_name: Mi 10T Pro
           product_id: 375
           unit_price: 599.99
-    - category_1: Laptops
+    - category_1_name: Laptops
       category_1_id: 16
       brands:
-      - brand: Dell
+      - brand_name: Dell
         brand_id: 76
         products:
         - product_name: XPS 15
@@ -1443,7 +1443,7 @@ products:
         - product_name: Alienware m17
           product_id: 380
           unit_price: 2500.00
-      - brand: HP
+      - brand_name: HP
         brand_id: 77
         products:
         - product_name: Spectre x360
@@ -1461,7 +1461,7 @@ products:
         - product_name: Omen 17
           product_id: 385
           unit_price: 1800.00
-      - brand: Lenovo
+      - brand_name: Lenovo
         brand_id: 78
         products:
         - product_name: ThinkPad X1 Carbon
@@ -1479,7 +1479,7 @@ products:
         - product_name: ThinkBook 14s
           product_id: 390
           unit_price: 850.00
-      - brand: Apple
+      - brand_name: Apple
         brand_id: 79
         products:
         - product_name: MacBook Air M1
@@ -1497,7 +1497,7 @@ products:
         - product_name: MacBook Pro 16 M1 Max
           product_id: 395
           unit_price: 3499.00
-      - brand: Asus
+      - brand_name: Asus
         brand_id: 80
         products:
         - product_name: ZenBook 14
@@ -1515,10 +1515,10 @@ products:
         - product_name: ProArt StudioBook Pro 17
           product_id: 400
           unit_price: 3000.00
-    - category_1: Televisions
+    - category_1_name: Televisions
       category_1_id: 17
       brands:
-      - brand: Samsung
+      - brand_name: Samsung
         brand_id: 81
         products:
         - product_name: QLED Q80T
@@ -1536,7 +1536,7 @@ products:
         - product_name: Serif Series
           product_id: 405
           unit_price: 1000.00
-      - brand: LG
+      - brand_name: LG
         brand_id: 82
         products:
         - product_name: CX OLED
@@ -1554,7 +1554,7 @@ products:
         - product_name: UN7000 Series
           product_id: 410
           unit_price: 400.00
-      - brand: Sony
+      - brand_name: Sony
         brand_id: 83
         products:
         - product_name: Bravia XR A80J OLED
@@ -1572,7 +1572,7 @@ products:
         - product_name: Z8H 8K HDR
           product_id: 415
           unit_price: 6000.00
-      - brand: Vizio
+      - brand_name: Vizio
         brand_id: 84
         products:
         - product_name: P-Series Quantum X
@@ -1590,7 +1590,7 @@ products:
         - product_name: OLED Series
           product_id: 420
           unit_price: 2000.00
-      - brand: TCL
+      - brand_name: TCL
         brand_id: 85
         products:
         - product_name: 6-Series R635 4K QLED
@@ -1608,10 +1608,10 @@ products:
         - product_name: 8-Series 4K QLED
           product_id: 425
           unit_price: 2000.00
-    - category_1: Tablets
+    - category_1_name: Tablets
       category_1_id: 18
       brands:
-      - brand: Apple
+      - brand_name: Apple
         brand_id: 86
         products:
         - product_name: iPad Pro 12.9
@@ -1629,7 +1629,7 @@ products:
         - product_name: iPad Pro 11
           product_id: 430
           unit_price: 799.00
-      - brand: Samsung
+      - brand_name: Samsung
         brand_id: 87
         products:
         - product_name: Galaxy Tab S7+
@@ -1647,7 +1647,7 @@ products:
         - product_name: Galaxy Tab Active3
           product_id: 435
           unit_price: 489.99
-      - brand: Microsoft
+      - brand_name: Microsoft
         brand_id: 88
         products:
         - product_name: Surface Pro 7
@@ -1665,7 +1665,7 @@ products:
         - product_name: Surface Laptop Go
           product_id: 440
           unit_price: 549.99
-      - brand: Amazon
+      - brand_name: Amazon
         brand_id: 89
         products:
         - product_name: Fire HD 10
@@ -1683,7 +1683,7 @@ products:
         - product_name: Fire HD 8 Kids
           product_id: 445
           unit_price: 139.99
-      - brand: Lenovo
+      - brand_name: Lenovo
         brand_id: 90
         products:
         - product_name: Tab P11 Pro
@@ -1701,10 +1701,10 @@ products:
         - product_name: ThinkPad X1 Fold
           product_id: 450
           unit_price: 2499.99
-    - category_1: Wearable Technology
+    - category_1_name: Wearable Technology
       category_1_id: 19
       brands:
-      - brand: Apple
+      - brand_name: Apple
         brand_id: 91
         products:
         - product_name: Apple Watch Series 7
@@ -1722,7 +1722,7 @@ products:
         - product_name: AirPods Max
           product_id: 455
           unit_price: 549.00
-      - brand: Samsung
+      - brand_name: Samsung
         brand_id: 92
         products:
         - product_name: Galaxy Watch 4
@@ -1740,7 +1740,7 @@ products:
         - product_name: Galaxy Buds Live
           product_id: 460
           unit_price: 169.99
-      - brand: Fitbit
+      - brand_name: Fitbit
         brand_id: 93
         products:
         - product_name: Charge 5
@@ -1758,7 +1758,7 @@ products:
         - product_name: Ace 3
           product_id: 465
           unit_price: 79.95
-      - brand: Garmin
+      - brand_name: Garmin
         brand_id: 94
         products:
         - product_name: Fenix 6
@@ -1776,7 +1776,7 @@ products:
         - product_name: Vivofit 4
           product_id: 470
           unit_price: 79.99
-      - brand: Xiaomi
+      - brand_name: Xiaomi
         brand_id: 95
         products:
         - product_name: Mi Band 6
@@ -1794,10 +1794,10 @@ products:
         - product_name: Mi True Wireless Earbuds
           product_id: 475
           unit_price: 39.99
-    - category_1: Audio Equipment
+    - category_1_name: Audio Equipment
       category_1_id: 20
       brands:
-      - brand: Bose
+      - brand_name: Bose
         brand_id: 96
         products:
         - product_name: QuietComfort 35 II
@@ -1815,7 +1815,7 @@ products:
         - product_name: Soundbar 700
           product_id: 480
           unit_price: 799.00
-      - brand: Sony
+      - brand_name: Sony
         brand_id: 97
         products:
         - product_name: WH-1000XM4
@@ -1833,7 +1833,7 @@ products:
         - product_name: HT-ST5000 Soundbar
           product_id: 485
           unit_price: 1499.99
-      - brand: Sennheiser
+      - brand_name: Sennheiser
         brand_id: 98
         products:
         - product_name: Momentum 3 Wireless
@@ -1851,7 +1851,7 @@ products:
         - product_name: Ambeo Soundbar
           product_id: 490
           unit_price: 2499.95
-      - brand: JBL
+      - brand_name: JBL
         brand_id: 99
         products:
         - product_name: Charge 4
@@ -1869,7 +1869,7 @@ products:
         - product_name: Bar 9.1
           product_id: 495
           unit_price: 999.95
-      - brand: Beats by Dre
+      - brand_name: Beats by Dre
         brand_id: 100
         products:
         - product_name: Powerbeats Pro
@@ -1887,10 +1887,10 @@ products:
         - product_name: Beats Flex
           product_id: 500
           unit_price: 69.99
-    - category_1: Computer Components
+    - category_1_name: Computer Components
       category_1_id: 21
       brands:
-      - brand: Intel
+      - brand_name: Intel
         brand_id: 101
         products:
         - product_name: Core i9-11900K
@@ -1908,7 +1908,7 @@ products:
         - product_name: Pentium Gold G6400
           product_id: 505
           unit_price: 64.99
-      - brand: AMD
+      - brand_name: AMD
         brand_id: 102
         products:
         - product_name: Ryzen 9 5950X
@@ -1926,7 +1926,7 @@ products:
         - product_name: Athlon 3000G
           product_id: 510
           unit_price: 49.99
-      - brand: NVIDIA
+      - brand_name: NVIDIA
         brand_id: 103
         products:
         - product_name: GeForce RTX 3090
@@ -1944,7 +1944,7 @@ products:
         - product_name: Quadro RTX 8000
           product_id: 515
           unit_price: 5500.00
-      - brand: Corsair
+      - brand_name: Corsair
         brand_id: 104
         products:
         - product_name: Vengeance LPX 16GB
@@ -1962,7 +1962,7 @@ products:
         - product_name: iCUE 4000X RGB
           product_id: 520
           unit_price: 119.99
-      - brand: Kingston
+      - brand_name: Kingston
         brand_id: 105
         products:
         - product_name: A2000 NVMe PCIe SSD 1TB
@@ -1980,7 +1980,7 @@ products:
         - product_name: HyperX Cloud II Gaming Headset
           product_id: 525
           unit_price: 99.00
-      - brand: ASUS
+      - brand_name: ASUS
         brand_id: 106
         products:
         - product_name: ROG Strix Z590-E Gaming WiFi
@@ -1998,13 +1998,13 @@ products:
         - product_name: ROG Thor 850W Platinum PSU
           product_id: 530
           unit_price: 249.99
-  - category_0: Clothing
+  - category_0_name: Clothing
     category_0_id: 4
     subcategories:
-    - category_1: T-Shirts
+    - category_1_name: T-Shirts
       category_1_id: 22
       brands:
-      - brand: Supreme
+      - brand_name: Supreme
         brand_id: 107
         products:
         - product_name: Box Logo Tee
@@ -2022,7 +2022,7 @@ products:
         - product_name: Pocket Tee
           product_id: 535
           unit_price: 59.99
-      - brand: Nike
+      - brand_name: Nike
         brand_id: 108
         products:
         - product_name: Swoosh T-Shirt
@@ -2040,7 +2040,7 @@ products:
         - product_name: Running T-Shirt
           product_id: 540
           unit_price: 24.99
-      - brand: Adidas
+      - brand_name: Adidas
         brand_id: 109
         products:
         - product_name: Originals Tee
@@ -2058,7 +2058,7 @@ products:
         - product_name: Badge of Sport Tee
           product_id: 545
           unit_price: 25.00
-      - brand: Under Armour
+      - brand_name: Under Armour
         brand_id: 110
         products:
         - product_name: Compression Tee
@@ -2076,7 +2076,7 @@ products:
         - product_name: Tech 2.0 Tee
           product_id: 550
           unit_price: 19.99
-      - brand: H&M
+      - brand_name: H&M
         brand_id: 111
         products:
         - product_name: Cotton T-Shirt
@@ -2094,10 +2094,10 @@ products:
         - product_name: Graphic T-Shirt
           product_id: 555
           unit_price: 15.99
-    - category_1: Jeans
+    - category_1_name: Jeans
       category_1_id: 23
       brands:
-      - brand: Levi's
+      - brand_name: Levi's
         brand_id: 112
         products:
         - product_name: 501 Original Fit
@@ -2115,7 +2115,7 @@ products:
         - product_name: 541 Athletic Taper
           product_id: 560
           unit_price: 68.00
-      - brand: Diesel
+      - brand_name: Diesel
         brand_id: 113
         products:
         - product_name: Thommer Slim-Fit
@@ -2133,7 +2133,7 @@ products:
         - product_name: Larkee Straight
           product_id: 565
           unit_price: 140.00
-      - brand: Wrangler
+      - brand_name: Wrangler
         brand_id: 114
         products:
         - product_name: Regular Fit Jean
@@ -2151,7 +2151,7 @@ products:
         - product_name: Flex Waist Jean
           product_id: 570
           unit_price: 49.00
-      - brand: Calvin Klein
+      - brand_name: Calvin Klein
         brand_id: 115
         products:
         - product_name: Straight Fit Jean
@@ -2169,7 +2169,7 @@ products:
         - product_name: Athletic Taper Jean
           product_id: 575
           unit_price: 92.00
-      - brand: Gap
+      - brand_name: Gap
         brand_id: 116
         products:
         - product_name: GapFlex Straight Jeans
@@ -2187,10 +2187,10 @@ products:
         - product_name: Athletic Taper Jeans with GapFlex
           product_id: 580
           unit_price: 65.00
-    - category_1: Dresses
+    - category_1_name: Dresses
       category_1_id: 24
       brands:
-      - brand: Zara
+      - brand_name: Zara
         brand_id: 117
         products:
         - product_name: Floral Print Dress
@@ -2208,7 +2208,7 @@ products:
         - product_name: Embroidered Midi Dress
           product_id: 585
           unit_price: 99.99
-      - brand: H&M
+      - brand_name: H&M
         brand_id: 118
         products:
         - product_name: Jersey Dress
@@ -2226,7 +2226,7 @@ products:
         - product_name: Bodycon Dress
           product_id: 590
           unit_price: 34.99
-      - brand: Gucci
+      - brand_name: Gucci
         brand_id: 119
         products:
         - product_name: Silk Midi Dress
@@ -2244,7 +2244,7 @@ products:
         - product_name: Floral Print Silk Dress
           product_id: 595
           unit_price: 4600.00
-      - brand: ASOS
+      - brand_name: ASOS
         brand_id: 120
         products:
         - product_name: Skater Dress
@@ -2262,7 +2262,7 @@ products:
         - product_name: Bodycon Midi Dress
           product_id: 600
           unit_price: 30.00
-      - brand: Forever 21
+      - brand_name: Forever 21
         brand_id: 121
         products:
         - product_name: Floral Maxi Dress
@@ -2280,10 +2280,10 @@ products:
         - product_name: Ruffled Bodycon Dress
           product_id: 605
           unit_price: 29.99
-    - category_1: Jackets
+    - category_1_name: Jackets
       category_1_id: 25
       brands:
-      - brand: North Face
+      - brand_name: North Face
         brand_id: 122
         products:
         - product_name: Venture 2 Jacket
@@ -2301,7 +2301,7 @@ products:
         - product_name: Triclimate Jacket
           product_id: 610
           unit_price: 279.00
-      - brand: Patagonia
+      - brand_name: Patagonia
         brand_id: 123
         products:
         - product_name: Nano Puff Jacket
@@ -2319,7 +2319,7 @@ products:
         - product_name: Better Sweater Fleece Jacket
           product_id: 615
           unit_price: 139.00
-      - brand: Columbia
+      - brand_name: Columbia
         brand_id: 124
         products:
         - product_name: Watertight II Jacket
@@ -2337,7 +2337,7 @@ products:
         - product_name: EvaPOURation Jacket
           product_id: 620
           unit_price: 99.99
-      - brand: Barbour
+      - brand_name: Barbour
         brand_id: 125
         products:
         - product_name: Beaufort Wax Jacket
@@ -2355,7 +2355,7 @@ products:
         - product_name: Powell Quilted Jacket
           product_id: 625
           unit_price: 299.00
-      - brand: Levi's
+      - brand_name: Levi's
         brand_id: 126
         products:
         - product_name: Trucker Jacket
@@ -2373,10 +2373,10 @@ products:
         - product_name: Coach's Jacket
           product_id: 630
           unit_price: 78.00
-    - category_1: Shoes
+    - category_1_name: Shoes
       category_1_id: 26
       brands:
-      - brand: Nike
+      - brand_name: Nike
         brand_id: 127
         products:
         - product_name: Air Force 1
@@ -2394,7 +2394,7 @@ products:
         - product_name: SB Dunk Low
           product_id: 635
           unit_price: 100.00
-      - brand: Adidas
+      - brand_name: Adidas
         brand_id: 128
         products:
         - product_name: Ultraboost 21
@@ -2412,7 +2412,7 @@ products:
         - product_name: Superstar
           product_id: 640
           unit_price: 85.00
-      - brand: Converse
+      - brand_name: Converse
         brand_id: 129
         products:
         - product_name: Chuck Taylor All Star High Top
@@ -2430,7 +2430,7 @@ products:
         - product_name: Jack Purcell Classic Low Top
           product_id: 645
           unit_price: 65.00
-      - brand: Puma
+      - brand_name: Puma
         brand_id: 130
         products:
         - product_name: Suede Classic
@@ -2448,7 +2448,7 @@ products:
         - product_name: Speedcat
           product_id: 650
           unit_price: 90.00
-      - brand: Vans
+      - brand_name: Vans
         brand_id: 131
         products:
         - product_name: Old Skool
@@ -2466,10 +2466,10 @@ products:
         - product_name: Slip-On
           product_id: 655
           unit_price: 50.00
-    - category_1: Sweatshirts & Hoodies
+    - category_1_name: Sweatshirts & Hoodies
       category_1_id: 27
       brands:
-      - brand: Champion
+      - brand_name: Champion
         brand_id: 132
         products:
         - product_name: Powerblend Pullover Hoodie
@@ -2487,7 +2487,7 @@ products:
         - product_name: Heritage Crew Sweatshirt
           product_id: 660
           unit_price: 55.00
-      - brand: Supreme
+      - brand_name: Supreme
         brand_id: 133
         products:
         - product_name: Box Logo Hooded Sweatshirt
@@ -2505,7 +2505,7 @@ products:
         - product_name: Overdyed Crewneck
           product_id: 665
           unit_price: 148.00
-      - brand: Nike
+      - brand_name: Nike
         brand_id: 134
         products:
         - product_name: Sportswear Club Fleece
@@ -2523,7 +2523,7 @@ products:
         - product_name: Air Pullover Hoodie
           product_id: 670
           unit_price: 70.00
-      - brand: Adidas
+      - brand_name: Adidas
         brand_id: 135
         products:
         - product_name: Essentials Pullover Hoodie
@@ -2541,7 +2541,7 @@ products:
         - product_name: Essentials 3-Stripes Crewneck
           product_id: 675
           unit_price: 50.00
-      - brand: Under Armour
+      - brand_name: Under Armour
         brand_id: 136
         products:
         - product_name: Rival Fleece Hoodie
@@ -2559,10 +2559,10 @@ products:
         - product_name: Sportstyle Terry Logo Hoodie
           product_id: 680
           unit_price: 50.00
-    - category_1: Underwear & Socks
+    - category_1_name: Underwear & Socks
       category_1_id: 28
       brands:
-      - brand: Calvin Klein
+      - brand_name: Calvin Klein
         brand_id: 137
         products:
         - product_name: Cotton Stretch Boxer Briefs
@@ -2580,7 +2580,7 @@ products:
         - product_name: Icon Microfiber Socks
           product_id: 685
           unit_price: 12.00
-      - brand: Hanes
+      - brand_name: Hanes
         brand_id: 138
         products:
         - product_name: ComfortSoft Briefs
@@ -2598,7 +2598,7 @@ products:
         - product_name: Ultimate FreshIQ Ankle Socks
           product_id: 690
           unit_price: 12.00
-      - brand: Tommy John
+      - brand_name: Tommy John
         brand_id: 139
         products:
         - product_name: Second Skin Relaxed Fit Boxers
@@ -2616,7 +2616,7 @@ products:
         - product_name: Performance Dress Socks
           product_id: 695
           unit_price: 16.00
-      - brand: Saxx
+      - brand_name: Saxx
         brand_id: 140
         products:
         - product_name: Vibe Boxer Briefs
@@ -2634,7 +2634,7 @@ products:
         - product_name: Strike Long Leg Boxer Briefs
           product_id: 700
           unit_price: 37.00
-      - brand: Bombas
+      - brand_name: Bombas
         brand_id: 141
         products:
         - product_name: Men's Ankle Socks
@@ -2652,13 +2652,13 @@ products:
         - product_name: Men's Performance Running Quarter Socks
           product_id: 705
           unit_price: 16.00
-  - category_0: Home
+  - category_0_name: Home
     category_0_id: 5
     subcategories:
-    - category_1: Furniture
+    - category_1_name: Furniture
       category_1_id: 29
       brands:
-      - brand: Ikea
+      - brand_name: Ikea
         brand_id: 142
         products:
         - product_name: EKTORP Sofa
@@ -2676,7 +2676,7 @@ products:
         - product_name: BILLY Bookcase
           product_id: 710
           unit_price: 59.00
-      - brand: Wayfair
+      - brand_name: Wayfair
         brand_id: 143
         products:
         - product_name: Comet End Table
@@ -2694,7 +2694,7 @@ products:
         - product_name: Almanzar Ladder Bookcase
           product_id: 715
           unit_price: 120.99
-      - brand: West Elm
+      - brand_name: West Elm
         brand_id: 144
         products:
         - product_name: Harris Sofa
@@ -2712,7 +2712,7 @@ products:
         - product_name: Zane Desk
           product_id: 720
           unit_price: 399.00
-      - brand: Restoration Hardware
+      - brand_name: Restoration Hardware
         brand_id: 145
         products:
         - product_name: Cloud Modular Sofa
@@ -2730,7 +2730,7 @@ products:
         - product_name: Balustrade Dining Table
           product_id: 725
           unit_price: 2595.00
-      - brand: Ashley Furniture
+      - brand_name: Ashley Furniture
         brand_id: 146
         products:
         - product_name: Darcy Sofa Chaise
@@ -2748,10 +2748,10 @@ products:
         - product_name: Aldwin Dining Table
           product_id: 730
           unit_price: 399.99
-    - category_1: Home Decor
+    - category_1_name: Home Decor
       category_1_id: 30
       brands:
-      - brand: Pottery Barn
+      - brand_name: Pottery Barn
         brand_id: 147
         products:
         - product_name: Faux Fur Alpaca Throws
@@ -2769,7 +2769,7 @@ products:
         - product_name: Linden Wood Paneled Mirror
           product_id: 735
           unit_price: 599.00
-      - brand: Pier1
+      - brand_name: Pier1
         brand_id: 148
         products:
         - product_name: Mosaic Wall Panel
@@ -2787,7 +2787,7 @@ products:
         - product_name: Champagne Wall Clock
           product_id: 740
           unit_price: 79.99
-      - brand: Urban Outfitters
+      - brand_name: Urban Outfitters
         brand_id: 149
         products:
         - product_name: Tufted Dot Duvet Cover
@@ -2805,7 +2805,7 @@ products:
         - product_name: Round Pintuck Pillow
           product_id: 745
           unit_price: 39.00
-      - brand: Crate & Barrel
+      - brand_name: Crate & Barrel
         brand_id: 150
         products:
         - product_name: Marble Bookends
@@ -2823,7 +2823,7 @@ products:
         - product_name: Modal Throw
           product_id: 750
           unit_price: 79.95
-      - brand: Anthropologie
+      - brand_name: Anthropologie
         brand_id: 151
         products:
         - product_name: Gleaming Primrose Mirror
@@ -2841,10 +2841,10 @@ products:
         - product_name: Velvet Curtains
           product_id: 755
           unit_price: 158.00
-    - category_1: Kitchenwares
+    - category_1_name: Kitchenwares
       category_1_id: 31
       brands:
-      - brand: Williams Sonoma
+      - brand_name: Williams Sonoma
         brand_id: 152
         products:
         - product_name: Le Creuset Cast-Iron Dutch Oven
@@ -2862,7 +2862,7 @@ products:
         - product_name: Breville Smart Oven
           product_id: 760
           unit_price: 279.95
-      - brand: Sur La Table
+      - brand_name: Sur La Table
         brand_id: 153
         products:
         - product_name: Staub Cocotte
@@ -2880,7 +2880,7 @@ products:
         - product_name: Nespresso VertuoPlus Coffee Maker
           product_id: 765
           unit_price: 179.95
-      - brand: KitchenAid
+      - brand_name: KitchenAid
         brand_id: 154
         products:
         - product_name: Artisan Stand Mixer
@@ -2898,7 +2898,7 @@ products:
         - product_name: Hand Blender
           product_id: 770
           unit_price: 49.99
-      - brand: Lodge
+      - brand_name: Lodge
         brand_id: 155
         products:
         - product_name: Cast Iron Skillet
@@ -2916,7 +2916,7 @@ products:
         - product_name: Cast Iron Combo Cooker
           product_id: 775
           unit_price: 49.90
-      - brand: Tefal
+      - brand_name: Tefal
         brand_id: 156
         products:
         - product_name: Non-Stick Fry Pan
@@ -2934,10 +2934,10 @@ products:
         - product_name: Intuition Stainless Steel Pot Set
           product_id: 780
           unit_price: 149.99
-    - category_1: Bath
+    - category_1_name: Bath
       category_1_id: 32
       brands:
-      - brand: Moen
+      - brand_name: Moen
         brand_id: 157
         products:
         - product_name: Magnetix Handheld Showerhead
@@ -2955,7 +2955,7 @@ products:
         - product_name: Curved Shower Rod
           product_id: 785
           unit_price: 42.99
-      - brand: Kohler
+      - brand_name: Kohler
         brand_id: 158
         products:
         - product_name: Cimarron Comfort Height Toilet
@@ -2973,7 +2973,7 @@ products:
         - product_name: Ridgeport Bath Towels
           product_id: 790
           unit_price: 19.99
-      - brand: Delta
+      - brand_name: Delta
         brand_id: 159
         products:
         - product_name: Trinsic Vessel Sink Faucet
@@ -2991,7 +2991,7 @@ products:
         - product_name: Dryden Robe Hook
           product_id: 795
           unit_price: 22.99
-      - brand: American Standard
+      - brand_name: American Standard
         brand_id: 160
         products:
         - product_name: Champion 4 Max Toilet
@@ -3009,7 +3009,7 @@ products:
         - product_name: Delancey Towel Ring
           product_id: 800
           unit_price: 30.00
-      - brand: Grohe
+      - brand_name: Grohe
         brand_id: 161
         products:
         - product_name: Vitalio Joy Shower System
@@ -3027,10 +3027,10 @@ products:
         - product_name: Bau Ceramic Pedestal Sink
           product_id: 805
           unit_price: 200.00
-    - category_1: Bedding
+    - category_1_name: Bedding
       category_1_id: 33
       brands:
-      - brand: Brooklinen
+      - brand_name: Brooklinen
         brand_id: 162
         products:
         - product_name: Luxury Sateen Sheet Set
@@ -3048,7 +3048,7 @@ products:
         - product_name: Heathered Cashmere Duvet Cover
           product_id: 810
           unit_price: 279.00
-      - brand: Parachute
+      - brand_name: Parachute
         brand_id: 163
         products:
         - product_name: Percale Venice Set
@@ -3066,7 +3066,7 @@ products:
         - product_name: Linen Quilt
           product_id: 815
           unit_price: 279.00
-      - brand: Casper
+      - brand_name: Casper
         brand_id: 164
         products:
         - product_name: Original Foam Mattress
@@ -3084,7 +3084,7 @@ products:
         - product_name: Percale Duvet Cover
           product_id: 820
           unit_price: 120.00
-      - brand: Tempur-Pedic
+      - brand_name: Tempur-Pedic
         brand_id: 165
         products:
         - product_name: TEMPUR-Cloud Mattress
@@ -3102,7 +3102,7 @@ products:
         - product_name: Pima Cotton Comforter
           product_id: 825
           unit_price: 400.00
-      - brand: Boll & Branch
+      - brand_name: Boll & Branch
         brand_id: 166
         products:
         - product_name: Signature Hemmed Sheet Set
@@ -3120,10 +3120,10 @@ products:
         - product_name: Flannel Duvet Set
           product_id: 830
           unit_price: 305.00
-    - category_1: Gardening
+    - category_1_name: Gardening
       category_1_id: 34
       brands:
-      - brand: Fiskars
+      - brand_name: Fiskars
         brand_id: 167
         products:
         - product_name: Bypass Pruner
@@ -3141,7 +3141,7 @@ products:
         - product_name: Garden Scissors
           product_id: 835
           unit_price: 19.99
-      - brand: Gardena
+      - brand_name: Gardena
         brand_id: 168
         products:
         - product_name: Comfort Flex Hose
@@ -3159,7 +3159,7 @@ products:
         - product_name: Aquazoom Oscillating Sprinkler
           product_id: 840
           unit_price: 69.99
-      - brand: Greenworks
+      - brand_name: Greenworks
         brand_id: 169
         products:
         - product_name: Cordless Grass Trimmer
@@ -3177,7 +3177,7 @@ products:
         - product_name: Cordless Hedge Trimmer
           product_id: 845
           unit_price: 89.99
-      - brand: Husqvarna
+      - brand_name: Husqvarna
         brand_id: 170
         products:
         - product_name: 450 Rancher Chainsaw
@@ -3195,7 +3195,7 @@ products:
         - product_name: 545 Mark II Gas Chainsaw
           product_id: 850
           unit_price: 529.99
-      - brand: Miracle-Gro
+      - brand_name: Miracle-Gro
         brand_id: 171
         products:
         - product_name: Water Soluble All Purpose Plant Food
@@ -3213,10 +3213,10 @@ products:
         - product_name: Shake 'N Feed Tomato, Fruit & Vegetable Plant Food
           product_id: 855
           unit_price: 11.49
-    - category_1: Lighting
+    - category_1_name: Lighting
       category_1_id: 35
       brands:
-      - brand: Philips Hue
+      - brand_name: Philips Hue
         brand_id: 172
         products:
         - product_name: Color Ambiance Starter Kit
@@ -3234,7 +3234,7 @@ products:
         - product_name: Ambiance Dimmable LED Smart Spot Light
           product_id: 860
           unit_price: 49.99
-      - brand: Sylvania
+      - brand_name: Sylvania
         brand_id: 173
         products:
         - product_name: SMART+ ZigBee Full Color Bulb
@@ -3252,7 +3252,7 @@ products:
         - product_name: Color Changing Strip Lights
           product_id: 865
           unit_price: 39.99
-      - brand: Kichler
+      - brand_name: Kichler
         brand_id: 174
         products:
         - product_name: Barrington Distressed Chandelier
@@ -3270,7 +3270,7 @@ products:
         - product_name: Harbor Outdoor Lantern
           product_id: 870
           unit_price: 139.00
-      - brand: Lutron
+      - brand_name: Lutron
         brand_id: 175
         products:
         - product_name: Caseta Wireless Smart Lighting Dimmer Switch
@@ -3288,7 +3288,7 @@ products:
         - product_name: GRAFIK Eye QS Wireless Control Unit
           product_id: 875
           unit_price: 600.00
-      - brand: GE Lighting
+      - brand_name: GE Lighting
         brand_id: 176
         products:
         - product_name: C by GE A19 Smart LED Bulbs
@@ -3306,13 +3306,13 @@ products:
         - product_name: Sun Filled LED Bulb
           product_id: 880
           unit_price: 8.99
-  - category_0: Sports
+  - category_0_name: Sports
     category_0_id: 6
     subcategories:
-    - category_1: Athletic Wear
+    - category_1_name: Athletic Wear
       category_1_id: 36
       brands:
-      - brand: Nike
+      - brand_name: Nike
         brand_id: 177
         products:
         - product_name: Pro Tights
@@ -3330,7 +3330,7 @@ products:
         - product_name: Therma Hoodie
           product_id: 885
           unit_price: 55.00
-      - brand: Adidas
+      - brand_name: Adidas
         brand_id: 178
         products:
         - product_name: SST Track Pants
@@ -3348,7 +3348,7 @@ products:
         - product_name: Alphaskin T-Shirt
           product_id: 890
           unit_price: 35.00
-      - brand: Under Armour
+      - brand_name: Under Armour
         brand_id: 179
         products:
         - product_name: HeatGear Leggings
@@ -3366,7 +3366,7 @@ products:
         - product_name: Blitzing Cap
           product_id: 895
           unit_price: 25.00
-      - brand: Puma
+      - brand_name: Puma
         brand_id: 180
         products:
         - product_name: Essential Shorts
@@ -3384,7 +3384,7 @@ products:
         - product_name: Softride Shoes
           product_id: 900
           unit_price: 80.00
-      - brand: Reebok
+      - brand_name: Reebok
         brand_id: 181
         products:
         - product_name: Classic Sneakers
@@ -3402,10 +3402,10 @@ products:
         - product_name: Training Gloves
           product_id: 905
           unit_price: 25.00
-    - category_1: Team Sports
+    - category_1_name: Team Sports
       category_1_id: 37
       brands:
-      - brand: Wilson
+      - brand_name: Wilson
         brand_id: 182
         products:
         - product_name: Evolution Basketball
@@ -3423,7 +3423,7 @@ products:
         - product_name: Blade Badminton Racket
           product_id: 910
           unit_price: 45.00
-      - brand: Easton
+      - brand_name: Easton
         brand_id: 183
         products:
         - product_name: Ghost Fastpitch Bat
@@ -3441,7 +3441,7 @@ products:
         - product_name: Hyperlite Softball Glove
           product_id: 915
           unit_price: 179.95
-      - brand: Spalding
+      - brand_name: Spalding
         brand_id: 184
         products:
         - product_name: NBA Official Game Basketball
@@ -3459,7 +3459,7 @@ products:
         - product_name: NBA Street Outdoor Basketball
           product_id: 920
           unit_price: 19.99
-      - brand: Rawlings
+      - brand_name: Rawlings
         brand_id: 185
         products:
         - product_name: Pro Preferred Glove
@@ -3477,7 +3477,7 @@ products:
         - product_name: Player Preferred Softball Glove
           product_id: 925
           unit_price: 59.95
-      - brand: Mikasa
+      - brand_name: Mikasa
         brand_id: 186
         products:
         - product_name: MVA200 Volleyball
@@ -3495,10 +3495,10 @@ products:
         - product_name: Basketball
           product_id: 930
           unit_price: 24.99
-    - category_1: Outdoor Recreation
+    - category_1_name: Outdoor Recreation
       category_1_id: 38
       brands:
-      - brand: The North Face
+      - brand_name: The North Face
         brand_id: 187
         products:
         - product_name: Venture 2 Jacket
@@ -3516,7 +3516,7 @@ products:
         - product_name: Apex Bionic Vest
           product_id: 935
           unit_price: 110.00
-      - brand: Columbia
+      - brand_name: Columbia
         brand_id: 188
         products:
         - product_name: Watertight II Jacket
@@ -3534,7 +3534,7 @@ products:
         - product_name: Newton Ridge Boots
           product_id: 940
           unit_price: 79.95
-      - brand: Coleman
+      - brand_name: Coleman
         brand_id: 189
         products:
         - product_name: Sundome Tent
@@ -3552,7 +3552,7 @@ products:
         - product_name: Propane Grill
           product_id: 945
           unit_price: 120.00
-      - brand: Patagonia
+      - brand_name: Patagonia
         brand_id: 190
         products:
         - product_name: Nano Puff Jacket
@@ -3570,7 +3570,7 @@ products:
         - product_name: Capilene Cool Shirt
           product_id: 950
           unit_price: 45.00
-      - brand: Osprey
+      - brand_name: Osprey
         brand_id: 191
         products:
         - product_name: Aether AG 70 Pack
@@ -3588,10 +3588,10 @@ products:
         - product_name: Poco Child Carrier
           product_id: 955
           unit_price: 330.00
-    - category_1: Fitness
+    - category_1_name: Fitness
       category_1_id: 39
       brands:
-      - brand: Peloton
+      - brand_name: Peloton
         brand_id: 192
         products:
         - product_name: Bike
@@ -3609,7 +3609,7 @@ products:
         - product_name: Yoga Mat
           product_id: 960
           unit_price: 60.00
-      - brand: Bowflex
+      - brand_name: Bowflex
         brand_id: 193
         products:
         - product_name: SelectTech 552 Dumbbells
@@ -3627,7 +3627,7 @@ products:
         - product_name: VeloCore Bike
           product_id: 965
           unit_price: 2199.00
-      - brand: NordicTrack
+      - brand_name: NordicTrack
         brand_id: 194
         products:
         - product_name: Commercial 1750 Treadmill
@@ -3645,7 +3645,7 @@ products:
         - product_name: Commercial S22i Studio Cycle
           product_id: 970
           unit_price: 1999.00
-      - brand: Fitbit
+      - brand_name: Fitbit
         brand_id: 195
         products:
         - product_name: Charge 4
@@ -3663,7 +3663,7 @@ products:
         - product_name: Sense
           product_id: 975
           unit_price: 299.95
-      - brand: TRX
+      - brand_name: TRX
         brand_id: 196
         products:
         - product_name: TRX HOME2 SYSTEM
@@ -3681,10 +3681,10 @@ products:
         - product_name: TRX Tactical Gym
           product_id: 980
           unit_price: 249.95
-    - category_1: Water Sports
+    - category_1_name: Water Sports
       category_1_id: 40
       brands:
-      - brand: Speedo
+      - brand_name: Speedo
         brand_id: 197
         products:
         - product_name: Fastskin LZR Pure Valor
@@ -3702,7 +3702,7 @@ products:
         - product_name: Turnz One Back
           product_id: 985
           unit_price: 69.99
-      - brand: O'Neill
+      - brand_name: O'Neill
         brand_id: 198
         products:
         - product_name: Reactor II 3/2mm Wetsuit
@@ -3720,7 +3720,7 @@ products:
         - product_name: Superfreak Tropical Boot
           product_id: 990
           unit_price: 69.95
-      - brand: Quiksilver
+      - brand_name: Quiksilver
         brand_id: 199
         products:
         - product_name: Highline Pro 3L Gore-Tex Jacket
@@ -3738,7 +3738,7 @@ products:
         - product_name: All Time Long Sleeve Rashguard
           product_id: 995
           unit_price: 37.00
-      - brand: Hobie
+      - brand_name: Hobie
         brand_id: 200
         products:
         - product_name: Mirage Pro Angler 14 Kayak
@@ -3756,7 +3756,7 @@ products:
         - product_name: Quest 11 Kayak
           product_id: 1000
           unit_price: 1649.00
-      - brand: YETI
+      - brand_name: YETI
         brand_id: 201
         products:
         - product_name: Tundra 65 Cooler
@@ -3774,10 +3774,10 @@ products:
         - product_name: Tank 85 Ice Bucket
           product_id: 1005
           unit_price: 249.99
-    - category_1: Cycling
+    - category_1_name: Cycling
       category_1_id: 41
       brands:
-      - brand: Trek
+      - brand_name: Trek
         brand_id: 202
         products:
         - product_name: Domane SL 6 Road Bike
@@ -3795,7 +3795,7 @@ products:
         - product_name: Precaliber 24 Kids' Bike
           product_id: 1010
           unit_price: 369.99
-      - brand: Giant
+      - brand_name: Giant
         brand_id: 203
         products:
         - product_name: TCR Advanced Pro 0 Road Bike
@@ -3813,7 +3813,7 @@ products:
         - product_name: ATX 3 Disc Mountain Bike
           product_id: 1015
           unit_price: 480.00
-      - brand: Specialized
+      - brand_name: Specialized
         brand_id: 204
         products:
         - product_name: Roubaix Comp Road Bike
@@ -3831,7 +3831,7 @@ products:
         - product_name: Chisel Comp Mountain Bike
           product_id: 1020
           unit_price: 1650.00
-      - brand: Cannondale
+      - brand_name: Cannondale
         brand_id: 205
         products:
         - product_name: SuperSix EVO Carbon Disc Road Bike
@@ -3849,7 +3849,7 @@ products:
         - product_name: Trail 5 Mountain Bike
           product_id: 1025
           unit_price: 875.00
-      - brand: Scott
+      - brand_name: Scott
         brand_id: 206
         products:
         - product_name: Addict RC 10 Road Bike
@@ -3867,10 +3867,10 @@ products:
         - product_name: Contessa Active 50 Mountain Bike
           product_id: 1030
           unit_price: 649.99
-    - category_1: Golf
+    - category_1_name: Golf
       category_1_id: 42
       brands:
-      - brand: TaylorMade
+      - brand_name: TaylorMade
         brand_id: 207
         products:
         - product_name: SIM2 MAX Driver
@@ -3888,7 +3888,7 @@ products:
         - product_name: FlexTech Stand Bag
           product_id: 1035
           unit_price: 234.99
-      - brand: Callaway
+      - brand_name: Callaway
         brand_id: 208
         products:
         - product_name: Epic Max Driver
@@ -3906,7 +3906,7 @@ products:
         - product_name: Org 14 Cart Bag
           product_id: 1040
           unit_price: 249.99
-      - brand: Titleist
+      - brand_name: Titleist
         brand_id: 209
         products:
         - product_name: TSi3 Driver
@@ -3924,7 +3924,7 @@ products:
         - product_name: Players 4 Stand Bag
           product_id: 1045
           unit_price: 199.99
-      - brand: Ping
+      - brand_name: Ping
         brand_id: 210
         products:
         - product_name: G425 Max Driver
@@ -3942,7 +3942,7 @@ products:
         - product_name: 2020 Sporty Gear Bag
           product_id: 1050
           unit_price: 119.99
-      - brand: Cobra
+      - brand_name: Cobra
         brand_id: 211
         products:
         - product_name: KING RADSPEED Driver
@@ -3960,13 +3960,13 @@ products:
         - product_name: Speedzone Xtreme Driver
           product_id: 1055
           unit_price: 349.00
-  - category_0: Beauty
+  - category_0_name: Beauty
     category_0_id: 7
     subcategories:
-    - category_1: Skincare
+    - category_1_name: Skincare
       category_1_id: 43
       brands:
-      - brand: Neutrogena
+      - brand_name: Neutrogena
         brand_id: 212
         products:
         - product_name: Hydro Boost Water Gel
@@ -3984,7 +3984,7 @@ products:
         - product_name: Alcohol-Free Toner
           product_id: 1060
           unit_price: 8.49
-      - brand: CeraVe
+      - brand_name: CeraVe
         brand_id: 213
         products:
         - product_name: Moisturizing Cream
@@ -4002,7 +4002,7 @@ products:
         - product_name: Renewing SA Cleanser
           product_id: 1065
           unit_price: 12.99
-      - brand: The Ordinary
+      - brand_name: The Ordinary
         brand_id: 214
         products:
         - product_name: Niacinamide 10% + Zinc 1%
@@ -4020,7 +4020,7 @@ products:
         - product_name: Buffet
           product_id: 1070
           unit_price: 14.80
-      - brand: La Roche-Posay
+      - brand_name: La Roche-Posay
         brand_id: 215
         products:
         - product_name: Anthelios Melt-In Sunscreen
@@ -4038,7 +4038,7 @@ products:
         - product_name: Thermal Spring Water
           product_id: 1075
           unit_price: 12.99
-      - brand: Olay
+      - brand_name: Olay
         brand_id: 216
         products:
         - product_name: Regenerist Micro-Sculpting Cream
@@ -4056,10 +4056,10 @@ products:
         - product_name: Gentle Foaming Cleanser
           product_id: 1080
           unit_price: 8.99
-    - category_1: Makeup
+    - category_1_name: Makeup
       category_1_id: 44
       brands:
-      - brand: Maybelline
+      - brand_name: Maybelline
         brand_id: 217
         products:
         - product_name: Fit Me Matte + Poreless Foundation
@@ -4077,7 +4077,7 @@ products:
         - product_name: The Nudes Eyeshadow Palette
           product_id: 1085
           unit_price: 11.99
-      - brand: MAC
+      - brand_name: MAC
         brand_id: 218
         products:
         - product_name: Studio Fix Fluid SPF 15 Foundation
@@ -4095,7 +4095,7 @@ products:
         - product_name: Extended Play Gigablack Lash Mascara
           product_id: 1090
           unit_price: 20.00
-      - brand: L'Oréal
+      - brand_name: L'Oréal
         brand_id: 219
         products:
         - product_name: True Match Super-Blendable Foundation
@@ -4113,7 +4113,7 @@ products:
         - product_name: Brow Stylist Definer
           product_id: 1095
           unit_price: 8.99
-      - brand: NARS
+      - brand_name: NARS
         brand_id: 220
         products:
         - product_name: Radiant Creamy Concealer
@@ -4131,7 +4131,7 @@ products:
         - product_name: Velvet Matte Lip Pencil
           product_id: 1100
           unit_price: 27.00
-      - brand: Urban Decay
+      - brand_name: Urban Decay
         brand_id: 221
         products:
         - product_name: Naked Reloaded Eyeshadow Palette
@@ -4149,10 +4149,10 @@ products:
         - product_name: Perversion Mascara
           product_id: 1105
           unit_price: 25.00
-    - category_1: Hair Care
+    - category_1_name: Hair Care
       category_1_id: 45
       brands:
-      - brand: Pantene
+      - brand_name: Pantene
         brand_id: 222
         products:
         - product_name: Pro-V Daily Moisture Renewal Shampoo
@@ -4170,7 +4170,7 @@ products:
         - product_name: Repair and Protect Air Spray
           product_id: 1110
           unit_price: 4.99
-      - brand: Moroccanoil
+      - brand_name: Moroccanoil
         brand_id: 223
         products:
         - product_name: Moroccanoil Treatment
@@ -4188,7 +4188,7 @@ products:
         - product_name: Dry Texture Spray
           product_id: 1115
           unit_price: 28.00
-      - brand: Redken
+      - brand_name: Redken
         brand_id: 224
         products:
         - product_name: One United Multi-Benefit Treatment Spray
@@ -4206,7 +4206,7 @@ products:
         - product_name: Frizz Dismiss Rebel Tame
           product_id: 1120
           unit_price: 25.00
-      - brand: Olaplex
+      - brand_name: Olaplex
         brand_id: 225
         products:
         - product_name: No.3 Hair Perfector
@@ -4224,7 +4224,7 @@ products:
         - product_name: No.7 Bonding Oil
           product_id: 1125
           unit_price: 28.00
-      - brand: Shea Moisture
+      - brand_name: Shea Moisture
         brand_id: 226
         products:
         - product_name: Coconut & Hibiscus Curl Enhancing Smoothie
@@ -4242,10 +4242,10 @@ products:
         - product_name: 100% Virgin Coconut Oil Leave-In Treatment
           product_id: 1130
           unit_price: 11.99
-    - category_1: Fragrance
+    - category_1_name: Fragrance
       category_1_id: 46
       brands:
-      - brand: Chanel
+      - brand_name: Chanel
         brand_id: 227
         products:
         - product_name: Chanel No. 5 Eau de Parfum
@@ -4263,7 +4263,7 @@ products:
         - product_name: Allure Homme Sport Eau Extreme
           product_id: 1135
           unit_price: 95.00
-      - brand: Dior
+      - brand_name: Dior
         brand_id: 228
         products:
         - product_name: J'adore Eau de Parfum
@@ -4281,7 +4281,7 @@ products:
         - product_name: Dior Homme Eau de Toilette
           product_id: 1140
           unit_price: 75.00
-      - brand: Giorgio Armani
+      - brand_name: Giorgio Armani
         brand_id: 229
         products:
         - product_name: Acqua di Gio Eau de Toilette
@@ -4299,7 +4299,7 @@ products:
         - product_name: Emporio Armani Stronger With You
           product_id: 1145
           unit_price: 69.00
-      - brand: Tom Ford
+      - brand_name: Tom Ford
         brand_id: 230
         products:
         - product_name: Black Orchid Eau de Parfum
@@ -4317,7 +4317,7 @@ products:
         - product_name: Lost Cherry Eau de Parfum
           product_id: 1150
           unit_price: 320.00
-      - brand: Calvin Klein
+      - brand_name: Calvin Klein
         brand_id: 231
         products:
         - product_name: Eternity for Men Eau de Toilette
@@ -4335,10 +4335,10 @@ products:
         - product_name: Ck Everyone Eau de Toilette
           product_id: 1155
           unit_price: 55.00
-    - category_1: Nails
+    - category_1_name: Nails
       category_1_id: 47
       brands:
-      - brand: OPI
+      - brand_name: OPI
         brand_id: 232
         products:
         - product_name: Funny Bunny Nail Lacquer
@@ -4356,7 +4356,7 @@ products:
         - product_name: Malaga Wine Nail Lacquer
           product_id: 1160
           unit_price: 10.50
-      - brand: Essie
+      - brand_name: Essie
         brand_id: 233
         products:
         - product_name: Ballet Slippers Nail Polish
@@ -4374,7 +4374,7 @@ products:
         - product_name: Mint Candy Apple Nail Polish
           product_id: 1165
           unit_price: 8.97
-      - brand: Sally Hansen
+      - brand_name: Sally Hansen
         brand_id: 234
         products:
         - product_name: Miracle Gel Nail Polish
@@ -4392,7 +4392,7 @@ products:
         - product_name: Color Therapy Nail Polish
           product_id: 1170
           unit_price: 8.99
-      - brand: CND
+      - brand_name: CND
         brand_id: 235
         products:
         - product_name: Vinylux Long Wear Nail Polish
@@ -4410,7 +4410,7 @@ products:
         - product_name: Creative Play Gel Polish
           product_id: 1175
           unit_price: 7.99
-      - brand: Deborah Lippmann
+      - brand_name: Deborah Lippmann
         brand_id: 236
         products:
         - product_name: Gel Lab Pro Nail Color
@@ -4428,10 +4428,10 @@ products:
         - product_name: Cuticle Remover
           product_id: 1180
           unit_price: 20.00
-    - category_1: Body Care
+    - category_1_name: Body Care
       category_1_id: 48
       brands:
-      - brand: Bath & Body Works
+      - brand_name: Bath & Body Works
         brand_id: 237
         products:
         - product_name: Japanese Cherry Blossom Body Lotion
@@ -4449,7 +4449,7 @@ products:
         - product_name: Eucalyptus Spearmint Body Wash
           product_id: 1185
           unit_price: 13.50
-      - brand: The Body Shop
+      - brand_name: The Body Shop
         brand_id: 238
         products:
         - product_name: Hemp Heavy-Duty Body Moisture Protector
@@ -4467,7 +4467,7 @@ products:
         - product_name: Vitamin C Glow Boosting Moisturizer
           product_id: 1190
           unit_price: 23.00
-      - brand: Lush
+      - brand_name: Lush
         brand_id: 239
         products:
         - product_name: Sleepy Body Lotion
@@ -4485,7 +4485,7 @@ products:
         - product_name: Dream Cream Body Lotion
           product_id: 1195
           unit_price: 29.95
-      - brand: Aveeno
+      - brand_name: Aveeno
         brand_id: 240
         products:
         - product_name: Daily Moisturizing Lotion
@@ -4503,7 +4503,7 @@ products:
         - product_name: Eczema Therapy Moisturizing Cream
           product_id: 1200
           unit_price: 11.69
-      - brand: Cetaphil
+      - brand_name: Cetaphil
         brand_id: 241
         products:
         - product_name: Moisturizing Cream
@@ -4521,7 +4521,7 @@ products:
         - product_name: PRO Oil Absorbing Moisturizer SPF 30
           product_id: 1205
           unit_price: 17.99
-      - brand: Dove
+      - brand_name: Dove
         brand_id: 242
         products:
         - product_name: Deep Moisture Body Wash
@@ -4539,10 +4539,10 @@ products:
         - product_name: Original Beauty Cream Bar
           product_id: 1210
           unit_price: 6.88
-    - category_1: Tools & Accessories
+    - category_1_name: Tools & Accessories
       category_1_id: 49
       brands:
-      - brand: Real Techniques
+      - brand_name: Real Techniques
         brand_id: 243
         products:
         - product_name: Miracle Complexion Sponge
@@ -4560,7 +4560,7 @@ products:
         - product_name: Blush Brush
           product_id: 1215
           unit_price: 8.99
-      - brand: Beautyblender
+      - brand_name: Beautyblender
         brand_id: 244
         products:
         - product_name: The Original Beautyblender
@@ -4578,7 +4578,7 @@ products:
         - product_name: Bounce Liquid Whip Long Wear Foundation
           product_id: 1220
           unit_price: 40.00
-      - brand: EcoTools
+      - brand_name: EcoTools
         brand_id: 245
         products:
         - product_name: Start the Day Beautifully Kit Brush Set
@@ -4596,7 +4596,7 @@ products:
         - product_name: Retractable Face Brush
           product_id: 1225
           unit_price: 7.99
-      - brand: Tweezerman
+      - brand_name: Tweezerman
         brand_id: 246
         products:
         - product_name: Slant Tweezer
@@ -4614,7 +4614,7 @@ products:
         - product_name: Skin Care Tool
           product_id: 1230
           unit_price: 13.00
-      - brand: Sigma Beauty
+      - brand_name: Sigma Beauty
         brand_id: 247
         products:
         - product_name: F80 Flat Kabuki Brush
@@ -4632,13 +4632,13 @@ products:
         - product_name: 3DHD Blender
           product_id: 1235
           unit_price: 15.00
-  - category_0: Books
+  - category_0_name: Books
     category_0_id: 8
     subcategories:
-    - category_1: Fiction
+    - category_1_name: Fiction
       category_1_id: 50
       brands:
-      - brand: Penguin Classics
+      - brand_name: Penguin Classics
         brand_id: 248
         products:
         - product_name: Pride and Prejudice
@@ -4656,7 +4656,7 @@ products:
         - product_name: Moby Dick
           product_id: 1240
           unit_price: 7.49
-      - brand: HarperCollins
+      - brand_name: HarperCollins
         brand_id: 249
         products:
         - product_name: American Gods
@@ -4674,7 +4674,7 @@ products:
         - product_name: Fahrenheit 451
           product_id: 1245
           unit_price: 7.99
-      - brand: Random House
+      - brand_name: Random House
         brand_id: 250
         products:
         - product_name: The Da Vinci Code
@@ -4692,7 +4692,7 @@ products:
         - product_name: Gone Girl
           product_id: 1250
           unit_price: 8.49
-      - brand: Simon & Schuster
+      - brand_name: Simon & Schuster
         brand_id: 251
         products:
         - product_name: Catcher in the Rye
@@ -4710,7 +4710,7 @@ products:
         - product_name: Lord of the Flies
           product_id: 1255
           unit_price: 6.99
-      - brand: Hachette Book Group
+      - brand_name: Hachette Book Group
         brand_id: 252
         products:
         - product_name: Me Before You
@@ -4728,10 +4728,10 @@ products:
         - product_name: P.S. I Love You
           product_id: 1260
           unit_price: 7.49
-    - category_1: Non-Fiction
+    - category_1_name: Non-Fiction
       category_1_id: 51
       brands:
-      - brand: Knopf Doubleday
+      - brand_name: Knopf Doubleday
         brand_id: 253
         products:
         - product_name: 'Sapiens: A Brief History of Humankind'
@@ -4749,7 +4749,7 @@ products:
         - product_name: The Guns of August
           product_id: 1265
           unit_price: 14.99
-      - brand: Macmillan
+      - brand_name: Macmillan
         brand_id: 254
         products:
         - product_name: 'Outliers: The Story of Success'
@@ -4767,7 +4767,7 @@ products:
         - product_name: A Short History of Nearly Everything
           product_id: 1270
           unit_price: 15.99
-      - brand: Oxford University Press
+      - brand_name: Oxford University Press
         brand_id: 255
         products:
         - product_name: The Selfish Gene
@@ -4785,7 +4785,7 @@ products:
         - product_name: The Double Helix
           product_id: 1275
           unit_price: 8.99
-      - brand: Princeton University Press
+      - brand_name: Princeton University Press
         brand_id: 256
         products:
         - product_name: The Economics of Inequality
@@ -4803,7 +4803,7 @@ products:
         - product_name: The Euro
           product_id: 1280
           unit_price: 17.99
-      - brand: Viking Press
+      - brand_name: Viking Press
         brand_id: 257
         products:
         - product_name: The Power of Habit
@@ -4821,10 +4821,10 @@ products:
         - product_name: 12 Rules for Life
           product_id: 1285
           unit_price: 13.99
-    - category_1: Science Fiction & Fantasy
+    - category_1_name: Science Fiction & Fantasy
       category_1_id: 52
       brands:
-      - brand: Tor Books
+      - brand_name: Tor Books
         brand_id: 258
         products:
         - product_name: Dune
@@ -4842,7 +4842,7 @@ products:
         - product_name: The Way of Kings
           product_id: 1290
           unit_price: 10.49
-      - brand: Del Rey
+      - brand_name: Del Rey
         brand_id: 259
         products:
         - product_name: 'Star Wars: Heir to the Empire'
@@ -4860,7 +4860,7 @@ products:
         - product_name: Blood of Elves
           product_id: 1295
           unit_price: 7.49
-      - brand: Ace Books
+      - brand_name: Ace Books
         brand_id: 260
         products:
         - product_name: Neuromancer
@@ -4878,7 +4878,7 @@ products:
         - product_name: Leviathan Wakes
           product_id: 1300
           unit_price: 8.99
-      - brand: Harper Voyager
+      - brand_name: Harper Voyager
         brand_id: 261
         products:
         - product_name: The Magicians
@@ -4896,7 +4896,7 @@ products:
         - product_name: Neverwhere
           product_id: 1305
           unit_price: 8.99
-      - brand: Baen Books
+      - brand_name: Baen Books
         brand_id: 262
         products:
         - product_name: On Basilisk Station
@@ -4914,10 +4914,10 @@ products:
         - product_name: Falling Free
           product_id: 1310
           unit_price: 7.49
-    - category_1: Mystery & Thrillers
+    - category_1_name: Mystery & Thrillers
       category_1_id: 53
       brands:
-      - brand: St. Martin's Press
+      - brand_name: St. Martin's Press
         brand_id: 263
         products:
         - product_name: Gone Baby Gone
@@ -4935,7 +4935,7 @@ products:
         - product_name: The Bourne Identity
           product_id: 1315
           unit_price: 7.99
-      - brand: Alfred A. Knopf
+      - brand_name: Alfred A. Knopf
         brand_id: 264
         products:
         - product_name: The Girl with the Dragon Tattoo
@@ -4953,7 +4953,7 @@ products:
         - product_name: In the Woods
           product_id: 1320
           unit_price: 8.49
-      - brand: Little, Brown and Company
+      - brand_name: Little, Brown and Company
         brand_id: 265
         products:
         - product_name: The Silence of the Lambs
@@ -4971,7 +4971,7 @@ products:
         - product_name: Live by Night
           product_id: 1325
           unit_price: 10.49
-      - brand: Berkley Books
+      - brand_name: Berkley Books
         brand_id: 266
         products:
         - product_name: Sharp Objects
@@ -4989,7 +4989,7 @@ products:
         - product_name: The Couple Next Door
           product_id: 1330
           unit_price: 8.99
-      - brand: Agatha Christie Ltd
+      - brand_name: Agatha Christie Ltd
         brand_id: 267
         products:
         - product_name: Murder on the Orient Express
@@ -5007,10 +5007,10 @@ products:
         - product_name: The ABC Murders
           product_id: 1335
           unit_price: 6.49
-    - category_1: Children's Books
+    - category_1_name: Children's Books
       category_1_id: 54
       brands:
-      - brand: Scholastic Inc.
+      - brand_name: Scholastic Inc.
         brand_id: 268
         products:
         - product_name: Harry Potter and the Sorcerer's Stone
@@ -5028,7 +5028,7 @@ products:
         - product_name: 'Goosebumps: Night of the Living Dummy'
           product_id: 1340
           unit_price: 4.99
-      - brand: Puffin Books
+      - brand_name: Puffin Books
         brand_id: 269
         products:
         - product_name: Charlotte's Web
@@ -5046,7 +5046,7 @@ products:
         - product_name: Where The Wild Things Are
           product_id: 1345
           unit_price: 8.99
-      - brand: Candlewick Press
+      - brand_name: Candlewick Press
         brand_id: 270
         products:
         - product_name: Guess How Much I Love You
@@ -5064,7 +5064,7 @@ products:
         - product_name: Walker Books
           product_id: 1350
           unit_price: 6.99
-      - brand: HarperCollins Children's Books
+      - brand_name: HarperCollins Children's Books
         brand_id: 271
         products:
         - product_name: The Chronicles of Narnia
@@ -5082,7 +5082,7 @@ products:
         - product_name: The Graveyard Book
           product_id: 1355
           unit_price: 7.49
-      - brand: Houghton Mifflin Harcourt
+      - brand_name: Houghton Mifflin Harcourt
         brand_id: 272
         products:
         - product_name: The Polar Express
@@ -5100,10 +5100,10 @@ products:
         - product_name: Turtle in Paradise
           product_id: 1360
           unit_price: 7.49
-    - category_1: Biographies & Memoirs
+    - category_1_name: Biographies & Memoirs
       category_1_id: 55
       brands:
-      - brand: Crown Publishing Group
+      - brand_name: Crown Publishing Group
         brand_id: 273
         products:
         - product_name: Steve Jobs
@@ -5121,7 +5121,7 @@ products:
         - product_name: Alexander Hamilton
           product_id: 1365
           unit_price: 18.49
-      - brand: Simon & Schuster
+      - brand_name: Simon & Schuster
         brand_id: 274
         products:
         - product_name: Born a Crime
@@ -5139,7 +5139,7 @@ products:
         - product_name: Open
           product_id: 1370
           unit_price: 16.99
-      - brand: Hachette Books
+      - brand_name: Hachette Books
         brand_id: 275
         products:
         - product_name: When Breath Becomes Air
@@ -5157,7 +5157,7 @@ products:
         - product_name: The Yellow House
           product_id: 1375
           unit_price: 14.99
-      - brand: Penguin Press
+      - brand_name: Penguin Press
         brand_id: 276
         products:
         - product_name: Into the Wild
@@ -5175,7 +5175,7 @@ products:
         - product_name: Just Kids
           product_id: 1380
           unit_price: 13.99
-      - brand: Doubleday
+      - brand_name: Doubleday
         brand_id: 277
         products:
         - product_name: No Ordinary Time
@@ -5193,10 +5193,10 @@ products:
         - product_name: The Pioneers
           product_id: 1385
           unit_price: 18.49
-    - category_1: Self-Help
+    - category_1_name: Self-Help
       category_1_id: 56
       brands:
-      - brand: TarcherPerigee
+      - brand_name: TarcherPerigee
         brand_id: 278
         products:
         - product_name: The Subtle Art of Not Giving a F*ck
@@ -5214,7 +5214,7 @@ products:
         - product_name: Atomic Habits
           product_id: 1390
           unit_price: 11.99
-      - brand: Rodale Books
+      - brand_name: Rodale Books
         brand_id: 279
         products:
         - product_name: Eat That Frog!
@@ -5232,7 +5232,7 @@ products:
         - product_name: The South Beach Diet
           product_id: 1395
           unit_price: 14.99
-      - brand: Hay House
+      - brand_name: Hay House
         brand_id: 280
         products:
         - product_name: The Four Agreements
@@ -5250,7 +5250,7 @@ products:
         - product_name: The Universe Has Your Back
           product_id: 1400
           unit_price: 10.49
-      - brand: HarperOne
+      - brand_name: HarperOne
         brand_id: 281
         products:
         - product_name: The Alchemist
@@ -5268,7 +5268,7 @@ products:
         - product_name: The Art of Happiness
           product_id: 1405
           unit_price: 14.49
-      - brand: Penguin Life
+      - brand_name: Penguin Life
         brand_id: 282
         products:
         - product_name: The Power of Habit
@@ -5286,13 +5286,13 @@ products:
         - product_name: The Life-Changing Magic of Tidying Up
           product_id: 1410
           unit_price: 9.99
-  - category_0: Movies
+  - category_0_name: Movies
     category_0_id: 9
     subcategories:
-    - category_1: Action & Adventure
+    - category_1_name: Action & Adventure
       category_1_id: 57
       brands:
-      - brand: Explosive Films
+      - brand_name: Explosive Films
         brand_id: 283
         products:
         - product_name: Skyfall Spectacle
@@ -5310,7 +5310,7 @@ products:
         - product_name: Velocity Rush
           product_id: 1415
           unit_price: 18.99
-      - brand: Heroic Motion
+      - brand_name: Heroic Motion
         brand_id: 284
         products:
         - product_name: Masked Savior
@@ -5328,7 +5328,7 @@ products:
         - product_name: Rebellion Quest
           product_id: 1420
           unit_price: 20.99
-      - brand: ThrillMax
+      - brand_name: ThrillMax
         brand_id: 285
         products:
         - product_name: Chase Horizon
@@ -5346,7 +5346,7 @@ products:
         - product_name: Reckless
           product_id: 1425
           unit_price: 17.99
-      - brand: Urban Edge
+      - brand_name: Urban Edge
         brand_id: 286
         products:
         - product_name: Steel Anarchy
@@ -5364,7 +5364,7 @@ products:
         - product_name: Outlaw's Justice
           product_id: 1430
           unit_price: 21.99
-      - brand: Apex Thrills
+      - brand_name: Apex Thrills
         brand_id: 287
         products:
         - product_name: Tremor Force
@@ -5382,10 +5382,10 @@ products:
         - product_name: Cliffhanger
           product_id: 1435
           unit_price: 19.99
-    - category_1: Comedy
+    - category_1_name: Comedy
       category_1_id: 58
       brands:
-      - brand: Laugh Riot
+      - brand_name: Laugh Riot
         brand_id: 288
         products:
         - product_name: Belly Laughs
@@ -5403,7 +5403,7 @@ products:
         - product_name: The Side Splitter
           product_id: 1440
           unit_price: 13.99
-      - brand: GiggleWorks
+      - brand_name: GiggleWorks
         brand_id: 289
         products:
         - product_name: Humor Hub
@@ -5421,7 +5421,7 @@ products:
         - product_name: Fun Flick
           product_id: 1445
           unit_price: 7.99
-      - brand: Funny Bone Films
+      - brand_name: Funny Bone Films
         brand_id: 290
         products:
         - product_name: Chuckle Fest
@@ -5439,7 +5439,7 @@ products:
         - product_name: Laughter Lines
           product_id: 1450
           unit_price: 18.50
-      - brand: Smiles Studio
+      - brand_name: Smiles Studio
         brand_id: 291
         products:
         - product_name: Joy Ride
@@ -5457,7 +5457,7 @@ products:
         - product_name: Wit's End
           product_id: 1455
           unit_price: 15.99
-      - brand: Chortle Cinema
+      - brand_name: Chortle Cinema
         brand_id: 292
         products:
         - product_name: Guffaw Gallery
@@ -5475,10 +5475,10 @@ products:
         - product_name: Snicker Snatcher
           product_id: 1460
           unit_price: 13.99
-    - category_1: Drama
+    - category_1_name: Drama
       category_1_id: 59
       brands:
-      - brand: Vivid Tales
+      - brand_name: Vivid Tales
         brand_id: 293
         products:
         - product_name: Soul's Abyss
@@ -5496,7 +5496,7 @@ products:
         - product_name: Dream's Edge
           product_id: 1465
           unit_price: 14.99
-      - brand: Deep Emotion
+      - brand_name: Deep Emotion
         brand_id: 294
         products:
         - product_name: Daring Destiny
@@ -5514,7 +5514,7 @@ products:
         - product_name: Eternal Flame
           product_id: 1470
           unit_price: 15.99
-      - brand: True Act
+      - brand_name: True Act
         brand_id: 295
         products:
         - product_name: Broken Bonds
@@ -5532,7 +5532,7 @@ products:
         - product_name: Virtue's Veil
           product_id: 1475
           unit_price: 21.99
-      - brand: Real Touch
+      - brand_name: Real Touch
         brand_id: 296
         products:
         - product_name: Serene Solitude
@@ -5550,7 +5550,7 @@ products:
         - product_name: Echoes of Us
           product_id: 1480
           unit_price: 13.99
-      - brand: Tense Moments
+      - brand_name: Tense Moments
         brand_id: 297
         products:
         - product_name: Grave Decisions
@@ -5568,10 +5568,10 @@ products:
         - product_name: Quiet Storm
           product_id: 1485
           unit_price: 18.99
-    - category_1: Science Fiction & Fantasy
+    - category_1_name: Science Fiction & Fantasy
       category_1_id: 60
       brands:
-      - brand: Otherworld Entertainment
+      - brand_name: Otherworld Entertainment
         brand_id: 298
         products:
         - product_name: Galactic Guardians
@@ -5589,7 +5589,7 @@ products:
         - product_name: Infinite Horizons
           product_id: 1490
           unit_price: 20.99
-      - brand: Future Visions
+      - brand_name: Future Visions
         brand_id: 299
         products:
         - product_name: Quantum Quest
@@ -5607,7 +5607,7 @@ products:
         - product_name: Eclipse Empire
           product_id: 1495
           unit_price: 18.99
-      - brand: Epic Mythos
+      - brand_name: Epic Mythos
         brand_id: 300
         products:
         - product_name: Dragon's Throne
@@ -5625,7 +5625,7 @@ products:
         - product_name: Knight's Quest
           product_id: 1500
           unit_price: 18.50
-      - brand: Spacetime Studios
+      - brand_name: Spacetime Studios
         brand_id: 301
         products:
         - product_name: Asteroid Pioneers
@@ -5643,7 +5643,7 @@ products:
         - product_name: Parallel Paradox
           product_id: 1505
           unit_price: 23.50
-      - brand: Imagination Infinity
+      - brand_name: Imagination Infinity
         brand_id: 302
         products:
         - product_name: Enchanted Encounter
@@ -5661,10 +5661,10 @@ products:
         - product_name: Arcane Alliance
           product_id: 1510
           unit_price: 20.99
-    - category_1: Horror
+    - category_1_name: Horror
       category_1_id: 61
       brands:
-      - brand: Fright Features
+      - brand_name: Fright Features
         brand_id: 303
         products:
         - product_name: Ghoul's Night
@@ -5682,7 +5682,7 @@ products:
         - product_name: Terror's Touch
           product_id: 1515
           unit_price: 18.99
-      - brand: Chills and Thrills
+      - brand_name: Chills and Thrills
         brand_id: 304
         products:
         - product_name: Whispers of Fear
@@ -5700,7 +5700,7 @@ products:
         - product_name: Nightmare's Nexus
           product_id: 1520
           unit_price: 19.50
-      - brand: Shadow Screams
+      - brand_name: Shadow Screams
         brand_id: 305
         products:
         - product_name: The Haunting
@@ -5718,7 +5718,7 @@ products:
         - product_name: Ghostly Gala
           product_id: 1525
           unit_price: 15.99
-      - brand: Terror Tales
+      - brand_name: Terror Tales
         brand_id: 306
         products:
         - product_name: Spectral Spirits
@@ -5736,7 +5736,7 @@ products:
         - product_name: Monster's Labyrinth
           product_id: 1530
           unit_price: 19.99
-      - brand: Gory Stories
+      - brand_name: Gory Stories
         brand_id: 307
         products:
         - product_name: The Butcher's Banquet
@@ -5754,10 +5754,10 @@ products:
         - product_name: Abominable Attraction
           product_id: 1535
           unit_price: 17.99
-    - category_1: Animated
+    - category_1_name: Animated
       category_1_id: 62
       brands:
-      - brand: Dreamful Animations
+      - brand_name: Dreamful Animations
         brand_id: 308
         products:
         - product_name: Colorful Journeys
@@ -5775,7 +5775,7 @@ products:
         - product_name: Radiant Tales
           product_id: 1540
           unit_price: 18.99
-      - brand: Kiddie Toons
+      - brand_name: Kiddie Toons
         brand_id: 309
         products:
         - product_name: Playground Heroes
@@ -5793,7 +5793,7 @@ products:
         - product_name: Fanciful Flights
           product_id: 1545
           unit_price: 10.99
-      - brand: Family Cartoons
+      - brand_name: Family Cartoons
         brand_id: 310
         products:
         - product_name: Magic Moments
@@ -5811,7 +5811,7 @@ products:
         - product_name: Ocean Odyssey
           product_id: 1550
           unit_price: 20.99
-      - brand: Cartoon Classics
+      - brand_name: Cartoon Classics
         brand_id: 311
         products:
         - product_name: Nostalgic ToonTown
@@ -5829,7 +5829,7 @@ products:
         - product_name: Yesteryears Yucks
           product_id: 1555
           unit_price: 16.50
-      - brand: Animate It
+      - brand_name: Animate It
         brand_id: 312
         products:
         - product_name: Sketchy Adventures
@@ -5847,10 +5847,10 @@ products:
         - product_name: Brush Strokes
           product_id: 1560
           unit_price: 12.99
-    - category_1: Musicals
+    - category_1_name: Musicals
       category_1_id: 63
       brands:
-      - brand: Broadway Hits
+      - brand_name: Broadway Hits
         brand_id: 313
         products:
         - product_name: Stage Spectacle
@@ -5868,7 +5868,7 @@ products:
         - product_name: Lyric Legends
           product_id: 1565
           unit_price: 19.99
-      - brand: Harmony House
+      - brand_name: Harmony House
         brand_id: 314
         products:
         - product_name: Singing Sensations
@@ -5886,7 +5886,7 @@ products:
         - product_name: Tune Triumph
           product_id: 1570
           unit_price: 20.50
-      - brand: Melody Makers
+      - brand_name: Melody Makers
         brand_id: 315
         products:
         - product_name: Note by Note
@@ -5904,7 +5904,7 @@ products:
         - product_name: Operatic Opus
           product_id: 1575
           unit_price: 19.50
-      - brand: Symphonic Stories
+      - brand_name: Symphonic Stories
         brand_id: 316
         products:
         - product_name: Conductor's Tale
@@ -5922,7 +5922,7 @@ products:
         - product_name: Classic Crescendo
           product_id: 1580
           unit_price: 22.50
-      - brand: Showtune Showcase
+      - brand_name: Showtune Showcase
         brand_id: 317
         products:
         - product_name: Musical Montage
@@ -5940,13 +5940,13 @@ products:
         - product_name: Spectacular Serenades
           product_id: 1585
           unit_price: 19.50
-  - category_0: Music
+  - category_0_name: Music
     category_0_id: 10
     subcategories:
-    - category_1: Guitars
+    - category_1_name: Guitars
       category_1_id: 64
       brands:
-      - brand: Fender
+      - brand_name: Fender
         brand_id: 318
         products:
         - product_name: Stratocaster
@@ -5964,7 +5964,7 @@ products:
         - product_name: Acoustasonic
           product_id: 1590
           unit_price: 1999.99
-      - brand: Gibson
+      - brand_name: Gibson
         brand_id: 319
         products:
         - product_name: Les Paul Classic
@@ -5982,7 +5982,7 @@ products:
         - product_name: ES-335
           product_id: 1595
           unit_price: 2999.99
-      - brand: Ibanez
+      - brand_name: Ibanez
         brand_id: 320
         products:
         - product_name: RG550
@@ -6000,7 +6000,7 @@ products:
         - product_name: AS73
           product_id: 1600
           unit_price: 399.99
-      - brand: Martin
+      - brand_name: Martin
         brand_id: 321
         products:
         - product_name: D-28
@@ -6018,7 +6018,7 @@ products:
         - product_name: GPX1AE
           product_id: 1605
           unit_price: 699.99
-      - brand: Taylor
+      - brand_name: Taylor
         brand_id: 322
         products:
         - product_name: 214ce
@@ -6036,10 +6036,10 @@ products:
         - product_name: Baby Taylor
           product_id: 1610
           unit_price: 399.99
-    - category_1: Pianos and Keyboards
+    - category_1_name: Pianos and Keyboards
       category_1_id: 65
       brands:
-      - brand: Yamaha
+      - brand_name: Yamaha
         brand_id: 323
         products:
         - product_name: P-45 Digital Piano
@@ -6057,7 +6057,7 @@ products:
         - product_name: Genos Workstation
           product_id: 1615
           unit_price: 5699.99
-      - brand: Roland
+      - brand_name: Roland
         brand_id: 324
         products:
         - product_name: FP-10 Digital Piano
@@ -6075,7 +6075,7 @@ products:
         - product_name: Fantom 8
           product_id: 1620
           unit_price: 3999.99
-      - brand: Korg
+      - brand_name: Korg
         brand_id: 325
         products:
         - product_name: B2 Digital Piano
@@ -6093,7 +6093,7 @@ products:
         - product_name: Volca Beats
           product_id: 1625
           unit_price: 169.99
-      - brand: Casio
+      - brand_name: Casio
         brand_id: 326
         products:
         - product_name: CT-S300 Keyboard
@@ -6111,7 +6111,7 @@ products:
         - product_name: AP-470 Celviano Digital Piano
           product_id: 1630
           unit_price: 1099.99
-      - brand: Nord
+      - brand_name: Nord
         brand_id: 327
         products:
         - product_name: Stage 3
@@ -6129,10 +6129,10 @@ products:
         - product_name: Drum 3P
           product_id: 1635
           unit_price: 699.99
-    - category_1: Drums
+    - category_1_name: Drums
       category_1_id: 66
       brands:
-      - brand: Pearl
+      - brand_name: Pearl
         brand_id: 328
         products:
         - product_name: Export EXX
@@ -6150,7 +6150,7 @@ products:
         - product_name: Masterworks
           product_id: 1640
           unit_price: 4999.99
-      - brand: DW
+      - brand_name: DW
         brand_id: 329
         products:
         - product_name: Performance Series
@@ -6168,7 +6168,7 @@ products:
         - product_name: Concept Birch
           product_id: 1645
           unit_price: 749.99
-      - brand: Tama
+      - brand_name: Tama
         brand_id: 330
         products:
         - product_name: Imperialstar
@@ -6186,7 +6186,7 @@ products:
         - product_name: S.L.P. Drum Kit
           product_id: 1650
           unit_price: 899.99
-      - brand: Ludwig
+      - brand_name: Ludwig
         brand_id: 331
         products:
         - product_name: Accent Drive
@@ -6204,7 +6204,7 @@ products:
         - product_name: Legacy Mahogany
           product_id: 1655
           unit_price: 3499.99
-      - brand: Gretsch
+      - brand_name: Gretsch
         brand_id: 332
         products:
         - product_name: Catalina Maple
@@ -6222,10 +6222,10 @@ products:
         - product_name: USA Custom
           product_id: 1660
           unit_price: 3699.99
-    - category_1: Bass Guitars
+    - category_1_name: Bass Guitars
       category_1_id: 67
       brands:
-      - brand: Fender
+      - brand_name: Fender
         brand_id: 333
         products:
         - product_name: American Professional II Precision Bass
@@ -6243,7 +6243,7 @@ products:
         - product_name: American Original '60s Jazz Bass
           product_id: 1665
           unit_price: 2099.99
-      - brand: Gibson
+      - brand_name: Gibson
         brand_id: 334
         products:
         - product_name: SG Bass
@@ -6261,7 +6261,7 @@ products:
         - product_name: Les Paul Bass
           product_id: 1670
           unit_price: 1499.99
-      - brand: Music Man
+      - brand_name: Music Man
         brand_id: 335
         products:
         - product_name: StingRay Special
@@ -6279,7 +6279,7 @@ products:
         - product_name: StingRay5 Special
           product_id: 1675
           unit_price: 2099.99
-      - brand: Ibanez
+      - brand_name: Ibanez
         brand_id: 336
         products:
         - product_name: GSRM20 Mikro
@@ -6297,7 +6297,7 @@ products:
         - product_name: GSR200
           product_id: 1680
           unit_price: 199.99
-      - brand: Warwick
+      - brand_name: Warwick
         brand_id: 337
         products:
         - product_name: RockBass Corvette
@@ -6315,10 +6315,10 @@ products:
         - product_name: Infinity
           product_id: 1685
           unit_price: 3699.99
-    - category_1: Brass Instruments
+    - category_1_name: Brass Instruments
       category_1_id: 68
       brands:
-      - brand: Yamaha
+      - brand_name: Yamaha
         brand_id: 338
         products:
         - product_name: YTR-2330 Trumpet
@@ -6336,7 +6336,7 @@ products:
         - product_name: YHR-567 French Horn
           product_id: 1690
           unit_price: 3299.99
-      - brand: Bach
+      - brand_name: Bach
         brand_id: 339
         products:
         - product_name: Stradivarius Trumpet 180S37
@@ -6354,7 +6354,7 @@ products:
         - product_name: CR310 Cornet
           product_id: 1695
           unit_price: 899.99
-      - brand: Conn
+      - brand_name: Conn
         brand_id: 340
         products:
         - product_name: Conn-Selmer Prelude Trumpet
@@ -6372,7 +6372,7 @@ products:
         - product_name: Vintage One Trumpet
           product_id: 1700
           unit_price: 2799.99
-      - brand: Getzen
+      - brand_name: Getzen
         brand_id: 341
         products:
         - product_name: 390 Series Trumpet
@@ -6390,7 +6390,7 @@ products:
         - product_name: 700S Eterna Trumpet
           product_id: 1705
           unit_price: 1599.99
-      - brand: Jupiter
+      - brand_name: Jupiter
         brand_id: 342
         products:
         - product_name: JTR700 Standard Series Trumpet
@@ -6408,10 +6408,10 @@ products:
         - product_name: JHR1100 Double French Horn
           product_id: 1710
           unit_price: 4199.99
-    - category_1: Woodwind Instruments
+    - category_1_name: Woodwind Instruments
       category_1_id: 69
       brands:
-      - brand: Selmer
+      - brand_name: Selmer
         brand_id: 343
         products:
         - product_name: AS400 Alto Saxophone
@@ -6429,7 +6429,7 @@ products:
         - product_name: BS500 Baritone Saxophone
           product_id: 1715
           unit_price: 5099.99
-      - brand: Buffet Crampon
+      - brand_name: Buffet Crampon
         brand_id: 344
         products:
         - product_name: R13 Professional Bb Clarinet
@@ -6447,7 +6447,7 @@ products:
         - product_name: Senzo Copper Alto Saxophone
           product_id: 1720
           unit_price: 5999.99
-      - brand: Yamaha
+      - brand_name: Yamaha
         brand_id: 345
         products:
         - product_name: YAS-280 Alto Saxophone
@@ -6465,7 +6465,7 @@ products:
         - product_name: YTS-62 Tenor Saxophone
           product_id: 1725
           unit_price: 3299.99
-      - brand: Vandoren
+      - brand_name: Vandoren
         brand_id: 346
         products:
         - product_name: Traditional Bb Clarinet Reeds
@@ -6483,7 +6483,7 @@ products:
         - product_name: All-Metal Tenor Saxophone Ligature
           product_id: 1730
           unit_price: 69.99
-      - brand: Jean Paul
+      - brand_name: Jean Paul
         brand_id: 347
         products:
         - product_name: AS-400 Alto Saxophone
@@ -6501,10 +6501,10 @@ products:
         - product_name: TS-400 Tenor Saxophone
           product_id: 1735
           unit_price: 899.99
-    - category_1: String Instruments
+    - category_1_name: String Instruments
       category_1_id: 70
       brands:
-      - brand: Stradivarius
+      - brand_name: Stradivarius
         brand_id: 348
         products:
         - product_name: Vesuvius Violin
@@ -6522,7 +6522,7 @@ products:
         - product_name: Alard Violin
           product_id: 1740
           unit_price: 14999.99
-      - brand: Stentor
+      - brand_name: Stentor
         brand_id: 349
         products:
         - product_name: Student II Violin
@@ -6540,7 +6540,7 @@ products:
         - product_name: Student Viola
           product_id: 1745
           unit_price: 179.99
-      - brand: Yamaha
+      - brand_name: Yamaha
         brand_id: 350
         products:
         - product_name: AV5-SC Violin Outfit
@@ -6558,7 +6558,7 @@ products:
         - product_name: SVC110SK Silent Cello
           product_id: 1750
           unit_price: 2399.99
-      - brand: D'Addario
+      - brand_name: D'Addario
         brand_id: 351
         products:
         - product_name: Prelude Violin String Set
@@ -6576,7 +6576,7 @@ products:
         - product_name: Zyex Violin String Set
           product_id: 1755
           unit_price: 54.99
-      - brand: Cecilio
+      - brand_name: Cecilio
         brand_id: 352
         products:
         - product_name: CVN-300 Violin
@@ -6594,7 +6594,7 @@ products:
         - product_name: CVB-400 Bass
           product_id: 1760
           unit_price: 499.99
-      - brand: Cremona
+      - brand_name: Cremona
         brand_id: 353
         products:
         - product_name: SV-175 Violin

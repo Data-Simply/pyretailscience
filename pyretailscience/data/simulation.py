@@ -1,3 +1,4 @@
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
@@ -5,11 +6,12 @@ from datetime import date, datetime, time, timedelta
 import numpy as np
 import pandas as pd
 import strictyaml as yaml
-from loguru import logger
 from tqdm import tqdm
 
+logger = logging.getLogger(__name__)
+
 # Configuration schema for the config file yaml
-schema = yaml.Map(
+config_schema = yaml.Map(
     {
         "stores": yaml.Map(
             {
@@ -29,24 +31,24 @@ schema = yaml.Map(
             {
                 "starting_number_of_customers": yaml.Int(),
                 "churn_probability": yaml.Float(),
-                "average_time_between_purchases": yaml.Int(),
+                "average_days_between_purchases": yaml.Int(),
                 "average_new_customers_per_day": yaml.Int(),
             }
         ),
         "products": yaml.Seq(
             yaml.Map(
                 {
-                    "category_0": yaml.Str(),
+                    "category_0_name": yaml.Str(),
                     "category_0_id": yaml.Int(),
                     "subcategories": yaml.Seq(
                         yaml.Map(
                             {
-                                "category_1": yaml.Str(),
+                                "category_1_name": yaml.Str(),
                                 "category_1_id": yaml.Int(),
                                 "brands": yaml.Seq(
                                     yaml.Map(
                                         {
-                                            "brand": yaml.Str(),
+                                            "brand_name": yaml.Str(),
                                             "brand_id": yaml.Int(),
                                             "products": yaml.Seq(
                                                 yaml.Map(
@@ -84,7 +86,7 @@ class Product:
     category_0_id: int
     category_1: str
     category_1_id: int
-    brand: str
+    brand_name: str
     brand_id: int
     product_name: str
     product_id: int
@@ -138,15 +140,15 @@ class TransactionGenerator:
 
             transaction = {
                 "transaction_id": transaction_id,
-                "date": simulation_datetime,
+                "transaction_datetime": simulation_datetime,
                 "customer_id": customer_id,
                 "product_id": product.product_id,
                 "product_name": product.product_name,
-                "category_0": product.category_0,
+                "category_0_name": product.category_0,
                 "category_0_id": product.category_0_id,
-                "category_1": product.category_1,
+                "category_1_name": product.category_1,
                 "category_1_id": product.category_1_id,
-                "brand": product.brand,
+                "brand_name": product.brand_name,
                 "brand_id": product.brand_id,
                 "unit_price": float(product.unit_price),
                 "quantity": quantity,
@@ -202,15 +204,10 @@ class Simulation:
     def __init__(
         self,
         seed: int,
-        config_file: str,
+        config: dict,
     ):
         self.seed = seed
-        with open(config_file, "r") as f:
-            try:
-                self.config = yaml.load(f.read(), schema).data
-            except yaml.YAMLError as error:
-                logger.error(error)
-                raise error
+        self.config = config
 
         self.rnd_generator = np.random.default_rng(self.seed)
 
@@ -221,6 +218,17 @@ class Simulation:
             for customer_id in range(1, self.config["customers"]["starting_number_of_customers"] + 1)
         ]
         self.transactions = []
+
+    @classmethod
+    def from_config_file(cls, seed: int, config_file: str):
+        with open(config_file, "r") as f:
+            try:
+                config = yaml.load(f.read(), config_schema).data
+            except yaml.YAMLError as error:
+                logger.exception(error)
+                raise error
+
+        return cls(seed=seed, config=config)
 
     def step(self, date: date) -> None:
         num_new_customers = self.rnd_generator.poisson(self.config["customers"]["average_new_customers_per_day"])
@@ -259,7 +267,7 @@ class Simulation:
             rnd_generator=self.rnd_generator,
             churn_prob=self.config["customers"]["churn_probability"],
             customer_id=customer_id,
-            period_between_purchases=self.config["customers"]["average_time_between_purchases"],
+            period_between_purchases=self.config["customers"]["average_days_between_purchases"],
             transaction_gen=TransactionGenerator(
                 rnd_generator=self.rnd_generator,
                 num_stores=self.config["stores"]["number_of_stores"],
@@ -279,11 +287,11 @@ class Simulation:
                     for product in brand["products"]:
                         products.append(
                             Product(
-                                category_0=category_0["category_0"],
+                                category_0=category_0["category_0_name"],
                                 category_0_id=int(category_0["category_0_id"]),
-                                category_1=category_1["category_1"],
+                                category_1=category_1["category_1_name"],
                                 category_1_id=int(category_1["category_1_id"]),
-                                brand=brand["brand"],
+                                brand_name=brand["brand_name"],
                                 brand_id=int(brand["brand_id"]),
                                 product_name=product["product_name"],
                                 product_id=int(product["product_id"]),
