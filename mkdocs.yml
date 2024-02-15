@@ -1,5 +1,5 @@
 site_name: pyretailscience
-# site_url: https://url/path/
+site_url: https://data-simply.github.io/pyretailscience
 
 theme:
   name: material
