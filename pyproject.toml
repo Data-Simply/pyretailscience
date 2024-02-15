@@ -17,6 +17,7 @@ seaborn = "^0.13.1"
 strictyaml = "^1.7.3"
 loguru = "^0.7.2"
 tqdm = "^4.66.1"
+great-expectations = "^0.18.8"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.12.1"
