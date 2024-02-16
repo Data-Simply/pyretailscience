@@ -36,7 +36,7 @@ pyretailscience --config_file=<config_file_path> [--verbose=<True|False>] [--see
 #### Examples
 ```bash
 # Get the default transaction config file
-wget https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/data/default_data_config.yaml
+wget https://raw.githubusercontent.com/Data-Simply/pyretailscience/0.1.1/data/default_data_config.yaml
 # Generate the data file
 pyretailscience --config_file=default_data_config.yaml --seed=123 transactions.parquet
 ```
