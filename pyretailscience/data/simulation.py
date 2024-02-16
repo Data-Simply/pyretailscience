@@ -179,7 +179,11 @@ class Customer:
         self.periods_between_purchases = period_between_purchases
         self.transactions = []
 
-        self.time_to_next_purchase = self.rnd_generator.poisson(period_between_purchases)
+        self.time_to_next_purchase = round(
+            # Scale the first purchase by a random number to avoid all customers purchasing at roughly the same time
+            self.rnd_generator.poisson(period_between_purchases) * self.rnd_generator.random(),
+            0,
+        )
 
     def step(self, date: date = None) -> None:
         if self.has_churned:
