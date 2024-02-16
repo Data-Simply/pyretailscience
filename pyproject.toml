@@ -35,9 +35,9 @@ tqdm = "^4.66.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs-material = "^9.5.4"
-mkquartodocs = "^0.5.8"
 mkdocstrings = {extras = ["python"], version = "^0.24.0"}
 mkdocs = "^1.5.3"
+mkdocs-jupyter = "^0.24.6"
 
 [build-system]
 requires = ["poetry-core"]

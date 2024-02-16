@@ -1,5 +1,11 @@
-site_name: pyretailscience
+site_name: PyRetailScience
 site_url: https://data-simply.github.io/pyretailscience
+
+nav:
+  - Home: index.md
+  - Reference:
+      - Simulation: api/simulation.md
+      - Contracts: api/contracts.md
 
 theme:
   name: material
@@ -14,6 +20,11 @@ theme:
     - content.code.annotation
     - content.code.copy
   language: en
+
+plugins:
+  - search
+  - mkdocstrings
+  - autorefs
 
 copyright: |
   &copy; 2024 <a href="https://datasimply.co"  target="_blank" rel="noopener">Data Simply</a>
