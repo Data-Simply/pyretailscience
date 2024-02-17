@@ -95,7 +95,6 @@ class ContractBase(abc.ABC):
 
     Args:
         df (pd.DataFrame): The DataFrame to be validated.   
-
     """
 
     basic_expectations: list[ExpectationConfiguration] = []
