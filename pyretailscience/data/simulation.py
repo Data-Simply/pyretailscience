@@ -2,6 +2,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+from typing import Self
 
 import numpy as np
 import pandas as pd
@@ -72,7 +73,17 @@ config_schema = yaml.Map(
 )
 
 
-def _random_time(rnd_generator: np.random.Generator, start_hour, end_hour):
+def _random_time(rnd_generator: np.random.Generator, start_hour, end_hour) -> time:
+    """Generate a random time between start_hour and end_hour.
+
+    Args:
+        rnd_generator (np.random.Generator): Random number generator
+        start_hour (int): Start hour
+        end_hour (int): End hour
+    
+    Returns:
+        time: Random time between start_hour and end_hour
+    """
     hour = rnd_generator.integers(start_hour, end_hour)
     minute = rnd_generator.integers(0, 60)
     second = rnd_generator.integers(0, 60)
@@ -82,6 +93,20 @@ def _random_time(rnd_generator: np.random.Generator, start_hour, end_hour):
 
 @dataclass
 class Product:
+    """Dataclass for a product.
+    
+    Args:
+        category_0 (str): Category 0 name
+        category_0_id (int): Category 0 ID
+        category_1 (str): Category 1 name
+        category_1_id (int): Category 1 ID
+        brand_name (str): Brand name
+        brand_id (int): Brand ID
+        product_name (str): Product name
+        product_id (int): Product ID
+        unit_price (float): Unit price
+        quantity_mean (int): Mean quantity purchased
+    """
     category_0: str
     category_0_id: int
     category_1: str
@@ -95,7 +120,16 @@ class Product:
 
 
 class TransactionGenerator:
-    """Generates a random transaction for a customer."""
+    """Generates a random transaction for a customer.
+    
+        Args:
+            rnd_generator (np.random.Generator): Random number generator
+            num_stores (int): Number of stores
+            max_products_per_transaction (int): Maximum number of products per transaction
+            products (list[Product]): List of Product objects
+            start_hour (int): Start hour
+            end_hour (int): End hour
+    """
 
     def __init__(
         self,
@@ -105,7 +139,7 @@ class TransactionGenerator:
         products: list[Product],
         start_hour: int,
         end_hour: int,
-    ):
+    ) -> None:
         self.num_stores = num_stores
         self.rnd_generator = rnd_generator
         self.products = products
@@ -114,6 +148,33 @@ class TransactionGenerator:
         self.end_hour = end_hour
 
     def generate_transaction(self, customer_id: int, simulation_date: date) -> dict:
+        """Generate a random transaction for a customer.
+
+        Args:
+            customer_id (int): Customer ID
+            simulation_date (date): Simulation date
+
+        Returns:
+            dict: Transaction details. For example:
+            {
+                # UUID for the transaction. We'll change this to a sequential integer later
+                "transaction_id": "f6c3c7c4-4c6e-4d6b-8f3f-5d0e1a7d6b7d",
+                "transaction_datetime": datetime.datetime(2021, 1, 1, 12, 30, 0),
+                "customer_id": 1,
+                "product_id": 1,
+                "product_name": "Product 1",
+                "category_0_name": "Category 0",
+                "category_0_id": 1,
+                "category_1_name": "Category 1",
+                "category_1_id": 1,
+                "brand_name": "Brand 1",
+                "brand_id": 1,
+                "unit_price": 10.0,
+                "quantity": 2,
+                "total_price": 20.0,
+                "store_id": 1,
+            }
+        """
         # Combine transaction_date with a random time
         simulation_datetime = datetime.combine(
             simulation_date,
@@ -162,7 +223,19 @@ class TransactionGenerator:
 
 
 class Customer:
-    has_churned = False
+    """Simulates a customer's purchasing behavior.
+    
+    Attributes:
+        has_churned (bool): Whether the customer has churned
+    
+    Args:
+        rnd_generator (np.random.Generator): Random number generator
+        churn_prob (float): Churn probability
+        customer_id (int): Customer ID
+        transaction_gen (TransactionGenerator): A common transaction generator shared between users.
+        period_between_purchases (int): Period between purchases
+    """
+    has_churned: bool = False
 
     def __init__(
         self,
@@ -171,7 +244,7 @@ class Customer:
         customer_id: int,
         transaction_gen: TransactionGenerator,
         period_between_purchases: int,
-    ):
+    ) -> None:
         self.rnd_generator = rnd_generator
         self.churn_prob = churn_prob
         self.id = customer_id
@@ -186,6 +259,17 @@ class Customer:
         )
 
     def step(self, date: date = None) -> None:
+        """Simulate a step (day) for the customer.
+
+        Here we simulate the customer's behavior for a single day. If the customer is due to make a purchase, we 
+        generate a transaction. We also simulate whether the customer churns.
+
+        Args:
+            date (date): Date of the simulation
+
+        Returns:
+            None
+        """
         if self.has_churned:
             return
 
@@ -205,11 +289,17 @@ class Customer:
 
 
 class Simulation:
+    """Simulates a retail environment with customers and transactions.
+    
+        Args:
+            seed (int): Random seed
+            config (dict): A dictionary of the settings of the simulation
+    """
     def __init__(
         self,
         seed: int,
         config: dict,
-    ):
+    ) -> None:
         self.seed = seed
         self.config = config
 
@@ -224,7 +314,16 @@ class Simulation:
         self.transactions = []
 
     @classmethod
-    def from_config_file(cls, seed: int, config_file: str):
+    def from_config_file(cls, seed: int, config_file: str) -> Self:
+        """Create a Simulation from a config file.
+
+        Args:
+            seed (int): Random seed
+            config_file (str): Path to the config file
+
+        Returns:
+            Simulation: A Simulation object
+        """
         with open(config_file, "r") as f:
             try:
                 config = yaml.load(f.read(), config_schema).data
@@ -235,6 +334,14 @@ class Simulation:
         return cls(seed=seed, config=config)
 
     def step(self, date: date) -> None:
+        """Simulate a step (day) for the simulation.
+
+        Args:
+            date (date): Date of the simulation
+
+        Returns:
+            None
+        """
         num_new_customers = self.rnd_generator.poisson(self.config["customers"]["average_new_customers_per_day"])
         logger.debug(f"Adding {num_new_customers} new customers")
         self.customers.extend(
@@ -248,6 +355,11 @@ class Simulation:
             customer.step(date)
 
     def run(self) -> None:
+        """Run the simulation.
+
+        Returns:
+            None
+        """
         start_date = self.config["transactions"]["start_date"].date()
         end_date = self.config["transactions"]["end_date"].date()
         days_in_simulation = [start_date + timedelta(n) for n in range((end_date - start_date).days)]
@@ -267,6 +379,14 @@ class Simulation:
         self.transactions = transactions
 
     def _create_customer(self, customer_id: int) -> Customer:
+        """Create a customer for use in the simulation.
+        
+        Args:
+            customer_id (int): Customer ID
+
+        Returns:
+            Customer: A Customer object
+        """
         return Customer(
             rnd_generator=self.rnd_generator,
             churn_prob=self.config["customers"]["churn_probability"],
@@ -283,6 +403,11 @@ class Simulation:
         )
 
     def _load_products(self) -> list[Product]:
+        """Load products from the config file.
+
+        Returns:
+            list[Product]: List of Product objects
+        """
         products = []
 
         for category_0 in self.config["products"]:
@@ -307,6 +432,14 @@ class Simulation:
         return products
 
     def save_transactions(self, output_file: str) -> None:
+        """Save the transactions to a file in parquet format.
+
+        Args:
+            output_file (str): Output file path
+
+        Returns:
+            None
+        """
         df = pd.DataFrame(self.transactions)
         logger.info(f"Saving {len(df)} transactions to {output_file}")
         df.to_parquet(output_file, index=False)
