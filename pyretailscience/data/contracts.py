@@ -92,6 +92,9 @@ class ContractBase(abc.ABC):
         validation_state (EValidationState): The validation state of the data.
         expectations_run (EExpectationSet | None): The expectation set that was run in the last validation.
         validation_result (dict): The result of the last validation.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to be validated.   
     """
 
     basic_expectations: list[ExpectationConfiguration] = []
@@ -101,11 +104,6 @@ class ContractBase(abc.ABC):
     validation_result: dict = {}
 
     def __init__(self, df: pd.DataFrame) -> None:
-        """Initializes the ContractBase with a DataFrame.
-        
-        Args:
-            df (pd.DataFrame): The DataFrame to be validated.    
-        """
         self._df = df
 
     def validate(
@@ -244,6 +242,10 @@ class TransactionItemLevelContract(ContractBase):
         validation_state (EValidationState): The validation state of the data.
         expectations_run (EExpectationSet | None): The expectation set that was run in the last validation.
         validation_result (dict): The result of the last validation.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to be validated. If category or brand columns are present, it adds expectations
+            that these columns are not null.
     """
     basic_expectations = [
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "transaction_id"}),
@@ -306,13 +308,6 @@ class TransactionItemLevelContract(ContractBase):
     ]
 
     def __init__(self, df: pd.DataFrame) -> None:
-        """Initializes the TransactionItemLevelContract with a DataFrame. 
-        
-        If the category or brand columns are present, it adds expectations that these columns are not null.
-
-        Args:
-            df (pd.DataFrame): The DataFrame to be validated.
-        """
 
         # If category or brand columns are present, add expectations for them
         category_pattern = re.compile(r"category_\d+_(id|name)")

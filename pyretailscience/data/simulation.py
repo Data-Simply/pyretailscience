@@ -120,7 +120,16 @@ class Product:
 
 
 class TransactionGenerator:
-    """Generates a random transaction for a customer."""
+    """Generates a random transaction for a customer.
+    
+        Args:
+            rnd_generator (np.random.Generator): Random number generator
+            num_stores (int): Number of stores
+            max_products_per_transaction (int): Maximum number of products per transaction
+            products (list[Product]): List of Product objects
+            start_hour (int): Start hour
+            end_hour (int): End hour
+    """
 
     def __init__(
         self,
@@ -131,19 +140,6 @@ class TransactionGenerator:
         start_hour: int,
         end_hour: int,
     ) -> None:
-        """Initialize the TransactionGenerator.
-        
-        Args:
-            rnd_generator (np.random.Generator): Random number generator
-            num_stores (int): Number of stores
-            max_products_per_transaction (int): Maximum number of products per transaction
-            products (list[Product]): List of Product objects
-            start_hour (int): Start hour
-            end_hour (int): End hour
-            
-        Returns:
-            None
-        """
         self.num_stores = num_stores
         self.rnd_generator = rnd_generator
         self.products = products
@@ -227,7 +223,18 @@ class TransactionGenerator:
 
 
 class Customer:
-    """Simulates a customer's purchasing behavior."""
+    """Simulates a customer's purchasing behavior.
+    
+    Attributes:
+        has_churned (bool): Whether the customer has churned
+    
+    Args:
+        rnd_generator (np.random.Generator): Random number generator
+        churn_prob (float): Churn probability
+        customer_id (int): Customer ID
+        transaction_gen (TransactionGenerator): A common transaction generator shared between users.
+        period_between_purchases (int): Period between purchases
+    """
     has_churned: bool = False
 
     def __init__(
@@ -238,18 +245,6 @@ class Customer:
         transaction_gen: TransactionGenerator,
         period_between_purchases: int,
     ) -> None:
-        """Initialize the Customer.
-
-        Args:
-            rnd_generator (np.random.Generator): Random number generator
-            churn_prob (float): Churn probability
-            customer_id (int): Customer ID
-            transaction_gen (TransactionGenerator): A common transaction generator shared between users.
-            period_between_purchases (int): Period between purchases
-
-        Returns:
-            None
-        """
         self.rnd_generator = rnd_generator
         self.churn_prob = churn_prob
         self.id = customer_id
@@ -294,23 +289,17 @@ class Customer:
 
 
 class Simulation:
-    """Simulates a retail environment with customers and transactions."""
-
-
+    """Simulates a retail environment with customers and transactions.
+    
+        Args:
+            seed (int): Random seed
+            config (dict): A dictionary of the settings of the simulation
+    """
     def __init__(
         self,
         seed: int,
         config: dict,
     ) -> None:
-        """Initialize the Simulation.
-
-        Args:
-            seed (int): Random seed
-            config (dict): A dictionary of the settings of the simulation
-        
-        Returns:
-            None
-        """
         self.seed = seed
         self.config = config
 
