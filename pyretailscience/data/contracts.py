@@ -71,7 +71,9 @@ class PyRetailSciencePandasDataset(PandasDataset):
                     }
                 }
         """
-        grouped_df = self.groupby(["transaction_id", "product_id", np.sign(self["quantity"])]).size()
+        grouped_df = self.groupby(
+            ["transaction_id", "product_id", np.sign(self["quantity"])]
+        ).size()
         nulls = self[["transaction_id", "product_id", "quantity"]].isnull()
         return {
             "success": all(grouped_df == 1),
@@ -128,7 +130,8 @@ class ContractBase(abc.ABC):
         # Return true if the data is already valid
         if self.validation_state == EValidationState.VALID:
             if self.expectations_run == EExpectationSet.EXTENDED or (
-                expectation_set == EExpectationSet.BASIC and self.expectations_run == EExpectationSet.BASIC
+                expectation_set == EExpectationSet.BASIC
+                and self.expectations_run == EExpectationSet.BASIC
             ):
                 return True
 
@@ -138,7 +141,9 @@ class ContractBase(abc.ABC):
 
         gx_df = PyRetailSciencePandasDataset(self._df)
         results = gx_df.validate(
-            expectation_suite=ExpectationSuite(expectation_suite_name="expectations", expectations=expectations)
+            expectation_suite=ExpectationSuite(
+                expectation_suite_name="expectations", expectations=expectations
+            )
         )
         self.validation_result = results
 
@@ -189,9 +194,15 @@ class TransactionLevelContract(ContractBase):
             expectation_type="expect_column_to_exist",
             kwargs={"column": "transaction_datetime"},
         ),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}
+        ),
     ]
 
     extended_expectations = [
@@ -272,13 +283,27 @@ class TransactionItemLevelContract(ContractBase):
             expectation_type="expect_column_to_exist",
             kwargs={"column": "transaction_datetime"},
         ),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "product_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "product_name"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "unit_price"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "quantity"}),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "product_id"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "product_name"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "unit_price"}
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "quantity"}
+        ),
     ]
 
     extended_expectations = [
@@ -380,7 +405,9 @@ class CustomerLevelContract(ContractBase):
     """
 
     basic_expectations = [
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}
+        ),
     ]
 
     extended_expectations = [
