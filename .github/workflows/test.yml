@@ -2,8 +2,7 @@ name: Pre-commit
 
 on:
   pull_request:
-    types:
-      - opened
+    branches: [main]
 
 concurrency:
   group: "test"
