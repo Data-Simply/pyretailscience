@@ -1,54 +1,42 @@
-
 name: PyPi Package Deploy
 
 on:
   push:
-    branches:
-        - main
-  release:
-    types: [created]
-  workflow_dispatch:
+  # workflow_dispatch:
+  #   inputs:
+  #     release:
+  #       type: choice
+  #       description: Select Release Type
+  #       default: "minor"
+  #       options:
+  #         - major
+  #         - minor
+  #         - patch
 
 concurrency:
   group: "release"
   cancel-in-progress: false
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Poetry Package
-        run: |
-          pip install --upgrade pip
-          pip install poetry==1.3.2
-          poetry config virtualenvs.create false
-          poetry install --no-interaction --with dev
-      - name: Test with pytest
-        run: |
-            pytest
-
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: test
+    env:
+      CI_COMMIT_MESSAGE: Continuous Integration Version Bump ${{ inputs.release }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install Poetry Package
         run: |
           pip install --upgrade pip
           pip install build
+          # poetry version ${{ inputs.release }}
+          poetry version patch
+
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
@@ -56,21 +44,54 @@ jobs:
           name: build
           path: dist/
           retention-days: 1
+      - name: GIT commit and push docs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add pyproject.toml
+          git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+          git push
+          VERSION=$(poetry version  -s)
+          git tag -a $VERSION -m "Auto-generated tag"
+          git push origin $VERSION
+          echo "RELEASE_TAG=$VERSION" >> GITHUB_ENV
 
-  pypi-publish:
-    name: Upload release to PyPI
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-        name: production
-        url: "https://pypi.org/project/pyretailscience"
-    permissions:
-        id-token: write
-    if: github.event_name == 'release' && github.event.action == 'created'
-    steps:
-      - uses: actions/download-artifact@v4
+      - name: "Create release"
+        uses: "actions/github-script@v6"
         with:
-          name: build
-          path: dist
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          script: |
+            try {
+              const response = await github.rest.repos.createRelease({
+                draft: false,
+                generate_release_notes: true,
+                name: process.env.RELEASE_TAG,
+                owner: context.repo.owner,
+                prerelease: false,
+                repo: context.repo.repo,
+                tag_name: process.env.RELEASE_TAG,
+              });
+
+              core.exportVariable('RELEASE_ID', response.data.id);
+              core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
+            } catch (error) {
+              core.setFailed(error.message);
+            }
+
+  # pypi-publish:
+  #   name: Upload release to PyPI
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   environment:
+  #     name: production
+  #     url: "https://pypi.org/project/pyretailscience"
+  #   permissions:
+  #     id-token: write
+  #   # if: github.event_name == 'release' && github.event.action == 'created'
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: build
+  #         path: dist
+  #     - name: Publish package distributions to PyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
