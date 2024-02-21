@@ -39,6 +39,9 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install build
+          pip install poetry==1.3.2
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --with dev
           # poetry version ${{ inputs.release }}
           poetry version patch
 
