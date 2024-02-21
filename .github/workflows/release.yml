@@ -52,7 +52,7 @@ jobs:
           name: build
           path: dist/
           retention-days: 1
-      - name: GIT commit and push docs
+      - name: GIT commit and tag
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
@@ -60,17 +60,13 @@ jobs:
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
           VERSION=$(poetry version  -s)
+          echo $VERSION
+          echo "RELEASE_TAG=${VERSION}" >> GITHUB_ENV
           git tag -a $VERSION -m "Auto-generated tag"
           git push origin $VERSION
 
-      - name: Release Tag
-        id: release
-        run: echo "RELEASE_TAG=$(poetry version  -s)" >> GITHUB_OUTPUT
-
       - name: "Create release"
         uses: "actions/github-script@v6"
-        env:
-          RELEASE_TAG: ${{ steps.release.outputs.RELEASE_TAG }}
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           script: |
