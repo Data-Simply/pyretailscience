@@ -13,10 +13,12 @@ on:
   #         - minor
   #         - patch
 
-permissions:
-  contents: write
-  deployments: write
-  packages: write
+# permissions:
+#   contents: write
+#   deployments: write
+#   packages: write
+
+permissions: write-all
 
 concurrency:
   group: "release"
