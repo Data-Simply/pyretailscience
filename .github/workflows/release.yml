@@ -13,6 +13,11 @@ on:
   #         - minor
   #         - patch
 
+permissions:
+  contents: write
+  deployments: write
+  packages: write
+
 concurrency:
   group: "release"
   cancel-in-progress: false
