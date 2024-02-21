@@ -257,8 +257,7 @@ class Customer:
 
         self.time_to_next_purchase = round(
             # Scale the first purchase by a random number to avoid all customers purchasing at roughly the same time
-            self.rnd_generator.poisson(period_between_purchases)
-            * self.rnd_generator.random(),
+            self.rnd_generator.poisson(period_between_purchases) * self.rnd_generator.random(),
             0,
         )
 
@@ -287,9 +286,7 @@ class Customer:
                 self.has_churned = True
                 logger.debug(f"Customer {self.id} churned")
             else:
-                self.time_to_next_purchase = self.rnd_generator.poisson(
-                    self.periods_between_purchases
-                )
+                self.time_to_next_purchase = self.rnd_generator.poisson(self.periods_between_purchases)
         else:
             self.time_to_next_purchase -= 1
 
@@ -316,9 +313,7 @@ class Simulation:
 
         self.customers = [
             self._create_customer(customer_id=customer_id)
-            for customer_id in range(
-                1, self.config["customers"]["starting_number_of_customers"] + 1
-            )
+            for customer_id in range(1, self.config["customers"]["starting_number_of_customers"] + 1)
         ]
         self.transactions = []
 
@@ -351,16 +346,12 @@ class Simulation:
         Returns:
             None
         """
-        num_new_customers = self.rnd_generator.poisson(
-            self.config["customers"]["average_new_customers_per_day"]
-        )
+        num_new_customers = self.rnd_generator.poisson(self.config["customers"]["average_new_customers_per_day"])
         logger.debug(f"Adding {num_new_customers} new customers")
         self.customers.extend(
             [
                 self._create_customer(customer_id=new_customer_id)
-                for new_customer_id in range(
-                    len(self.customers) + 1, num_new_customers + 1
-                )
+                for new_customer_id in range(len(self.customers) + 1, num_new_customers + 1)
             ]
         )
         # Simulate each customer
@@ -375,9 +366,7 @@ class Simulation:
         """
         start_date = self.config["transactions"]["start_date"].date()
         end_date = self.config["transactions"]["end_date"].date()
-        days_in_simulation = [
-            start_date + timedelta(n) for n in range((end_date - start_date).days)
-        ]
+        days_in_simulation = [start_date + timedelta(n) for n in range((end_date - start_date).days)]
         for sim_day in tqdm(days_in_simulation, desc="Simulating days"):
             self.step(sim_day)
 
@@ -387,13 +376,9 @@ class Simulation:
 
         # Change transactions UUIDs to sequential integers
         unique_transaction_ids = set([t["transaction_id"] for t in transactions])
-        transaction_id_map = {
-            transaction_id: i for i, transaction_id in enumerate(unique_transaction_ids)
-        }
+        transaction_id_map = {transaction_id: i for i, transaction_id in enumerate(unique_transaction_ids)}
         for transaction in transactions:
-            transaction["transaction_id"] = transaction_id_map[
-                transaction["transaction_id"]
-            ]
+            transaction["transaction_id"] = transaction_id_map[transaction["transaction_id"]]
 
         self.transactions = transactions
 
@@ -410,15 +395,11 @@ class Simulation:
             rnd_generator=self.rnd_generator,
             churn_prob=self.config["customers"]["churn_probability"],
             customer_id=customer_id,
-            period_between_purchases=self.config["customers"][
-                "average_days_between_purchases"
-            ],
+            period_between_purchases=self.config["customers"]["average_days_between_purchases"],
             transaction_gen=TransactionGenerator(
                 rnd_generator=self.rnd_generator,
                 num_stores=self.config["stores"]["number_of_stores"],
-                max_products_per_transaction=self.config["transactions"][
-                    "max_products_per_transaction"
-                ],
+                max_products_per_transaction=self.config["transactions"]["max_products_per_transaction"],
                 products=self.products,
                 start_hour=self.config["transactions"]["start_hour"],
                 end_hour=self.config["transactions"]["end_hour"],
@@ -449,9 +430,7 @@ class Simulation:
                                 product_id=int(product["product_id"]),
                                 unit_price=product["unit_price"],
                                 # TODO: Move this to the config file
-                                quantity_mean=self.rnd_generator.poisson(
-                                    self.rnd_generator.integers(1, 3)
-                                ),
+                                quantity_mean=self.rnd_generator.poisson(self.rnd_generator.integers(1, 3)),
                             )
                         )
         return products
