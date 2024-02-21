@@ -61,7 +61,7 @@ jobs:
           git push
           VERSION=$(poetry version  -s)
           echo $VERSION
-          echo "RELEASE_TAG=${VERSION}" >> GITHUB_ENV
+          echo "RELEASE_TAG=${VERSION}" >> $GITHUB_ENV
           git tag -a $VERSION -m "Auto-generated tag"
           git push origin $VERSION
 
