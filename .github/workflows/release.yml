@@ -13,12 +13,10 @@ on:
   #         - minor
   #         - patch
 
-# permissions:
-#   contents: write
-#   deployments: write
-#   packages: write
-
-permissions: write-all
+permissions:
+  contents: write
+  deployments: write
+  packages: write
 
 concurrency:
   group: "release"
@@ -55,7 +53,6 @@ jobs:
           path: dist/
           retention-days: 1
       - name: GIT commit and push docs
-        id: release
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
@@ -65,8 +62,10 @@ jobs:
           VERSION=$(poetry version  -s)
           git tag -a $VERSION -m "Auto-generated tag"
           #git push origin $VERSION
-          echo "RELEASE_TAG=$(poetry version  -s)" >> GITHUB_OUTPUT
-      - run: echo ${{ steps.release.outputs.RELEASE_TAG}}
+
+      - name: Release Tag
+        id: release
+        run: echo "RELEASE_TAG=$(poetry version  -s)" >> GITHUB_OUTPUT
 
       # - name: "Create release"
       #   uses: "actions/github-script@v6"
