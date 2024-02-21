@@ -58,38 +58,39 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add pyproject.toml
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
-          git push
+          #git push
           VERSION=$(poetry version  -s)
           git tag -a $VERSION -m "Auto-generated tag"
-          git push origin $VERSION
+          #git push origin $VERSION
           echo "RELEASE_TAG=$VERSION" >> GITHUB_ENV
+      - run: echo ${{ env.RELEASE_TAG }}
 
-      - name: "Create release"
-        uses: "actions/github-script@v6"
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-          script: |
-            if (!process.env.RELEASE_TAG) {
-              core.setFailed("The environment variable RELEASE_TAG is not defined.")
+      # - name: "Create release"
+      #   uses: "actions/github-script@v6"
+      #   with:
+      #     github-token: "${{ secrets.GITHUB_TOKEN }}"
+      #     script: |
+      #       if (!process.env.RELEASE_TAG) {
+      #         core.setFailed("The environment variable RELEASE_TAG is not defined.")
 
-              return;
-            }
-            try {
-              const response = await github.rest.repos.createRelease({
-                draft: false,
-                generate_release_notes: true,
-                name: `${{ env.RELEASE_TAG }}`,
-                owner: context.repo.owner,
-                prerelease: false,
-                repo: context.repo.repo,
-                tag_name: `${{ env.RELEASE_TAG }}`,
-              });
+      #         return;
+      #       }
+      #       try {
+      #         const response = await github.rest.repos.createRelease({
+      #           draft: false,
+      #           generate_release_notes: true,
+      #           name: process.env.RELEASE_TAG,
+      #           owner: context.repo.owner,
+      #           prerelease: false,
+      #           repo: context.repo.repo,
+      #           tag_name: process.env.RELEASE_TAG,
+      #         });
 
-              core.exportVariable('RELEASE_ID', response.data.id);
-              core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
-            } catch (error) {
-              core.setFailed(error.message);
-            }
+      #         core.exportVariable('RELEASE_ID', response.data.id);
+      #         core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
+      #       } catch (error) {
+      #         core.setFailed(error.message);
+      #       }
 
   # pypi-publish:
   #   name: Upload release to PyPI
@@ -100,7 +101,6 @@ jobs:
   #     url: "https://pypi.org/project/pyretailscience"
   #   permissions:
   #     id-token: write
-  #   # if: github.event_name == 'release' && github.event.action == 'created'
   #   steps:
   #     - uses: actions/download-artifact@v4
   #       with:
