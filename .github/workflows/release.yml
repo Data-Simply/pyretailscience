@@ -62,7 +62,7 @@ jobs:
           VERSION=$(poetry version  -s)
           git tag -a $VERSION -m "Auto-generated tag"
           #git push origin $VERSION
-          echo "RELEASE_TAG=$VERSION" >> GITHUB_ENV
+          echo "RELEASE_TAG=${VERSION}" >> GITHUB_ENV
       - run: echo ${{ env.RELEASE_TAG }}
 
       # - name: "Create release"
