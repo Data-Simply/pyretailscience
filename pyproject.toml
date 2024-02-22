@@ -18,12 +18,9 @@ strictyaml = "^1.7.3"
 loguru = "^0.7.2"
 tqdm = "^4.66.1"
 great-expectations = "^0.18.8"
+pre-commit ="^3.6.2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.12.1"
-flake8 = "^7.0.0"
-isort = "^5.13.2"
-flake8-isort = "^6.1.1"
 pytest = "^8.0.0"
 pytest-cov = "^4.1.0"
 
@@ -46,5 +43,5 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 pyretailscience = "pyretailscience.data.cli:generate"
 
-[tool.black]
-line-length = 120
+[tool.ruff]
+line-length=120

@@ -80,7 +80,7 @@ def _random_time(rnd_generator: np.random.Generator, start_hour, end_hour) -> ti
         rnd_generator (np.random.Generator): Random number generator
         start_hour (int): Start hour
         end_hour (int): End hour
-    
+
     Returns:
         time: Random time between start_hour and end_hour
     """
@@ -94,7 +94,7 @@ def _random_time(rnd_generator: np.random.Generator, start_hour, end_hour) -> ti
 @dataclass
 class Product:
     """Dataclass for a product.
-    
+
     Args:
         category_0 (str): Category 0 name
         category_0_id (int): Category 0 ID
@@ -107,6 +107,7 @@ class Product:
         unit_price (float): Unit price
         quantity_mean (int): Mean quantity purchased
     """
+
     category_0: str
     category_0_id: int
     category_1: str
@@ -121,14 +122,14 @@ class Product:
 
 class TransactionGenerator:
     """Generates a random transaction for a customer.
-    
-        Args:
-            rnd_generator (np.random.Generator): Random number generator
-            num_stores (int): Number of stores
-            max_products_per_transaction (int): Maximum number of products per transaction
-            products (list[Product]): List of Product objects
-            start_hour (int): Start hour
-            end_hour (int): End hour
+
+    Args:
+        rnd_generator (np.random.Generator): Random number generator
+        num_stores (int): Number of stores
+        max_products_per_transaction (int): Maximum number of products per transaction
+        products (list[Product]): List of Product objects
+        start_hour (int): Start hour
+        end_hour (int): End hour
     """
 
     def __init__(
@@ -187,7 +188,8 @@ class TransactionGenerator:
 
         store_id = self.rnd_generator.integers(1, self.num_stores)
         products = self.rnd_generator.choice(
-            self.products, size=self.rnd_generator.integers(1, self.max_products_per_transaction)
+            self.products,
+            size=self.rnd_generator.integers(1, self.max_products_per_transaction),
         )
         quantity = self.rnd_generator.integers(1, self.max_products_per_transaction)
 
@@ -224,10 +226,10 @@ class TransactionGenerator:
 
 class Customer:
     """Simulates a customer's purchasing behavior.
-    
+
     Attributes:
         has_churned (bool): Whether the customer has churned
-    
+
     Args:
         rnd_generator (np.random.Generator): Random number generator
         churn_prob (float): Churn probability
@@ -235,6 +237,7 @@ class Customer:
         transaction_gen (TransactionGenerator): A common transaction generator shared between users.
         period_between_purchases (int): Period between purchases
     """
+
     has_churned: bool = False
 
     def __init__(
@@ -261,7 +264,7 @@ class Customer:
     def step(self, date: date = None) -> None:
         """Simulate a step (day) for the customer.
 
-        Here we simulate the customer's behavior for a single day. If the customer is due to make a purchase, we 
+        Here we simulate the customer's behavior for a single day. If the customer is due to make a purchase, we
         generate a transaction. We also simulate whether the customer churns.
 
         Args:
@@ -290,11 +293,12 @@ class Customer:
 
 class Simulation:
     """Simulates a retail environment with customers and transactions.
-    
-        Args:
-            seed (int): Random seed
-            config (dict): A dictionary of the settings of the simulation
+
+    Args:
+        seed (int): Random seed
+        config (dict): A dictionary of the settings of the simulation
     """
+
     def __init__(
         self,
         seed: int,
@@ -380,7 +384,7 @@ class Simulation:
 
     def _create_customer(self, customer_id: int) -> Customer:
         """Create a customer for use in the simulation.
-        
+
         Args:
             customer_id (int): Customer ID
 

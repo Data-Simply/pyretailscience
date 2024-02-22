@@ -8,7 +8,11 @@ from pyretailscience.data import contracts
 @pytest.fixture
 def dataset():
     # Create a sample dataset for testing
-    data = {"transaction_id": [1, 1, 2, 2, 3], "product_id": ["A", "B", "A", "B", "C"], "quantity": [1, -1, 2, -2, 3]}
+    data = {
+        "transaction_id": [1, 1, 2, 2, 3],
+        "product_id": ["A", "B", "A", "B", "C"],
+        "quantity": [1, -1, 2, -2, 3],
+    }
     return pd.DataFrame(data)
 
 
@@ -40,7 +44,6 @@ def test_expect_product_and_quantity_sign_to_be_unique_in_a_transaction(dataset)
 
 
 def test_validate_contract_base(dataset):
-
     test_contract = contracts.ContractBase(dataset)
 
     assert test_contract.validation_state == contracts.EValidationState.UNKNOWN

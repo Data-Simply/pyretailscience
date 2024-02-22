@@ -4,8 +4,7 @@ from enum import Enum
 
 import numpy as np
 import pandas as pd
-from great_expectations.core.expectation_configuration import \
-    ExpectationConfiguration
+from great_expectations.core.expectation_configuration import ExpectationConfiguration
 from great_expectations.core.expectation_suite import ExpectationSuite
 from great_expectations.dataset import PandasDataset
 
@@ -19,12 +18,11 @@ class EValidationState(Enum):
         INVALID (str): Represents an invalid contract.
         UNKNOWN (str): Represents an unknown validation state.
     """
+
     VALID = "valid"
     INVALID = "invalid"
     UNKNOWN = "unknown"
 
-
-from enum import Enum
 
 class EExpectationSet(Enum):
     """
@@ -32,11 +30,12 @@ class EExpectationSet(Enum):
 
     **Basic Expectations** are a set of expectations that can be quickly run, such as checking whether a column exists in a DataFrame.
     **Extended Expectations** are a set of expectations that are more computationally expensive, such as checking whether a column has unique values.
-    
+
     Attributes:
         BASIC (str): Basic expectation set.
         EXTENDED (str): Extended expectation set.
     """
+
     BASIC = "basic"
     EXTENDED = "extended"
 
@@ -44,7 +43,7 @@ class EExpectationSet(Enum):
 class PyRetailSciencePandasDataset(PandasDataset):
     """A subclass of PandasDataset that adds custom expectations for the PyRetailScience project based on its data
     specs.
-    
+
     Attributes:
         _data_asset_type (str): The data asset type for the PyRetailSciencePandasDataset.
     """
@@ -52,7 +51,9 @@ class PyRetailSciencePandasDataset(PandasDataset):
     _data_asset_type = "PyRetailSciencePandasDataset"
 
     @PandasDataset.expectation(["self"])
-    def expect_product_and_quantity_sign_to_be_unique_in_a_transaction(self) -> dict[str, any]:
+    def expect_product_and_quantity_sign_to_be_unique_in_a_transaction(
+        self,
+    ) -> dict[str, any]:
         """Asserts that the combination of transaction_id, product_id, and quantity sign are unique. This is useful to
         ensure that the same product is not added or removed more than once in the same transaction. The data contract
         specifies that the quantity sign should be unique for each transaction_id and product_id combination. Returns
@@ -85,7 +86,7 @@ class PyRetailSciencePandasDataset(PandasDataset):
 class ContractBase(abc.ABC):
     """Base class for data contracts. It contains the basic and extended expectations for the data, as well as the
     validation state and the result of the last validation. It also contains a method to validate the data.
-    
+
     Attributes:
         basic_expectations (list[ExpectationConfiguration]): A list of basic expectations for the data.
         extended_expectations (list[ExpectationConfiguration]): A list of extended expectations for the data.
@@ -94,7 +95,7 @@ class ContractBase(abc.ABC):
         validation_result (dict): The result of the last validation.
 
     Args:
-        df (pd.DataFrame): The DataFrame to be validated.   
+        df (pd.DataFrame): The DataFrame to be validated.
     """
 
     basic_expectations: list[ExpectationConfiguration] = []
@@ -116,7 +117,7 @@ class ContractBase(abc.ABC):
         Args:
             expectation_set (EExpectationSet, optional): The expectation set to run. Defaults to EExpectationSet.BASIC.
             verbose (bool, optional): Whether to print the failed expectations. Defaults to False.
-        
+
         Returns:
             bool: True if the data meets the expectations in the selected expectation_set, False otherwise.
         """
@@ -171,7 +172,7 @@ class TransactionLevelContract(ContractBase):
             exist.
         extended_expectations (list[ExpectationConfiguration]): A list of extended expectations for the data. These
             include expectations that the transaction_id, transaction_datetime, customer_id, total_price, and store_id
-            columns have unique values, that the transaction_datetime column has values between 1970-01-01 and 
+            columns have unique values, that the transaction_datetime column has values between 1970-01-01 and
             2029-12-31, and that the transaction_id, transaction_datetime, customer_id, and store_id columns have unique
             combinations.
         validation_state (EValidationState): The validation state of the data.
@@ -180,8 +181,14 @@ class TransactionLevelContract(ContractBase):
     """
 
     basic_expectations = [
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "transaction_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "transaction_datetime"}),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist",
+            kwargs={"column": "transaction_id"},
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist",
+            kwargs={"column": "transaction_datetime"},
+        ),
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}),
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}),
@@ -189,11 +196,19 @@ class TransactionLevelContract(ContractBase):
 
     extended_expectations = [
         ExpectationConfiguration(
-            expectation_type="expect_column_values_to_be_unique", kwargs={"column": "transaction_id"}
+            expectation_type="expect_column_values_to_be_unique",
+            kwargs={"column": "transaction_id"},
         ),
         ExpectationConfiguration(
             expectation_type="expect_compound_columns_to_be_unique",
-            kwargs={"column_list": ["transaction_id", "transaction_datetime", "customer_id", "store_id"]},
+            kwargs={
+                "column_list": [
+                    "transaction_id",
+                    "transaction_datetime",
+                    "customer_id",
+                    "store_id",
+                ]
+            },
         ),
         ExpectationConfiguration(
             expectation_type="expect_column_values_to_be_between",
@@ -228,9 +243,9 @@ class TransactionLevelContract(ContractBase):
 
 class TransactionItemLevelContract(ContractBase):
     """Data contract for the transaction item level data. It contains the basic and extended expectations for the data,
-    as well as the validation state and the result of the last validation. It also contains a method to validate the 
+    as well as the validation state and the result of the last validation. It also contains a method to validate the
     data.
-    
+
     Attributes:
         basic_expectations (list[ExpectationConfiguration]): A list of basic expectations for the data. These include
             expectations that the columns transaction_id, transaction_datetime, customer_id, total_price, store_id,
@@ -247,9 +262,16 @@ class TransactionItemLevelContract(ContractBase):
         df (pd.DataFrame): The DataFrame to be validated. If category or brand columns are present, it adds expectations
             that these columns are not null.
     """
+
     basic_expectations = [
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "transaction_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "transaction_datetime"}),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist",
+            kwargs={"column": "transaction_id"},
+        ),
+        ExpectationConfiguration(
+            expectation_type="expect_column_to_exist",
+            kwargs={"column": "transaction_datetime"},
+        ),
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}),
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}),
@@ -262,7 +284,14 @@ class TransactionItemLevelContract(ContractBase):
     extended_expectations = [
         ExpectationConfiguration(
             expectation_type="expect_compound_columns_to_be_unique",
-            kwargs={"column_list": ["transaction_id", "transaction_datetime", "customer_id", "store_id"]},
+            kwargs={
+                "column_list": [
+                    "transaction_id",
+                    "transaction_datetime",
+                    "customer_id",
+                    "store_id",
+                ]
+            },
         ),
         ExpectationConfiguration(
             expectation_type="expect_transaction_product_quantity_sign_to_be_unique",
@@ -308,7 +337,6 @@ class TransactionItemLevelContract(ContractBase):
     ]
 
     def __init__(self, df: pd.DataFrame) -> None:
-
         # If category or brand columns are present, add expectations for them
         category_pattern = re.compile(r"category_\d+_(id|name)")
         category_matches = [s for s in df.columns if category_pattern.match(s)]
@@ -344,19 +372,21 @@ class CustomerLevelContract(ContractBase):
         basic_expectations (list[ExpectationConfiguration]): A list of basic expectations for the data. These include
             expectations that the column customer_id exists.
         extended_expectations (list[ExpectationConfiguration]): A list of extended expectations for the data. These
-            include expectations that the customer_id column has unique values, and that the customer_id column has no 
+            include expectations that the customer_id column has unique values, and that the customer_id column has no
             null values.
         validation_state (EValidationState): The validation state of the data.
         expectations_run (EExpectationSet | None): The expectation set that was run in the last validation.
         validation_result (dict): The result of the last validation.
     """
+
     basic_expectations = [
         ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
     ]
 
     extended_expectations = [
         ExpectationConfiguration(
-            expectation_type="expect_column_values_to_be_unique", kwargs={"column": "customer_id"}
+            expectation_type="expect_column_values_to_be_unique",
+            kwargs={"column": "customer_id"},
         ),
         ExpectationConfiguration(
             expectation_type="expect_column_values_to_not_be_null",
