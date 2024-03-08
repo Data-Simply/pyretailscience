@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from typing import Self
 
 import numpy as np
 import pandas as pd
@@ -318,7 +319,7 @@ class Simulation:
         self.transactions = []
 
     @classmethod
-    def from_config_file(cls, seed: int, config_file: str) -> Self:
+    def from_config_file(cls, seed: int, config_file: str) -> Simulation:
         """Create a Simulation from a config file.
 
         Args:

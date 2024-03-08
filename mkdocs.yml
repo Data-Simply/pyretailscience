@@ -6,6 +6,7 @@ nav:
   - Examples:
       - Data Contracts: examples/data_contracts.ipynb
       - Data Simulation: examples/simulate_data.ipynb
+      - Customer Retention: examples/retention.ipynb
   - Reference:
       - Simulation: api/simulation.md
       - Contracts: api/contracts.md
