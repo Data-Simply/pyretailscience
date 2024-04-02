@@ -349,10 +349,12 @@ class Simulation:
         """
         num_new_customers = self.rnd_generator.poisson(self.config["customers"]["average_new_customers_per_day"])
         logger.debug(f"Adding {num_new_customers} new customers")
+        last_customer_id = len(self.customers)
+        last_new_customer_id = last_customer_id + num_new_customers
         self.customers.extend(
             [
                 self._create_customer(customer_id=new_customer_id)
-                for new_customer_id in range(len(self.customers) + 1, num_new_customers + 1)
+                for new_customer_id in range(last_customer_id + 1, last_new_customer_id + 1)
             ]
         )
         # Simulate each customer
