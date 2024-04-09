@@ -35,3 +35,40 @@ def standard_graph_styles(ax: Axes) -> Axes:
     ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
     ax.grid(which="major", axis="y", color="#DAD8D7", alpha=0.5, zorder=1)
     return ax
+
+
+def not_none(value1, value2):
+    """
+    Helper funciont that returns the first value that is not None.
+
+    Args:
+        value1: The first value.
+        value2: The second value.
+
+    Returns:
+        The first value that is not None.
+    """
+    if value1 is None:
+        return value2
+    return value1
+
+
+def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decimals: int = 100) -> int:
+    """
+    Helper function for the `human_format` function that determines the number of decimals to use for the y-axis.
+
+    Args:
+        ylim: The y-axis limits.
+        tick_values: The y-axis tick values.
+        max_decimals: The maximum number of decimals to use. Defaults to 100.
+
+    Returns:
+        int: The number of decimals to use.
+    """
+    decimals = 0
+    while True:
+        tick_labels = [human_format(t, 0, decimals=decimals) for t in tick_values if t >= ylim[0] and t <= ylim[1]]
+        if len(tick_labels) == len(set(tick_labels)) or decimals == max_decimals:
+            break
+        decimals += 1
+    return decimals
