@@ -1,12 +1,13 @@
-import matplotlib.pyplot as plt
+import operator
+
 import matplotlib.ticker as mtick
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 from pyretailscience.data.contracts import TransactionItemLevelContract
+from pyretailscience.style.graph_utils import GraphStyles as gs
 from pyretailscience.style.graph_utils import human_format, standard_graph_styles
 from pyretailscience.style.tailwind import COLORS
-import operator
 
 
 class PurchasesPerCustomer:
@@ -33,7 +34,10 @@ class PurchasesPerCustomer:
         ax: Axes | None = None,
         draw_percentile_line: bool = False,
         percentile_line: float = 0.5,
-        source_text: str = None,
+        source_text: str | None = None,
+        title: str | None = None,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plot the distribution of the number of purchases per customer.
@@ -54,6 +58,9 @@ class PurchasesPerCustomer:
         if cumlative:
             density = True
 
+        if xlabel is None:
+            xlabel = "Number of purchases"
+
         ax = self.cust_purchases_s.hist(
             bins=bins,
             cumulative=cumlative,
@@ -62,20 +69,28 @@ class PurchasesPerCustomer:
             color=COLORS["green"][500],
             **kwargs,
         )
-        ax.set_xlabel("Number of purchases")
+
+        ax.set_xlabel(xlabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
         ax = standard_graph_styles(ax)
 
         if cumlative:
-            plt.title("Number of Purchases Cumulative Distribution")
-            plt.ylabel("Percentage of customers")
+            if title is None:
+                title = "Number of Purchases Cumulative Distribution"
+            if ylabel is None:
+                ylabel = "Percentage of customers"
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
 
         else:
-            plt.title("Number of Purchases Distribution")
-            plt.ylabel("Number of customers")
+            if title is None:
+                title = "Number of Purchases Distribution"
+            if ylabel is None:
+                ylabel = "Number of customers"
             ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
+
+        ax.set_title(title, fontsize=gs.DEFAULT_TITLE_FONT_SIZE, pad=15)
+        ax.set_ylabel(ylabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
 
         if draw_percentile_line:
             if percentile_line > 1 or percentile_line < 0:
@@ -96,7 +111,7 @@ class PurchasesPerCustomer:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=10,
+                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
             )
 
         return ax
@@ -176,6 +191,9 @@ class DaysBetweenPurchases:
         ax: Axes | None = None,
         draw_percentile_line: bool = False,
         percentile_line: float = 0.5,
+        title: str | None = None,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
         source_text: str = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
@@ -204,20 +222,30 @@ class DaysBetweenPurchases:
             color=COLORS["green"][500],
             **kwargs,
         )
-        plt.xlabel("Average Number of Days Between Purchases")
+
+        if xlabel is None:
+            xlabel = "Average Number of Days Between Purchases"
+        ax.set_xlabel(xlabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
         ax = standard_graph_styles(ax)
 
         if cumlative:
-            plt.title("Average Days Between Purchases Cumulative Distribution")
-            plt.ylabel("Percentage of Customers")
+            if title is None:
+                title = "Average Days Between Purchases Cumulative Distribution"
+            if ylabel is None:
+                ylabel = "Percentage of Customers"
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
 
         else:
-            plt.title("Average Days Between Purchases Distribution")
-            plt.ylabel("Number of Customers")
+            if title is None:
+                title = "Average Days Between Purchases Distribution"
+            if ylabel is None:
+                ylabel = "Number of Customers"
             ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
+
+        ax.set_title(title, fontsize=gs.DEFAULT_TITLE_FONT_SIZE, pad=15)
+        ax.set_ylabel(ylabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
 
         if draw_percentile_line:
             if percentile_line > 1 or percentile_line < 0:
@@ -239,7 +267,7 @@ class DaysBetweenPurchases:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=10,
+                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
             )
 
         return ax
@@ -306,6 +334,9 @@ class TransactionChurn:
         self,
         cumlative: bool = False,
         ax: Axes | None = None,
+        title: str | None = None,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
         source_text: str = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
@@ -320,7 +351,10 @@ class TransactionChurn:
         """
         if cumlative:
             cumulative_churn_rate_s = self.purchase_dist_df["churned"].cumsum().div(self.n_unique_customers)
-            ax = cumulative_churn_rate_s.plot.area(color=COLORS["green"][500])
+            ax = cumulative_churn_rate_s.plot.area(
+                color=COLORS["green"][500],
+                **kwargs,
+            )
             ax.set_xlim(self.purchase_dist_df.index.min(), self.purchase_dist_df.index.max())
         else:
             ax = self.purchase_dist_df["churned_pct"].plot.bar(
@@ -332,11 +366,17 @@ class TransactionChurn:
 
         standard_graph_styles(ax)
 
-        # Format y axis as a percent
+        if title is None:
+            title = "Churn Rate by Number of Purchases"
+        if xlabel is None:
+            xlabel = "Number of Purchases"
+        if ylabel is None:
+            ylabel = "% Churned"
+
         ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-        ax.set_xlabel("Number of Purchases")
-        ax.set_ylabel("% Churned")
-        ax.set_title("Churn Rate by Number of Purchases")
+        ax.set_xlabel(xlabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
+        ax.set_ylabel(ylabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
+        ax.set_title(title, fontsize=gs.DEFAULT_TITLE_FONT_SIZE, pad=15)
 
         if source_text:
             ax.annotate(
@@ -345,7 +385,7 @@ class TransactionChurn:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=10,
+                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
             )
 
         return ax
