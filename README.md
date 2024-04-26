@@ -23,25 +23,28 @@ pip install pyretailscience
 The `pyretailscience` package provides a command-line interface for generating simulated transaction data.
 
 #### Usage
+
 ```bash
 pyretailscience --config_file=<config_file_path> [--verbose=<True|False>] [--seed=<seed_number>] [output]
 ```
 
 #### Options and Arguments
+
 - `--config_file=<config_file_path>`: The path to the configuration file for the simulation. This is a required argument.
 - `--verbose=<True|False>`: Optional. Set to `True` to see debug messages. Default is `False`.
 - `--seed=<seed_number>`: Optional. Seed for the random number generator used in the simulation. If not provided, a random seed will be used.
 - `[output]`: Optional. The path where the generated transactions will be saved in parquet format. If not provided, the transactions will be saved in the current directory.
 
 #### Examples
+
 ```bash
 # Get the default transaction config file
-wget https://raw.githubusercontent.com/Data-Simply/pyretailscience/0.1.1/data/default_data_config.yaml
+wget https://raw.githubusercontent.com/Data-Simply/pyretailscience/0.3.0/data/default_data_config.yaml
 # Generate the data file
 pyretailscience --config_file=default_data_config.yaml --seed=123 transactions.parquet
 ```
-This command will generate a file named `transactions.parquet` with the simulated transaction data, using the configuration file at default data configuration file, and a seed of `123` for the random number generator.
 
+This command will generate a file named `transactions.parquet` with the simulated transaction data, using the configuration file at default data configuration file, and a seed of `123` for the random number generator.
 
 # Contributing
 
