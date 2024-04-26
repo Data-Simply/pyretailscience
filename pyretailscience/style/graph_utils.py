@@ -7,6 +7,7 @@ class GraphStyles:
     DEFAULT_TITLE_FONT_SIZE = 16
     DEFAULT_SOURCE_FONT_SIZE = 10
     DEFAULT_AXIS_LABEL_FONT_SIZE = 12
+    DEFAULT_TICK_LABEL_FONT_SIZE = 10
 
 
 def human_format(num, pos=None, decimals=0, prefix="") -> str:

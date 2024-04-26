@@ -19,6 +19,8 @@ loguru = "^0.7.2"
 tqdm = "^4.66.1"
 great-expectations = "^0.18.8"
 pre-commit ="^3.6.2"
+scipy = "^1.13.0"
+scikit-learn = "^1.4.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
