@@ -83,6 +83,51 @@ class PyRetailSciencePandasDataset(PandasDataset):
         }
 
 
+def build_expected_columns(columns: list[str]) -> list[ExpectationConfiguration]:
+    """A helper function that builds a list of expectations for the columns to exist.
+
+    Args:
+        columns (list[str]): A list of columns to build the expectations for.
+
+    Returns:
+        list[ExpectationConfiguration]: A list of expectations for the columns to exist.
+    """
+    return [
+        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": column})
+        for column in columns
+    ]
+
+
+def build_expected_unique_columns(columns: list[str]) -> list[ExpectationConfiguration]:
+    """A helper function that builds a list of expectations for the columns to have unique values.
+
+    Args:
+        columns (list[str]): A list of columns to build the expectations for.
+
+    Returns:
+        list[ExpectationConfiguration]: A list of expectations for the columns to have unique values.
+    """
+    return [
+        ExpectationConfiguration(expectation_type="expect_column_values_to_be_unique", kwargs={"column": column})
+        for column in columns
+    ]
+
+
+def build_non_null_columns(columns: list[list[str]]) -> list[ExpectationConfiguration]:
+    """A helper function that builds a list of expectations for the columns to have no null values.
+
+    Args:
+        columns (list[list[str]]): A list of columns to build the expectations for.
+
+    Returns:
+        list[ExpectationConfiguration]: A list of expectations for the columns to have no null values.
+    """
+    return [
+        ExpectationConfiguration(expectation_type="expect_column_values_to_not_be_null", kwargs={"column": column})
+        for column in columns
+    ]
+
+
 class ContractBase(abc.ABC):
     """Base class for data contracts. It contains the basic and extended expectations for the data, as well as the
     validation state and the result of the last validation. It also contains a method to validate the data.
@@ -180,65 +225,29 @@ class TransactionLevelContract(ContractBase):
         validation_result (dict): The result of the last validation.
     """
 
-    basic_expectations = [
-        ExpectationConfiguration(
-            expectation_type="expect_column_to_exist",
-            kwargs={"column": "transaction_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_to_exist",
-            kwargs={"column": "transaction_datetime"},
-        ),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}),
-    ]
+    basic_expectations = build_expected_columns(
+        ["transaction_id", "transaction_datetime", "customer_id", "total_price", "store_id"]
+    )
 
-    extended_expectations = [
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_be_unique",
-            kwargs={"column": "transaction_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_compound_columns_to_be_unique",
-            kwargs={
-                "column_list": [
-                    "transaction_id",
-                    "transaction_datetime",
-                    "customer_id",
-                    "store_id",
-                ]
-            },
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_be_between",
-            kwargs={
-                "column": "transaction_datetime",
-                "min_value": "1970-01-01",
-                "max_value": "2029-12-31",
-            },
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "transaction_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "transaction_datetime"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "customer_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "total_price"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "store_id"},
-        ),
-    ]
+    extended_expectations = (
+        build_expected_unique_columns(
+            [
+                "transaction_id",
+                ["transaction_datetime", "customer_id", "total_price", "store_id"],
+            ]
+        )
+        + [
+            ExpectationConfiguration(
+                expectation_type="expect_column_values_to_be_between",
+                kwargs={
+                    "column": "transaction_datetime",
+                    "min_value": "1970-01-01",
+                    "max_value": "2029-12-31",
+                },
+            )
+        ]
+        + build_non_null_columns(["transaction_id", "transaction_datetime", "customer_id", "total_price", "store_id"])
+    )
 
 
 class TransactionItemLevelContract(ContractBase):
@@ -263,23 +272,19 @@ class TransactionItemLevelContract(ContractBase):
             that these columns are not null.
     """
 
-    basic_expectations = [
-        ExpectationConfiguration(
-            expectation_type="expect_column_to_exist",
-            kwargs={"column": "transaction_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_to_exist",
-            kwargs={"column": "transaction_datetime"},
-        ),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "customer_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "total_price"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "store_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "product_id"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "product_name"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "unit_price"}),
-        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "quantity"}),
-    ]
+    basic_expectations = build_expected_columns(
+        [
+            "transaction_id",
+            "transaction_datetime",
+            "customer_id",
+            "total_price",
+            "store_id",
+            "product_id",
+            "product_name",
+            "unit_price",
+            "quantity",
+        ]
+    )
 
     extended_expectations = [
         ExpectationConfiguration(
@@ -297,44 +302,18 @@ class TransactionItemLevelContract(ContractBase):
             expectation_type="expect_transaction_product_quantity_sign_to_be_unique",
             kwargs={},
         ),
-        # Null expectations
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "transaction_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "transaction_datetime"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "customer_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "total_price"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "store_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "product_id"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "product_name"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "unit_price"},
-        ),
-        ExpectationConfiguration(
-            expectation_type="expect_column_values_to_not_be_null",
-            kwargs={"column": "quantity"},
-        ),
-    ]
+    ] + build_non_null_columns(
+        [
+            "transaction_id",
+            "transaction_datetime",
+            "customer_id",
+            "store_id",
+            "product_id",
+            "product_name",
+            "unit_price",
+            "quantity",
+        ]
+    )
 
     def __init__(self, df: pd.DataFrame) -> None:
         # If category or brand columns are present, add expectations for them
@@ -393,3 +372,37 @@ class CustomerLevelContract(ContractBase):
             kwargs={"column": "customer_id"},
         ),
     ]
+
+
+class CustomContract(ContractBase):
+    """A helper class to construct contracts for specific use cases.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        basic_expectations (list[ExpectationConfiguration] | None, optional): A list of basic expectation
+            configurations. Defaults to None. At least one basic or extended expectation must be supplied.
+        extended_expectations (list[ExpectationConfiguration] | None, optional): A list of extended expectation
+            configurations. Defaults to None. At least one basic or extended expectation must be supplied.
+
+    Raises:
+        ValueError: If both basic_expectations and extended_expectations are None.
+
+    Attributes:
+        basic_expectations (list[ExpectationConfiguration]): A list of basic expectation configurations.
+        extended_expectations (list[ExpectationConfiguration]): A list of extended expectation configurations.
+
+    """
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        basic_expectations: list[ExpectationConfiguration] | None = None,
+        extended_expectations: list[ExpectationConfiguration] | None = None,
+    ) -> None:
+        if basic_expectations is None and extended_expectations is None:
+            raise ValueError("At least one of basic_expectations or extended_expectations must be provided.")
+
+        self.basic_expectations = basic_expectations or []
+        self.extended_expectations = extended_expectations or []
+
+        super().__init__(df)

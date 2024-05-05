@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from pyretailscience.data import contracts
+from great_expectations.core.expectation_configuration import ExpectationConfiguration
 
 
 @pytest.fixture
@@ -62,3 +63,96 @@ def test_validate_contract_base(dataset):
     assert result is True
     assert test_contract.validation_state == contracts.EValidationState.VALID
     assert test_contract.expectations_run == contracts.EExpectationSet.EXTENDED
+
+
+def test_build_expected_columns():
+    columns = ["column1", "column2", "column3"]
+    expected_expectations = [
+        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "column1"}),
+        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "column2"}),
+        ExpectationConfiguration(expectation_type="expect_column_to_exist", kwargs={"column": "column3"}),
+    ]
+
+    expectations = contracts.build_expected_columns(columns)
+
+    assert expectations == expected_expectations
+
+    # Test with a positive case dataframe where all the columns exists
+    df = pd.DataFrame({"column1": [1, 2, 3], "column2": [4, 5, 6], "column3": [7, 8, 9]})
+
+    class TestContract(contracts.ContractBase):
+        basic_expectations = expectations
+
+    test_contract = TestContract(df)
+    result = test_contract.validate(expectation_set=contracts.EExpectationSet.BASIC)
+
+    assert result is True
+
+    # Test with a negative case dataframe where one of the columns is missing
+    df = pd.DataFrame({"column1": [1, 2, 3], "column2": [4, 5, 6]})
+    test_contract = TestContract(df)
+    result = test_contract.validate(expectation_set=contracts.EExpectationSet.BASIC)
+
+    assert result is False
+
+
+def test_build_expected_unique_columns():
+    columns = ["column1", "column2"]
+    expected_expectations = [
+        ExpectationConfiguration(expectation_type="expect_column_values_to_be_unique", kwargs={"column": "column1"}),
+        ExpectationConfiguration(expectation_type="expect_column_values_to_be_unique", kwargs={"column": "column2"}),
+    ]
+
+    expectations = contracts.build_expected_unique_columns(columns)
+
+    assert expectations == expected_expectations
+
+    # Test with a positive case dataframe where all the columns are unique
+    df = pd.DataFrame({"column1": [1, 2, 3], "column2": [7, 8, 9]})
+
+    class TestContract(contracts.ContractBase):
+        basic_expectations = expectations
+
+    test_contract = TestContract(df)
+    result = test_contract.validate(expectation_set=contracts.EExpectationSet.BASIC)
+
+    assert result is True
+
+    # Test with a negative case dataframe where one of the columns is not unique
+    df = pd.DataFrame({"column1": [1, 2, 3], "column2": [7, 8, 7]})
+
+    test_contract = TestContract(df)
+    result = test_contract.validate(expectation_set=contracts.EExpectationSet.BASIC)
+
+    assert result is False
+
+
+def test_build_non_null_columns():
+    columns = ["column1", "column2"]
+    expected_expectations = [
+        ExpectationConfiguration(expectation_type="expect_column_values_to_not_be_null", kwargs={"column": "column1"}),
+        ExpectationConfiguration(expectation_type="expect_column_values_to_not_be_null", kwargs={"column": "column2"}),
+    ]
+
+    expectations = contracts.build_non_null_columns(columns)
+
+    assert expectations == expected_expectations
+
+    # Test with a positive case dataframe where all the columns have no null values
+    df = pd.DataFrame({"column1": [1, 2, 3], "column2": [4, 5, 6]})
+
+    class TestContract(contracts.ContractBase):
+        basic_expectations = expectations
+
+    test_contract = TestContract(df)
+    result = test_contract.validate(expectation_set=contracts.EExpectationSet.BASIC)
+
+    assert result is True
+
+    # Test with a negative case dataframe where one of the columns has null values
+    df = pd.DataFrame({"column1": [1, 2, 3], "column2": [4, None, 6]})
+
+    test_contract = TestContract(df)
+    result = test_contract.validate(expectation_set=contracts.EExpectationSet.BASIC)
+
+    assert result is False

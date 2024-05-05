@@ -7,7 +7,7 @@ from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.data.contracts import TransactionItemLevelContract
+from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
 from pyretailscience.style.graph_utils import GraphStyles as gs
 
 
@@ -40,8 +40,17 @@ class CustomerDecisionHierarchy:
             ValueError: If the dataframe does not comply with the TransactionItemLevelContract.
 
         """
-        if TransactionItemLevelContract(df).validate() is False:
-            raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
+        cdh_contract = CustomContract(
+            df,
+            basic_expectations=build_expected_columns(columns=["customer_id", "transaction_id", "product_name"]),
+            extended_expectations=build_non_null_columns(columns=["customer_id", "transaction_id", "product_name"]),
+        )
+
+        if cdh_contract.validate() is False:
+            raise ValueError(
+                "The dataframe requires the columns 'customer_id', 'transaction_id', and 'product_name' and they must "
+                "be non-null"
+            )
 
         self.random_state = random_state
         self.pairs_df = self._get_pairs(df, exclude_same_transaction_products)
