@@ -6,6 +6,7 @@ from matplotlib.axes import Axes, SubplotBase
 
 from pyretailscience.data.contracts import TransactionItemLevelContract
 from pyretailscience.style.graph_utils import GraphStyles as gs
+import pyretailscience.style.graph_utils as gu
 from pyretailscience.style.graph_utils import human_format, standard_graph_styles
 from pyretailscience.style.tailwind import COLORS
 
@@ -36,8 +37,8 @@ class PurchasesPerCustomer:
         percentile_line: float = 0.5,
         source_text: str | None = None,
         title: str | None = None,
-        xlabel: str | None = None,
-        ylabel: str | None = None,
+        x_label: str | None = None,
+        y_label: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plot the distribution of the number of purchases per customer.
@@ -58,8 +59,8 @@ class PurchasesPerCustomer:
         if cumlative:
             density = True
 
-        if xlabel is None:
-            xlabel = "Number of purchases"
+        if x_label is None:
+            x_label = "Number of purchases"
 
         ax = self.cust_purchases_s.hist(
             bins=bins,
@@ -70,27 +71,38 @@ class PurchasesPerCustomer:
             **kwargs,
         )
 
-        ax.set_xlabel(xlabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
+        ax.set_xlabel(
+            x_label,
+            fontproperties=gs.POPPINS_REG,
+            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        )
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
         ax = standard_graph_styles(ax)
 
         if cumlative:
-            if title is None:
-                title = "Number of Purchases Cumulative Distribution"
-            if ylabel is None:
-                ylabel = "Percentage of customers"
+            default_title = "Number of Purchases Cumulative Distribution"
+            default_y_label = "Percentage of customers"
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
 
         else:
-            if title is None:
-                title = "Number of Purchases Distribution"
-            if ylabel is None:
-                ylabel = "Number of customers"
+            default_title = "Number of Purchases Distribution"
+            default_y_label = "Number of customers"
             ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
-        ax.set_title(title, fontsize=gs.DEFAULT_TITLE_FONT_SIZE, pad=15)
-        ax.set_ylabel(ylabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
+        ax.set_title(
+            gu.not_none(title, default_title),
+            fontproperties=gs.POPPINS_SEMI_BOLD,
+            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
+            pad=gs.DEFAULT_TITLE_PAD,
+        )
+        ax.set_ylabel(
+            gu.not_none(y_label, default_y_label),
+            fontproperties=gs.POPPINS_REG,
+            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        )
 
         if draw_percentile_line:
             if percentile_line > 1 or percentile_line < 0:
@@ -112,6 +124,8 @@ class PurchasesPerCustomer:
                 ha="left",
                 va="center",
                 fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                color="dimgray",
             )
 
         return ax
@@ -192,8 +206,8 @@ class DaysBetweenPurchases:
         draw_percentile_line: bool = False,
         percentile_line: float = 0.5,
         title: str | None = None,
-        xlabel: str | None = None,
-        ylabel: str | None = None,
+        x_label: str | None = None,
+        y_label: str | None = None,
         source_text: str = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
@@ -223,29 +237,38 @@ class DaysBetweenPurchases:
             **kwargs,
         )
 
-        if xlabel is None:
-            xlabel = "Average Number of Days Between Purchases"
-        ax.set_xlabel(xlabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
+        ax.set_xlabel(
+            gu.not_none(x_label, "Average Number of Days Between Purchases"),
+            fontproperties=gs.POPPINS_REG,
+            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        )
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
         ax = standard_graph_styles(ax)
 
         if cumlative:
-            if title is None:
-                title = "Average Days Between Purchases Cumulative Distribution"
-            if ylabel is None:
-                ylabel = "Percentage of Customers"
+            default_title = "Average Days Between Purchases Cumulative Distribution"
+            default_y_label = "Percentage of Customers"
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
 
         else:
-            if title is None:
-                title = "Average Days Between Purchases Distribution"
-            if ylabel is None:
-                ylabel = "Number of Customers"
+            default_title = "Average Days Between Purchases Distribution"
+            default_y_label = "Number of Customers"
             ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
-        ax.set_title(title, fontsize=gs.DEFAULT_TITLE_FONT_SIZE, pad=15)
-        ax.set_ylabel(ylabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
+        ax.set_title(
+            gu.not_none(title, default_title),
+            fontproperties=gs.POPPINS_SEMI_BOLD,
+            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
+            pad=gs.DEFAULT_TITLE_PAD,
+        )
+        ax.set_ylabel(
+            gu.not_none(y_label, default_y_label),
+            fontproperties=gs.POPPINS_REG,
+            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        )
 
         if draw_percentile_line:
             if percentile_line > 1 or percentile_line < 0:
@@ -268,6 +291,8 @@ class DaysBetweenPurchases:
                 ha="left",
                 va="center",
                 fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                color="dimgray",
             )
 
         return ax
@@ -335,8 +360,8 @@ class TransactionChurn:
         cumlative: bool = False,
         ax: Axes | None = None,
         title: str | None = None,
-        xlabel: str | None = None,
-        ylabel: str | None = None,
+        x_label: str | None = None,
+        y_label: str | None = None,
         source_text: str = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
@@ -366,17 +391,25 @@ class TransactionChurn:
 
         standard_graph_styles(ax)
 
-        if title is None:
-            title = "Churn Rate by Number of Purchases"
-        if xlabel is None:
-            xlabel = "Number of Purchases"
-        if ylabel is None:
-            ylabel = "% Churned"
-
         ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-        ax.set_xlabel(xlabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
-        ax.set_ylabel(ylabel, fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE, labelpad=10)
-        ax.set_title(title, fontsize=gs.DEFAULT_TITLE_FONT_SIZE, pad=15)
+        ax.set_xlabel(
+            gu.not_none(x_label, "Number of Purchases"),
+            fontproperties=gs.POPPINS_REG,
+            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        )
+        ax.set_ylabel(
+            gu.not_none(y_label, "% Churned"),
+            fontproperties=gs.POPPINS_REG,
+            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        )
+        ax.set_title(
+            gu.not_none(title, "Churn Rate by Number of Purchases"),
+            fontproperties=gs.POPPINS_SEMI_BOLD,
+            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
+            pad=gs.DEFAULT_TITLE_PAD,
+        )
 
         if source_text:
             ax.annotate(
@@ -386,6 +419,8 @@ class TransactionChurn:
                 ha="left",
                 va="center",
                 fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                color="dimgray",
             )
 
         return ax
