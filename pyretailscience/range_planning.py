@@ -254,18 +254,21 @@ class CustomerDecisionHierarchy:
 
         ax.set_title(
             title,
+            fontproperties=gs.POPPINS_SEMI_BOLD,
             fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-            pad=15,
+            pad=gs.DEFAULT_TITLE_PAD + 5,
         )
         ax.set_xlabel(
-            gu.not_none(y_label, default_x_label),
+            gu.not_none(x_label, default_x_label),
+            fontproperties=gs.POPPINS_REG,
             fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=10,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
         )
         ax.set_ylabel(
-            gu.not_none(x_label, default_y_label),
+            gu.not_none(y_label, default_y_label),
+            fontproperties=gs.POPPINS_REG,
             fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=10,
+            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
         )
 
         # Set the y label to be on the right side of the plot
@@ -300,11 +303,21 @@ class CustomerDecisionHierarchy:
                 ha="left",
                 va="center",
                 fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                color="dimgray",
             )
 
+        ax.xaxis.set_tick_params(labelsize=gs.DEFAULT_TICK_LABEL_FONT_SIZE)
+        ax.yaxis.set_tick_params(labelsize=gs.DEFAULT_TICK_LABEL_FONT_SIZE)
+
+        # Rotate the x-axis labels if they are too long
         if orientation in ["top", "bottom"]:
-            ax.xaxis.set_tick_params(labelsize=gs.DEFAULT_TICK_LABEL_FONT_SIZE)
-        else:
-            ax.yaxis.set_tick_params(labelsize=gs.DEFAULT_TICK_LABEL_FONT_SIZE)
+            plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+
+        # Set the font properties for the tick labels
+        for tick in ax.get_xticklabels():
+            tick.set_fontproperties(gs.POPPINS_REG)
+        for tick in ax.get_yticklabels():
+            tick.set_fontproperties(gs.POPPINS_REG)
 
         return ax

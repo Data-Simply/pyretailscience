@@ -4,6 +4,7 @@ from matplotlib.axes import Axes, SubplotBase
 from pandas.tseries.offsets import BaseOffset
 
 import pyretailscience.style.graph_utils as gu
+from pyretailscience.style.graph_utils import GraphStyles as gs
 from pyretailscience.style.tailwind import COLORS, get_linear_cmap
 
 # TODO: Consider simplifying this by reducing the color range in the get_linear_cmap function.
@@ -71,9 +72,22 @@ def time_plot(
         **kwargs,
     )
     ax = gu.standard_graph_styles(ax)
-    ax.set_ylabel(gu.not_none(y_label, value_col.title()))
-    ax.set_title(gu.not_none(title, default_title))
-    ax.set_xlabel(gu.not_none(x_label, ""))
+
+    ax.set_title(
+        gu.not_none(title, default_title),
+        fontproperties=gs.POPPINS_SEMI_BOLD,
+        fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
+    )
+    ax.set_xlabel(
+        gu.not_none(x_label, ""),
+        fontproperties=gs.POPPINS_REG,
+        fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+    )
+    ax.set_ylabel(
+        gu.not_none(y_label, value_col.title()),
+        fontproperties=gs.POPPINS_REG,
+        fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
+    )
 
     decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
     ax.yaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
@@ -90,7 +104,15 @@ def time_plot(
             xycoords="axes fraction",
             ha="left",
             va="center",
-            fontsize=10,
+            fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
+            fontproperties=gs.POPPINS_LIGHT_ITALIC,
+            color="dimgray",
         )
+
+    # Set the font properties for the tick labels
+    for tick in ax.get_xticklabels():
+        tick.set_fontproperties(gs.POPPINS_REG)
+    for tick in ax.get_yticklabels():
+        tick.set_fontproperties(gs.POPPINS_REG)
 
     return ax

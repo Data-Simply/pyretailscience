@@ -1,13 +1,26 @@
+import matplotlib.font_manager as fm
 from matplotlib.axes import Axes
+import importlib.resources as pkg_resources
+
+ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 
 
 class GraphStyles:
     """A class to hold the styles for a graph."""
 
-    DEFAULT_TITLE_FONT_SIZE = 16
+    POPPINS_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Bold.ttf")
+    POPPINS_SEMI_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-SemiBold.ttf")
+    POPPINS_REG = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Regular.ttf")
+    POPPINS_MED = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Medium.ttf")
+    POPPINS_LIGHT_ITALIC = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-LightItalic.ttf")
+
+    DEFAULT_TITLE_FONT_SIZE = 20
     DEFAULT_SOURCE_FONT_SIZE = 10
     DEFAULT_AXIS_LABEL_FONT_SIZE = 12
     DEFAULT_TICK_LABEL_FONT_SIZE = 10
+
+    DEFAULT_AXIS_LABEL_PAD = 10
+    DEFAULT_TITLE_PAD = 10
 
 
 def human_format(num, pos=None, decimals=0, prefix="") -> str:
