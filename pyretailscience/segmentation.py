@@ -10,7 +10,12 @@ from pyretailscience.style.tailwind import COLORS
 
 
 class HMLSegmentation:
-    def __init__(self, df: pd.DataFrame, value_col: str = "total_price") -> None:
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        value_col: str = "total_price",
+        zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
+    ) -> None:
         """
         Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend.
 
@@ -30,12 +35,16 @@ class HMLSegmentation:
         # Group by customer_id and calculate total_spend
         grouped_df = df.groupby("customer_id")[value_col].sum().to_frame(value_col)
 
-        # Separate customers with zero spend
-        zero_idx = grouped_df[value_col] == 0
-        zero_cust_df = grouped_df[zero_idx]
-        zero_cust_df["segment_name"] = "Zero"
+        # TODO: Consider only warning about customers with zero spend and adding them to the light group
 
-        hml_df = grouped_df[~zero_idx]
+        # Separate customers with zero spend
+        hml_df = grouped_df
+        if zero_value_customers in ["separate_segment", "exclude"]:
+            zero_idx = grouped_df[value_col] == 0
+            zero_cust_df = grouped_df[zero_idx]
+            zero_cust_df["segment_name"] = "Zero"
+
+            hml_df = grouped_df[~zero_idx]
 
         # Create a new column 'segment' based on the total_spend
         hml_df["segment_name"] = pd.qcut(
@@ -44,13 +53,14 @@ class HMLSegmentation:
             labels=["Light", "Medium", "Heavy"],
         )
 
-        hml_df = pd.concat([hml_df, zero_cust_df])
+        if zero_value_customers == "separate_segment":
+            hml_df = pd.concat([hml_df, zero_cust_df])
 
         segment_code_map = {"Light": "L", "Medium": "M", "Heavy": "H", "Zero": "Z"}
 
         hml_df["segment_id"] = hml_df["segment_name"].map(segment_code_map)
 
-        self.df = grouped_df
+        self.df = hml_df
 
     def add_segment(self, df: pd.DataFrame) -> pd.DataFrame:
         """
