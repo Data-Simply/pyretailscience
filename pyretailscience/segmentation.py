@@ -280,3 +280,44 @@ class SegTransactionStats:
             tick.set_fontproperties(gs.POPPINS_REG)
 
         return ax
+
+
+def get_index(
+    df: pd.DataFrame,
+    filter_index: list[bool],
+    grp_cols: list[str],
+    value_col: str,
+    agg_func: str = "sum",
+    offset: int = 0,
+) -> pd.DataFrame:
+    """
+    Calculates the index of the value_col for the subset of a dataframe defined by filter_index.
+
+    Args:
+        df (pd.DataFrame): The dataframe to calculate the index on.
+        filter_index (list[bool]): The boolean index to filter the data by.
+        grp_cols (list[str]): The columns to group the data by.
+        value_col (str): The column to calculate the index on.
+        agg_func (str): The aggregation function to apply to the value_col.
+        offset (int, optional): The offset to subtract from the index. Defaults to 0.
+
+    Returns:
+        pd.Series: The index of the value_col for the subset of data defined by filter_index.
+    """
+    overall_df = df.groupby(grp_cols)[value_col].agg(agg_func).to_frame(value_col)
+    if len(grp_cols) == 1:
+        overall_total = overall_df[value_col].sum()
+    else:
+        overall_total = overall_df.groupby(grp_cols[:-1])[value_col].sum()
+    overall_s = overall_df[value_col] / overall_total
+
+    subset_df = df[filter_index].groupby(grp_cols)[value_col].agg(agg_func).to_frame(value_col)
+    if len(grp_cols) == 1:
+        subset_total = subset_df[value_col].sum()
+    else:
+        subset_total = subset_df.groupby(grp_cols[:-1])[value_col].sum()
+    subset_s = subset_df[value_col] / subset_total
+
+    index_df = ((subset_s / overall_s * 100) - offset).to_frame("index").reset_index()
+
+    return index_df

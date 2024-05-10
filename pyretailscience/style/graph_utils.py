@@ -44,7 +44,12 @@ def human_format(num, pos=None, decimals=0, prefix="") -> str:
     return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "G", "T", "P"][magnitude])
 
 
-def standard_graph_styles(ax: Axes) -> Axes:
+def standard_graph_styles(
+    ax: Axes,
+    title: str | None = None,
+    x_label: str | None = None,
+    y_label: str | None = None,
+) -> Axes:
     """Apply standard styles to a Matplotlib graph.
 
     Args:
@@ -56,6 +61,31 @@ def standard_graph_styles(ax: Axes) -> Axes:
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
     ax.grid(which="major", axis="y", color="#DAD8D7", alpha=0.5, zorder=1)
+
+    if title is not None:
+        ax.set_title(
+            title,
+            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
+            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
+            pad=GraphStyles.DEFAULT_TITLE_PAD,
+        )
+
+    if x_label is not None:
+        ax.set_xlabel(
+            x_label,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+        )
+
+    if y_label is not None:
+        ax.set_ylabel(
+            y_label,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+        )
+
     return ax
 
 
