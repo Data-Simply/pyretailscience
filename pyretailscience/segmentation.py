@@ -4,12 +4,70 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.data.contracts import TransactionItemLevelContract, TransactionLevelContract
+from pyretailscience.data.contracts import (
+    TransactionItemLevelContract,
+    TransactionLevelContract,
+    CustomContract,
+    build_expected_columns,
+    build_non_null_columns,
+    build_expected_unique_columns,
+)
 from pyretailscience.style.graph_utils import GraphStyles as gs
 from pyretailscience.style.tailwind import COLORS
 
 
-class HMLSegmentation:
+class BaseSegmentation:
+    def add_segment(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Adds the segment to the dataframe based on the customer_id column.
+
+        Args:
+            df (pd.DataFrame): The dataframe to add the segment to. The dataframe must have a customer_id column.
+
+        Returns:
+            pd.DataFrame: The dataframe with the segment added.
+
+        Raises:
+            ValueError: If the number of rows before and after the merge do not match.
+        """
+        rows_before = len(df)
+        df = df.merge(self.df[["segment_name", "segment_id"]], how="left", left_on="customer_id", right_index=True)
+        rows_after = len(df)
+        if rows_before != rows_after:
+            raise ValueError("The number of rows before and after the merge do not match. This should not happen.")
+
+        return df
+
+
+class ExistingSegmentation(BaseSegmentation):
+    def __init__(self, df: pd.DataFrame) -> None:
+        """
+        Segments customers based on an existing segment in the dataframe.
+
+        Args:
+
+            df (pd.DataFrame): A dataframe with the customer_id, segment_name and segment_id columns.
+
+        Raises:
+            ValueError: If the dataframe does not have the columns customer_id, segment_name and segment_id.
+        """
+        required_cols = "customer_id", "segment_name", "segment_id"
+        contract = CustomContract(
+            df,
+            basic_expectations=build_expected_columns(columns=required_cols),
+            extended_expectations=build_non_null_columns(columns=required_cols)
+            + build_expected_unique_columns(columns=[required_cols]),
+        )
+
+        if contract.validate() is False:
+            raise ValueError(
+                f"The dataframe requires the columns {required_cols} and they must be non-null and unique."
+            )
+
+        self.df = df[["customer_id", "segment_name", "segment_id"]].set_index("customer_id")
+
+
+class HMLSegmentation(BaseSegmentation):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -20,22 +78,25 @@ class HMLSegmentation:
         Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend.
 
         Args:
-            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-                TransactionItemLevelContract or the TransactionLevelContract.
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must contain a customer_id column.
             value_col (str, optional): The column to use for the segmentation. Defaults to "total_price".
 
         Raises:
-            ValueError: If the dataframe does not comply with the TransactionItemLevelContract or
-                TransactionLevelContract.
+            ValueError: If the dataframe is missing the columns "customer_id" or `value_col`, or these columns contain
+                null values.
         """
+        required_cols = ["customer_id", value_col]
+        contract = CustomContract(
+            df,
+            basic_expectations=build_expected_columns(columns=required_cols),
+            extended_expectations=build_non_null_columns(columns=required_cols),
+        )
 
-        if TransactionItemLevelContract(df).validate() is False and TransactionLevelContract(df).validate() is False:
-            raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
+        if contract.validate() is False:
+            raise ValueError(f"The dataframe requires the columns {required_cols} and they must be non-null")
 
         # Group by customer_id and calculate total_spend
         grouped_df = df.groupby("customer_id")[value_col].sum().to_frame(value_col)
-
-        # TODO: Consider only warning about customers with zero spend and adding them to the light group
 
         # Separate customers with zero spend
         hml_df = grouped_df
@@ -61,31 +122,6 @@ class HMLSegmentation:
         hml_df["segment_id"] = hml_df["segment_name"].map(segment_code_map)
 
         self.df = hml_df
-
-    def add_segment(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Adds the segment to the dataframe based on the customer_id column.
-
-        Args:
-            df (pd.DataFrame): The dataframe to add the segment to. The dataframe must have a customer_id column.
-
-        Returns:
-            pd.DataFrame: The dataframe with the segment added.
-
-        Raises:
-            ValueError: If the number of rows before and after the merge do not match.
-        """
-
-        # TODO: Add a contract that ensures there's a customer ID column or matches one or more of a set of contracts
-        # efficently - Eg checks all the quick validations and then tries the extended validations
-
-        rows_before = len(df)
-        df = df.merge(self.df[["segment_name", "segment_id"]], how="left", left_on="customer_id", right_index=True)
-        rows_after = len(df)
-        if rows_before != rows_after:
-            raise ValueError("The number of rows before and after the merge do not match. This should not happen.")
-
-        return df
 
 
 class SegTransactionStats:
