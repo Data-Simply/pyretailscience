@@ -194,12 +194,22 @@ def index_plot(
             case of `group_col`
         legend_title (str, optional): The title of the legend. Defaults to None. When None the legend title is set to
             the title case of `group_col`
+        highlight_range (Literal["default"] | tuple[float, float] | None, optional): The range to highlight. Defaults
+            to "default". When "default" the range is set to (80, 120). When None no range is highlighted.
+        sort_by (Literal["group", "value"] | None, optional): The column to sort by. Defaults to None. When None the
+            data is not sorted. When "group" the data is sorted by group_col. When "value" the data is sorted by
+            the value_col. When series_col is not None this option is ignored.
+        sort_order (Literal["ascending", "descending"], optional): The order to sort the data. Defaults to "ascending".
         ax (Axes, optional): The matplotlib axes object to plot on. Defaults to None.
         source_text (str, optional): The source text to add to the plot. Defaults to None.
         **kwargs: Additional keyword arguments to pass to the Pandas plot function.
 
     Returns:
         SubplotBase: The matplotlib axes object.
+
+    Raises:
+        ValueError: If sort_by is not either "group" or "value" or None.
+        ValueError: If sort_order is not either "ascending" or "descending".
     """
 
     if sort_by is not None and sort_by not in ["group", "value"]:
@@ -219,12 +229,18 @@ def index_plot(
 
     if series_col is None:
         colors = COLORS["green"][500]
-        index_df = index_df[[group_col, "index"]].set_index(group_col)
         show_legend = False
+        index_df = index_df[[group_col, "index"]].set_index(group_col)
+        if sort_by == "group":
+            index_df = index_df.sort_values(by=group_col, ascending=sort_order == "ascending")
+        elif sort_by == "value":
+            index_df = index_df.sort_values(by="index", ascending=sort_order == "ascending")
     else:
-        colors = get_linear_cmap("green")(np.linspace(COLORMAP_MIN, COLORMAP_MAX, df[series_col].nunique()))
-        index_df = index_df.pivot(index=group_col, columns=series_col, values="index")
         show_legend = True
+        colors = get_linear_cmap("green")(np.linspace(COLORMAP_MIN, COLORMAP_MAX, df[series_col].nunique()))
+
+        index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
+        index_df = index_df.pivot_table(index=group_col, columns=series_col, values="index", sort=False)
 
     ax = index_df.plot.barh(left=100, legend=show_legend, ax=ax, color=colors, **kwargs)
 
