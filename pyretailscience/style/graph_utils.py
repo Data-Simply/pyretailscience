@@ -22,6 +22,8 @@ class GraphStyles:
     DEFAULT_AXIS_LABEL_PAD = 10
     DEFAULT_TITLE_PAD = 10
 
+    DEFAULT_BAR_WIDTH = 0.8
+
 
 def human_format(num, pos=None, decimals=0, prefix="") -> str:
     """Format a number in a human readable format for Matplotlib.

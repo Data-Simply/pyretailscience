@@ -242,15 +242,23 @@ def index_plot(
         index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
         index_df = index_df.pivot_table(index=group_col, columns=series_col, values="index", sort=False)
 
-    ax = index_df.plot.barh(left=100, legend=show_legend, ax=ax, color=colors, **kwargs)
+    ax = index_df.plot.barh(
+        left=100,
+        legend=show_legend,
+        ax=ax,
+        color=colors,
+        width=gs.DEFAULT_BAR_WIDTH,
+        zorder=2,
+        **kwargs,
+    )
 
     ax.axvline(100, color="black", linewidth=1, alpha=0.5)
     if highlight_range == "default":
         highlight_range = (80, 120)
     if highlight_range is not None:
-        ax.axvline(highlight_range[0], color="black", linewidth=0.25, alpha=0.1)
-        ax.axvline(highlight_range[1], color="black", linewidth=0.25, alpha=0.1)
-        ax.axvspan(highlight_range[0], highlight_range[1], color="black", alpha=0.1)
+        ax.axvline(highlight_range[0], color="black", linewidth=0.25, alpha=0.1, zorder=-1)
+        ax.axvline(highlight_range[1], color="black", linewidth=0.25, alpha=0.1, zorder=-1)
+        ax.axvspan(highlight_range[0], highlight_range[1], color="black", alpha=0.1, zorder=-1)
 
     default_title = f"{value_col.title()} by {group_col.title()}"
 
@@ -262,7 +270,7 @@ def index_plot(
     )
 
     if show_legend:
-        legend = ax.legend(title=gu.not_none(legend_title, group_col.title()), frameon=True)
+        legend = ax.legend(title=gu.not_none(legend_title, series_col.title()), frameon=True)
         legend.get_frame().set_facecolor("white")
         legend.get_frame().set_edgecolor("white")
 
