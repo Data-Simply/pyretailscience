@@ -175,6 +175,7 @@ def index_plot(
     sort_order: Literal["ascending", "descending"] = "ascending",
     ax: Axes | None = None,
     source_text: str = None,
+    exclude_groups: list[any] | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
     """
@@ -202,6 +203,7 @@ def index_plot(
         sort_order (Literal["ascending", "descending"], optional): The order to sort the data. Defaults to "ascending".
         ax (Axes, optional): The matplotlib axes object to plot on. Defaults to None.
         source_text (str, optional): The source text to add to the plot. Defaults to None.
+        exclude_groups (list[any], optional): The groups to exclude from the plot. Defaults to None.
         **kwargs: Additional keyword arguments to pass to the Pandas plot function.
 
     Returns:
@@ -226,6 +228,9 @@ def index_plot(
         agg_func=agg_func,
         offset=100,
     )
+
+    if exclude_groups is not None:
+        index_df = index_df[~index_df[group_col].isin(exclude_groups)]
 
     if series_col is None:
         colors = COLORS["green"][500]
