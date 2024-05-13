@@ -138,7 +138,7 @@ def get_indexes(
     Returns:
         pd.Series: The index of the value_col for the subset of data defined by filter_index.
     """
-    grp_cols = ([] if index_subgroup_col is None else [index_subgroup_col]) + [index_col]
+    grp_cols = [index_col] if index_subgroup_col is None else [index_subgroup_col, index_col]
 
     overall_df = df.groupby(grp_cols)[value_col].agg(agg_func).to_frame(value_col)
     if index_subgroup_col is None:
