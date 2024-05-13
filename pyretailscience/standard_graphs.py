@@ -171,7 +171,7 @@ def index_plot(
     y_label: str | None = None,
     legend_title: str | None = None,
     highlight_range: Literal["default"] | tuple[float, float] | None = "default",
-    sort_by: Literal["group", "value"] | None = None,
+    sort_by: Literal["group", "value"] | None = "group",
     sort_order: Literal["ascending", "descending"] = "ascending",
     ax: Axes | None = None,
     source_text: str = None,
@@ -197,7 +197,7 @@ def index_plot(
             the title case of `group_col`
         highlight_range (Literal["default"] | tuple[float, float] | None, optional): The range to highlight. Defaults
             to "default". When "default" the range is set to (80, 120). When None no range is highlighted.
-        sort_by (Literal["group", "value"] | None, optional): The column to sort by. Defaults to None. When None the
+        sort_by (Literal["group", "value"] | None, optional): The column to sort by. Defaults to "group". When None the
             data is not sorted. When "group" the data is sorted by group_col. When "value" the data is sorted by
             the value_col. When series_col is not None this option is ignored.
         sort_order (Literal["ascending", "descending"], optional): The order to sort the data. Defaults to "ascending".
@@ -244,7 +244,8 @@ def index_plot(
         show_legend = True
         colors = get_linear_cmap("green")(np.linspace(COLORMAP_MIN, COLORMAP_MAX, df[series_col].nunique()))
 
-        index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
+        if sort_by == "group":
+            index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
         index_df = index_df.pivot_table(index=group_col, columns=series_col, values="index", sort=False)
 
     ax = index_df.plot.barh(
