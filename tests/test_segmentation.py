@@ -1,9 +1,8 @@
 import pandas as pd
-from pyretailscience.segmentation import get_index
+from pyretailscience.standard_graphs import get_indexes
 
 
-def test_get_index():
-    # Test case: grp_cols only one column
+def test_get_indexes_single_column():
     df = pd.DataFrame(
         {
             "group_col": ["A", "A", "B", "B", "C", "C"],
@@ -12,15 +11,16 @@ def test_get_index():
         }
     )
     expected_output = pd.DataFrame({"group_col": ["A", "B", "C"], "index": [77.77777778, 100, 106.0606]})
-    output = get_index(
+    output = get_indexes(
         df=df,
-        grp_cols=["group_col"],
-        filter_index=df["filter_col"] == "X",
+        index_col="group_col",
+        df_index_filter=df["filter_col"] == "X",
         value_col="value_col",
     )
     pd.testing.assert_frame_equal(output, expected_output)
 
-    # Test case: grp_cols two columns
+
+def test_get_indexes_two_columns():
     df = pd.DataFrame(
         {
             "group_col1": ["A", "A", "B", "B", "C", "C", "A", "A", "B", "B", "C", "C"],
@@ -36,15 +36,17 @@ def test_get_index():
             "index": [77.77777778, 100, 106.0606, 98.51851852, 100, 100.9661836],
         }
     )
-    output = get_index(
+    output = get_indexes(
         df=df,
-        grp_cols=["group_col2", "group_col1"],
-        filter_index=df["filter_col"] == "X",
+        index_col="group_col1",
+        index_subgroup_col="group_col2",
+        df_index_filter=df["filter_col"] == "X",
         value_col="value_col",
     )
     pd.testing.assert_frame_equal(output, expected_output)
 
-    # Test case: offset = 100
+
+def test_get_indexes_with_offset():
     df = pd.DataFrame(
         {
             "group_col": ["A", "A", "B", "B", "C", "C"],
@@ -53,16 +55,17 @@ def test_get_index():
         }
     )
     expected_output = pd.DataFrame({"group_col": ["A", "B", "C"], "index": [-22.22222222, 0, 6.060606061]})
-    output = get_index(
+    output = get_indexes(
         df=df,
-        grp_cols=["group_col"],
-        filter_index=df["filter_col"] == "X",
+        index_col="group_col",
+        df_index_filter=df["filter_col"] == "X",
         value_col="value_col",
         offset=100,
     )
     pd.testing.assert_frame_equal(output, expected_output)
 
-    # Test case: agg_func = "nunique"
+
+def test_get_indexes_with_agg_func():
     df = pd.DataFrame(
         {
             "group_col1": ["A", "A", "A", "A", "B", "B", "B", "B", "C", "C", "C", "C"],
@@ -76,10 +79,10 @@ def test_get_index():
             "index": [140, 140, 46.6666667],
         }
     )
-    output = get_index(
+    output = get_indexes(
         df=df,
-        grp_cols=["group_col1"],
-        filter_index=df["filter_col"] == "X",
+        index_col="group_col1",
+        df_index_filter=df["filter_col"] == "X",
         value_col="value_col",
         agg_func="nunique",
     )
