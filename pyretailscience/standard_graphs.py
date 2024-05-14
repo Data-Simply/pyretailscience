@@ -179,6 +179,7 @@ def index_plot(
     ax: Axes | None = None,
     source_text: str = None,
     exclude_groups: list[any] | None = None,
+    include_only_groups: list[any] | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
     """
@@ -207,6 +208,9 @@ def index_plot(
         ax (Axes, optional): The matplotlib axes object to plot on. Defaults to None.
         source_text (str, optional): The source text to add to the plot. Defaults to None.
         exclude_groups (list[any], optional): The groups to exclude from the plot. Defaults to None.
+        include_only_groups (list[any], optional): The groups to include in the plot. Defaults to None. When None all
+            groups are included. When not None only the groups in the list are included. Can not be used with
+            exclude_groups.
         **kwargs: Additional keyword arguments to pass to the Pandas plot function.
 
     Returns:
@@ -215,12 +219,15 @@ def index_plot(
     Raises:
         ValueError: If sort_by is not either "group" or "value" or None.
         ValueError: If sort_order is not either "ascending" or "descending".
+        ValueError: If exclude_groups and include_only_groups are used together.
     """
 
     if sort_by is not None and sort_by not in ["group", "value"]:
         raise ValueError("sort_by must be either 'group' or 'value' or None")
     if sort_order not in ["ascending", "descending"]:
         raise ValueError("sort_order must be either 'ascending' or 'descending'")
+    if exclude_groups is not None and include_only_groups is not None:
+        raise ValueError("exclude_groups and include_only_groups cannot be used together.")
 
     index_df = get_indexes(
         df=df,
@@ -234,6 +241,8 @@ def index_plot(
 
     if exclude_groups is not None:
         index_df = index_df[~index_df[group_col].isin(exclude_groups)]
+    if include_only_groups is not None:
+        index_df = index_df[index_df[group_col].isin(include_only_groups)]
 
     if series_col is None:
         colors = COLORS["green"][500]
