@@ -1,4 +1,6 @@
 import pandas as pd
+import pytest
+
 from pyretailscience.standard_graphs import get_indexes
 
 
@@ -87,3 +89,29 @@ def test_get_indexes_with_agg_func():
         agg_func="nunique",
     )
     pd.testing.assert_frame_equal(output, expected_output)
+
+
+def test_get_indexes_index_filter_all_same():
+    df = pd.DataFrame(
+        {
+            "group_col": ["A", "A", "B", "B", "C", "C"],
+            "filter_col": ["X", "X", "X", "X", "X", "X"],
+            "value_col": [1, 2, 3, 4, 5, 6],
+        }
+    )
+    # Assert a value error will be reaised
+    with pytest.raises(ValueError):
+        get_indexes(
+            df=df,
+            df_index_filter=[True, True, True, True, True, True],
+            index_col="group_col",
+            value_col="value_col",
+        )
+
+    with pytest.raises(ValueError):
+        get_indexes(
+            df=df,
+            df_index_filter=[False, False, False, False, False, False],
+            index_col="group_col",
+            value_col="value_col",
+        )
