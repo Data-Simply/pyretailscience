@@ -29,4 +29,4 @@ repos:
   hooks:
     - id: nbstripout
       files: \.(ipynb)$
-      args: [--keep-output, --drop-empty-cells]
+      args: [--keep-output, --strip-empty-cells]
