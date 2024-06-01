@@ -24,3 +24,9 @@ repos:
       types: [python]
       pass_filenames: false
       always_run: true
+- repo: https://github.com/kynan/nbstripout
+  rev: 0.5.0
+  hooks:
+    - id: nbstripout
+      files: \.(ipynb)$
+      args: [--keep-output, --drop-empty-cells]
