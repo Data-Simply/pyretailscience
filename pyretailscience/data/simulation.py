@@ -199,7 +199,7 @@ class TransactionGenerator:
 
         transaction_lines = []
         for product in products:
-            quantity = self.rnd_generator.poisson(product.quantity_mean)
+            quantity = max(self.rnd_generator.poisson(product.quantity_mean), 1)
             total_price = float(product.unit_price) * quantity
 
             transaction = {
@@ -433,7 +433,7 @@ class Simulation:
                                 product_id=int(product["product_id"]),
                                 unit_price=product["unit_price"],
                                 # TODO: Move this to the config file
-                                quantity_mean=self.rnd_generator.poisson(self.rnd_generator.integers(1, 3)),
+                                quantity_mean=self.rnd_generator.integers(1, 3),
                             )
                         )
         return products

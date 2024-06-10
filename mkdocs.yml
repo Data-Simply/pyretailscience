@@ -7,6 +7,7 @@ nav:
       - Data Contracts: examples/data_contracts.ipynb
       - Data Simulation: examples/simulate_data.ipynb
       - Customer Retention: examples/retention.ipynb
+      - Gain Loss Analysis: examples/gain_loss.ipynb
   - Reference:
       - Simulation: api/simulation.md
       - Contracts: api/contracts.md
