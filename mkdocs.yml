@@ -8,6 +8,7 @@ nav:
       - Data Simulation: examples/simulate_data.ipynb
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
+      - Cross Shop Analysis: examples/cross_shop.ipynb
   - Reference:
       - Simulation: api/simulation.md
       - Contracts: api/contracts.md
