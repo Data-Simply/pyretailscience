@@ -43,7 +43,7 @@ def human_format(num, pos=None, decimals=0, prefix="") -> str:
         num /= 1000.0
 
     # Add more suffixes if you need them
-    return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "G", "T", "P"][magnitude])
+    return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
 
 
 def standard_graph_styles(
