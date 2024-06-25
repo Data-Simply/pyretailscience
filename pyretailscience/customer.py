@@ -1,13 +1,19 @@
+"""Classes and function to assist with customer retention analysis."""
+
 import operator
 
 import matplotlib.ticker as mtick
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-from pyretailscience.data.contracts import TransactionItemLevelContract
-from pyretailscience.style.graph_utils import GraphStyles as gs
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.graph_utils import human_format, standard_graph_styles
+from pyretailscience.data.contracts import (
+    CustomContract,
+    TransactionItemLevelContract,
+    build_expected_columns,
+    build_non_null_columns,
+)
+from pyretailscience.style.graph_utils import GraphStyles, human_format, standard_graph_styles
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -16,25 +22,39 @@ class PurchasesPerCustomer:
 
     Attributes:
         cust_purchases_s (pd.Series): The number of purchases per customer.
-
-    Args:
-        df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-            TransactionItemLevelContract.
     """
 
     def __init__(self, df: pd.DataFrame) -> None:
-        if TransactionItemLevelContract(df).validate() is False:
-            raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
+        """Initialize the PurchasesPerCustomer class.
 
-        self.cust_purchases_s = df.groupby("customer_id").size()
+        Args:
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
+                contain customer_id and transaction_id columns, which must be non-null.
+
+        Raises:
+            ValueError: If the dataframe doesn't contain the columns customer_id and transaction_id, or if the columns
+                are null.
+
+        """
+        contract = CustomContract(
+            df,
+            basic_expectations=build_expected_columns(columns=["customer_id", "transaction_id"]),
+            extended_expectations=build_non_null_columns(columns=["customer_id", "transaction_id"]),
+        )
+        if contract.validate() is False:
+            raise ValueError(
+                "The dataframe requires the columns 'customer_id', 'transaction_id' and they must be non-null.",
+                "Please ensure these columns exist and contain no null values.",
+            )
+
+        self.cust_purchases_s = df.groupby("customer_id")["transaction_id"].nunique()
 
     def plot(
         self,
         bins: int = 10,
         cumlative: bool = False,
         ax: Axes | None = None,
-        draw_percentile_line: bool = False,
-        percentile_line: float = 0.5,
+        percentile_line: float | None = None,
         source_text: str | None = None,
         title: str | None = None,
         x_label: str | None = None,
@@ -47,14 +67,17 @@ class PurchasesPerCustomer:
             bins (int, optional): The number of bins to plot. Defaults to 10.
             cumlative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
             ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
-            draw_percentile_line (bool, optional): Whether to draw a line at the percentile specified with
-                the `percentile_line` paramter. Defaults to False.
-            percentile_line (float, optional): The percentile to draw a line at. Defaults to 0.8.
+            percentile_line (float, optional): The percentile to draw a line at. Defaults to None. When None then no
+                line is drawn.
+            source_text (str, optional): The source text to add to the plot. Defaults to None.
+            title (str, optional): The title of the plot. Defaults to None.
+            x_label (str, optional): The x-axis label. Defaults to None.
+            y_label (str, optional): The y-axis label. Defaults to None.
+            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot function.
 
         Returns:
             SubplotBase: The Matplotlib axes of the plot
         """
-
         density = False
         if cumlative:
             density = True
@@ -73,9 +96,9 @@ class PurchasesPerCustomer:
 
         ax.set_xlabel(
             x_label,
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
@@ -93,18 +116,18 @@ class PurchasesPerCustomer:
 
         ax.set_title(
             gu.not_none(title, default_title),
-            fontproperties=gs.POPPINS_SEMI_BOLD,
-            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-            pad=gs.DEFAULT_TITLE_PAD,
+            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
+            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
+            pad=GraphStyles.DEFAULT_TITLE_PAD,
         )
         ax.set_ylabel(
             gu.not_none(y_label, default_y_label),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
 
-        if draw_percentile_line:
+        if percentile_line is not None:
             if percentile_line > 1 or percentile_line < 0:
                 raise ValueError("Percentile line must be between 0 and 1")
             ax.axvline(
@@ -123,8 +146,8 @@ class PurchasesPerCustomer:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
 
@@ -146,6 +169,8 @@ class PurchasesPerCustomer:
 
         Args:
             number_of_purchases (int): The number of purchases to find the percentile of.
+            comparison (str, optional): The comparison to use. Defaults to "less_than_equal_to". Must be one of
+                less_than, less_than_equal_to, equal_to, not_equal_to, greater_than, or greater_than_equal_to.
 
         Returns:
             float: The percentile of the number of purchases.
@@ -161,12 +186,12 @@ class PurchasesPerCustomer:
 
         if comparison not in ops:
             raise ValueError(
-                "Comparison must be one of 'less_than', 'less_than_equal_to', 'equal_to', 'not_equal_to', "
-                "'greater_than', 'greater_than_equal_to'"
+                "Comparison must be one of 'less_than', 'less_than_equal_to', 'equal_to', 'not_equal_to',",
+                "'greater_than', 'greater_than_equal_to'",
             )
 
         return len(self.cust_purchases_s[ops[comparison](self.cust_purchases_s, number_of_purchases)]) / len(
-            self.cust_purchases_s
+            self.cust_purchases_s,
         )
 
 
@@ -175,40 +200,63 @@ class DaysBetweenPurchases:
 
     Attributes:
         purchase_dist_s (pd.Series): The average number of days between purchases per customer.
-
-    Args:
-        df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-            TransactionItemLevelContract.
-
-    Raises:
-        ValueError: If the dataframe does not comply with the TransactionItemLevelContract
     """
 
     def __init__(self, df: pd.DataFrame) -> None:
-        if TransactionItemLevelContract(df).validate() is False:
-            raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
+        """Initialize the DaysBetweenPurchases class.
 
+        Args:
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
+                TransactionItemLevelContract.
+
+        Raises:
+            ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id, or if the
+                columns are null.
+
+        """
+        contract = CustomContract(
+            df,
+            basic_expectations=build_expected_columns(columns=["customer_id", "transaction_datetime"]),
+            extended_expectations=build_non_null_columns(columns=["customer_id", "transaction_datetime"]),
+        )
+        if contract.validate() is False:
+            raise ValueError(
+                "The dataframe requires the columns 'customer_id', 'transaction_datetime' and they must be non-null.",
+                "Please ensure these columns exist and contain no null values.",
+            )
+
+        self.purchase_dist_s = self._calculate_days_between_purchases(df)
+
+    @staticmethod
+    def _calculate_days_between_purchases(df: pd.DataFrame) -> pd.Series:
+        """Calculate the average number of days between purchases per customer.
+
+        Args:
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
+                TransactionItemLevelContract.
+
+        Returns:
+            pd.Series: The average number of days between purchases per customer.
+        """
         purchase_dist_df = df[["customer_id", "transaction_datetime"]].copy()
         purchase_dist_df["transaction_datetime"] = df["transaction_datetime"].dt.floor("D")
         purchase_dist_df = purchase_dist_df.drop_duplicates().sort_values(["customer_id", "transaction_datetime"])
-        purchase_dist_df["diff"] = purchase_dist_df.groupby("customer_id")["transaction_datetime"].transform(
-            lambda x: x.diff()
-        )
-        purchase_dist_df = purchase_dist_df[~purchase_dist_df["diff"].isnull()]
+        purchase_dist_df["diff"] = purchase_dist_df["transaction_datetime"].diff()
+        new_cust_mask = purchase_dist_df["customer_id"] != purchase_dist_df["customer_id"].shift(1)
+        purchase_dist_df = purchase_dist_df[~new_cust_mask]
         purchase_dist_df["diff"] = purchase_dist_df["diff"].dt.days
-        self.purchase_dist_s = purchase_dist_df.groupby("customer_id")["diff"].mean()
+        return purchase_dist_df.groupby("customer_id")["diff"].mean()
 
     def plot(
         self,
         bins: int = 10,
         cumlative: bool = False,
         ax: Axes | None = None,
-        draw_percentile_line: bool = False,
-        percentile_line: float = 0.5,
+        percentile_line: float | None = None,
         title: str | None = None,
         x_label: str | None = None,
         y_label: str | None = None,
-        source_text: str = None,
+        source_text: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plot the distribution of the average number of days between purchases per customer.
@@ -217,9 +265,13 @@ class DaysBetweenPurchases:
             bins (int, optional): The number of bins to plot. Defaults to 10.
             cumlative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
             ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
-            draw_percentile_line (bool, optional): Whether to draw a line at the percentile specified with
-                the `percentile_line` paramter. Defaults to False.
-            percentile_line (float, optional): The percentile to draw a line at. Defaults to 0.8.
+            percentile_line (float, optional): The percentile to draw a line at. Defaults to None. When None then no
+                line is drawn.
+            title (str, optional): The title of the plot. Defaults to None.
+            x_label (str, optional): The x-axis label. Defaults to None.
+            y_label (str, optional): The y-axis label. Defaults to None.
+            source_text (str, optional): The source text to add to the plot. Defaults to None.
+            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot
 
         Returns:
             SubplotBase: The Matplotlib axes of the plot
@@ -237,12 +289,6 @@ class DaysBetweenPurchases:
             **kwargs,
         )
 
-        ax.set_xlabel(
-            gu.not_none(x_label, "Average Number of Days Between Purchases"),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
-        )
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
         ax = standard_graph_styles(ax)
@@ -257,20 +303,14 @@ class DaysBetweenPurchases:
             default_y_label = "Number of Customers"
             ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
-        ax.set_title(
-            gu.not_none(title, default_title),
-            fontproperties=gs.POPPINS_SEMI_BOLD,
-            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-            pad=gs.DEFAULT_TITLE_PAD,
-        )
-        ax.set_ylabel(
-            gu.not_none(y_label, default_y_label),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+        ax = gu.standard_graph_styles(
+            ax,
+            title=gu.not_none(title, default_title),
+            y_label=gu.not_none(y_label, default_y_label),
+            x_label=gu.not_none(x_label, "Average Number of Days Between Purchases"),
         )
 
-        if draw_percentile_line:
+        if percentile_line is not None:
             if percentile_line > 1 or percentile_line < 0:
                 raise ValueError("Percentile line must be between 0 and 1")
             ax.axvline(
@@ -290,10 +330,16 @@ class DaysBetweenPurchases:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
+
+        # Set the font properties for the tick labels
+        for tick in ax.get_xticklabels():
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        for tick in ax.get_yticklabels():
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
         return ax
 
@@ -323,6 +369,16 @@ class TransactionChurn:
     """
 
     def __init__(self, df: pd.DataFrame, churn_period: float) -> None:
+        """Initialize the TransactionChurn class.
+
+        Args:
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
+                TransactionItemLevelContract.
+            churn_period (float): The number of days to consider a customer churned.
+
+        Raises:
+            ValueError: If the dataframe does not comply with the TransactionItemLevelContract
+        """
         if TransactionItemLevelContract(df).validate() is False:
             raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
 
@@ -362,7 +418,7 @@ class TransactionChurn:
         title: str | None = None,
         x_label: str | None = None,
         y_label: str | None = None,
-        source_text: str = None,
+        source_text: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plot the churn rate by number of purchases.
@@ -370,6 +426,11 @@ class TransactionChurn:
         Args:
             cumlative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
             ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
+            title (str, optional): The title of the plot. Defaults to None.
+            x_label (str, optional): The x-axis label. Defaults to None.
+            y_label (str, optional): The y-axis label. Defaults to None.
+            source_text (str, optional): The source text to add to the plot. Defaults to None.
+            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot function.
 
         Returns:
             SubplotBase: The Matplotlib axes of the plot
@@ -394,21 +455,21 @@ class TransactionChurn:
         ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
         ax.set_xlabel(
             gu.not_none(x_label, "Number of Purchases"),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
         ax.set_ylabel(
             gu.not_none(y_label, "% Churned"),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
         ax.set_title(
             gu.not_none(title, "Churn Rate by Number of Purchases"),
-            fontproperties=gs.POPPINS_SEMI_BOLD,
-            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-            pad=gs.DEFAULT_TITLE_PAD,
+            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
+            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
+            pad=GraphStyles.DEFAULT_TITLE_PAD,
         )
 
         if source_text:
@@ -418,8 +479,8 @@ class TransactionChurn:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
 
