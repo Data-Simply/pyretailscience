@@ -48,5 +48,16 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 pyretailscience = "pyretailscience.data.cli:generate"
 
+[tool.pytest.ini_options]
+addopts = "--cov=pyretailscience --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["pyretailscience"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
 [tool.ruff]
 line-length=120
