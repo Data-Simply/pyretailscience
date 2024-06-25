@@ -188,15 +188,27 @@ class DaysBetweenPurchases:
         if TransactionItemLevelContract(df).validate() is False:
             raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
 
+        self.purchase_dist_s = self._calculate_days_between_purchases(df)
+
+    @staticmethod
+    def _calculate_days_between_purchases(df: pd.DataFrame) -> pd.Series:
+        """Calculate the average number of days between purchases per customer.
+
+        Args:
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
+                TransactionItemLevelContract.
+
+        Returns:
+            pd.Series: The average number of days between purchases per customer.
+        """
         purchase_dist_df = df[["customer_id", "transaction_datetime"]].copy()
         purchase_dist_df["transaction_datetime"] = df["transaction_datetime"].dt.floor("D")
         purchase_dist_df = purchase_dist_df.drop_duplicates().sort_values(["customer_id", "transaction_datetime"])
-        purchase_dist_df["diff"] = purchase_dist_df.groupby("customer_id")["transaction_datetime"].transform(
-            lambda x: x.diff()
-        )
-        purchase_dist_df = purchase_dist_df[~purchase_dist_df["diff"].isnull()]
+        purchase_dist_df["diff"] = purchase_dist_df["transaction_datetime"].diff()
+        new_cust_mask = purchase_dist_df["customer_id"] != purchase_dist_df["customer_id"].shift(1)
+        purchase_dist_df = purchase_dist_df[~new_cust_mask]
         purchase_dist_df["diff"] = purchase_dist_df["diff"].dt.days
-        self.purchase_dist_s = purchase_dist_df.groupby("customer_id")["diff"].mean()
+        return purchase_dist_df.groupby("customer_id")["diff"].mean()
 
     def plot(
         self,
