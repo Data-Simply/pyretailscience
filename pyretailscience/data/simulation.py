@@ -1,3 +1,5 @@
+"""Simulate a retail environment with customers and transactions."""
+
 from __future__ import annotations
 
 import logging
@@ -18,7 +20,7 @@ config_schema = yaml.Map(
         "stores": yaml.Map(
             {
                 "number_of_stores": yaml.Int(),
-            }
+            },
         ),
         "transactions": yaml.Map(
             {
@@ -27,7 +29,7 @@ config_schema = yaml.Map(
                 "start_hour": yaml.Int(),
                 "end_hour": yaml.Int(),
                 "max_products_per_transaction": yaml.Int(),
-            }
+            },
         ),
         "customers": yaml.Map(
             {
@@ -35,7 +37,7 @@ config_schema = yaml.Map(
                 "churn_probability": yaml.Float(),
                 "average_days_between_purchases": yaml.Int(),
                 "average_new_customers_per_day": yaml.Int(),
-            }
+            },
         ),
         "products": yaml.Seq(
             yaml.Map(
@@ -58,23 +60,23 @@ config_schema = yaml.Map(
                                                         "product_name": yaml.Str(),
                                                         "product_id": yaml.Int(),
                                                         "unit_price": yaml.Float(),
-                                                    }
-                                                )
+                                                    },
+                                                ),
                                             ),
-                                        }
-                                    )
+                                        },
+                                    ),
                                 ),
-                            }
-                        )
+                            },
+                        ),
                     ),
-                }
-            )
+                },
+            ),
         ),
-    }
+    },
 )
 
 
-def _random_time(rnd_generator: np.random.Generator, start_hour, end_hour) -> time:
+def _random_time(rnd_generator: np.random.Generator, start_hour: int, end_hour: int) -> time:
     """Generate a random time between start_hour and end_hour.
 
     Args:
@@ -122,16 +124,7 @@ class Product:
 
 
 class TransactionGenerator:
-    """Generates a random transaction for a customer.
-
-    Args:
-        rnd_generator (np.random.Generator): Random number generator
-        num_stores (int): Number of stores
-        max_products_per_transaction (int): Maximum number of products per transaction
-        products (list[Product]): List of Product objects
-        start_hour (int): Start hour
-        end_hour (int): End hour
-    """
+    """Generates a random transaction for a customer."""
 
     def __init__(
         self,
@@ -142,6 +135,16 @@ class TransactionGenerator:
         start_hour: int,
         end_hour: int,
     ) -> None:
+        """Initialize the TransactionGenerator.
+
+        Args:
+            rnd_generator (np.random.Generator): Random number generator
+            num_stores (int): Number of stores
+            max_products_per_transaction (int): Maximum number of products per transaction
+            products (list[Product]): List of Product objects
+            start_hour (int): Start hour
+            end_hour (int): End hour
+        """
         self.num_stores = num_stores
         self.rnd_generator = rnd_generator
         self.products = products
@@ -231,12 +234,6 @@ class Customer:
     Attributes:
         has_churned (bool): Whether the customer has churned
 
-    Args:
-        rnd_generator (np.random.Generator): Random number generator
-        churn_prob (float): Churn probability
-        customer_id (int): Customer ID
-        transaction_gen (TransactionGenerator): A common transaction generator shared between users.
-        period_between_purchases (int): Period between purchases
     """
 
     has_churned: bool = False
@@ -249,6 +246,15 @@ class Customer:
         transaction_gen: TransactionGenerator,
         period_between_purchases: int,
     ) -> None:
+        """Initialize the Customer.
+
+        Args:
+            rnd_generator (np.random.Generator): Random number generator
+            churn_prob (float): Churn probability
+            customer_id (int): Customer ID
+            transaction_gen (TransactionGenerator): A common transaction generator shared between users.
+            period_between_purchases (int): Period between purchases
+        """
         self.rnd_generator = rnd_generator
         self.churn_prob = churn_prob
         self.id = customer_id
@@ -285,7 +291,7 @@ class Customer:
             # Bernoulli trial to see if customer churns
             if self.rnd_generator.binomial(1, self.churn_prob):
                 self.has_churned = True
-                logger.debug(f"Customer {self.id} churned")
+                logger.debug("Customer churned", extra={"customer_id": self.id})
             else:
                 self.time_to_next_purchase = self.rnd_generator.poisson(self.periods_between_purchases)
         else:
@@ -293,18 +299,19 @@ class Customer:
 
 
 class Simulation:
-    """Simulates a retail environment with customers and transactions.
-
-    Args:
-        seed (int): Random seed
-        config (dict): A dictionary of the settings of the simulation
-    """
+    """Simulates a retail environment with customers and transactions."""
 
     def __init__(
         self,
         seed: int,
         config: dict,
     ) -> None:
+        """Initialize the Simulation.
+
+        Args:
+            seed (int): Random seed
+            config (dict): A dictionary of the settings of the simulation
+        """
         self.seed = seed
         self.config = config
 
@@ -329,12 +336,12 @@ class Simulation:
         Returns:
             Simulation: A Simulation object
         """
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             try:
                 config = yaml.load(f.read(), config_schema).data
-            except yaml.YAMLError as error:
-                logger.exception(error)
-                raise error
+            except yaml.YAMLError:
+                logger.exception("Failed parsing config file")
+                raise
 
         return cls(seed=seed, config=config)
 
@@ -348,14 +355,14 @@ class Simulation:
             None
         """
         num_new_customers = self.rnd_generator.poisson(self.config["customers"]["average_new_customers_per_day"])
-        logger.debug(f"Adding {num_new_customers} new customers")
+        logger.debug("Adding new customers", extra={"num_new_customers": num_new_customers})
         last_customer_id = len(self.customers)
         last_new_customer_id = last_customer_id + num_new_customers
         self.customers.extend(
             [
                 self._create_customer(customer_id=new_customer_id)
                 for new_customer_id in range(last_customer_id + 1, last_new_customer_id + 1)
-            ]
+            ],
         )
         # Simulate each customer
         for customer in self.customers:
@@ -378,7 +385,7 @@ class Simulation:
             transactions.extend(customer.transactions)
 
         # Change transactions UUIDs to sequential integers
-        unique_transaction_ids = set([t["transaction_id"] for t in transactions])
+        unique_transaction_ids = {t["transaction_id"] for t in transactions}
         transaction_id_map = {transaction_id: i for i, transaction_id in enumerate(unique_transaction_ids)}
         for transaction in transactions:
             transaction["transaction_id"] = transaction_id_map[transaction["transaction_id"]]
@@ -415,28 +422,24 @@ class Simulation:
         Returns:
             list[Product]: List of Product objects
         """
-        products = []
-
-        for category_0 in self.config["products"]:
-            for category_1 in category_0["subcategories"]:
-                for brand in category_1["brands"]:
-                    for product in brand["products"]:
-                        products.append(
-                            Product(
-                                category_0=category_0["category_0_name"],
-                                category_0_id=int(category_0["category_0_id"]),
-                                category_1=category_1["category_1_name"],
-                                category_1_id=int(category_1["category_1_id"]),
-                                brand_name=brand["brand_name"],
-                                brand_id=int(brand["brand_id"]),
-                                product_name=product["product_name"],
-                                product_id=int(product["product_id"]),
-                                unit_price=product["unit_price"],
-                                # TODO: Move this to the config file
-                                quantity_mean=self.rnd_generator.integers(1, 3),
-                            )
-                        )
-        return products
+        return [
+            Product(
+                category_0=category_0["category_0_name"],
+                category_0_id=int(category_0["category_0_id"]),
+                category_1=category_1["category_1_name"],
+                category_1_id=int(category_1["category_1_id"]),
+                brand_name=brand["brand_name"],
+                brand_id=int(brand["brand_id"]),
+                product_name=product["product_name"],
+                product_id=int(product["product_id"]),
+                unit_price=product["unit_price"],
+                quantity_mean=self.rnd_generator.integers(1, 3),
+            )
+            for category_0 in self.config["products"]
+            for category_1 in category_0["subcategories"]
+            for brand in category_1["brands"]
+            for product in brand["products"]
+        ]
 
     def save_transactions(self, output_file: str) -> None:
         """Save the transactions to a file in parquet format.
@@ -448,5 +451,5 @@ class Simulation:
             None
         """
         df = pd.DataFrame(self.transactions)
-        logger.info(f"Saving {len(df)} transactions to {output_file}")
+        logger.info("Saving transactions.", extra={"df_length": len(df), "output_file": output_file})
         df.to_parquet(output_file, index=False)
