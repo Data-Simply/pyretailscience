@@ -3,6 +3,10 @@ site_url: https://data-simply.github.io/pyretailscience
 
 nav:
   - Home: index.md
+  - Getting Started:
+      - Installation: getting_started/installation.md
+  - Analysis Modules:
+      - analysis_modules.md
   - Examples:
       - Data Contracts: examples/data_contracts.ipynb
       - Data Simulation: examples/simulate_data.ipynb
@@ -15,19 +19,28 @@ nav:
 
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
-    - navigation.tabs
-    - navigation.sections
-    - toc.integrate
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - content.tabs.link
     - content.code.annotation
     - content.code.copy
+    - content.tabs.link
+    - navigation.footer
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.integrate
   language: en
   palette:
-    primary: green
+    primary: custom
+  font:
+    text: Poppins
+    code: Roboto Mono
+  logo: assets/images/logo-white.svg
+  favicon: assets/images/logo.svg
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
   - search
@@ -49,7 +62,11 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Data-Simply/pyretailscience
+      name: PyRetailScience on GitHub
 
 copyright: |
-  &copy; 2024 <a href="https://datasimply.co"  target="_blank" rel="noopener">Data Simply</a> -
+  &copy; 2024 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
   <a href="#__consent">Change cookie settings</a>
