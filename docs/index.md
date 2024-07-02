@@ -1,5 +1,9 @@
-# Welcome to PyRetailScience
+---
+template: home.html
+title: PyRetailScience
+social:
+  cards_layout_options:
+    title: PyRetailScience | Retail Analytics Toolbox
+---
 
-More documentation coming soon. Check the API reference for now.
-
-For now see the [API Reference](api/simulation.md)
+Welcome to PyRetailScience.
