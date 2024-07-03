@@ -8,13 +8,11 @@ nav:
   - Analysis Modules:
       - analysis_modules.md
   - Examples:
-      - Data Contracts: examples/data_contracts.ipynb
-      - Data Simulation: examples/simulate_data.ipynb
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
       - Cross Shop Analysis: examples/cross_shop.ipynb
+      - Data Contracts: examples/data_contracts.ipynb
   - Reference:
-      - Simulation: api/simulation.md
       - Contracts: api/contracts.md
 
 theme:
