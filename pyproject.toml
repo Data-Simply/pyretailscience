@@ -12,7 +12,6 @@ pandas = "^2.1.4"
 pyarrow = "^14.0.2"
 matplotlib = "^3.8.2"
 numpy = "^1.26.3"
-click = "^8.1.7"
 seaborn = "^0.13.1"
 strictyaml = "^1.7.3"
 loguru = "^0.7.2"
@@ -44,9 +43,6 @@ mkdocs-jupyter = "^0.24.6"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-pyretailscience = "pyretailscience.data.cli:generate"
 
 [tool.pytest.ini_options]
 addopts = "--cov=pyretailscience --cov-report=term-missing"

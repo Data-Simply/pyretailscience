@@ -140,5 +140,4 @@ cython_debug/
 .vscode
 
 # Data files
-*.parquet
 *.csv
