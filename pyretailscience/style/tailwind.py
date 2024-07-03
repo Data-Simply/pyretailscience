@@ -1,8 +1,15 @@
-from matplotlib.colors import ListedColormap
-from matplotlib.colors import LinearSegmentedColormap
+"""Tailwind CSS color Palettes and helper functions.
 
-# Colors from Tailwind CSS
-# https://raw.githubusercontent.com/tailwindlabs/tailwindcss/a1e74f055b13a7ef5775bdd72a77a4d397565016/src/public/colors.js
+PyRetailScience includes the raw Tailwind CSS color palettes and ListedColormaps and LinearSegmentedColormaps versions
+for use when charting.
+
+Colors from Tailwind CSS
+https://raw.githubusercontent.com/tailwindlabs/tailwindcss/a1e74f055b13a7ef5775bdd72a77a4d397565016/src/public/colors.js
+
+"""
+
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+
 COLORS = {
     "slate": {
         50: "#f8fafc",
@@ -293,21 +300,51 @@ COLORS = {
 }
 
 
-def get_color_list(name):
+def get_color_list(name: str) -> list[str]:
+    """Returns a list of colors from the Tailwind color pallete of the given name.
+
+    Args:
+        name (str): The name of the color pallete.
+
+    Returns:
+        list[str]: A list of colors from the Tailwind color pallete.
+    """
     if name not in COLORS:
-        raise ValueError(f"Color name {name} not found. Valid colors are: {', '.join(COLORS.keys())}")
-    return [COLORS[name][key] for key in COLORS[name].keys()]
+        msg = f"Color pallete {name} not found. Available color palettes are: {', '.join(COLORS.keys())}."
+        raise ValueError(msg)
+    return [COLORS[name][key] for key in COLORS[name]]
 
 
-def get_listed_cmap(name):
+def get_listed_cmap(name: str) -> ListedColormap:
+    """Returns a ListedColormap from the Tailwind color pallete of the given name.
+
+    Args:
+        name (str): The name of the color pallete.
+
+    Returns:
+        ListedColormap: The color pallete as a ListedColormap.
+    """
     return ListedColormap(get_color_list(name))
 
 
-def get_linear_cmap(name):
+def get_linear_cmap(name: str) -> LinearSegmentedColormap:
+    """Returns a LinearSegmentedColormap from the Tailwind color pallete of the given name.
+
+    Args:
+        name (str): The name of the color pallete.
+
+    Returns:
+        LinearSegmentedColormap: The color pallete as a LinearSegmentedColormap.
+    """
     return LinearSegmentedColormap.from_list(f"{name}_linear_colormap", get_color_list(name))
 
 
 def get_base_cmap() -> ListedColormap:
+    """Returns a ListedColormap with all the Tailwind colors.
+
+    Returns:
+        ListedColormap: A ListedColormap with all the Tailwind colors.
+    """
     color_order = [
         "red",
         "orange",
@@ -330,9 +367,7 @@ def get_base_cmap() -> ListedColormap:
     ]
     color_numbers = [500, 300, 700]
     colors = []
-    for color_number in color_numbers:
-        for color in color_order:
-            colors.append(COLORS[color][color_number])
+    colors = [COLORS[color][color_number] for color_number in color_numbers for color in color_order]
 
     return ListedColormap(colors)
 

@@ -1,3 +1,5 @@
+"""This module contains functions to create standard graphs for retail science projects."""
+
 from typing import Literal
 
 import numpy as np
@@ -6,7 +8,7 @@ from matplotlib.axes import Axes, SubplotBase
 from pandas.tseries.offsets import BaseOffset
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles as gs
+from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS, get_linear_cmap
 
 # TODO: Consider simplifying this by reducing the color range in the get_linear_cmap function.
@@ -25,11 +27,10 @@ def time_plot(
     y_label: str | None = None,
     legend_title: str | None = None,
     ax: Axes | None = None,
-    source_text: str = None,
+    source_text: str | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
-    """
-    Plots the value_col over time.
+    """Plots the value_col over time.
 
     Args:
         df (pd.DataFrame): The dataframe to plot.
@@ -101,16 +102,16 @@ def time_plot(
             xycoords="axes fraction",
             ha="left",
             va="center",
-            fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-            fontproperties=gs.POPPINS_LIGHT_ITALIC,
+            fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+            fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
             color="dimgray",
         )
 
     # Set the font properties for the tick labels
     for tick in ax.get_xticklabels():
-        tick.set_fontproperties(gs.POPPINS_REG)
+        tick.set_fontproperties(GraphStyles.POPPINS_REG)
     for tick in ax.get_yticklabels():
-        tick.set_fontproperties(gs.POPPINS_REG)
+        tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
     return ax
 
@@ -124,14 +125,14 @@ def get_indexes(
     agg_func: str = "sum",
     offset: int = 0,
 ) -> pd.DataFrame:
-    """
-    Calculates the index of the value_col for the subset of a dataframe defined by df_index_filter.
+    """Calculates the index of the value_col for the subset of a dataframe defined by df_index_filter.
 
     Args:
         df (pd.DataFrame): The dataframe to calculate the index on.
         df_index_filter (list[bool]): The boolean index to filter the data by.
-        grp_cols (list[str]): The columns to group the data by.
+        index_col (str): The column to calculate the index on.
         value_col (str): The column to calculate the index on.
+        index_subgroup_col (str, optional): The column to subgroup the index by. Defaults to None.
         agg_func (str): The aggregation function to apply to the value_col.
         offset (int, optional): The offset to subtract from the index. Defaults to 0.
 
@@ -157,12 +158,11 @@ def get_indexes(
         subset_total = subset_df.groupby(index_subgroup_col)[value_col].sum()
     subset_s = subset_df[value_col] / subset_total
 
-    index_df = ((subset_s / overall_s * 100) - offset).to_frame("index").reset_index()
-
-    return index_df
+    return ((subset_s / overall_s * 100) - offset).to_frame("index").reset_index()
 
 
-def index_plot(
+# TODO: Refactor this into a class to reduce complexity and arg count
+def index_plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
     df: pd.DataFrame,
     df_index_filter: list[bool],
     value_col: str,
@@ -177,19 +177,18 @@ def index_plot(
     sort_by: Literal["group", "value"] | None = "group",
     sort_order: Literal["ascending", "descending"] = "ascending",
     ax: Axes | None = None,
-    source_text: str = None,
+    source_text: str | None = None,
     exclude_groups: list[any] | None = None,
     include_only_groups: list[any] | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
-    """
-    Plots the value_col over time.
+    """Plots the value_col over time.
 
     Args:
         df (pd.DataFrame): The dataframe to plot.
         df_index_filter (list[bool]): The filter to apply to the dataframe.
         value_col (str): The column to plot.
-        group_col str: The column to group the data by.
+        group_col (str): The column to group the data by.
         agg_func (str, optional): The aggregation function to apply to the value_col. Defaults to "sum".
         series_col (str, optional): The column to use as the series. Defaults to None.
         title (str, optional): The title of the plot. Defaults to None. When None the title is set to
@@ -221,7 +220,6 @@ def index_plot(
         ValueError: If sort_order is not either "ascending" or "descending".
         ValueError: If exclude_groups and include_only_groups are used together.
     """
-
     if sort_by is not None and sort_by not in ["group", "value"]:
         raise ValueError("sort_by must be either 'group' or 'value' or None")
     if sort_order not in ["ascending", "descending"]:
@@ -265,7 +263,7 @@ def index_plot(
         legend=show_legend,
         ax=ax,
         color=colors,
-        width=gs.DEFAULT_BAR_WIDTH,
+        width=GraphStyles.DEFAULT_BAR_WIDTH,
         zorder=2,
         **kwargs,
     )
@@ -273,7 +271,7 @@ def index_plot(
     ax.axvline(100, color="black", linewidth=1, alpha=0.5)
     if highlight_range == "default":
         highlight_range = (80, 120)
-    if highlight_range is not None:
+    elif highlight_range is not None:
         ax.axvline(highlight_range[0], color="black", linewidth=0.25, alpha=0.1, zorder=-1)
         ax.axvline(highlight_range[1], color="black", linewidth=0.25, alpha=0.1, zorder=-1)
         ax.axvspan(highlight_range[0], highlight_range[1], color="black", alpha=0.1, zorder=-1)
@@ -299,15 +297,15 @@ def index_plot(
             xycoords="axes fraction",
             ha="left",
             va="center",
-            fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-            fontproperties=gs.POPPINS_LIGHT_ITALIC,
+            fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+            fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
             color="dimgray",
         )
 
     # Set the font properties for the tick labels
     for tick in ax.get_xticklabels():
-        tick.set_fontproperties(gs.POPPINS_REG)
+        tick.set_fontproperties(GraphStyles.POPPINS_REG)
     for tick in ax.get_yticklabels():
-        tick.set_fontproperties(gs.POPPINS_REG)
+        tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
     return ax

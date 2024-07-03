@@ -1,6 +1,9 @@
+"""Helper functions for styling graphs."""
+
+import importlib.resources as pkg_resources
+
 import matplotlib.font_manager as fm
 from matplotlib.axes import Axes
-import importlib.resources as pkg_resources
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 
@@ -25,7 +28,12 @@ class GraphStyles:
     DEFAULT_BAR_WIDTH = 0.8
 
 
-def human_format(num, pos=None, decimals=0, prefix="") -> str:
+def human_format(
+    num: float,
+    pos: int | None = None,  # noqa: ARG001 (pos is only used for Matplotlib compatibility)
+    decimals: int = 0,
+    prefix: str = "",
+) -> str:
     """Format a number in a human readable format for Matplotlib.
 
     Args:
@@ -37,10 +45,13 @@ def human_format(num, pos=None, decimals=0, prefix="") -> str:
     Returns:
         str: The formatted number.
     """
+    # The minimum difference between two numbers to recieve a different suffix
+    minimum_magnitude_difference = 1000.0
+
     magnitude = 0
-    while abs(num) >= 1000:
+    while abs(num) >= minimum_magnitude_difference:
         magnitude += 1
-        num /= 1000.0
+        num /= minimum_magnitude_difference
 
     # Add more suffixes if you need them
     return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
@@ -56,6 +67,9 @@ def standard_graph_styles(
 
     Args:
         ax (Axes): The graph to apply the styles to.
+        title (str, optional): The title of the graph. Defaults to None.
+        x_label (str, optional): The x-axis label. Defaults to None.
+        y_label (str, optional): The y-axis label. Defaults to None.
 
     Returns:
         Axes: The graph with the styles applied.
@@ -91,9 +105,8 @@ def standard_graph_styles(
     return ax
 
 
-def not_none(value1, value2):
-    """
-    Helper funciont that returns the first value that is not None.
+def not_none(value1: any, value2: any) -> any:
+    """Helper funciont that returns the first value that is not None.
 
     Args:
         value1: The first value.
@@ -108,8 +121,7 @@ def not_none(value1, value2):
 
 
 def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decimals: int = 100) -> int:
-    """
-    Helper function for the `human_format` function that determines the number of decimals to use for the y-axis.
+    """Helper function for the `human_format` function that determines the number of decimals to use for the y-axis.
 
     Args:
         ylim: The y-axis limits.

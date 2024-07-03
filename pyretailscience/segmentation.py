@@ -1,3 +1,5 @@
+"""This module contains classes for segmenting customers based on their spend and transaction statistics by segment."""
+
 from typing import Literal
 
 import pandas as pd
@@ -5,21 +7,22 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.data.contracts import (
+    CustomContract,
     TransactionItemLevelContract,
     TransactionLevelContract,
-    CustomContract,
     build_expected_columns,
-    build_non_null_columns,
     build_expected_unique_columns,
+    build_non_null_columns,
 )
-from pyretailscience.style.graph_utils import GraphStyles as gs
+from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
 
 
 class BaseSegmentation:
+    """A base class for customer segmentation."""
+
     def add_segment(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Adds the segment to the dataframe based on the customer_id column.
+        """Adds the segment to the dataframe based on the customer_id column.
 
         Args:
             df (pd.DataFrame): The dataframe to add the segment to. The dataframe must have a customer_id column.
@@ -40,12 +43,12 @@ class BaseSegmentation:
 
 
 class ExistingSegmentation(BaseSegmentation):
+    """Segments customers based on an existing segment in the dataframe."""
+
     def __init__(self, df: pd.DataFrame) -> None:
-        """
-        Segments customers based on an existing segment in the dataframe.
+        """Segments customers based on an existing segment in the dataframe.
 
         Args:
-
             df (pd.DataFrame): A dataframe with the customer_id, segment_name and segment_id columns.
 
         Raises:
@@ -60,26 +63,28 @@ class ExistingSegmentation(BaseSegmentation):
         )
 
         if contract.validate() is False:
-            raise ValueError(
-                f"The dataframe requires the columns {required_cols} and they must be non-null and unique."
-            )
+            msg = f"The dataframe requires the columns {required_cols} and they must be non-null and unique."
+            raise ValueError(msg)
 
         self.df = df[["customer_id", "segment_name", "segment_id"]].set_index("customer_id")
 
 
 class HMLSegmentation(BaseSegmentation):
+    """Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend."""
+
     def __init__(
         self,
         df: pd.DataFrame,
         value_col: str = "total_price",
         zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
     ) -> None:
-        """
-        Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend.
+        """Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend.
 
         Args:
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must contain a customer_id column.
             value_col (str, optional): The column to use for the segmentation. Defaults to "total_price".
+            zero_value_customers (Literal["separate_segment", "exclude", "include_with_light"], optional): How to handle
+                customers with zero spend. Defaults to "separate_segment".
 
         Raises:
             ValueError: If the dataframe is missing the columns "customer_id" or `value_col`, or these columns contain
@@ -93,7 +98,8 @@ class HMLSegmentation(BaseSegmentation):
         )
 
         if contract.validate() is False:
-            raise ValueError(f"The dataframe requires the columns {required_cols} and they must be non-null")
+            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+            raise ValueError(msg)
 
         # Group by customer_id and calculate total_spend
         grouped_df = df.groupby("customer_id")[value_col].sum().to_frame(value_col)
@@ -125,9 +131,10 @@ class HMLSegmentation(BaseSegmentation):
 
 
 class SegTransactionStats:
+    """Calculates transaction statistics by segment."""
+
     def __init__(self, df: pd.DataFrame, segment_col: str = "segment_id") -> None:
-        """
-        Calculates transaction statistics by segment.
+        """Calculates transaction statistics by segment.
 
         Args:
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
@@ -158,7 +165,7 @@ class SegTransactionStats:
         else:
             raise NotImplementedError(
                 "The dataframe does not comply with the TransactionItemLevelContract or TransactionLevelContract. "
-                "These are the only two contracts supported at this time."
+                "These are the only two contracts supported at this time.",
             )
         total_num_customers = df["customer_id"].nunique()
         stats_df["spend_per_cust"] = stats_df["revenue"] / stats_df["customers"]
@@ -177,11 +184,10 @@ class SegTransactionStats:
         ax: Axes | None = None,
         orientation: Literal["vertical", "horizontal"] = "vertical",
         sort_order: Literal["ascending", "descending", None] = None,
-        source_text: str = None,
+        source_text: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
-        """
-        Plots the value_col by segment.
+        """Plots the value_col by segment.
 
         Args:
             value_col (str): The column to plot.
@@ -206,7 +212,6 @@ class SegTransactionStats:
             ValueError: If the sort_order is not "ascending", "descending" or None.
             ValueError: If the orientation is not "vertical" or "horizontal".
         """
-
         if sort_order not in ["ascending", "descending", None]:
             raise ValueError("sort_order must be either 'ascending' or 'descending' or None")
         if orientation not in ["vertical", "horizontal"]:
@@ -244,21 +249,21 @@ class SegTransactionStats:
 
         ax.set_title(
             gu.not_none(title, default_title),
-            fontproperties=gs.POPPINS_SEMI_BOLD,
-            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-            pad=gs.DEFAULT_TITLE_PAD,
+            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
+            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
+            pad=GraphStyles.DEFAULT_TITLE_PAD,
         )
         ax.set_ylabel(
             plot_y_label,
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
         ax.set_xlabel(
             plot_x_label,
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
 
         if source_text is not None:
@@ -268,15 +273,15 @@ class SegTransactionStats:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
 
         # Set the font properties for the tick labels
         for tick in ax.get_xticklabels():
-            tick.set_fontproperties(gs.POPPINS_REG)
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
         for tick in ax.get_yticklabels():
-            tick.set_fontproperties(gs.POPPINS_REG)
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
         return ax

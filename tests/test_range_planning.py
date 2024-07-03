@@ -1,11 +1,17 @@
+"""Tests for the range_planning module."""
+
 import numpy as np
 import pandas as pd
-import pyretailscience.range_planning as rp
 import pytest
+
+import pyretailscience.range_planning as rp
 
 
 class TestCustomerDecisionHierarchy:
+    """Tests for the CustomerDecisionHierarchy class."""
+
     def test_calculate_yules_q_identical_arrays(self):
+        """Test that the function returns 1.0 when the arrays are identical."""
         bought_product_1 = np.array([1, 0, 1, 0, 1], dtype=bool)
         bought_product_2 = np.array([1, 0, 1, 0, 1], dtype=bool)
         expected_q = 1.0
@@ -13,6 +19,7 @@ class TestCustomerDecisionHierarchy:
         assert rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2) == expected_q
 
     def test_calculate_yules_q_opposite_arrays(self):
+        """Test that the function returns -1.0 when the arrays are opposite."""
         bought_product_1 = np.array([1, 0, 1, 0, 1], dtype=bool)
         bought_product_2 = np.array([0, 1, 0, 1, 0], dtype=bool)
         expected_q = -1.0
@@ -20,6 +27,7 @@ class TestCustomerDecisionHierarchy:
         assert rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2) == expected_q
 
     def test_calculate_yules_q_different_length_arrays(self):
+        """Test that the function raises a ValueError when the arrays have different lengths."""
         bought_product_1 = np.array([1, 0, 1, 0, 1], dtype=bool)
         bought_product_2 = np.array([1, 0, 1, 0], dtype=bool)
 
@@ -27,6 +35,7 @@ class TestCustomerDecisionHierarchy:
             rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2)
 
     def test_calculate_yules_q_empty_arrays(self):
+        """Test that the function returns 0.0 when the arrays are empty."""
         bought_product_1 = np.array([], dtype=bool)
         bought_product_2 = np.array([], dtype=bool)
         expected_q = 0.0
@@ -34,6 +43,7 @@ class TestCustomerDecisionHierarchy:
         assert rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2) == expected_q
 
     def test_get_yules_q_distances(self):
+        """Test that the function returns the correct Yules Q distances."""
         bought_product_1 = np.array([1, 0, 1, 0, 0, 1, 1, 0, 1], dtype=bool)
         bought_product_2 = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1], dtype=bool)
         expected_q = -0.6363636363636364
@@ -41,6 +51,7 @@ class TestCustomerDecisionHierarchy:
         assert rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2) == expected_q
 
     def test_init_invalid_dataframe(self):
+        """Test that the function raises a ValueError when the dataframe is invalid."""
         df = pd.DataFrame({"customer_id": [1, 2, 3], "transaction_id": [1, 2, 3], "product_name": ["A", "B", "C"]})
         exclude_same_transaction_products = True
         random_state = 42
@@ -49,12 +60,13 @@ class TestCustomerDecisionHierarchy:
             rp.CustomerDecisionHierarchy(df, exclude_same_transaction_products, random_state)
 
     def test_init_exclude_same_transaction_products_true(self):
+        """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is True."""
         df = pd.DataFrame(
             {
                 "customer_id": [1, 1, 1, 2, 2, 2, 3, 3],
                 "transaction_id": [1, 1, 2, 3, 3, 4, 5, 6],
                 "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
-            }
+            },
         )
         exclude_same_transaction_products = True
 
@@ -65,19 +77,20 @@ class TestCustomerDecisionHierarchy:
         assert pairs_df.equals(expected_pairs_df)
 
     def test_init_exclude_same_transaction_products_false(self):
+        """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is False."""
         df = pd.DataFrame(
             {
                 "customer_id": [1, 1, 1, 2, 2, 2, 3, 3],
                 "transaction_id": [1, 1, 2, 3, 3, 4, 5, 6],
                 "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
-            }
+            },
         )
         exclude_same_transaction_products = False
 
         pairs_df = rp.CustomerDecisionHierarchy._get_pairs(df, exclude_same_transaction_products)
 
         expected_pairs_df = pd.DataFrame(
-            {"customer_id": [1, 1, 1, 2, 2, 3], "product_name": ["A", "B", "C", "D", "E", "E"]}
+            {"customer_id": [1, 1, 1, 2, 2, 3], "product_name": ["A", "B", "C", "D", "E", "E"]},
         ).astype("category")
 
         assert pairs_df.equals(expected_pairs_df)
