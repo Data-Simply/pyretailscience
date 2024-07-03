@@ -1,14 +1,18 @@
+"""This module contains the CrossShop class that is used to create a cross-shop diagram."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
-from pyretailscience.style.graph_utils import GraphStyles as gs
+from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
 
 
 class CrossShop:
+    """A class to create a cross-shop diagram."""
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -47,7 +51,8 @@ class CrossShop:
             extended_expectations=build_non_null_columns(columns=required_cols),
         )
         if contract.validate() is False:
-            raise ValueError(f"The dataframe requires the columns {required_cols} and they must be non-null")
+            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+            raise ValueError(msg)
 
         self.group_count = 2 if group_3_idx is None else 3
 
@@ -95,7 +100,6 @@ class CrossShop:
         Raises:
             ValueError: If the groups are not mutually exclusive.
         """
-
         if isinstance(group_1_idx, list):
             group_1_idx = pd.Series(group_1_idx)
         if isinstance(group_2_idx, list):
@@ -124,9 +128,7 @@ class CrossShop:
 
         kpi_df = df.groupby("customer_id")[value_col].agg(agg_func)
 
-        cs_df = cs_df.merge(kpi_df, left_index=True, right_index=True)
-
-        return cs_df
+        return cs_df.merge(kpi_df, left_index=True, right_index=True)
 
     @staticmethod
     def _calc_cross_shop_table(
@@ -177,7 +179,7 @@ class CrossShop:
         vary_size: bool = False,
         figsize: tuple[int, int] | None = None,
         ax: Axes | None = None,
-        **kwargs,
+        **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plot the cross-shop diagram.
 
@@ -188,15 +190,16 @@ class CrossShop:
                 False.
             figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
             ax (Axes, optional): The axes to plot on. Defaults to None.
-            **kwargs: Additional keyword arguments to pass to the diagram.
+            **kwargs (dict[str, any]): Additional keyword arguments to pass to the diagram.
 
         Returns:
             SubplotBase: The axes of the plot.
         """
+        three_circles = 3
 
         zero_group = (0, 0)
         colors = [COLORS["green"][500], COLORS["green"][800]]
-        if self.group_count == 3:
+        if self.group_count == three_circles:
             zero_group = (0, 0, 0)
             colors += [COLORS["green"][200]]
 
@@ -229,24 +232,24 @@ class CrossShop:
             )
 
         for text in diagram.set_label_artists:
-            text.set_fontproperties(gs.POPPINS_REG)
-            text.set_fontsize(gs.DEFAULT_AXIS_LABEL_FONT_SIZE)
-            if self.group_count == 3 and not vary_size:
+            text.set_fontproperties(GraphStyles.POPPINS_REG)
+            text.set_fontsize(GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE)
+            if self.group_count == three_circles and not vary_size:
                 # Increase the spacing between text and the diagram to avoid overlap
                 self.translate_text_outward(text)
 
-        for subset_id, _ in subset_sizes.items():
+        for subset_id in subset_sizes:
             if subset_id not in diagram.subset_label_artists:
                 continue
             text = diagram.subset_label_artists[subset_id]
-            text.set_fontproperties(gs.POPPINS_REG)
+            text.set_fontproperties(GraphStyles.POPPINS_REG)
 
         if title is not None:
             ax.set_title(
                 title,
-                fontproperties=gs.POPPINS_SEMI_BOLD,
-                fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-                pad=gs.DEFAULT_TITLE_PAD + 20,
+                fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
+                fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
+                pad=GraphStyles.DEFAULT_TITLE_PAD + 20,
             )
 
         if source_text is not None:
@@ -256,8 +259,8 @@ class CrossShop:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
 
