@@ -1,3 +1,5 @@
+"""This module contains the RangePlanning class for performing range planning analysis."""
+
 from typing import Literal
 
 import matplotlib.pyplot as plt
@@ -8,10 +10,12 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
-from pyretailscience.style.graph_utils import GraphStyles as gs
+from pyretailscience.style.graph_utils import GraphStyles
 
 
 class CustomerDecisionHierarchy:
+    """A class to perform range planning analysis using the Customer Decision Hierarchy method."""
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -19,9 +23,8 @@ class CustomerDecisionHierarchy:
         method: Literal["truncated_svd", "yules_q"] = "truncated_svd",
         min_var_explained: float = 0.8,
         random_state: int = 42,
-    ):
-        """
-        Initializes the RangePlanning object.
+    ) -> None:
+        """Initializes the RangePlanning object.
 
         Args:
             df (pd.DataFrame): The input dataframe containing transaction data. The dataframe must comply with the
@@ -49,7 +52,7 @@ class CustomerDecisionHierarchy:
         if cdh_contract.validate() is False:
             raise ValueError(
                 "The dataframe requires the columns 'customer_id', 'transaction_id', and 'product_name' and they must "
-                "be non-null"
+                "be non-null",
             )
 
         self.random_state = random_state
@@ -67,19 +70,19 @@ class CustomerDecisionHierarchy:
             )
             # Drop all rows from pairs_df where customer_id and product_name are in pairs_to_exclude_df
             pairs_df = pairs_df.merge(
-                pairs_to_exclude_df, on=["customer_id", "product_name"], how="left", indicator=True
+                pairs_to_exclude_df,
+                on=["customer_id", "product_name"],
+                how="left",
+                indicator=True,
             )
             pairs_df = pairs_df[pairs_df["_merge"] == "left_only"][["customer_id", "product_name"]].drop_duplicates()
         else:
             pairs_df = df[["customer_id", "product_name"]].drop_duplicates()
 
-        pairs_df = pairs_df.reset_index(drop=True).astype("category")
-
-        return pairs_df
+        return pairs_df.reset_index(drop=True).astype("category")
 
     def _get_truncated_svd_distances(self, min_var_explained: float = 0.8) -> np.array:
-        """
-        Calculate the truncated SVD distances for the given pairs dataframe.
+        """Calculate the truncated SVD distances for the given pairs dataframe.
 
         Args:
             min_var_explained (float): The minimum variance explained required.
@@ -97,7 +100,7 @@ class CustomerDecisionHierarchy:
                     self.pairs_df["product_name"].cat.codes,
                     self.pairs_df["customer_id"].cat.codes,
                 ),
-            )
+            ),
         )
 
         n_products = sparse_matrix.shape[0]
@@ -108,16 +111,15 @@ class CustomerDecisionHierarchy:
         req_n_components = np.argmax(cuml_var >= min_var_explained) + 1
 
         reduced_matrix = TruncatedSVD(n_components=req_n_components, random_state=self.random_state).fit_transform(
-            sparse_matrix
+            sparse_matrix,
         )
         norm_matrix = reduced_matrix / np.linalg.norm(reduced_matrix, axis=1, keepdims=True)
 
-        return norm_matrix
+        return norm_matrix  # noqa: RET504
 
     @staticmethod
-    def _calculate_yules_q(bought_product_1: np.array, bought_product_2: np.array):
-        """
-        Calculates the Yule's Q coefficient between two binary arrays.
+    def _calculate_yules_q(bought_product_1: np.array, bought_product_2: np.array) -> float:
+        """Calculates the Yule's Q coefficient between two binary arrays.
 
         Args:
             bought_product_1 (np.array): Binary array representing the first bought product. Each element is 1 if the
@@ -145,13 +147,13 @@ class CustomerDecisionHierarchy:
         c = np.count_nonzero(~bought_product_1 & bought_product_2)
         d = np.count_nonzero(~bought_product_1 & ~bought_product_2)
 
+        # Calculate Yule's Q coefficient
         q = (a * d - b * c) / (a * d + b * c)
 
-        return q
+        return q  # noqa: RET504
 
     def _get_yules_q_distances(self) -> float:
-        """
-        Calculate the Yules Q distances between pairs of products.
+        """Calculate the Yules Q distances between pairs of products.
 
         Returns:
             float: The Yules Q distances between pairs of products.
@@ -189,10 +191,8 @@ class CustomerDecisionHierarchy:
                 yules_q_matrix[i, j] = yules_q_dist
                 yules_q_matrix[j, i] = yules_q_dist
 
-        # Normalize the yules q values to be between 0 and 1
-        yules_q_matrix = (yules_q_matrix + 1) / 2
-
-        return yules_q_matrix
+        # Normalize the yules q values to be between 0 and 1 and return
+        return (yules_q_matrix + 1) / 2
 
     def _calculate_distances(
         self,
@@ -232,8 +232,7 @@ class CustomerDecisionHierarchy:
         source_text: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
-        """
-        Plots the range planning dendrogram.
+        """Plots the range planning dendrogram.
 
         Args:
             title (str, optional): The title of the plot. Defaults to None.
@@ -254,37 +253,34 @@ class CustomerDecisionHierarchy:
             _, ax = plt.subplots(figsize=figsize)
 
         orientation = kwargs.get("orientation", "top")
-        if orientation in ["top", "bottom"]:
-            default_x_label = "Products"
-            default_y_label = "Distance"
-        else:
-            default_x_label = "Distance"
-            default_y_label = "Products"
+        default_x_label, default_y_label = (
+            ("Products", "Distance") if orientation in ["top", "bottom"] else ("Distance", "Products")
+        )
 
         ax.set_title(
             title,
-            fontproperties=gs.POPPINS_SEMI_BOLD,
-            fontsize=gs.DEFAULT_TITLE_FONT_SIZE,
-            pad=gs.DEFAULT_TITLE_PAD + 5,
+            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
+            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
+            pad=GraphStyles.DEFAULT_TITLE_PAD + 5,
         )
         ax.set_xlabel(
             gu.not_none(x_label, default_x_label),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
         ax.set_ylabel(
             gu.not_none(y_label, default_y_label),
-            fontproperties=gs.POPPINS_REG,
-            fontsize=gs.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=gs.DEFAULT_AXIS_LABEL_PAD,
+            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
         )
 
         # Set the y label to be on the right side of the plot
         if orientation == "left":
             ax.yaxis.tick_right()
             ax.yaxis.set_label_position("right")
-        if orientation == "bottom":
+        elif orientation == "bottom":
             ax.xaxis.tick_top()
             ax.xaxis.set_label_position("top")
 
@@ -311,13 +307,13 @@ class CustomerDecisionHierarchy:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
 
-        ax.xaxis.set_tick_params(labelsize=gs.DEFAULT_TICK_LABEL_FONT_SIZE)
-        ax.yaxis.set_tick_params(labelsize=gs.DEFAULT_TICK_LABEL_FONT_SIZE)
+        ax.xaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
+        ax.yaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
 
         # Rotate the x-axis labels if they are too long
         if orientation in ["top", "bottom"]:
@@ -325,8 +321,8 @@ class CustomerDecisionHierarchy:
 
         # Set the font properties for the tick labels
         for tick in ax.get_xticklabels():
-            tick.set_fontproperties(gs.POPPINS_REG)
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
         for tick in ax.get_yticklabels():
-            tick.set_fontproperties(gs.POPPINS_REG)
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
         return ax
