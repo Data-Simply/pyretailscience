@@ -1,17 +1,33 @@
+"""This module performs gain loss analysis (switching analysis) on a DataFrame to assess customer movement between brands or products over time.
+
+Gain loss analysis, also known as switching analysis, is a marketing analytics technique used to
+assess customer movement between brands or products over time. It helps businesses understand the dynamics of customer
+acquisition and churn. Here's a concise definition: Gain loss analysis examines the flow of customers to and from a
+brand or product, quantifying:
+
+1. Gains: New customers acquired from competitors
+2. Losses: Existing customers lost to competitors
+3. Net change: The overall impact on market share
+
+This analysis helps marketers:
+
+- Identify trends in customer behavior
+- Evaluate the effectiveness of marketing strategies
+- Understand competitive dynamics in the market
+"""
+
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
-from pyretailscience.style.graph_utils import GraphStyles as gs
+from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
-
-# TODO: Consider simplifying this by reducing the color range in the get_linear_cmap function.
-COLORMAP_MIN = 0.25
-COLORMAP_MAX = 0.75
 
 
 class GainLoss:
+    """A class to perform gain loss analysis on a DataFrame to assess customer movement between brands or products over time."""
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -24,7 +40,7 @@ class GainLoss:
         group_col: str | None = None,
         value_col: str = "total_price",
         agg_func: str = "sum",
-    ):
+    ) -> None:
         """Calculate the gain loss table for a given DataFrame at the customer level.
 
         Args:
@@ -48,7 +64,7 @@ class GainLoss:
 
         if not len(p1_index) == len(p2_index) == len(focus_group_index) == len(comparison_group_index):
             raise ValueError(
-                "p1_index, p2_index, focus_group_index, and comparison_group_index should have the same length"
+                "p1_index, p2_index, focus_group_index, and comparison_group_index should have the same length",
             )
 
         required_cols = ["customer_id", value_col] + ([group_col] if group_col is not None else [])
@@ -58,7 +74,8 @@ class GainLoss:
             extended_expectations=build_non_null_columns(columns=required_cols),
         )
         if contract.validate() is False:
-            raise ValueError(f"The dataframe requires the columns {required_cols} and they must be non-null")
+            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+            raise ValueError(msg)
 
         self.focus_group_name = focus_group_name
         self.comparison_group_name = comparison_group_name
@@ -81,6 +98,49 @@ class GainLoss:
         )
 
     @staticmethod
+    def process_customer_group(
+        focus_p1: float,
+        comparison_p1: float,
+        focus_p2: float,
+        comparison_p2: float,
+        focus_diff: float,
+        comparison_diff: float,
+    ) -> tuple[float, float, float, float, float, float]:
+        """Process the gain loss for a customer group.
+
+        Args:
+            focus_p1 (float | int): The focus group total in the first time period.
+            comparison_p1 (float | int): The comparison group total in the first time period.
+            focus_p2 (float | int): The focus group total in the second time period.
+            comparison_p2 (float | int): The comparison group total in the second time period.
+            focus_diff (float | int): The difference in the focus group totals.
+            comparison_diff (float | int): The difference in the comparison group totals.
+
+        Returns:
+            tuple[float, float, float, float, float, float]: The gain loss for the customer group.
+        """
+        if focus_p1 == 0 and comparison_p1 == 0:
+            return focus_p2, 0, 0, 0, 0, 0
+        if focus_p2 == 0 and comparison_p2 == 0:
+            return 0, -1 * focus_p1, 0, 0, 0, 0
+
+        if focus_diff > 0:
+            focus_inc_dec = focus_diff if comparison_diff > 0 else max(0, comparison_diff + focus_diff)
+        elif comparison_diff < 0:
+            focus_inc_dec = focus_diff
+        else:
+            focus_inc_dec = min(0, comparison_diff + focus_diff)
+
+        increased_focus = max(0, focus_inc_dec)
+        decreased_focus = min(0, focus_inc_dec)
+
+        transfer = focus_diff - focus_inc_dec
+        switch_from_comparison = max(0, transfer)
+        switch_to_comparison = min(0, transfer)
+
+        return 0, 0, increased_focus, decreased_focus, switch_from_comparison, switch_to_comparison
+
+    @staticmethod
     def _calc_gain_loss(
         df: pd.DataFrame,
         p1_index: list[bool],
@@ -91,8 +151,7 @@ class GainLoss:
         value_col: str = "total_price",
         agg_func: str = "sum",
     ) -> pd.DataFrame:
-        """
-        Calculate the gain loss table for a given DataFrame at the customer level.
+        """Calculate the gain loss table for a given DataFrame at the customer level.
 
         Args:
             df (pd.DataFrame): The DataFrame to calculate the gain loss table from.
@@ -102,6 +161,7 @@ class GainLoss:
             comparison_group_index (list[bool]): The index for the comparison group.
             group_col (str | None, optional): The column to group by. Defaults to None.
             value_col (str, optional): The column to calculate the gain loss from. Defaults to "total_price".
+            agg_func (str, optional): The aggregation function to use. Defaults to "sum".
 
         Returns:
             pd.DataFrame: The gain loss table.
@@ -144,14 +204,27 @@ class GainLoss:
         gl_df["comparison_diff"] = gl_df["comparison_p2"] - gl_df["comparison_p1"]
         gl_df["total_diff"] = gl_df["total_p2"] - gl_df["total_p1"]
 
-        gl_df["switch_from_comparison"] = (gl_df["focus_diff"] - gl_df["total_diff"]).apply(lambda x: max(x, 0))
-        gl_df["switch_to_comparison"] = (gl_df["focus_diff"] - gl_df["total_diff"]).apply(lambda x: min(x, 0))
-
-        gl_df["new"] = gl_df.apply(lambda x: max(x["total_diff"], 0) if x["focus_p1"] == 0 else 0, axis=1)
-        gl_df["lost"] = gl_df.apply(lambda x: min(x["total_diff"], 0) if x["focus_p2"] == 0 else 0, axis=1)
-
-        gl_df["increased_focus"] = gl_df.apply(lambda x: max(x["total_diff"], 0) if x["focus_p1"] != 0 else 0, axis=1)
-        gl_df["decreased_focus"] = gl_df.apply(lambda x: min(x["total_diff"], 0) if x["focus_p2"] != 0 else 0, axis=1)
+        (
+            gl_df["new"],
+            gl_df["lost"],
+            gl_df["increased_focus"],
+            gl_df["decreased_focus"],
+            gl_df["switch_from_comparison"],
+            gl_df["switch_to_comparison"],
+        ) = zip(
+            *gl_df.apply(
+                lambda x: GainLoss.process_customer_group(
+                    focus_p1=x["focus_p1"],
+                    comparison_p1=x["comparison_p1"],
+                    focus_p2=x["focus_p2"],
+                    comparison_p2=x["comparison_p2"],
+                    focus_diff=x["focus_diff"],
+                    comparison_diff=x["comparison_diff"],
+                ),
+                axis=1,
+            ),
+            strict=False,
+        )
 
         return gl_df
 
@@ -171,8 +244,8 @@ class GainLoss:
         """
         if group_col is None:
             return gain_loss_df.sum().to_frame("").T
-        else:
-            return gain_loss_df.groupby(level=0).sum()
+
+        return gain_loss_df.groupby(level=0).sum()
 
     def plot(
         self,
@@ -193,6 +266,7 @@ class GainLoss:
             ax (Axes | None, optional): The axes to plot on. Defaults to None.
             source_text (str | None, optional): The source text to add to the plot. Defaults to None.
             move_legend_outside (bool, optional): Whether to move the legend outside the plot. Defaults to False.
+            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot.
 
         Returns:
             SubplotBase: The plot
@@ -217,7 +291,7 @@ class GainLoss:
         if move_legend_outside:
             legend_bbox_to_anchor = (1.05, 1)
 
-        # TODO: Ensure that each label ctually has data before adding to the legend
+        # TODO: Ensure that each label actually has data before adding to the legend
         legend = ax.legend(
             [
                 "New",
@@ -252,15 +326,15 @@ class GainLoss:
                 xycoords="axes fraction",
                 ha="left",
                 va="center",
-                fontsize=gs.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=gs.POPPINS_LIGHT_ITALIC,
+                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
                 color="dimgray",
             )
 
         # Set the font properties for the tick labels
         for tick in ax.get_xticklabels():
-            tick.set_fontproperties(gs.POPPINS_REG)
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
         for tick in ax.get_yticklabels():
-            tick.set_fontproperties(gs.POPPINS_REG)
+            tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
         return ax
