@@ -145,6 +145,8 @@ class SegTransactionStats:
 
         """
         required_cols = ["customer_id", "total_price", "transaction_id", segment_col]
+        if "quantity" in df.columns:
+            required_cols.append("quantity")
         contract = CustomContract(
             df,
             basic_expectations=build_expected_columns(columns=required_cols),
