@@ -8,8 +8,6 @@ from matplotlib.axes import Axes, SubplotBase
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.data.contracts import (
     CustomContract,
-    TransactionItemLevelContract,
-    TransactionLevelContract,
     build_expected_columns,
     build_expected_unique_columns,
     build_non_null_columns,
@@ -146,34 +144,51 @@ class SegTransactionStats:
                 TransactionLevelContract.
 
         """
+        required_cols = ["customer_id", "total_price", "transaction_id", segment_col]
+        if "quantity" in df.columns:
+            required_cols.append("quantity")
+        contract = CustomContract(
+            df,
+            basic_expectations=build_expected_columns(columns=required_cols),
+            extended_expectations=build_non_null_columns(columns=required_cols),
+        )
+
+        if contract.validate() is False:
+            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+            raise ValueError(msg)
+
         self.segment_col = segment_col
-        if TransactionItemLevelContract(df).validate() is True:
-            stats_df = df.groupby(segment_col).agg(
-                revenue=("total_price", "sum"),
-                transactions=("transaction_id", "nunique"),
-                customers=("customer_id", "nunique"),
-                total_quantity=("quantity", "sum"),
-            )
+
+        self.df = self._calc_seg_stats(df, segment_col)
+
+    @staticmethod
+    def _calc_seg_stats(df: pd.DataFrame, segment_col: str) -> pd.DataFrame:
+        aggs = {
+            "revenue": ("total_price", "sum"),
+            "transactions": ("transaction_id", "nunique"),
+            "customers": ("customer_id", "nunique"),
+        }
+        total_aggs = {
+            "revenue": [df["total_price"].sum()],
+            "transactions": [df["transaction_id"].nunique()],
+            "customers": [df["customer_id"].nunique()],
+        }
+        if "quantity" in df.columns:
+            aggs["total_quantity"] = ("quantity", "sum")
+            total_aggs["total_quantity"] = [df["quantity"].sum()]
+
+        stats_df = pd.concat(
+            [
+                df.groupby(segment_col).agg(**aggs),
+                pd.DataFrame(total_aggs, index=["total"]),
+            ],
+        )
+
+        if "quantity" in df.columns:
             stats_df["price_per_unit"] = stats_df["revenue"] / stats_df["total_quantity"]
             stats_df["quantity_per_transaction"] = stats_df["total_quantity"] / stats_df["transactions"]
-        elif TransactionLevelContract(df).validate() is True:
-            stats_df = df.groupby(segment_col).agg(
-                revenue=("total_price", "sum"),
-                transactions=("transaction_id", "nunique"),
-                customers=("customer_id", "nunique"),
-            )
-        else:
-            raise NotImplementedError(
-                "The dataframe does not comply with the TransactionItemLevelContract or TransactionLevelContract. "
-                "These are the only two contracts supported at this time.",
-            )
-        total_num_customers = df["customer_id"].nunique()
-        stats_df["spend_per_cust"] = stats_df["revenue"] / stats_df["customers"]
-        stats_df["spend_per_transaction"] = stats_df["revenue"] / stats_df["transactions"]
-        stats_df["transactions_per_customer"] = stats_df["transactions"] / stats_df["customers"]
-        stats_df["customers_pct"] = stats_df["customers"] / total_num_customers
 
-        self.df = stats_df
+        return stats_df
 
     def plot(
         self,
@@ -185,6 +200,7 @@ class SegTransactionStats:
         orientation: Literal["vertical", "horizontal"] = "vertical",
         sort_order: Literal["ascending", "descending", None] = None,
         source_text: str | None = None,
+        hide_total: bool = True,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plots the value_col by segment.
@@ -203,6 +219,7 @@ class SegTransactionStats:
             sort_order (Literal["ascending", "descending", None], optional): The sort order of the segments.
                 Defaults to None. If None, the segments are plotted in the order they appear in the dataframe.
             source_text (str, optional): The source text to add to the plot. Defaults to None.
+            hide_total (bool, optional): Whether to hide the total row. Defaults to True.
             **kwargs: Additional keyword arguments to pass to the Pandas plot function.
 
         Returns:
@@ -223,6 +240,9 @@ class SegTransactionStats:
             kind = "barh"
 
         val_s = self.df[value_col]
+        if hide_total:
+            val_s = val_s[val_s.index != "total"]
+
         if sort_order is not None:
             ascending = sort_order == "ascending"
             val_s = val_s.sort_values(ascending=ascending)
