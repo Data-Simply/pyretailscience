@@ -88,6 +88,9 @@ class HMLSegmentation(BaseSegmentation):
             ValueError: If the dataframe is missing the columns "customer_id" or `value_col`, or these columns contain
                 null values.
         """
+        if df.empty:
+            raise ValueError("Input DataFrame is empty")
+
         required_cols = ["customer_id", value_col]
         contract = CustomContract(
             df,
@@ -97,6 +100,11 @@ class HMLSegmentation(BaseSegmentation):
 
         if contract.validate() is False:
             msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+            raise ValueError(msg)
+
+        hml_cuts = [0.500, 0.800, 1]
+        if len(df) < len(hml_cuts):
+            msg = f"There are {len(df)} customers, which is less than is less than the number of segment thresholds."
             raise ValueError(msg)
 
         # Group by customer_id and calculate total_spend
@@ -114,7 +122,7 @@ class HMLSegmentation(BaseSegmentation):
         # Create a new column 'segment' based on the total_spend
         hml_df["segment_name"] = pd.qcut(
             hml_df[value_col],
-            q=[0, 0.500, 0.800, 1],
+            q=[0, *hml_cuts],
             labels=["Light", "Medium", "Heavy"],
         )
 
