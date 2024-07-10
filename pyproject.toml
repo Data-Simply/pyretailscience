@@ -12,8 +12,6 @@ pandas = "^2.1.4"
 pyarrow = "^14.0.2"
 matplotlib = "^3.8.2"
 numpy = "^1.26.3"
-seaborn = "^0.13.1"
-strictyaml = "^1.7.3"
 loguru = "^0.7.2"
 tqdm = "^4.66.1"
 great-expectations = "^0.18.8"
@@ -28,11 +26,9 @@ nbstripout = "^0.7.1"
 ruff = "^0.4.8"
 pre-commit ="^3.6.2"
 
-
 [tool.poetry.group.examples.dependencies]
 jupyterlab = "^4.0.10"
 tqdm = "^4.66.1"
-
 
 [tool.poetry.group.docs.dependencies]
 mkdocs-material = "^9.5.4"
