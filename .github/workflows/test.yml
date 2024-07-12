@@ -27,3 +27,8 @@ jobs:
           poetry install --no-interaction --with dev
       - name: Run Pre-commit
         run: pre-commit run --all-files
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
