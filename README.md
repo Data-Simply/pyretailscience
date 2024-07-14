@@ -156,7 +156,9 @@ Please make sure to follow the existing coding style and provide unit tests for 
 
 This repository is supported by Data simply.
 
-If you are interested in seeing what Data Simply can do for you, then please email murray@datasimply.co. We work with companies at a variety of scales and with varying levels of data and retail analytics sophistication, to help them build, scale or streamline their analysis capabilities.
+If you are interested in seeing what Data Simply can do for you, then please email [email us](mailto:murray@datasimply.co).
+We work with companies at a variety of scales and with varying levels of data and retail analytics sophistication, to
+help them build, scale or streamline their analysis capabilities.
 
 ## Contributors
 
