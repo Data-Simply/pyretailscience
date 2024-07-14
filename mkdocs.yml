@@ -1,5 +1,7 @@
 site_name: PyRetailScience
-site_url: https://data-simply.github.io/pyretailscience
+site_url: https://pyretailscience.datasimply.co
+repo_url: https://github.com/Data-Simply/pyretailscience
+repo_name: Data-Simply/pyretailscience
 
 nav:
   - Home: index.md
@@ -12,7 +14,14 @@ nav:
       - Gain Loss Analysis: examples/gain_loss.ipynb
       - Cross Shop Analysis: examples/cross_shop.ipynb
       - Data Contracts: examples/data_contracts.ipynb
+      - Segmentation: examples/segmentation.ipynb
   - Reference:
+      - Gain Loss: api/gain_loss.md
+      - Range Planning: api/range_planning.md
+      - Segmentation: api/segmentation.md
+      - Customer Retention: api/customer.md
+      - Standard Graphs: api/standard_graphs.md
+      - Cross Shop Analysis: api/cross_shop.md
       - Contracts: api/contracts.md
 
 theme:
