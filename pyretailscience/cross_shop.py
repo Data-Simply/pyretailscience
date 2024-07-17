@@ -6,6 +6,7 @@ from matplotlib.axes import Axes, SubplotBase
 from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
+from pyretailscience.style import graph_utils as gu
 from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
 
@@ -253,15 +254,8 @@ class CrossShop:
             )
 
         if source_text is not None:
-            ax.annotate(
-                source_text,
-                xy=(-0.1, -0.05),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
+            # Hide the xticks to remove space between the diagram and source text
+            ax.set_xticklabels([], visible=False)
+            gu.add_source_text(ax=ax, source_text=source_text)
 
         return ax

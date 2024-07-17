@@ -21,7 +21,6 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
-from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -320,21 +319,8 @@ class GainLoss:
         ax.axvline(0, color="black", linewidth=0.5)
 
         if source_text is not None:
-            ax.annotate(
-                source_text,
-                xy=(-0.1, -0.2),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
+            gu.add_source_text(ax=ax, source_text=source_text)
 
-        # Set the font properties for the tick labels
-        for tick in ax.get_xticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
-        for tick in ax.get_yticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        gu.standard_tick_styles(ax)
 
         return ax
