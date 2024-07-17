@@ -257,23 +257,11 @@ class CustomerDecisionHierarchy:
             ("Products", "Distance") if orientation in ["top", "bottom"] else ("Distance", "Products")
         )
 
-        ax.set_title(
-            title,
-            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
-            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-            pad=GraphStyles.DEFAULT_TITLE_PAD + 5,
-        )
-        ax.set_xlabel(
-            gu.not_none(x_label, default_x_label),
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
-        )
-        ax.set_ylabel(
-            gu.not_none(y_label, default_y_label),
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+        gu.standard_graph_styles(
+            ax=ax,
+            title=title,
+            x_label=gu.not_none(x_label, default_x_label),
+            y_label=gu.not_none(y_label, default_y_label),
         )
 
         # Set the y label to be on the right side of the plot
@@ -286,32 +274,6 @@ class CustomerDecisionHierarchy:
 
         dendrogram(linkage_matrix, labels=labels, ax=ax, **kwargs)
 
-        if source_text is not None:
-            plt.draw()
-
-            y_axis_offset = -0.1
-            if orientation != "bottom":
-                bbox_height = ax.get_xaxis().get_tightbbox().height
-                axis_height = bbox_height / ax.figure.dpi / ax.figure.get_figheight()
-                y_axis_offset = min(-axis_height * 1.5, -0.1)
-
-            x_axis_offset = -0.1
-            if orientation == "right":
-                bbox_width = ax.get_yaxis().get_tightbbox().width
-                axis_width = bbox_width / ax.figure.dpi / ax.figure.get_figwidth()
-                x_axis_offset = min(-axis_width * 1.25, -0.1)
-
-            ax.annotate(
-                source_text,
-                xy=(x_axis_offset, y_axis_offset),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
-
         ax.xaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
         ax.yaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
 
@@ -320,9 +282,9 @@ class CustomerDecisionHierarchy:
             plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 
         # Set the font properties for the tick labels
-        for tick in ax.get_xticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
-        for tick in ax.get_yticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        gu.standard_tick_styles(ax)
+
+        if source_text is not None:
+            gu.add_source_text(ax=ax, source_text=source_text)
 
         return ax

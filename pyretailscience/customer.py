@@ -13,7 +13,7 @@ from pyretailscience.data.contracts import (
     build_expected_columns,
     build_non_null_columns,
 )
-from pyretailscience.style.graph_utils import GraphStyles, human_format, standard_graph_styles
+from pyretailscience.style.graph_utils import human_format, standard_graph_styles
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -94,15 +94,7 @@ class PurchasesPerCustomer:
             **kwargs,
         )
 
-        ax.set_xlabel(
-            x_label,
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
-        )
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
-
-        ax = standard_graph_styles(ax)
 
         if cumlative:
             default_title = "Number of Purchases Cumulative Distribution"
@@ -114,17 +106,11 @@ class PurchasesPerCustomer:
             default_y_label = "Number of customers"
             ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
-        ax.set_title(
-            gu.not_none(title, default_title),
-            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
-            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-            pad=GraphStyles.DEFAULT_TITLE_PAD,
-        )
-        ax.set_ylabel(
-            gu.not_none(y_label, default_y_label),
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+        ax = standard_graph_styles(
+            ax,
+            title=gu.not_none(title, default_title),
+            x_label=x_label,
+            y_label=gu.not_none(y_label, default_y_label),
         )
 
         if percentile_line is not None:
@@ -140,16 +126,7 @@ class PurchasesPerCustomer:
             ax.legend(frameon=False)
 
         if source_text:
-            ax.annotate(
-                source_text,
-                xy=(-0.1, -0.2),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
+            gu.add_source_text(ax=ax, source_text=source_text)
 
         return ax
 
@@ -324,22 +301,9 @@ class DaysBetweenPurchases:
             ax.legend(frameon=False)
 
         if source_text:
-            ax.annotate(
-                source_text,
-                xy=(-0.1, -0.2),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
+            gu.add_source_text(ax=ax, source_text=source_text)
 
-        # Set the font properties for the tick labels
-        for tick in ax.get_xticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
-        for tick in ax.get_yticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        gu.standard_tick_styles(ax)
 
         return ax
 
@@ -450,38 +414,16 @@ class TransactionChurn:
                 **kwargs,
             )
 
-        standard_graph_styles(ax)
+        standard_graph_styles(
+            ax,
+            title=gu.not_none(title, "Churn Rate by Number of Purchases"),
+            x_label=gu.not_none(x_label, "Number of Purchases"),
+            y_label=gu.not_none(y_label, "% Churned"),
+        )
 
         ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-        ax.set_xlabel(
-            gu.not_none(x_label, "Number of Purchases"),
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
-        )
-        ax.set_ylabel(
-            gu.not_none(y_label, "% Churned"),
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
-        )
-        ax.set_title(
-            gu.not_none(title, "Churn Rate by Number of Purchases"),
-            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
-            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-            pad=GraphStyles.DEFAULT_TITLE_PAD,
-        )
 
         if source_text:
-            ax.annotate(
-                source_text,
-                xy=(-0.1, -0.2),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
+            gu.add_source_text(ax=ax, source_text=source_text)
 
         return ax

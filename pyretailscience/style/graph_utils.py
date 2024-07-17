@@ -4,6 +4,7 @@ import importlib.resources as pkg_resources
 
 import matplotlib.font_manager as fm
 from matplotlib.axes import Axes
+from matplotlib.text import Text
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 
@@ -105,6 +106,23 @@ def standard_graph_styles(
     return ax
 
 
+def standard_tick_styles(ax: Axes) -> Axes:
+    """Apply standard tick styles to a Matplotlib graph.
+
+    Args:
+        ax (Axes): The graph to apply the styles to.
+
+    Returns:
+        Axes: The graph with the styles applied.
+    """
+    for tick in ax.get_xticklabels():
+        tick.set_fontproperties(GraphStyles.POPPINS_REG)
+    for tick in ax.get_yticklabels():
+        tick.set_fontproperties(GraphStyles.POPPINS_REG)
+
+    return ax
+
+
 def not_none(value1: any, value2: any) -> any:
     """Helper funciont that returns the first value that is not None.
 
@@ -120,7 +138,7 @@ def not_none(value1: any, value2: any) -> any:
     return value1
 
 
-def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decimals: int = 100) -> int:
+def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decimals: int = 10) -> int:
     """Helper function for the `human_format` function that determines the number of decimals to use for the y-axis.
 
     Args:
@@ -132,9 +150,62 @@ def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decima
         int: The number of decimals to use.
     """
     decimals = 0
-    while True:
+    while decimals < max_decimals:
         tick_labels = [human_format(t, 0, decimals=decimals) for t in tick_values if t >= ylim[0] and t <= ylim[1]]
-        if len(tick_labels) == len(set(tick_labels)) or decimals == max_decimals:
+        # Ensure no duplicate labels
+        if len(tick_labels) == len(set(tick_labels)):
             break
         decimals += 1
     return decimals
+
+
+def add_source_text(
+    ax: Axes,
+    source_text: str,
+    font_size: float = GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+    vertical_padding: float = 2,
+) -> Text:
+    """Add source text to the bottom left corner of a graph.
+
+    Args:
+        ax (Axes): The graph to add the source text to.
+        source_text (str): The source text.
+        font_size (float, optional): The font size of the source text.
+            Defaults to GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE.
+        vertical_padding (float, optional): The padding in ems below the x-axis label. Defaults to 2.
+
+    Returns:
+        Text: The source text.
+    """
+    ax.figure.canvas.draw()
+
+    # Get y coordinate of the text
+    xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+
+    top_of_label_px = xlabel_box.y0
+
+    padding_px = vertical_padding * font_size
+
+    y_disp = top_of_label_px - padding_px - (xlabel_box.height)
+
+    # Convert display coordinates to normalized figure coordinates
+    y_norm = y_disp / ax.figure.bbox.height
+
+    # Get x coordinate of the text
+    ylabel_box = ax.yaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+    title_box = ax.title.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+    min_x0 = min(ylabel_box.x0, title_box.x0)
+    x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
+
+    # Add text to the bottom left corner of the figure
+    return ax.figure.text(
+        x_norm,
+        y_norm,
+        source_text,
+        ha="left",
+        va="bottom",
+        transform=ax.figure.transFigure,
+        fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
+        fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
+        color="dimgray",
+    )

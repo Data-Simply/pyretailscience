@@ -12,7 +12,6 @@ from pyretailscience.data.contracts import (
     build_expected_unique_columns,
     build_non_null_columns,
 )
-from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -313,7 +312,6 @@ class SegTransactionStats:
             ax=ax,
             **kwargs,
         )
-        ax = gu.standard_graph_styles(ax)
 
         if orientation == "vertical":
             plot_y_label = gu.not_none(y_label, value_col.title())
@@ -326,41 +324,16 @@ class SegTransactionStats:
             decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
             ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
 
-        ax.set_title(
-            gu.not_none(title, default_title),
-            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
-            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-            pad=GraphStyles.DEFAULT_TITLE_PAD,
-        )
-        ax.set_ylabel(
-            plot_y_label,
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
-        )
-        ax.set_xlabel(
-            plot_x_label,
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+        ax = gu.standard_graph_styles(
+            ax,
+            title=gu.not_none(title, default_title),
+            x_label=plot_x_label,
+            y_label=plot_y_label,
         )
 
         if source_text is not None:
-            ax.annotate(
-                source_text,
-                xy=(-0.1, -0.15),
-                xycoords="axes fraction",
-                ha="left",
-                va="center",
-                fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-                fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-                color="dimgray",
-            )
+            gu.add_source_text(ax=ax, source_text=source_text)
 
-        # Set the font properties for the tick labels
-        for tick in ax.get_xticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
-        for tick in ax.get_yticklabels():
-            tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        gu.standard_tick_styles(ax)
 
         return ax
