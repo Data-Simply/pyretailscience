@@ -22,6 +22,7 @@ class GraphStyles:
     DEFAULT_SOURCE_FONT_SIZE = 10
     DEFAULT_AXIS_LABEL_FONT_SIZE = 12
     DEFAULT_TICK_LABEL_FONT_SIZE = 10
+    DEFAULT_BAR_LABEL_FONT_SIZE = 11
 
     DEFAULT_AXIS_LABEL_PAD = 10
     DEFAULT_TITLE_PAD = 10
@@ -63,6 +64,9 @@ def standard_graph_styles(
     title: str | None = None,
     x_label: str | None = None,
     y_label: str | None = None,
+    title_pad: int = GraphStyles.DEFAULT_TITLE_PAD,
+    x_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+    y_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
 ) -> Axes:
     """Apply standard styles to a Matplotlib graph.
 
@@ -71,6 +75,10 @@ def standard_graph_styles(
         title (str, optional): The title of the graph. Defaults to None.
         x_label (str, optional): The x-axis label. Defaults to None.
         y_label (str, optional): The y-axis label. Defaults to None.
+        title_pad (int, optional): The padding above the title. Defaults to GraphStyles.DEFAULT_TITLE_PAD.
+        x_label_pad (int, optional): The padding below the x-axis label. Defaults to GraphStyles.DEFAULT_AXIS_LABEL_PAD.
+        y_label_pad (int, optional): The padding to the left of the y-axis label. Defaults to
+            GraphStyles.DEFAULT_AXIS_LABEL_PAD.
 
     Returns:
         Axes: The graph with the styles applied.
@@ -84,7 +92,7 @@ def standard_graph_styles(
             title,
             fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
             fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-            pad=GraphStyles.DEFAULT_TITLE_PAD,
+            pad=title_pad,
         )
 
     if x_label is not None:
@@ -92,7 +100,7 @@ def standard_graph_styles(
             x_label,
             fontproperties=GraphStyles.POPPINS_REG,
             fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+            labelpad=x_label_pad,
         )
 
     if y_label is not None:
@@ -100,7 +108,7 @@ def standard_graph_styles(
             y_label,
             fontproperties=GraphStyles.POPPINS_REG,
             fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+            labelpad=y_label_pad,
         )
 
     return ax

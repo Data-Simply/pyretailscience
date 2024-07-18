@@ -336,3 +336,9 @@ p {
 .md-source__repository {
   font-size: 0.55rem;
 }
+
+.clear:after {
+  clear: both;
+  content: "";
+  display: block;
+}
