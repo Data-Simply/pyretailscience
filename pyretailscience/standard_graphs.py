@@ -278,16 +278,120 @@ def index_plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
         legend.get_frame().set_edgecolor("white")
 
     if source_text is not None:
-        ax.annotate(
-            source_text,
-            xy=(-0.1, -0.2),
-            xycoords="axes fraction",
-            ha="left",
-            va="center",
-            fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-            fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-            color="dimgray",
+        gu.add_source_text(ax=ax, source_text=source_text)
+
+    gu.standard_tick_styles(ax)
+
+    return ax
+
+
+def waterfall_plot(
+    amounts: list[float],
+    labels: list[str],
+    title: str | None = None,
+    y_label: str | None = None,
+    x_label: str = "",
+    source_text: str | None = None,
+    data_label_format: Literal["absolute", "percentage", "both", "none"] = "absolute",
+    display_net_bar: bool = False,
+    display_net_line: bool = False,
+    remove_zero_amounts: bool = True,
+    ax: Axes | None = None,
+    **kwargs: dict[str, any],
+) -> Axes:
+    """Generates a waterfall chart.
+
+    Args:
+        amounts (list[float]): The amounts to plot.
+        labels (list[str]): The labels for the amounts.
+        title (str, optional): The title of the chart. Defaults to None.
+        y_label (str, optional): The y-axis label. Defaults to None.
+        x_label (str, optional): The x-axis label. Defaults to None.
+        source_text (str, optional): The source text to add to the plot. Defaults to None.
+        data_label_format (Literal["absolute", "percentage", "both", "none"], optional): The format of the data labels.
+            Defaults to "absolute".
+        display_net_bar (bool, optional): Whether to display a net bar. Defaults to False.
+        display_net_line (bool, optional): Whether to display a net line. Defaults to False.
+        remove_zero_amounts (bool, optional): Whether to remove zero amounts from the plot. Defaults to True
+        ax (Axes, optional): The matplotlib axes object to plot on. Defaults to None.
+        **kwargs: Additional keyword arguments to pass to the Pandas plot function.
+
+    Returns:
+        Axes: The matplotlib axes object.
+    """
+    if len(amounts) != len(labels):
+        raise ValueError("The lengths of amounts and labels must be the same.")
+
+    data_label_format = data_label_format.lower()
+    if data_label_format not in ["absolute", "percentage", "both", "none"]:
+        raise ValueError("data_label_format must be either 'absolute', 'percentage', 'both', or 'none'.")
+
+    df = pd.DataFrame({"labels": labels, "amounts": amounts})
+
+    if remove_zero_amounts:
+        df = df[df["amounts"] != 0]
+
+    amount_total = df["amounts"].sum()
+
+    colors = df["amounts"].apply(lambda x: COLORS["green"][500] if x > 0 else COLORS["red"][500]).to_list()
+    bottom = df["amounts"].cumsum().shift(1).fillna(0).to_list()
+
+    if display_net_bar:
+        # Append a row for the net amount
+        df.loc[len(df)] = ["Net", amount_total]
+        colors.append(COLORS["blue"][500])
+        bottom.append(0)
+
+    # Create the plot
+    ax = df.plot.bar(
+        x="labels",
+        y="amounts",
+        legend=None,
+        bottom=bottom,
+        color=colors,
+        width=0.8,
+        ax=ax,
+        **kwargs,
+    )
+
+    extra_title_pad = 25 if data_label_format != "none" else 0
+    ax = gu.standard_graph_styles(
+        ax,
+        title=title,
+        y_label=gu.not_none(y_label, "Amounts"),
+        x_label=x_label,
+        title_pad=GraphStyles.DEFAULT_TITLE_PAD + extra_title_pad,
+    )
+
+    decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
+    ax.yaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
+
+    # Add a black line at the y=0 position
+    ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
+
+    if data_label_format != "none":
+        total_change = df["amounts"].sum()
+        if data_label_format == "absolute":
+            labels = df["amounts"].apply(lambda x: gu.human_format(x, decimals=decimals + 1))
+        elif data_label_format == "percentage":
+            labels = df["amounts"].apply(lambda x: f"{x/total_change:.0%}")
+        else:
+            labels = [f"{gu.human_format(x, decimals=decimals+1)} ({x/total_change:.0%})" for x in df["amounts"]]
+
+        ax.bar_label(
+            ax.containers[0],
+            label_type="edge",
+            labels=labels,
+            padding=5,
+            fontsize=GraphStyles.DEFAULT_BAR_LABEL_FONT_SIZE,
+            fontproperties=GraphStyles.POPPINS_REG,
         )
+
+    if display_net_line:
+        ax.axhline(y=amount_total, color="black", linewidth=1, linestyle="--")
+
+    if source_text is not None:
+        gu.add_source_text(ax=ax, source_text=source_text)
 
     gu.standard_tick_styles(ax)
 
