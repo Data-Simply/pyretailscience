@@ -28,9 +28,20 @@ def time_plot(
     legend_title: str | None = None,
     ax: Axes | None = None,
     source_text: str | None = None,
+    move_legend_outside: bool = False,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
     """Plots the value_col over time.
+
+    Timeline plots are a fundamental tool for interpreting transactional data within a temporal context. By presenting
+    data in a chronological sequence, these visualizations reveal patterns and trends that might otherwise remain hidden
+    in raw numbers, making them essential for both historical analysis and forward-looking insights. They are
+    particularly useful for:
+
+    - Tracking sales performance across different periods (e.g., daily, weekly, monthly)
+    - Identifying seasonal patterns or promotional impacts on sales
+    - Comparing the performance of different product categories or store locations over time
+    - Visualizing customer behavior trends, such as purchase frequency or average transaction value
 
     Args:
         df (pd.DataFrame): The dataframe to plot.
@@ -47,6 +58,7 @@ def time_plot(
             the title case of `group_col`
         ax (Axes, optional): The matplotlib axes object to plot on. Defaults to None.
         source_text (str, optional): The source text to add to the plot. Defaults to None.
+        move_legend_outside (bool, optional): Whether to move the legend outside the plot. Defaults to True.
         **kwargs: Additional keyword arguments to pass to the Pandas plot function.
 
     Returns:
@@ -88,9 +100,13 @@ def time_plot(
     ax.yaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
 
     if show_legend:
+        legend_bbox_to_anchor = None
+        if move_legend_outside:
+            legend_bbox_to_anchor = (1.05, 1)
         legend = ax.legend(
             title=gu.not_none(legend_title, group_col.title()),
             frameon=True,
+            bbox_to_anchor=legend_bbox_to_anchor,
         )
         legend.get_frame().set_facecolor("white")
         legend.get_frame().set_edgecolor("white")
@@ -300,6 +316,16 @@ def waterfall_plot(
     **kwargs: dict[str, any],
 ) -> Axes:
     """Generates a waterfall chart.
+
+    Waterfall plots are particularly good for showing how different things add or subtract from a starting number. For
+    instance,
+
+    - Changes in sales figures from one period to another
+    - Breakdown of profit margins
+    - Impact of different product categories on overall revenue
+
+    They are often used to identify key drivers of financial performance, highlight areas for improvement, and communicate
+    complex data stories to stakeholders in an intuitive manner.
 
     Args:
         amounts (list[float]): The amounts to plot.
