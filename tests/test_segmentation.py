@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 
+from pyretailscience.options import get_option
 from pyretailscience.segmentation import HMLSegmentation, SegTransactionStats, ThresholdSegmentation
 
 
@@ -14,11 +15,11 @@ class TestCalcSegStats:
         """Return a base DataFrame for testing."""
         return pd.DataFrame(
             {
-                "customer_id": [1, 2, 3, 4, 5],
-                "total_price": [100, 200, 150, 300, 250],
-                "transaction_id": [101, 102, 103, 104, 105],
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 150, 300, 250],
+                get_option("column.transaction_id"): [101, 102, 103, 104, 105],
                 "segment_id": ["A", "B", "A", "B", "A"],
-                "quantity": [10, 20, 15, 30, 25],
+                get_option("column.unit_quantity"): [10, 20, 15, 30, 25],
             },
         )
 
@@ -26,12 +27,12 @@ class TestCalcSegStats:
         """Test that the method correctly calculates at the transaction-item level."""
         expected_output = pd.DataFrame(
             {
-                "revenue": [500, 500, 1000],
-                "transactions": [3, 2, 5],
-                "customers": [3, 2, 5],
-                "total_quantity": [50, 50, 100],
-                "price_per_unit": [10.0, 10.0, 10.0],
-                "quantity_per_transaction": [16.666667, 25.0, 20.0],
+                get_option("column.agg.unit_spend"): [500, 500, 1000],
+                get_option("column.agg.transaction_id"): [3, 2, 5],
+                get_option("column.agg.customer_id"): [3, 2, 5],
+                get_option("column.agg.unit_quantity"): [50, 50, 100],
+                get_option("column.calc.price_per_unit"): [10.0, 10.0, 10.0],
+                get_option("column.calc.units_per_transaction"): [16.666667, 25.0, 20.0],
             },
             index=["A", "B", "total"],
         )
@@ -43,18 +44,18 @@ class TestCalcSegStats:
         """Test that the method correctly calculates at the transaction level."""
         df = pd.DataFrame(
             {
-                "customer_id": [1, 2, 3, 4, 5],
-                "total_price": [100, 200, 150, 300, 250],
-                "transaction_id": [101, 102, 103, 104, 105],
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 150, 300, 250],
+                get_option("column.transaction_id"): [101, 102, 103, 104, 105],
                 "segment_id": ["A", "B", "A", "B", "A"],
             },
         )
 
         expected_output = pd.DataFrame(
             {
-                "revenue": [500, 500, 1000],
-                "transactions": [3, 2, 5],
-                "customers": [3, 2, 5],
+                get_option("column.agg.unit_spend"): [500, 500, 1000],
+                get_option("column.agg.transaction_id"): [3, 2, 5],
+                get_option("column.agg.customer_id"): [3, 2, 5],
             },
             index=["A", "B", "total"],
         )
@@ -76,12 +77,12 @@ class TestCalcSegStats:
 
         expected_output = pd.DataFrame(
             {
-                "revenue": [1000, 1000],
-                "transactions": [5, 5],
-                "customers": [5, 5],
-                "total_quantity": [100, 100],
-                "price_per_unit": [10.0, 10.0],
-                "quantity_per_transaction": [20.0, 20.0],
+                get_option("column.agg.unit_spend"): [1000, 1000],
+                get_option("column.agg.transaction_id"): [5, 5],
+                get_option("column.agg.customer_id"): [5, 5],
+                get_option("column.agg.unit_quantity"): [100, 100],
+                get_option("column.calc.price_per_unit"): [10.0, 10.0],
+                get_option("column.calc.units_per_transaction"): [20.0, 20.0],
             },
             index=["A", "total"],
         )
@@ -95,14 +96,19 @@ class TestThresholdSegmentation:
 
     def test_correct_segmentation(self):
         """Test that the method correctly segments customers based on given thresholds and segments."""
-        df = pd.DataFrame({"customer_id": [1, 2, 3, 4], "total_price": [100, 200, 300, 400]})
+        df = pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 4],
+                get_option("column.unit_spend"): [100, 200, 300, 400],
+            },
+        )
         thresholds = [0.5, 1]
         segments = {0: "Low", 1: "High"}
         seg = ThresholdSegmentation(
             df=df,
             thresholds=thresholds,
             segments=segments,
-            value_col="total_price",
+            value_col=get_option("column.unit_spend"),
             zero_value_customers="exclude",
         )
         result_df = seg.df
@@ -113,7 +119,7 @@ class TestThresholdSegmentation:
 
     def test_single_customer(self):
         """Test that the method correctly segments a DataFrame with only one customer."""
-        df = pd.DataFrame({"customer_id": [1], "total_price": [100]})
+        df = pd.DataFrame({get_option("column.customer_id"): [1], get_option("column.unit_spend"): [100]})
         thresholds = [0.5, 1]
         segments = {0: "Low"}
         with pytest.raises(ValueError):
@@ -127,7 +133,7 @@ class TestThresholdSegmentation:
         """Test that the correct aggregation function is applied for product_id custom segmentation."""
         df = pd.DataFrame(
             {
-                "customer_id": [1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5],
+                get_option("column.customer_id"): [1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5],
                 "product_id": [3, 4, 4, 6, 1, 5, 7, 2, 2, 3, 2, 3, 4, 1],
             },
         )
@@ -145,7 +151,7 @@ class TestThresholdSegmentation:
 
         expected_result = pd.DataFrame(
             {
-                "customer_id": [1, 2, 3, 4, 5],
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
                 "product_id": [1, 4, 2, 2, 3],
                 "segment_name": ["Low", "High", "Medium", "Medium", "Medium"],
                 "segment_id": ["A", "C", "B", "B", "B"],
@@ -167,11 +173,11 @@ class TestThresholdSegmentation:
         """Test that the method correctly merges segment data back into the original DataFrame."""
         df = pd.DataFrame(
             {
-                "customer_id": [1, 2, 3, 4, 5],
-                "total_price": [100, 200, 0, 150, 0],
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 0, 150, 0],
             },
         )
-        value_col = "total_price"
+        value_col = get_option("column.unit_spend")
         agg_func = "sum"
         thresholds = [0.33, 0.66, 1]
         segments = {"A": "Low", "B": "Medium", "C": "High"}
@@ -193,8 +199,8 @@ class TestThresholdSegmentation:
         # Assert the correct segment_name and segment_id
         expected_df = pd.DataFrame(
             {
-                "customer_id": [1, 2, 3, 4, 5],
-                "total_price": [100, 200, 0, 150, 0],
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 0, 150, 0],
                 "segment_name": ["Low", "High", "Zero", "Medium", "Zero"],
                 "segment_id": ["A", "C", "Z", "B", "Z"],
             },
@@ -203,11 +209,16 @@ class TestThresholdSegmentation:
 
     def test_handles_dataframe_with_duplicate_customer_id_entries(self):
         """Test that the method correctly handles a DataFrame with duplicate customer_id entries."""
-        df = pd.DataFrame({"customer_id": [1, 2, 3, 1, 2, 3], "total_price": [100, 200, 300, 150, 250, 350]})
+        df = pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 1, 2, 3],
+                get_option("column.unit_spend"): [100, 200, 300, 150, 250, 350],
+            },
+        )
 
         my_seg = ThresholdSegmentation(
             df=df,
-            value_col="total_price",
+            value_col=get_option("column.unit_spend"),
             agg_func="sum",
             thresholds=[0.5, 0.8, 1],
             segments={"L": "Light", "M": "Medium", "H": "Heavy"},
@@ -220,8 +231,13 @@ class TestThresholdSegmentation:
     def test_correctly_maps_segment_names_to_segment_ids_with_fixed_thresholds(self):
         """Test that the method correctly maps segment names to segment IDs with fixed thresholds."""
         # Setup
-        df = pd.DataFrame({"customer_id": [1, 2, 3, 4, 5], "total_price": [100, 200, 300, 400, 500]})
-        value_col = "total_price"
+        df = pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 300, 400, 500],
+            },
+        )
+        value_col = get_option("column.unit_spend")
         agg_func = "sum"
         thresholds = [0.33, 0.66, 1]
         segments = {1: "Low", 2: "Medium", 3: "High"}
@@ -241,7 +257,12 @@ class TestThresholdSegmentation:
 
     def test_thresholds_not_unique(self):
         """Test that the method raises an error when the thresholds are not unique."""
-        df = pd.DataFrame({"customer_id": [1, 2, 3, 4, 5], "total_price": [100, 200, 300, 400, 500]})
+        df = pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 300, 400, 500],
+            },
+        )
         thresholds = [0.5, 0.5, 0.8, 1]
         segments = {1: "Low", 2: "Medium", 3: "High"}
 
@@ -250,7 +271,12 @@ class TestThresholdSegmentation:
 
     def test_thresholds_too_few_segments(self):
         """Test that the method raises an error when there are too few/many segments for the number of thresholds."""
-        df = pd.DataFrame({"customer_id": [1, 2, 3, 4, 5], "total_price": [100, 200, 300, 400, 500]})
+        df = pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 300, 400, 500],
+            },
+        )
         thresholds = [0.4, 0.6, 0.8, 1]
         segments = {1: "Low", 3: "High"}
 
@@ -264,7 +290,12 @@ class TestThresholdSegmentation:
 
     def test_thresholds_too_too_few_thresholds(self):
         """Test that the method raises an error when there are too few/many thresholds for the number of segments."""
-        df = pd.DataFrame({"customer_id": [1, 2, 3, 4, 5], "total_price": [100, 200, 300, 400, 500]})
+        df = pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [100, 200, 300, 400, 500],
+            },
+        )
         thresholds = [0.4, 1]
         segments = {1: "Low", 2: "Medium", 3: "High"}
 
@@ -282,7 +313,9 @@ class TestSegTransactionStats:
 
     def test_handles_empty_dataframe_with_errors(self):
         """Test that the method raises an error when the DataFrame is missing a required column."""
-        df = pd.DataFrame(columns=["total_price", "transaction_id", "segment_id", "quantity"])
+        df = pd.DataFrame(
+            columns=[get_option("column.unit_spend"), get_option("column.transaction_id"), "segment_id", "quantity"],
+        )
 
         with pytest.raises(ValueError):
             SegTransactionStats(df, "segment_id")
@@ -294,11 +327,16 @@ class TestHMLSegmentation:
     @pytest.fixture()
     def base_df(self):
         """Return a base DataFrame for testing."""
-        return pd.DataFrame({"customer_id": [1, 2, 3, 4, 5], "total_price": [1000, 200, 0, 500, 300]})
+        return pd.DataFrame(
+            {
+                get_option("column.customer_id"): [1, 2, 3, 4, 5],
+                get_option("column.unit_spend"): [1000, 200, 0, 500, 300],
+            },
+        )
 
     def test_no_transactions(self):
         """Test that the method raises an error when there are no transactions."""
-        data = {"customer_id": [], "total_price": []}
+        data = {get_option("column.customer_id"): [], get_option("column.unit_spend"): []}
         df = pd.DataFrame(data)
         with pytest.raises(ValueError):
             HMLSegmentation(df)
@@ -359,12 +397,12 @@ class TestHMLSegmentation:
     def test_raises_value_error_if_required_columns_missing(self, base_df):
         """Test that the method raises an error when the DataFrame is missing a required column."""
         with pytest.raises(ValueError):
-            HMLSegmentation(base_df.drop(columns=["customer_id"]))
+            HMLSegmentation(base_df.drop(columns=[get_option("column.customer_id")]))
 
     # DataFrame with only one customer
     def test_segments_customer_single(self):
         """Test that the method correctly segments a DataFrame with only one customer."""
-        data = {"customer_id": [1], "total_price": [0]}
+        data = {get_option("column.customer_id"): [1], get_option("column.unit_spend"): [0]}
         df = pd.DataFrame(data)
         with pytest.raises(ValueError):
             HMLSegmentation(df)
@@ -381,7 +419,7 @@ class TestHMLSegmentation:
 
     def test_alternate_value_col(self, base_df):
         """Test that the method correctly segments a DataFrame with an alternate value column."""
-        base_df = base_df.rename(columns={"total_price": "quantity"})
+        base_df = base_df.rename(columns={get_option("column.unit_spend"): "quantity"})
         hml_segmentation = HMLSegmentation(base_df, value_col="quantity")
         result_df = hml_segmentation.df
 

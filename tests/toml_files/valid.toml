@@ -1,0 +1,12 @@
+[column]
+customer_id="new_customer_id"
+product_id="new_product_id"
+
+[column.agg]
+customer_id="new_customers"
+
+[column.calc]
+price_per_unit="new_price_per_unit"
+
+[column.suffix]
+count="new_cnt"

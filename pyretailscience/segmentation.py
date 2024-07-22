@@ -12,6 +12,7 @@ from pyretailscience.data.contracts import (
     build_expected_unique_columns,
     build_non_null_columns,
 )
+from pyretailscience.options import get_option
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -31,7 +32,12 @@ class BaseSegmentation:
             ValueError: If the number of rows before and after the merge do not match.
         """
         rows_before = len(df)
-        df = df.merge(self.df[["segment_name", "segment_id"]], how="left", left_on="customer_id", right_index=True)
+        df = df.merge(
+            self.df[["segment_name", "segment_id"]],
+            how="left",
+            left_on=get_option("column.customer_id"),
+            right_index=True,
+        )
         rows_after = len(df)
         if rows_before != rows_after:
             raise ValueError("The number of rows before and after the merge do not match. This should not happen.")
@@ -51,7 +57,7 @@ class ExistingSegmentation(BaseSegmentation):
         Raises:
             ValueError: If the dataframe does not have the columns customer_id, segment_name and segment_id.
         """
-        required_cols = "customer_id", "segment_name", "segment_id"
+        required_cols = get_option("column.customer_id"), "segment_name", "segment_id"
         contract = CustomContract(
             df,
             basic_expectations=build_expected_columns(columns=required_cols),
@@ -63,7 +69,9 @@ class ExistingSegmentation(BaseSegmentation):
             msg = f"The dataframe requires the columns {required_cols} and they must be non-null and unique."
             raise ValueError(msg)
 
-        self.df = df[["customer_id", "segment_name", "segment_id"]].set_index("customer_id")
+        self.df = df[[get_option("column.customer_id"), "segment_name", "segment_id"]].set_index(
+            get_option("column.customer_id"),
+        )
 
 
 class ThresholdSegmentation(BaseSegmentation):
@@ -74,7 +82,7 @@ class ThresholdSegmentation(BaseSegmentation):
         df: pd.DataFrame,
         thresholds: list[float],
         segments: dict[any, str],
-        value_col: str = "total_price",
+        value_col: str | None = None,
         agg_func: str = "sum",
         zero_segment_name: str = "Zero",
         zero_segment_id: str = "Z",
@@ -86,7 +94,7 @@ class ThresholdSegmentation(BaseSegmentation):
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must contain a customer_id column.
             thresholds (List[float]): The percentile thresholds for segmentation.
             segments (Dict[str, str]): A dictionary where keys are segment IDs and values are segment names.
-            value_col (str): The column to use for the segmentation.
+            value_col (str, optional): The column to use for the segmentation. Defaults to get_option("column.unit_spend").
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".
             zero_segment_name (str, optional): The name of the segment for customers with zero spend. Defaults to "Zero".
             zero_segment_id (str, optional): The ID of the segment for customers with zero spend. Defaults to "Z".
@@ -100,7 +108,9 @@ class ThresholdSegmentation(BaseSegmentation):
         if df.empty:
             raise ValueError("Input DataFrame is empty")
 
-        required_cols = ["customer_id", value_col]
+        value_col = get_option("column.unit_spend") if value_col is None else value_col
+
+        required_cols = [get_option("column.customer_id"), value_col]
         contract = CustomContract(
             df,
             basic_expectations=build_expected_columns(columns=required_cols),
@@ -128,7 +138,7 @@ class ThresholdSegmentation(BaseSegmentation):
             raise ValueError("The number of thresholds must match the number of segments.")
 
         # Group by customer_id and calculate total_spend
-        grouped_df = df.groupby("customer_id")[value_col].agg(agg_func).to_frame(value_col)
+        grouped_df = df.groupby(get_option("column.customer_id"))[value_col].agg(agg_func).to_frame(value_col)
 
         # Separate customers with zero spend
         self.df = grouped_df
@@ -138,7 +148,7 @@ class ThresholdSegmentation(BaseSegmentation):
             zero_cust_df["segment_name"] = zero_segment_name
             zero_cust_df["segment_id"] = zero_segment_id
 
-            self.df = grouped_df[~zero_idx]
+            self.df = grouped_df[~zero_idx].copy()
 
         # Create a new column 'segment' based on the total_spend
         labels = list(segments.values())
@@ -161,20 +171,25 @@ class HMLSegmentation(ThresholdSegmentation):
     def __init__(
         self,
         df: pd.DataFrame,
-        value_col: str = "total_price",
+        value_col: str | None = None,
         agg_func: str = "sum",
         zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
     ) -> None:
         """Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend.
 
+        HMLSegmentation is a subclass of ThresholdSegmentation and based around an industry standard definition. The
+        thresholds for Heavy (top 20%), Medium (next 30%) and Light (bottom 50%) are chosen based on the pareto
+        distribution, commonly know as the 80/20 rule. It is typically used in retail to segment customers based on
+        their spend, transaction volume or quantities purchased.
+
         Args:
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must contain a customer_id column.
-            value_col (str, optional): The column to use for the segmentation. Defaults to "total_price".
+            value_col (str, optional): The column to use for the segmentation. Defaults to get_option("column.unit_spend").
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".
             zero_value_customers (Literal["separate_segment", "exclude", "include_with_light"], optional): How to handle
                 customers with zero spend. Defaults to "separate_segment".
         """
-        thresholds = [0.500, 0.800, 1]
+        thresholds = [0, 0.500, 0.800, 1]
         segments = {"L": "Light", "M": "Medium", "H": "Heavy"}
         super().__init__(
             df=df,
@@ -202,9 +217,14 @@ class SegTransactionStats:
                 TransactionLevelContract.
 
         """
-        required_cols = ["customer_id", "total_price", "transaction_id", segment_col]
-        if "quantity" in df.columns:
-            required_cols.append("quantity")
+        required_cols = [
+            get_option("column.customer_id"),
+            get_option("column.unit_spend"),
+            get_option("column.transaction_id"),
+            segment_col,
+        ]
+        if get_option("column.unit_quantity") in df.columns:
+            required_cols.append(get_option("column.unit_quantity"))
         contract = CustomContract(
             df,
             basic_expectations=build_expected_columns(columns=required_cols),
@@ -222,18 +242,18 @@ class SegTransactionStats:
     @staticmethod
     def _calc_seg_stats(df: pd.DataFrame, segment_col: str) -> pd.DataFrame:
         aggs = {
-            "revenue": ("total_price", "sum"),
-            "transactions": ("transaction_id", "nunique"),
-            "customers": ("customer_id", "nunique"),
+            get_option("column.agg.unit_spend"): (get_option("column.unit_spend"), "sum"),
+            get_option("column.agg.transaction_id"): (get_option("column.transaction_id"), "nunique"),
+            get_option("column.agg.customer_id"): (get_option("column.customer_id"), "nunique"),
         }
         total_aggs = {
-            "revenue": [df["total_price"].sum()],
-            "transactions": [df["transaction_id"].nunique()],
-            "customers": [df["customer_id"].nunique()],
+            get_option("column.agg.unit_spend"): [df[get_option("column.unit_spend")].sum()],
+            get_option("column.agg.transaction_id"): [df[get_option("column.transaction_id")].nunique()],
+            get_option("column.agg.customer_id"): [df[get_option("column.customer_id")].nunique()],
         }
-        if "quantity" in df.columns:
-            aggs["total_quantity"] = ("quantity", "sum")
-            total_aggs["total_quantity"] = [df["quantity"].sum()]
+        if get_option("column.unit_quantity") in df.columns:
+            aggs[get_option("column.agg.unit_quantity")] = (get_option("column.unit_quantity"), "sum")
+            total_aggs[get_option("column.agg.unit_quantity")] = [df[get_option("column.unit_quantity")].sum()]
 
         stats_df = pd.concat(
             [
@@ -242,9 +262,13 @@ class SegTransactionStats:
             ],
         )
 
-        if "quantity" in df.columns:
-            stats_df["price_per_unit"] = stats_df["revenue"] / stats_df["total_quantity"]
-            stats_df["quantity_per_transaction"] = stats_df["total_quantity"] / stats_df["transactions"]
+        if get_option("column.unit_quantity") in df.columns:
+            stats_df[get_option("column.calc.price_per_unit")] = (
+                stats_df[get_option("column.agg.unit_spend")] / stats_df[get_option("column.agg.unit_quantity")]
+            )
+            stats_df[get_option("column.calc.units_per_transaction")] = (
+                stats_df[get_option("column.agg.unit_quantity")] / stats_df[get_option("column.agg.transaction_id")]
+            )
 
         return stats_df
 
