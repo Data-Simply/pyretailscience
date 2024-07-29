@@ -308,7 +308,7 @@ def waterfall_plot(
     y_label: str | None = None,
     x_label: str = "",
     source_text: str | None = None,
-    data_label_format: Literal["absolute", "percentage", "both", "none"] = "absolute",
+    data_label_format: Literal["absolute", "percentage", "both"] | None = None,
     display_net_bar: bool = False,
     display_net_line: bool = False,
     remove_zero_amounts: bool = True,
@@ -348,9 +348,9 @@ def waterfall_plot(
     if len(amounts) != len(labels):
         raise ValueError("The lengths of amounts and labels must be the same.")
 
-    data_label_format = data_label_format.lower()
-    if data_label_format not in ["absolute", "percentage", "both", "none"]:
-        raise ValueError("data_label_format must be either 'absolute', 'percentage', 'both', or 'none'.")
+    data_label_format = None if data_label_format is None else data_label_format.lower()
+    if data_label_format is not None and data_label_format not in ["absolute", "percentage", "both"]:
+        raise ValueError("data_label_format must be either 'absolute', 'percentage', 'both', or None.")
 
     df = pd.DataFrame({"labels": labels, "amounts": amounts})
 
@@ -395,7 +395,7 @@ def waterfall_plot(
     # Add a black line at the y=0 position
     ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
 
-    if data_label_format != "none":
+    if data_label_format is not None:
         total_change = df["amounts"].sum()
         if data_label_format == "absolute":
             labels = df["amounts"].apply(lambda x: gu.human_format(x, decimals=decimals + 1))
