@@ -15,6 +15,7 @@ nav:
       - Cross Shop Analysis: examples/cross_shop.ipynb
       - Data Contracts: examples/data_contracts.ipynb
       - Segmentation: examples/segmentation.ipynb
+      - Product Association: examples/product_association.ipynb
   - Reference:
       - Gain Loss: api/gain_loss.md
       - Range Planning: api/range_planning.md
@@ -22,6 +23,7 @@ nav:
       - Customer Retention: api/customer.md
       - Standard Graphs: api/standard_graphs.md
       - Cross Shop Analysis: api/cross_shop.md
+      - Product Association: api/product_association.md
       - Contracts: api/contracts.md
 
 theme:
