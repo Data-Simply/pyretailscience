@@ -40,7 +40,8 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
+from scipy.sparse import csc_array
+from tqdm import tqdm
 
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
 
@@ -100,6 +101,7 @@ class ProductAssociation:
         min_support: float = 0.0,
         min_confidence: float = 0.0,
         min_uplift: float = 0.0,
+        show_progress: bool = False,
     ) -> None:
         """Initialize the ProductAssociation object.
 
@@ -122,6 +124,7 @@ class ProductAssociation:
                 to 0.0. Must be between 0 and 1.
             min_uplift (float, optional): The minimum uplift value required for the association rules. Defaults to 0.0.
                 Must be greater or equal to 0.
+            show_progress (bool, optional): Whether to show a progress bar during the calculation. Defaults to False.
 
         Raises:
             ValueError: If the number of combinations is not 2 or 3, or if any of the minimum values are invalid.
@@ -150,6 +153,7 @@ class ProductAssociation:
             min_support=min_support,
             min_confidence=min_confidence,
             min_uplift=min_uplift,
+            show_progress=show_progress,
         )
 
     @staticmethod
@@ -164,6 +168,7 @@ class ProductAssociation:
         min_support: float = 0.0,
         min_confidence: float = 0.0,
         min_uplift: float = 0.0,
+        show_progress: bool = False,
     ) -> pd.DataFrame:
         """Calculate product association rules based on transaction data.
 
@@ -189,6 +194,7 @@ class ProductAssociation:
                 to 0.0. Must be between 0 and 1.
             min_uplift (float, optional): The minimum uplift value required for the association rules. Defaults to 0.0.
                 Must be greater or equal to 0.
+            show_progress (bool, optional): Whether to show a progress bar during the calculation. Defaults to False.
 
         Returns:
             pandas.DataFrame: A DataFrame containing the calculated association rules and their metrics.
@@ -228,7 +234,7 @@ class ProductAssociation:
         unique_combo_df[value_col] = pd.Categorical(unique_combo_df[value_col], ordered=True)
         unique_combo_df[group_col] = pd.Categorical(unique_combo_df[group_col], ordered=True)
 
-        sparse_matrix = csr_matrix(
+        sparse_matrix = csc_array(
             (
                 [1] * len(unique_combo_df),
                 (
@@ -245,36 +251,43 @@ class ProductAssociation:
         occurrences = np.array(sparse_matrix.sum(axis=0)).flatten()
         occurence_prob = occurrences / row_count
 
-        items = [target_item]
-        if target_item is None:
-            if number_of_combinations == 2:  # noqa: PLR2004
-                items = unique_combo_df[value_col].cat.categories
-            elif number_of_combinations == 3:  # noqa: PLR2004
-                items = sorted(combinations(unique_combo_df[value_col].cat.categories, 2))
+        base_items = [target_item]
+        if number_of_combinations == 2:  # noqa: PLR2004
+            if target_item is None:
+                base_items = unique_combo_df[value_col].cat.categories
+            items = [([unique_combo_df[value_col].cat.categories.get_loc(cat)], cat) for cat in base_items]
+        elif number_of_combinations == 3:  # noqa: PLR2004
+            if target_item is None:
+                base_items = sorted(combinations(unique_combo_df[value_col].cat.categories, 2))
+            items = [
+                ([unique_combo_df[value_col].cat.categories.get_loc(i) for i in cats], cats) for cats in base_items
+            ]
 
-        for item_2 in items:
-            if isinstance(item_2, tuple):
-                target_item_col_index = [unique_combo_df[value_col].cat.categories.get_loc(i) for i in item_2]
-                rows_with_target_item = (sparse_matrix[:, target_item_col_index].toarray() == 1).all(axis=1)
-            else:
-                target_item_col_index = unique_combo_df[value_col].cat.categories.get_loc(item_2)
-                rows_with_target_item = sparse_matrix[:, target_item_col_index].toarray().ravel() == 1
+        if show_progress:
+            items = tqdm(items)
 
-            rows_with_target_item_sum = rows_with_target_item.sum()
+        cols_mask = np.zeros(sparse_matrix.shape[1], dtype=bool)
 
-            cooccurrences = np.array(sparse_matrix[rows_with_target_item, :].sum(axis=0)).flatten()
+        for target_item_loc, item_2 in items:
+            target_item_col_index = cols_mask.copy()
+            target_item_col_index[target_item_loc] = True
+            rows_with_target_item = sparse_matrix[:, target_item_col_index].getnnz(axis=1) == len(target_item_loc)
+
+            cooccurrences = sparse_matrix[rows_with_target_item, :].sum(axis=0).flatten()
             if (cooccurrences == 0).all():
                 continue
 
+            rows_with_target_item_sum = rows_with_target_item.sum()
             coocurrence_prob = cooccurrences / row_count
 
             target_prob = rows_with_target_item_sum / row_count
             expected_prob = target_prob * occurence_prob
 
+            # TODO: Try to avoid constructing a pandas Dataframe
             pa_df = pd.DataFrame(
                 {
                     f"{value_col}_1": [item_2] * sparse_matrix.shape[1],
-                    f"{value_col}_2": unique_combo_df[value_col].cat.categories,
+                    f"{value_col}_2": unique_combo_df[value_col].cat.categories.values,
                     "occurrences_1": rows_with_target_item_sum,
                     "occurrences_2": occurrences,
                     "cooccurrences": cooccurrences,
@@ -284,13 +297,8 @@ class ProductAssociation:
                 },
             )
 
-            if isinstance(item_2, tuple):
-                dupe_pairs_idx = pa_df.apply(lambda x: x[f"{value_col}_2"] in x[f"{value_col}_1"], axis=1)
-            else:
-                dupe_pairs_idx = pa_df[f"{value_col}_1"] == pa_df[f"{value_col}_2"]
-
             excl_pairs_idx = (
-                dupe_pairs_idx
+                target_item_col_index
                 | (pa_df["occurrences_1"] < min_occurrences)
                 | (pa_df["occurrences_2"] < min_occurrences)
                 | (pa_df["cooccurrences"] < min_cooccurrences)
