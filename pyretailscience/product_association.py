@@ -40,7 +40,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csc_array
+from scipy.sparse import csc_matrix
 from tqdm import tqdm
 
 from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
@@ -234,7 +234,7 @@ class ProductAssociation:
         unique_combo_df[value_col] = pd.Categorical(unique_combo_df[value_col], ordered=True)
         unique_combo_df[group_col] = pd.Categorical(unique_combo_df[group_col], ordered=True)
 
-        sparse_matrix = csc_array(
+        sparse_matrix = csc_matrix(
             (
                 [1] * len(unique_combo_df),
                 (
@@ -273,7 +273,7 @@ class ProductAssociation:
             target_item_col_index[target_item_loc] = True
             rows_with_target_item = sparse_matrix[:, target_item_col_index].getnnz(axis=1) == len(target_item_loc)
 
-            cooccurrences = sparse_matrix[rows_with_target_item, :].sum(axis=0).flatten()
+            cooccurrences = np.array(sparse_matrix[rows_with_target_item, :].sum(axis=0)).flatten()
             if (cooccurrences == 0).all():
                 continue
 
