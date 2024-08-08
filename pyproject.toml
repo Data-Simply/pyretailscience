@@ -10,11 +10,11 @@ license = "Elastic-2.0"
 python = ">=3.10,<3.12"
 pandas = "^2.1.4"
 pyarrow = "^14.0.2"
-matplotlib = "^3.8.2"
+matplotlib = "^3.9.1"
 numpy = "^1.26.3"
 loguru = "^0.7.2"
 tqdm = "^4.66.1"
-great-expectations = "^0.18.8"
+great-expectations = "^0.18.19"
 scipy = "^1.13.0"
 scikit-learn = "^1.4.2"
 matplotlib-set-diagrams = "~0.0.2"
@@ -28,7 +28,7 @@ ruff = "^0.4.8"
 pre-commit ="^3.6.2"
 
 [tool.poetry.group.examples.dependencies]
-jupyterlab = "^4.0.10"
+jupyterlab = "^4.2.4"
 tqdm = "^4.66.1"
 
 [tool.poetry.group.docs.dependencies]
