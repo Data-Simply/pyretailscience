@@ -230,7 +230,7 @@ class SegTransactionStats:
         if get_option("column.unit_quantity") in data.columns:
             required_cols.append(get_option("column.unit_quantity"))
 
-        missing_cols = [col for col in required_cols if col not in data.columns]
+        missing_cols = set(required_cols) - set(data.columns)
 
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
