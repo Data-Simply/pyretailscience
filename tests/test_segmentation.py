@@ -27,15 +27,19 @@ class TestCalcSegStats:
         """Test that the method correctly calculates at the transaction-item level."""
         expected_output = pd.DataFrame(
             {
-                get_option("column.agg.unit_spend"): [500, 500, 1000],
+                "segment_name": ["A", "B", "Total"],
+                get_option("column.agg.unit_spend"): [500.0, 500.0, 1000.0],
                 get_option("column.agg.transaction_id"): [3, 2, 5],
                 get_option("column.agg.customer_id"): [3, 2, 5],
                 get_option("column.agg.unit_quantity"): [50, 50, 100],
+                get_option("column.calc.spend_per_customer"): [166.666667, 250.0, 200.0],
+                get_option("column.calc.spend_per_transaction"): [166.666667, 250.0, 200.0],
+                get_option("column.calc.transactions_per_customer"): [1.0, 1.0, 1.0],
+                f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
                 get_option("column.calc.price_per_unit"): [10.0, 10.0, 10.0],
                 get_option("column.calc.units_per_transaction"): [16.666667, 25.0, 20.0],
             },
-            index=["A", "B", "total"],
-        )
+        ).set_index("segment_name")
 
         segment_stats = SegTransactionStats._calc_seg_stats(base_df, "segment_id")
         pd.testing.assert_frame_equal(segment_stats, expected_output)
@@ -53,12 +57,16 @@ class TestCalcSegStats:
 
         expected_output = pd.DataFrame(
             {
-                get_option("column.agg.unit_spend"): [500, 500, 1000],
+                "segment_name": ["A", "B", "Total"],
+                get_option("column.agg.unit_spend"): [500.0, 500.0, 1000.0],
                 get_option("column.agg.transaction_id"): [3, 2, 5],
                 get_option("column.agg.customer_id"): [3, 2, 5],
+                get_option("column.calc.spend_per_customer"): [166.666667, 250.0, 200.0],
+                get_option("column.calc.spend_per_transaction"): [166.666667, 250.0, 200.0],
+                get_option("column.calc.transactions_per_customer"): [1.0, 1.0, 1.0],
+                f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
             },
-            index=["A", "B", "total"],
-        )
+        ).set_index("segment_name")
 
         segment_stats = SegTransactionStats._calc_seg_stats(df, "segment_id")
         pd.testing.assert_frame_equal(segment_stats, expected_output)
@@ -77,15 +85,19 @@ class TestCalcSegStats:
 
         expected_output = pd.DataFrame(
             {
-                get_option("column.agg.unit_spend"): [1000, 1000],
+                "segment_name": ["A", "Total"],
+                get_option("column.agg.unit_spend"): [1000.0, 1000.0],
                 get_option("column.agg.transaction_id"): [5, 5],
                 get_option("column.agg.customer_id"): [5, 5],
                 get_option("column.agg.unit_quantity"): [100, 100],
+                get_option("column.calc.spend_per_customer"): [200.0, 200.0],
+                get_option("column.calc.spend_per_transaction"): [200.0, 200.0],
+                get_option("column.calc.transactions_per_customer"): [1.0, 1.0],
+                f"customers_{get_option('column.suffix.percent')}": [1.0, 1.0],
                 get_option("column.calc.price_per_unit"): [10.0, 10.0],
                 get_option("column.calc.units_per_transaction"): [20.0, 20.0],
             },
-            index=["A", "total"],
-        )
+        ).set_index("segment_name")
 
         segment_stats = SegTransactionStats._calc_seg_stats(df, "segment_id")
         pd.testing.assert_frame_equal(segment_stats, expected_output)
