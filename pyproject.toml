@@ -19,6 +19,7 @@ scipy = "^1.13.0"
 scikit-learn = "^1.4.2"
 matplotlib-set-diagrams = "~0.0.2"
 toml = "^0.10.2"
+duckdb = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

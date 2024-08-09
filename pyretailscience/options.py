@@ -53,6 +53,9 @@ class Options:
             # Calculated columns
             "column.calc.price_per_unit": "price_per_unit",
             "column.calc.units_per_transaction": "units_per_transaction",
+            "column.calc.spend_per_customer": "spend_per_customer",
+            "column.calc.spend_per_transaction": "spend_per_transaction",
+            "column.calc.transactions_per_customer": "transactions_per_customer",
             # Abbreviation suffix
             "column.suffix.count": "cnt",
             "column.suffix.percent": "pct",
@@ -86,6 +89,9 @@ class Options:
             # Calculated columns
             "column.calc.price_per_unit": "The name of the column containing the price per unit.",
             "column.calc.units_per_transaction": "The name of the column containing the units per transaction.",
+            "column.calc.spend_per_customer": "The name of the column containing the spend per customer.",
+            "column.calc.spend_per_transaction": "The name of the column containing the spend per transaction.",
+            "column.calc.transactions_per_customer": "The name of the column containing the transactions per customer.",
             # Abbreviation suffixes
             "column.suffix.count": "The suffix to use for count columns.",
             "column.suffix.percent": "The suffix to use for percentage columns.",
