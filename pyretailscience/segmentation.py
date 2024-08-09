@@ -254,6 +254,8 @@ class SegTransactionStats:
         """
         if isinstance(data, pd.DataFrame):
             data = duckdb.from_df(data)
+        elif not isinstance(data, DuckDBPyRelation):
+            raise TypeError("data must be either a pandas DataFrame or a DuckDBPyRelation")
 
         base_aggs = [
             f"SUM({get_option('column.unit_spend')}) as {get_option('column.agg.unit_spend')},",
