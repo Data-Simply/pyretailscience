@@ -43,8 +43,6 @@ import pandas as pd
 from scipy.sparse import csc_matrix
 from tqdm import tqdm
 
-from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
-
 
 class ProductAssociation:
     """A class for generating and analyzing product association rules.
@@ -133,13 +131,9 @@ class ProductAssociation:
             ValueError: If the input DataFrame does not contain the required columns or if they have null values.
         """
         required_cols = [group_col, value_col]
-        contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=required_cols),
-            extended_expectations=build_non_null_columns(columns=required_cols),
-        )
-        if contract.validate() is False:
-            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
         self.df = self._calc_association(

@@ -5,7 +5,6 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
-from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
 from pyretailscience.style import graph_utils as gu
 from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
@@ -46,13 +45,9 @@ class CrossShop:
                 the number of group indexes given.
         """
         required_cols = ["customer_id", value_col]
-        contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=required_cols),
-            extended_expectations=build_non_null_columns(columns=required_cols),
-        )
-        if contract.validate() is False:
-            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
         self.group_count = 2 if group_3_idx is None else 3

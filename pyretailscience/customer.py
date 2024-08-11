@@ -7,12 +7,6 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.data.contracts import (
-    CustomContract,
-    TransactionItemLevelContract,
-    build_expected_columns,
-    build_non_null_columns,
-)
 from pyretailscience.style.graph_utils import human_format, standard_graph_styles
 from pyretailscience.style.tailwind import COLORS
 
@@ -36,16 +30,11 @@ class PurchasesPerCustomer:
                 are null.
 
         """
-        contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=["customer_id", "transaction_id"]),
-            extended_expectations=build_non_null_columns(columns=["customer_id", "transaction_id"]),
-        )
-        if contract.validate() is False:
-            raise ValueError(
-                "The dataframe requires the columns 'customer_id', 'transaction_id' and they must be non-null.",
-                "Please ensure these columns exist and contain no null values.",
-            )
+        required_cols = ["customer_id", "transaction_id"]
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
+            raise ValueError(msg)
 
         self.cust_purchases_s = df.groupby("customer_id")["transaction_id"].nunique()
 
@@ -183,24 +172,19 @@ class DaysBetweenPurchases:
         """Initialize the DaysBetweenPurchases class.
 
         Args:
-            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-                TransactionItemLevelContract.
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must have the columns customer_id
+                and transaction_datetime, which must be non-null.
 
         Raises:
             ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id, or if the
                 columns are null.
 
         """
-        contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=["customer_id", "transaction_datetime"]),
-            extended_expectations=build_non_null_columns(columns=["customer_id", "transaction_datetime"]),
-        )
-        if contract.validate() is False:
-            raise ValueError(
-                "The dataframe requires the columns 'customer_id', 'transaction_datetime' and they must be non-null.",
-                "Please ensure these columns exist and contain no null values.",
-            )
+        required_cols = ["customer_id", "transaction_datetime"]
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
+            raise ValueError(msg)
 
         self.purchase_dist_s = self._calculate_days_between_purchases(df)
 
@@ -209,12 +193,18 @@ class DaysBetweenPurchases:
         """Calculate the average number of days between purchases per customer.
 
         Args:
-            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-                TransactionItemLevelContract.
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must have the columns customer_id
+                and transaction_datetime, which must be non-null.
 
         Returns:
             pd.Series: The average number of days between purchases per customer.
         """
+        required_cols = ["customer_id", "transaction_datetime"]
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
+            raise ValueError(msg)
+
         purchase_dist_df = df[["customer_id", "transaction_datetime"]].copy()
         purchase_dist_df["transaction_datetime"] = df["transaction_datetime"].dt.floor("D")
         purchase_dist_df = purchase_dist_df.drop_duplicates().sort_values(["customer_id", "transaction_datetime"])
@@ -325,26 +315,24 @@ class TransactionChurn:
     Attributes:
         purchase_dist_df (pd.DataFrame): The churn rate by number of purchases.
         n_unique_customers (int): The number of unique customers in the dataframe.
-
-    Args:
-        df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-            TransactionItemLevelContract.
-        churn_period (float): The number of days to consider a customer churned.
     """
 
     def __init__(self, df: pd.DataFrame, churn_period: float) -> None:
         """Initialize the TransactionChurn class.
 
         Args:
-            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must comply with the
-                TransactionItemLevelContract.
+            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must have the columns customer_id
+                and transaction_datetime.
             churn_period (float): The number of days to consider a customer churned.
 
         Raises:
-            ValueError: If the dataframe does not comply with the TransactionItemLevelContract
+            ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id.
         """
-        if TransactionItemLevelContract(df).validate() is False:
-            raise ValueError("The dataframe does not comply with the TransactionItemLevelContract")
+        required_cols = ["customer_id", "transaction_datetime"]
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
+            raise ValueError(msg)
 
         purchase_dist_df = df[["customer_id", "transaction_datetime"]].copy()
         # Truncate the transaction_datetime to the day

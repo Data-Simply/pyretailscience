@@ -8,12 +8,6 @@ from duckdb import DuckDBPyRelation
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.data.contracts import (
-    CustomContract,
-    build_expected_columns,
-    build_expected_unique_columns,
-    build_non_null_columns,
-)
 from pyretailscience.options import get_option
 from pyretailscience.style.tailwind import COLORS
 
@@ -60,15 +54,9 @@ class ExistingSegmentation(BaseSegmentation):
             ValueError: If the dataframe does not have the columns customer_id, segment_name and segment_id.
         """
         required_cols = get_option("column.customer_id"), "segment_name", "segment_id"
-        contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=required_cols),
-            extended_expectations=build_non_null_columns(columns=required_cols)
-            + build_expected_unique_columns(columns=[required_cols]),
-        )
-
-        if contract.validate() is False:
-            msg = f"The dataframe requires the columns {required_cols} and they must be non-null and unique."
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
         self.df = df[[get_option("column.customer_id"), "segment_name", "segment_id"]].set_index(
@@ -113,14 +101,9 @@ class ThresholdSegmentation(BaseSegmentation):
         value_col = get_option("column.unit_spend") if value_col is None else value_col
 
         required_cols = [get_option("column.customer_id"), value_col]
-        contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=required_cols),
-            extended_expectations=build_non_null_columns(columns=required_cols),
-        )
-
-        if contract.validate() is False:
-            msg = f"The dataframe requires the columns {required_cols} and they must be non-null"
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
         if len(df) < len(thresholds):
@@ -215,11 +198,6 @@ class SegTransactionStats:
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
             segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_id".
-
-        Raises:
-            NotImplementedError: If the dataframe does not comply with the TransactionItemLevelContract or
-                TransactionLevelContract.
-
         """
         required_cols = [
             get_option("column.customer_id"),
@@ -231,7 +209,6 @@ class SegTransactionStats:
             required_cols.append(get_option("column.unit_quantity"))
 
         missing_cols = set(required_cols) - set(data.columns)
-
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)

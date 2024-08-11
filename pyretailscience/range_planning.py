@@ -9,7 +9,6 @@ from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.data.contracts import CustomContract, build_expected_columns, build_non_null_columns
 from pyretailscience.style.graph_utils import GraphStyles
 
 
@@ -27,8 +26,8 @@ class CustomerDecisionHierarchy:
         """Initializes the RangePlanning object.
 
         Args:
-            df (pd.DataFrame): The input dataframe containing transaction data. The dataframe must comply with the
-                TransactionItemLevelContract or the TransactionLevelContract.
+            df (pd.DataFrame): The input dataframe containing transaction data. The dataframe must have the columns
+                customer_id, transaction_id, product_name.
             exclude_same_transaction_products (bool, optional): Flag indicating whether to exclude products found in
                 the same transaction from a customer's distinct list of products bought. The idea is that if a
                 customer bought two products in the same transaction they can't be substitutes for that customer.
@@ -40,20 +39,14 @@ class CustomerDecisionHierarchy:
             random_state (int, optional): Random seed for reproducibility. Defaults to 42.
 
         Raises:
-            ValueError: If the dataframe does not comply with the TransactionItemLevelContract.
+            ValueError: If the dataframe does not have the require columns.
 
         """
-        cdh_contract = CustomContract(
-            df,
-            basic_expectations=build_expected_columns(columns=["customer_id", "transaction_id", "product_name"]),
-            extended_expectations=build_non_null_columns(columns=["customer_id", "transaction_id", "product_name"]),
-        )
-
-        if cdh_contract.validate() is False:
-            raise ValueError(
-                "The dataframe requires the columns 'customer_id', 'transaction_id', and 'product_name' and they must "
-                "be non-null",
-            )
+        required_cols = ["customer_id", "transaction_id", "product_name"]
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
+            raise ValueError(msg)
 
         self.random_state = random_state
         self.pairs_df = self._get_pairs(df, exclude_same_transaction_products)

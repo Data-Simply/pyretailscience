@@ -13,7 +13,6 @@ nav:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
       - Cross Shop Analysis: examples/cross_shop.ipynb
-      - Data Contracts: examples/data_contracts.ipynb
       - Segmentation: examples/segmentation.ipynb
       - Product Association: examples/product_association.ipynb
   - Reference:
@@ -24,7 +23,6 @@ nav:
       - Standard Graphs: api/standard_graphs.md
       - Cross Shop Analysis: api/cross_shop.md
       - Product Association: api/product_association.md
-      - Contracts: api/contracts.md
 
 theme:
   name: material
