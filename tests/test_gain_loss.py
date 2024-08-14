@@ -1,9 +1,12 @@
+"""Tests for the GainLoss class in the gain_loss module."""
+
 import pytest
+
 from pyretailscience.gain_loss import GainLoss
 
 
 @pytest.mark.parametrize(
-    "focus_p1, comparison_p1, focus_p2, comparison_p2, focus_diff, comparison_diff, expected",
+    ("focus_p1", "comparison_p1", "focus_p2", "comparison_p2", "focus_diff", "comparison_diff", "expected"),
     [
         # Test when a new customer is added (focus_p1 and comparison_p1 are 0)
         (0, 0, 100, 0, 100, 0, (100, 0, 0, 0, 0, 0)),
@@ -52,8 +55,15 @@ from pyretailscience.gain_loss import GainLoss
     ],
 )
 def test_process_customer_group(
-    focus_p1, comparison_p1, focus_p2, comparison_p2, focus_diff, comparison_diff, expected
+    focus_p1,
+    comparison_p1,
+    focus_p2,
+    comparison_p2,
+    focus_diff,
+    comparison_diff,
+    expected,
 ):
+    """Test the process_customer_group method of the GainLoss class."""
     result = GainLoss.process_customer_group(
         focus_p1=focus_p1,
         comparison_p1=comparison_p1,

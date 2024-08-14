@@ -53,4 +53,95 @@ show_missing = true
 skip_covered = true
 
 [tool.ruff]
+target-version = "py310"
 line-length=120
+show-fixes = true
+
+[tool.ruff.lint]
+ignore = [
+    "ANN101",
+    "ANN102",
+    "EM101",
+    "TRY003", # Disable until we start creating proper exception classes
+    "PT011",  # Disable until we start creating proper exception classes
+    "PTH123", # Not using open() to open files
+]
+select = [
+    "A",    # Builtins
+    "ANN",  # Annotations
+    "ARG",  # Unused arguments
+    "B",    # Bugbear
+    "BLE",  # Blind except
+    "C4",   # Comprehensions
+    "C90",  # mccabe
+    "COM",  # Commas
+    "D",    # Pydocstyle
+    "D1",   # Undocumented public elements
+    "D2",   # Docstring conventions
+    "D3",   # Triple double quotes
+    "D4",   # Docstring text format
+    "DTZ",  # Datetimes
+    "EM",   # Error messages
+    "ERA",  # Commented-out code
+    "EXE",  # Executable
+    "F",    # Pyflakes
+    "FA",   # __future__ annotations
+    "FLY",  # F-strings
+    "G",    # Logging format
+    "I",    # Isort
+    "ICN",  # Import conventions
+    "INP",  # Disallow PEP-420 (Implicit namespace packages)
+    "INT",  # gettext
+    "ISC",  # Implicit str concat
+    "N",    # PEP-8 Naming
+    "NPY",  # Numpy
+    "PERF", # Unnecessary performance costs
+    "PGH",  # Pygrep hooks
+    "PIE",  # Unnecessary code
+    "PL",   # Pylint
+    "PT",   # Pytest
+    "PTH",  # Use Pathlib
+    "PYI",  # Stub files
+    "Q",    # Quotes
+    "RET",  # Return
+    "RUF",  # Ruff
+    "RSE",  # Raise
+    "S",    # Bandit
+    "SIM",  # Code simplification
+    "SLF",  # Private member access
+    "SLOT", # __slots__
+    "T10",  # Debugger
+    "T20",  # Print
+    "TCH",  # Type checking
+    "TID",  # Tidy imports
+    "TRY",  # Exception handling
+    "UP",   # Pyupgrade
+    "W",    # Warnings
+    "YTT",  # sys.version
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+# https://beta.ruff.rs/docs/rules/
+"__init__.py" = ["F401", "F403", "F405", "D104"]
+"tests/*" = ["ANN", "ARG", "INP001", "S101", "SLF001"]
+"*.ipynb" = ["T201"]
+
+[tool.ruff.lint.pylint]
+max-args = 15
+max-branches = 20
+max-returns = 10
+max-statements = 80
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+multiline-quotes = "double"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
