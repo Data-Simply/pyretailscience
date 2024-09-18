@@ -28,7 +28,7 @@ ruff = "^0.4.8"
 pre-commit ="^3.6.2"
 
 [tool.poetry.group.examples.dependencies]
-jupyterlab = "^4.2.4"
+jupyterlab = "^4.2.5"
 tqdm = "^4.66.1"
 
 [tool.poetry.group.docs.dependencies]
