@@ -43,6 +43,52 @@ waterfall_plot(
 )
 ```
 
+### Index Plots
+
+<div class="clear" markdown>
+
+![Image title](assets/images/analysis_modules/index_plot.svg){ align=right loading=lazy width="50%"}
+
+Index plots are visual tools used in retail analytics to compare different categories or segments against a baseline or
+average value, typically set at 100. Index plots allow analysts to:
+
+Quickly identify which categories over- or underperform relative to the average
+Compare performance across diverse categories on a standardized scale
+Highlight areas of opportunity or concern in retail operations
+Easily communicate relative performance to stakeholders without revealing sensitive absolute numbers
+
+In retail contexts, index plots are valuable for:
+
+Comparing sales performance across product categories
+Analyzing customer segment behavior against the overall average
+Evaluating store or regional performance relative to company-wide metrics
+Identifying high-potential areas for growth or investment
+
+By normalizing data to an index, these plots facilitate meaningful comparisons and help focus attention on significant
+deviations from expected performance, supporting more informed decision-making in retail strategy and operations.
+
+</div>
+
+Example:
+
+```python
+from pyretailscience.standard_graphs import index_plot
+
+index_plot(
+    df,
+    df_index_filter=df["segment_name"] == "Light",
+    value_col="unit_price",
+    group_col="category_0_name",
+    title="Music an opportunity category for Light?",
+    y_label="Categories",
+    x_label="Indexed Spend",
+    source_text="Source: Transaction data financial year 2023",
+    sort_by="value",
+    sort_order="descending",
+    legend_title="Quarter",
+)
+```
+
 ### Timeline Plot
 
 <div class="clear" markdown>
@@ -73,8 +119,12 @@ from pyretailscience.standard_graphs import time_plot
 rng = np.random.default_rng(42)
 df = pd.DataFrame(
     {
-        "transaction_datetime": pd.concat([pd.Series(pd.date_range(start="2022-01-01", periods=200, freq="D"))] * 3),
-        "total_price": np.concatenate([rng.integers(1, 1000, size=200) * multiplier for multiplier in range(1, 4)]),
+        "transaction_datetime": pd.concat(
+            [pd.Series(pd.date_range(start="2022-01-01", periods=200, freq="D"))] * 3
+        ),
+        "total_price": np.concatenate(
+            [rng.integers(1, 1000, size=200) * multiplier for multiplier in range(1, 4)]
+        ),
         "group": ["Group A"] * 200 + ["Group B"] * 200 + ["Group C"] * 200,
     },
 )
@@ -149,3 +199,190 @@ pa.df.head()
 | 100 Animals Book | 4-Series 4K UHD              |             78 |             82 |              1 | 0.000039 |  0.0128205 |   3.98 |
 | 100 Animals Book | 700S Eterna Trumpet          |             78 |             71 |              1 | 0.000039 |  0.0128205 |   4.60 |
 <!-- markdownlint-enable MD013 -->
+
+### Cross Shop
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Gain Loss
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Customer Decision Hierarchy
+
+<div class="clear" markdown>
+
+![Image title](assets/images/analysis_modules/customer_decision_hierarchy.svg){ align=right loading=lazy width="50%"}
+
+A Customer Decision Hierarchy (CDH), also known as a Customer Decision Tree, is a powerful tool in retail analytics that
+ visually represents the sequential steps and criteria customers use when making purchase decisions within a specific
+ product category. Here's a brief summary of its purpose and utility:
+
+CDHs allow analysts to:
+
+- Map out the hierarchical structure of customer decision-making processes
+- Identify key product attributes that drive purchase decisions
+- Understand product substitutions and alternatives customers consider
+- Prioritize product attributes based on their importance to customers
+
+In retail contexts, CDHs are valuable for:
+
+- Optimizing product assortments and shelf layouts
+- Developing targeted marketing strategies
+- Identifying opportunities for new product development
+- Understanding competitive dynamics within a category
+
+By visualizing the decision-making process, CDHs help retailers align their offerings and strategies with customer
+preferences, potentially increasing sales and customer satisfaction. They provide insights into how customers navigate
+choices, enabling more effective category management and merchandising decisions.
+
+</div>
+
+Example:
+
+```python
+from pyretailscience.range_planning import CustomerDecisionHierarchy
+
+cdh = CustomerDecisionHierarchy(df)
+ax = cdh.plot(
+    orientation="right",
+    source_text="Source: Transactions 2024",
+    title="Snack Food Substitutions",
+)
+```
+
+### Revenue Tree
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### HML Segmentation
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Threshold Segmentation
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Segmentation Stats
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Purchases Per Customer
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Days Between Purchases
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```
+
+### Transaction Churn
+
+<div class="clear" markdown>
+
+![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+
+PASTE TEXT HERE
+
+</div>
+
+Example:
+
+```python
+PASTE CODE HERE
+```

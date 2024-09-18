@@ -185,7 +185,26 @@ def index_plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
     include_only_groups: list[any] | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
-    """Plots the value_col over time.
+    """Creates an index plot.
+
+    Index plots are visual tools used in retail analytics to compare different categories or segments against a
+    baseline or average value, typically set at 100. Index plots allow analysts to:
+
+    Quickly identify which categories over- or underperform relative to the average
+    Compare performance across diverse categories on a standardized scale
+    Highlight areas of opportunity or concern in retail operations
+    Easily communicate relative performance to stakeholders without revealing sensitive absolute numbers
+
+    In retail contexts, index plots are valuable for:
+
+    Comparing sales performance across product categories
+    Analyzing customer segment behavior against the overall average
+    Evaluating store or regional performance relative to company-wide metrics
+    Identifying high-potential areas for growth or investment
+
+    By normalizing data to an index, these plots facilitate meaningful comparisons and help focus attention on
+    significant deviations from expected performance, supporting more informed decision-making in retail strategy and
+    operations.
 
     Args:
         df (pd.DataFrame): The dataframe to plot.
