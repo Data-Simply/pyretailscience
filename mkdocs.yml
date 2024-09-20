@@ -23,6 +23,7 @@ nav:
       - Standard Graphs: api/standard_graphs.md
       - Cross Shop Analysis: api/cross_shop.md
       - Product Association: api/product_association.md
+      - Line Plot: api/plots/line.md
 
 theme:
   name: material

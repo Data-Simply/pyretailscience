@@ -7,6 +7,50 @@ social:
 
 ## Plots
 
+### Line Plot
+
+<div class="clear" markdown>
+
+![Image title](assets/images/analysis_modules/line_plot.svg){ align=right loading=lazy width="50%"}
+
+Line plots are particularly good for visualizing sequences that resemble time-based data, such as:
+
+- Days since an event (e.g., -2, -1, 0, 1, 2)
+- Months since a competitor opened
+- Tracking how metrics change across key events
+
+They are often used to compare trends across categories, show the impact of events on performance, and visualize changes over time-like sequences.
+
+Note: This module is not intended for actual datetime values. For time-based plots using dates, refer to the **timeline** module.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.plots import line
+
+df = pd.DataFrame({
+    "months_since_event": range(-5, 6),
+    "category_A": [10000, 12000, 13000, 15000, 16000, 17000, 18000, 20000, 21000, 20030, 25000],
+    "category_B": [9000, 10000, 11000, 13000, 14000, 15000, 10000, 7000, 3500, 3000, 2800],
+})
+
+line.plot(
+    df=df,
+    value_col=["category_A", "category_B"],
+    x_label="Months Since Event",
+    y_label="Revenue (£)",
+    title="Revenue Trends across Categories",
+    x_col="months_since_event",
+    group_col=None,
+    source_text="Source: PyRetailScience - 2024",
+    move_legend_outside=True,
+)
+```
+
+
 ### Waterfall Plot
 
 <div class="clear" markdown>
