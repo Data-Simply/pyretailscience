@@ -11,7 +11,7 @@ social:
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/line_plot.svg){ align=right loading=lazy width="50%"}
+![Image title](assets/images/analysis_modules/plots/line_plot.svg){ align=right loading=lazy width="50%"}
 
 Line plots are particularly good for visualizing sequences that resemble time-based data, such as:
 
