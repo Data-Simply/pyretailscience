@@ -132,7 +132,7 @@ def standard_tick_styles(ax: Axes) -> Axes:
 
 
 def not_none(value1: any, value2: any) -> any:
-    """Helper funciont that returns the first value that is not None.
+    """Helper function that returns the first value that is not None.
 
     Args:
         value1: The first value.
