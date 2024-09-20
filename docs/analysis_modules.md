@@ -33,13 +33,13 @@ from pyretailscience.plots import line
 
 df = pd.DataFrame({
     "months_since_event": range(-5, 6),
-    "category_A": [10000, 12000, 13000, 15000, 16000, 17000, 18000, 20000, 21000, 20030, 25000],
-    "category_B": [9000, 10000, 11000, 13000, 14000, 15000, 10000, 7000, 3500, 3000, 2800],
+    "category A": [10000, 12000, 13000, 15000, 16000, 17000, 18000, 20000, 21000, 20030, 25000],
+    "category B": [9000, 10000, 11000, 13000, 14000, 15000, 10000, 7000, 3500, 3000, 2800],
 })
 
 line.plot(
     df=df,
-    value_col=["category_A", "category_B"],
+    value_col=["category A", "category B"],
     x_label="Months Since Event",
     y_label="Revenue (£)",
     title="Revenue Trends across Categories",
