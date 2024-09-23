@@ -12,7 +12,7 @@ from pyretailscience.plots import line
 from pyretailscience.style import graph_utils as gu
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_dataframe():
     """A sample dataframe for testing."""
     data = {
@@ -23,14 +23,14 @@ def sample_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_get_base_cmap(mocker):
     """Mock the get_base_cmap function to return a custom colormap."""
     cmap = ListedColormap(["#FF0000", "#00FF00", "#0000FF"])
     mocker.patch("pyretailscience.style.tailwind.get_base_cmap", return_value=cmap)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_gu_functions(mocker):
     mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
     mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
