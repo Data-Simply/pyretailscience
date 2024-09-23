@@ -81,6 +81,13 @@ def plot(
             UserWarning,
             stacklevel=2,
         )
+
+    elif x_col is None and pd.api.types.is_datetime64_any_dtype(df.index):
+        warnings.warn(
+            "The DataFrame index is datetime-like. Consider using the 'plots.timeline' module for time-based plots.",
+            UserWarning,
+            stacklevel=2,
+        )
     colors = get_base_cmap()
 
     if group_col is None:

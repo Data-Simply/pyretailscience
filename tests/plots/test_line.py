@@ -178,3 +178,94 @@ def test_plot_adds_source_text(sample_dataframe):
     )
 
     gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+
+
+@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+def test_plot_with_legend_title(sample_dataframe):
+    """Test the plot function with a legend title."""
+    _, ax = plt.subplots()
+
+    # Create the plot with a legend title
+    legend_title = "Test Legend"
+    result_ax = line.plot(
+        df=sample_dataframe,
+        value_col="y",
+        x_label="X Axis",
+        y_label="Y Axis",
+        title="Test Plot with Legend Title",
+        x_col="x",
+        group_col="group",
+        ax=ax,
+        legend_title=legend_title,
+    )
+
+    # Assert that standard_graph_styles was called with the provided legend title
+    gu.standard_graph_styles.assert_called_once_with(
+        ax=result_ax,
+        title="Test Plot with Legend Title",
+        x_label="X Axis",
+        y_label="Y Axis",
+        legend_title=legend_title,
+        move_legend_outside=False,
+    )
+
+
+@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+def test_plot_with_legend_title_and_move_outside(sample_dataframe):
+    """Test the plot function with both move_legend_outside=True and legend_title."""
+    _, ax = plt.subplots()
+
+    # Create the plot with both options
+    legend_title = "Test Legend"
+    result_ax = line.plot(
+        df=sample_dataframe,
+        value_col="y",
+        x_label="X Axis",
+        y_label="Y Axis",
+        title="Test Plot Legend Outside with Title",
+        x_col="x",
+        group_col="group",
+        ax=ax,
+        move_legend_outside=True,
+        legend_title=legend_title,
+    )
+
+    # Assert that standard_graph_styles was called with both options
+    gu.standard_graph_styles.assert_called_once_with(
+        ax=result_ax,
+        title="Test Plot Legend Outside with Title",
+        x_label="X Axis",
+        y_label="Y Axis",
+        legend_title=legend_title,
+        move_legend_outside=True,
+    )
+
+
+@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+def test_plot_with_datetime_index_warns(sample_dataframe, mocker):
+    """Test the plot function with a datetime index and no x_col, expecting a warning."""
+    df_with_datetime_index = sample_dataframe.set_index("x")
+    _, ax = plt.subplots()
+
+    # Mock the warnings.warn method to check if it's called
+    mocker.patch("warnings.warn")
+
+    # Create the plot with a datetime index and no x_col
+    result_ax = line.plot(
+        df=df_with_datetime_index,
+        value_col="y",
+        x_label="X Axis",
+        y_label="Y Axis",
+        title="Test Plot Datetime Index",
+        ax=ax,
+    )
+
+    # Assert that the plot was created
+    assert isinstance(result_ax, Axes)
+
+    # Assert that the warning about datetime-like index was raised
+    warnings.warn.assert_called_once_with(
+        "The DataFrame index is datetime-like. Consider using the 'plots.timeline' module for time-based plots.",
+        UserWarning,
+        stacklevel=2,
+    )
