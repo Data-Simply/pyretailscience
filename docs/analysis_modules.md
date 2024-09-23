@@ -13,7 +13,7 @@ social:
 
 ![Image title](assets/images/analysis_modules/plots/line_plot.svg){ align=right loading=lazy width="50%"}
 
-Line plots are particularly good for visualizing sequences that resemble time-based data, such as:
+Line plots are particularly good for visualizing sequences that are ordered or sequential, but not necessarily categorical, such as:
 
 - Days since an event (e.g., -2, -1, 0, 1, 2)
 - Months since a competitor opened
@@ -21,7 +21,7 @@ Line plots are particularly good for visualizing sequences that resemble time-ba
 
 They are often used to compare trends across categories, show the impact of events on performance, and visualize changes over time-like sequences.
 
-Note: This module is not intended for actual datetime values. For time-based plots using dates, refer to the **timeline** module.
+Note: While this module can handle datetime values on the x-axis, the **timeline** plot module has additional features that make working with datetimes easier, such as easily resampling the data to alternate time frames.
 
 </div>
 
@@ -49,7 +49,6 @@ line.plot(
     move_legend_outside=True,
 )
 ```
-
 
 ### Waterfall Plot
 
