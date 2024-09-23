@@ -1,8 +1,9 @@
 """This module provides flexible functionality for creating line plots from pandas DataFrames.
 
-It focuses on  visualizing sequences that resemble time-based data, such as "days since an event" or "months since a
-competitor opened." However, it does not explicitly handle datetime values. For actual time-based plots using
-datetime objects, please refer to the **`timeline`** module.
+It focuses on visualizing sequences that are ordered or sequential but not necessarily categorical, such as "days since
+an event" or "months since a competitor opened." However, while this module can handle datetime values on the x-axis,
+the **timeline** module has additional features that make working with datetimes easier, such as easily resampling the
+data to alternate time frames.
 
 The sequences used in this module can include values like "days since an event" (e.g., -2, -1, 0, 1, 2) or "months
 since a competitor store opened." **This module is not intended for use with actual datetime values**. If a datetime
@@ -44,9 +45,9 @@ from pyretailscience.style.tailwind import get_base_cmap
 def plot(
     df: pd.DataFrame,
     value_col: str | list[str],
-    x_label: str,
-    y_label: str,
-    title: str,
+    x_label: str | None = None,
+    y_label: str | None = None,
+    title: str | None = None,
     x_col: str | None = None,
     group_col: str | None = None,
     legend_title: str | None = None,
@@ -60,9 +61,9 @@ def plot(
     Args:
         df (pd.DataFrame): The dataframe to plot.
         value_col (str or list of str): The column(s) to plot.
-        x_label (str): The x-axis label.
-        y_label (str): The y-axis label.
-        title (str): The title of the plot.
+        x_label (str, optional): The x-axis label.
+        y_label (str, optional): The y-axis label.
+        title (str, optional): The title of the plot.
         x_col (str, optional): The column to be used as the x-axis. If None, the index is used.
         group_col (str, optional): The column used to define different lines.
         legend_title (str, optional): The title of the legend.
@@ -82,10 +83,10 @@ def plot(
         )
     colors = get_base_cmap()
 
-    if group_col is not None:
-        pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
-    else:
+    if group_col is None:
         pivot_df = df.set_index(x_col if x_col is not None else df.index)[value_col]
+    else:
+        pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
 
     ax = pivot_df.plot(
         ax=ax,
@@ -95,18 +96,15 @@ def plot(
         **kwargs,
     )
 
-    ax = gu.standard_graph_styles(
-        ax,
-        title=title,
-        x_label=x_label,
-        y_label=y_label,
-    )
+    ax = gu.standard_graph_styles(ax=ax, title=title, x_label=x_label, y_label=y_label)
 
     if move_legend_outside:
         ax.legend(bbox_to_anchor=(1.05, 1))
 
     if legend_title is not None:
-        ax.legend(title=legend_title)
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.set_title(legend_title)
 
     if source_text is not None:
         gu.add_source_text(ax=ax, source_text=source_text)
