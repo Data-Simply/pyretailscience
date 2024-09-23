@@ -45,14 +45,14 @@ from pyretailscience.style.tailwind import get_base_cmap
 def plot(
     df: pd.DataFrame,
     value_col: str | list[str],
-    x_label: str | None = None,
-    y_label: str | None = None,
-    title: str | None = None,
+    x_label: str,
+    y_label: str,
+    title: str,
     x_col: str | None = None,
     group_col: str | None = None,
-    legend_title: str | None = None,
     ax: Axes | None = None,
     source_text: str | None = None,
+    legend_title: str | None = None,
     move_legend_outside: bool = False,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
@@ -61,9 +61,9 @@ def plot(
     Args:
         df (pd.DataFrame): The dataframe to plot.
         value_col (str or list of str): The column(s) to plot.
-        x_label (str, optional): The x-axis label.
-        y_label (str, optional): The y-axis label.
-        title (str, optional): The title of the plot.
+        x_label (str): The x-axis label.
+        y_label (str): The y-axis label.
+        title (str): The title of the plot.
         x_col (str, optional): The column to be used as the x-axis. If None, the index is used.
         group_col (str, optional): The column used to define different lines.
         legend_title (str, optional): The title of the legend.
@@ -96,15 +96,14 @@ def plot(
         **kwargs,
     )
 
-    ax = gu.standard_graph_styles(ax=ax, title=title, x_label=x_label, y_label=y_label)
-
-    if move_legend_outside:
-        ax.legend(bbox_to_anchor=(1.05, 1))
-
-    if legend_title is not None:
-        legend = ax.get_legend()
-        if legend is not None:
-            legend.set_title(legend_title)
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
 
     if source_text is not None:
         gu.add_source_text(ax=ax, source_text=source_text)

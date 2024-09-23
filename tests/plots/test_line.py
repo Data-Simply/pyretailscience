@@ -107,7 +107,7 @@ def test_plot_moves_legend_outside(sample_dataframe):
     """Test the plot function moves the legend outside the plot."""
     _, ax = plt.subplots()
 
-    # Test with move_legend_outside=True
+    # Create the plot with move_legend_outside=True
     result_ax = line.plot(
         df=sample_dataframe,
         value_col="y",
@@ -120,13 +120,44 @@ def test_plot_moves_legend_outside(sample_dataframe):
         move_legend_outside=True,
     )
 
-    expected_coords = (1.05, 1.0)
-    legend = result_ax.get_legend()
-    # Check if bbox_to_anchor is set to (1.05, 1) when legend is outside
-    bbox_anchor = legend.get_bbox_to_anchor()._bbox
+    # Assert that standard_graph_styles was called with move_legend_outside=True
+    gu.standard_graph_styles.assert_called_once_with(
+        ax=result_ax,
+        title="Test Plot Legend Outside",
+        x_label="X Axis",
+        y_label="Y Axis",
+        legend_title=None,
+        move_legend_outside=True,
+    )
 
-    assert legend is not None
-    assert (bbox_anchor.x0, bbox_anchor.y0) == expected_coords
+
+@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+def test_plot_moves_legend_inside(sample_dataframe):
+    """Test the plot function moves the legend inside the plot."""
+    _, ax = plt.subplots()
+
+    # Create the plot with move_legend_outside=False
+    result_ax = line.plot(
+        df=sample_dataframe,
+        value_col="y",
+        x_label="X Axis",
+        y_label="Y Axis",
+        title="Test Plot Legend Inside",
+        x_col="x",
+        group_col="group",
+        ax=ax,
+        move_legend_outside=False,
+    )
+
+    # Assert that standard_graph_styles was called with move_legend_outside=False
+    gu.standard_graph_styles.assert_called_once_with(
+        ax=result_ax,
+        title="Test Plot Legend Inside",
+        x_label="X Axis",
+        y_label="Y Axis",
+        legend_title=None,
+        move_legend_outside=False,
+    )
 
 
 @pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")

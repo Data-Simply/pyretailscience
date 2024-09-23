@@ -67,6 +67,8 @@ def standard_graph_styles(
     title_pad: int = GraphStyles.DEFAULT_TITLE_PAD,
     x_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
     y_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+    legend_title: str | None = None,
+    move_legend_outside: bool = False,
 ) -> Axes:
     """Apply standard styles to a Matplotlib graph.
 
@@ -79,6 +81,8 @@ def standard_graph_styles(
         x_label_pad (int, optional): The padding below the x-axis label. Defaults to GraphStyles.DEFAULT_AXIS_LABEL_PAD.
         y_label_pad (int, optional): The padding to the left of the y-axis label. Defaults to
             GraphStyles.DEFAULT_AXIS_LABEL_PAD.
+        legend_title (str, optional): The title of the legend. If None, no legend title is applied. Defaults to None.
+        move_legend_outside (bool, optional): Whether to move the legend outside the plot. Defaults to False.
 
     Returns:
         Axes: The graph with the styles applied.
@@ -111,6 +115,13 @@ def standard_graph_styles(
             fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
             labelpad=y_label_pad,
         )
+
+    legend = ax.legend() if move_legend_outside or legend_title is not None else ax.get_legend()
+    if legend:
+        if move_legend_outside:
+            legend.set_bbox_to_anchor((1.05, 1))
+        if legend_title:
+            legend.set_title(legend_title)
 
     return ax
 
