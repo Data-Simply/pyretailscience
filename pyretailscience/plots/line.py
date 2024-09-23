@@ -77,7 +77,7 @@ def plot(
     """
     if x_col is not None and pd.api.types.is_datetime64_any_dtype(df[x_col]):
         warnings.warn(
-            f"The column '{x_col}' is datetime-like. Consider using the 'timeline' module for time-based plots.",
+            f"The column '{x_col}' is datetime-like. Consider using the 'plots.timeline' module for time-based plots.",
             UserWarning,
             stacklevel=2,
         )
