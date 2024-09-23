@@ -83,6 +83,7 @@ def standard_graph_styles(
     Returns:
         Axes: The graph with the styles applied.
     """
+    ax.set_facecolor("w")
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
     ax.grid(which="major", axis="y", color="#DAD8D7", alpha=0.5, zorder=1)
