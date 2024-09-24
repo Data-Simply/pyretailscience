@@ -345,28 +345,8 @@ def get_base_cmap() -> ListedColormap:
     Returns:
         ListedColormap: A ListedColormap with all the Tailwind colors.
     """
-    color_order = [
-        "red",
-        "orange",
-        "yellow",
-        "green",
-        "teal",
-        "sky",
-        "indigo",
-        "purple",
-        "pink",
-        "slate",
-        "amber",
-        "lime",
-        "emerald",
-        "cyan",
-        "blue",
-        "violet",
-        "fuchsia",
-        "rose",
-    ]
+    color_order = ["green", "orange", "red", "blue", "yellow", "violet", "pink"]
     color_numbers = [500, 300, 700]
-    colors = []
     colors = [COLORS[color][color_number] for color_number in color_numbers for color in color_order]
 
     return ListedColormap(colors)
