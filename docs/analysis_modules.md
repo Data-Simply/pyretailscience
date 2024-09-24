@@ -21,7 +21,7 @@ Line plots are particularly good for visualizing sequences that are ordered or s
 
 They are often used to compare trends across categories, show the impact of events on performance, and visualize changes over time-like sequences.
 
-Note: While this module can handle datetime values on the x-axis, the **timeline** plot module has additional features that make working with datetimes easier, such as easily resampling the data to alternate time frames.
+Note: While this module can handle datetime values on the x-axis, the **plots.time_line** plot module has additional features that make working with datetimes easier, such as easily resampling the data to alternate time frames.
 
 </div>
 

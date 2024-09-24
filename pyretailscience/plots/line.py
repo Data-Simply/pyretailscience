@@ -8,7 +8,7 @@ data to alternate time frames.
 The sequences used in this module can include values like "days since an event" (e.g., -2, -1, 0, 1, 2) or "months
 since a competitor store opened." **This module is not intended for use with actual datetime values**. If a datetime
 or datetime-like column is passed as **`x_col`**, a warning will be triggered, suggesting the use of the
-**`timeline`** module.
+**`plots.time_line`** module.
 
 ### Core Features
 
@@ -28,7 +28,7 @@ or datetime-like column is passed as **`x_col`**, a warning will be triggered, s
 ### Limitations and Handling of Temporal Data
 
 - **Limited Handling of Temporal Data**: This module can plot simple time-based sequences, such as "days since an event," but it cannot manipulate or directly handle datetime or date-like columns. It is not optimized for actual datetime values.
-If a datetime column is passed or more complex temporal plotting is needed, a warning will suggest using the **`timeline`** module, which is specifically designed for working with temporal data and performing time-based manipulation.
+If a datetime column is passed or more complex temporal plotting is needed, a warning will suggest using the **`plots.time_line`** module, which is specifically designed for working with temporal data and performing time-based manipulation.
 - **Pre-Aggregated Data Required**: The module does not perform any data aggregation, so all data must be pre-aggregated before being passed in for plotting.
 
 """
@@ -77,14 +77,14 @@ def plot(
     """
     if x_col is not None and pd.api.types.is_datetime64_any_dtype(df[x_col]):
         warnings.warn(
-            f"The column '{x_col}' is datetime-like. Consider using the 'plots.timeline' module for time-based plots.",
+            f"The column '{x_col}' is datetime-like. Consider using the 'plots.time_line' module for time-based plots.",
             UserWarning,
             stacklevel=2,
         )
 
     elif x_col is None and pd.api.types.is_datetime64_any_dtype(df.index):
         warnings.warn(
-            "The DataFrame index is datetime-like. Consider using the 'plots.timeline' module for time-based plots.",
+            "The DataFrame index is datetime-like. Consider using the 'plots.time_line' module for time-based plots.",
             UserWarning,
             stacklevel=2,
         )
