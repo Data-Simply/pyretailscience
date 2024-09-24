@@ -45,9 +45,9 @@ from pyretailscience.style.tailwind import get_base_cmap
 def plot(
     df: pd.DataFrame,
     value_col: str | list[str],
-    x_label: str,
-    y_label: str,
-    title: str,
+    x_label: str | None = None,
+    y_label: str | None = None,
+    title: str | None = None,
     x_col: str | None = None,
     group_col: str | None = None,
     ax: Axes | None = None,
@@ -61,9 +61,9 @@ def plot(
     Args:
         df (pd.DataFrame): The dataframe to plot.
         value_col (str or list of str): The column(s) to plot.
-        x_label (str): The x-axis label.
-        y_label (str): The y-axis label.
-        title (str): The title of the plot.
+        x_label (str, optional): The x-axis label.
+        y_label (str, optional): The y-axis label.
+        title (str, optional): The title of the plot.
         x_col (str, optional): The column to be used as the x-axis. If None, the index is used.
         group_col (str, optional): The column used to define different lines.
         legend_title (str, optional): The title of the legend.
