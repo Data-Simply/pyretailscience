@@ -94,7 +94,11 @@ def plot(
         df = df.to_frame(name=value_col[0])
 
     df = apply_range_clipping(
-        df=df, value_col=value_col, range_lower=range_lower, range_upper=range_upper, range_method=range_method
+        df=df,
+        value_col=value_col,
+        range_lower=range_lower,
+        range_upper=range_upper,
+        range_method=range_method,
     )
 
     cmap = get_base_cmap()
@@ -102,7 +106,13 @@ def plot(
     num_histograms = _get_num_histograms(df=df, value_col=value_col, group_col=group_col)
 
     ax = _plot_histogram(
-        df=df, value_col=value_col, group_col=group_col, ax=ax, cmap=cmap, num_histograms=num_histograms, **kwargs
+        df=df,
+        value_col=value_col,
+        group_col=group_col,
+        ax=ax,
+        cmap=cmap,
+        num_histograms=num_histograms,
+        **kwargs,
     )
 
     ax = gu.standard_graph_styles(
@@ -143,7 +153,9 @@ def _prepare_value_col(df: pd.DataFrame | pd.Series, value_col: str | list[str] 
 
 
 def _prepare_dataframe(
-    data: pd.DataFrame | pd.Series, value_col: str | list[str] | None, group_col: str | None
+    data: pd.DataFrame | pd.Series,
+    value_col: str | list[str] | None,
+    group_col: str | None,
 ) -> pd.DataFrame:
     """Prepares and returns the dataframe with appropriate columns for plotting.
 
@@ -197,10 +209,10 @@ def apply_range_clipping(
                 col: df[col].apply(
                     lambda x: np.nan
                     if (range_lower is not None and x < range_lower) or (range_upper is not None and x > range_upper)
-                    else x
+                    else x,
                 )
                 for col in value_col
-            }
+            },
         )
 
     return df

@@ -34,7 +34,7 @@ def sample_dataframe():
         {
             "value": [1, 2, 3, 4, 5],
             "category": ["A", "A", "B", "B", "B"],
-        }
+        },
     )
 
 
@@ -61,7 +61,12 @@ def test_plot_single_histogram_no_legend(sample_dataframe, mocker):
 
     # Verify that standard_graph_styles was called with correct parameters
     gu.standard_graph_styles.assert_called_once_with(
-        ax=resulted_ax, title=None, x_label=None, y_label=None, legend_title=None, move_legend_outside=False
+        ax=resulted_ax,
+        title=None,
+        x_label=None,
+        y_label=None,
+        legend_title=None,
+        move_legend_outside=False,
     )
 
     # Verify that add_source_text was not called
@@ -82,7 +87,12 @@ def test_plot_multiple_histograms_with_legend_when_group_col_is_not_nan(sample_d
 
     # Verify that standard_graph_styles was called with correct parameters
     gu.standard_graph_styles.assert_called_once_with(
-        ax=resulted_ax, title=None, x_label=None, y_label=None, legend_title=None, move_legend_outside=False
+        ax=resulted_ax,
+        title=None,
+        x_label=None,
+        y_label=None,
+        legend_title=None,
+        move_legend_outside=False,
     )
 
     # Verify that add_source_text was not called
@@ -103,7 +113,12 @@ def test_plot_multiple_histograms_with_legend_when_value_col_is_a_list(sample_da
 
     # Verify that standard_graph_styles was called with correct parameters
     gu.standard_graph_styles.assert_called_once_with(
-        ax=resulted_ax, title=None, x_label=None, y_label=None, legend_title=None, move_legend_outside=False
+        ax=resulted_ax,
+        title=None,
+        x_label=None,
+        y_label=None,
+        legend_title=None,
+        move_legend_outside=False,
     )
 
     # Verify that add_source_text was not called
@@ -124,7 +139,12 @@ def test_plot_with_source_text(sample_dataframe, mocker):
 
     # Verify that standard_graph_styles was called with correct parameters
     gu.standard_graph_styles.assert_called_once_with(
-        ax=resulted_ax, title=None, x_label=None, y_label=None, legend_title=None, move_legend_outside=False
+        ax=resulted_ax,
+        title=None,
+        x_label=None,
+        y_label=None,
+        legend_title=None,
+        move_legend_outside=False,
     )
 
     # Verify that add_source_text was called with the correct source_text
@@ -145,7 +165,12 @@ def test_plot_custom_labels(sample_dataframe, mocker):
 
     # Verify that standard_graph_styles was called with custom x and y labels
     gu.standard_graph_styles.assert_called_once_with(
-        ax=resulted_ax, title=None, x_label="Custom X", y_label="Custom Y", legend_title=None, move_legend_outside=False
+        ax=resulted_ax,
+        title=None,
+        x_label="Custom X",
+        y_label="Custom Y",
+        legend_title=None,
+        move_legend_outside=False,
     )
 
     # Verify that add_source_text was not called
@@ -166,7 +191,12 @@ def test_plot_with_series(sample_series, mocker):
 
     # Verify that standard_graph_styles was called with correct parameters
     gu.standard_graph_styles.assert_called_once_with(
-        ax=resulted_ax, title=None, x_label=None, y_label=None, legend_title=None, move_legend_outside=False
+        ax=resulted_ax,
+        title=None,
+        x_label=None,
+        y_label=None,
+        legend_title=None,
+        move_legend_outside=False,
     )
 
     # Verify that add_source_text was not called
@@ -179,7 +209,11 @@ def test_apply_range_clipping_clip_lower(sample_dataframe):
     """Test apply_range_clipping with a lower bound."""
     # Call apply_range_clipping with a lower bound
     result_df = apply_range_clipping(
-        sample_dataframe, value_col=["value"], range_lower=3, range_upper=None, range_method="clip"
+        sample_dataframe,
+        value_col=["value"],
+        range_lower=3,
+        range_upper=None,
+        range_method="clip",
     )
 
     # Assert that values below 3 are clipped
@@ -187,7 +221,7 @@ def test_apply_range_clipping_clip_lower(sample_dataframe):
         {
             "value": [3, 3, 3, 4, 5],
             "category": ["A", "A", "B", "B", "B"],
-        }
+        },
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
@@ -197,7 +231,11 @@ def test_apply_range_clipping_clip_upper(sample_dataframe):
     """Test apply_range_clipping with an upper bound."""
     # Call apply_range_clipping with an upper bound
     result_df = apply_range_clipping(
-        sample_dataframe, value_col=["value"], range_lower=None, range_upper=3, range_method="clip"
+        sample_dataframe,
+        value_col=["value"],
+        range_lower=None,
+        range_upper=3,
+        range_method="clip",
     )
 
     # Assert that values above 3 are clipped
@@ -205,7 +243,7 @@ def test_apply_range_clipping_clip_upper(sample_dataframe):
         {
             "value": [1, 2, 3, 3, 3],
             "category": ["A", "A", "B", "B", "B"],
-        }
+        },
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
@@ -215,7 +253,11 @@ def test_apply_range_clipping_fillna_lower_upper(sample_dataframe):
     """Test apply_range_clipping with both lower and upper bounds using the fillna method."""
     # Call apply_range_clipping with both lower and upper bounds and use fillna method
     result_df = apply_range_clipping(
-        sample_dataframe, value_col=["value"], range_lower=2, range_upper=4, range_method="fillna"
+        sample_dataframe,
+        value_col=["value"],
+        range_lower=2,
+        range_upper=4,
+        range_method="fillna",
     )
 
     # Assert that values outside the range are replaced with NaN
@@ -223,7 +265,7 @@ def test_apply_range_clipping_fillna_lower_upper(sample_dataframe):
         {
             "value": [np.nan, 2, 3, 4, np.nan],
             "category": ["A", "A", "B", "B", "B"],
-        }
+        },
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
@@ -233,7 +275,11 @@ def test_apply_range_clipping_no_bounds(sample_dataframe):
     """Test apply_range_clipping with no bounds."""
     # Call apply_range_clipping with no bounds
     result_df = apply_range_clipping(
-        sample_dataframe, value_col=["value"], range_lower=None, range_upper=None, range_method="clip"
+        sample_dataframe,
+        value_col=["value"],
+        range_lower=None,
+        range_upper=None,
+        range_method="clip",
     )
 
     # Assert that the dataframe remains unchanged
@@ -245,7 +291,11 @@ def test_apply_range_clipping_clip_lower_upper(sample_dataframe):
     """Test apply_range_clipping with both lower and upper bounds using the clip method."""
     # Call apply_range_clipping with both lower and upper bounds using the clip method
     result_df = apply_range_clipping(
-        sample_dataframe, value_col=["value"], range_lower=2, range_upper=4, range_method="clip"
+        sample_dataframe,
+        value_col=["value"],
+        range_lower=2,
+        range_upper=4,
+        range_method="clip",
     )
 
     # Assert that values outside the bounds are clipped
@@ -253,7 +303,7 @@ def test_apply_range_clipping_clip_lower_upper(sample_dataframe):
         {
             "value": [2, 2, 3, 4, 4],
             "category": ["A", "A", "B", "B", "B"],
-        }
+        },
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
