@@ -24,6 +24,8 @@ nav:
       - Cross Shop Analysis: api/cross_shop.md
       - Product Association: api/product_association.md
       - Line Plot: api/plots/line.md
+      - Histogram Plot: api/plots/histogram.md
+
 
 theme:
   name: material

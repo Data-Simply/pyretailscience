@@ -116,11 +116,12 @@ def standard_graph_styles(
             labelpad=y_label_pad,
         )
 
-    legend = ax.legend() if move_legend_outside or legend_title is not None else ax.get_legend()
-    if legend:
-        if move_legend_outside:
+    # Add the legend only if legend_title is provided or move_legend_outside is True
+    if legend_title or move_legend_outside:
+        legend = ax.legend()
+        if move_legend_outside and legend:
             legend.set_bbox_to_anchor((1.05, 1))
-        if legend_title:
+        if legend_title and legend:
             legend.set_title(legend_title)
 
     return ax

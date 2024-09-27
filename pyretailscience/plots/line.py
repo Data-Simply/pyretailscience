@@ -2,7 +2,7 @@
 
 It focuses on visualizing sequences that are ordered or sequential but not necessarily categorical, such as "days since
 an event" or "months since a competitor opened." However, while this module can handle datetime values on the x-axis,
-the **timeline** module has additional features that make working with datetimes easier, such as easily resampling the
+the **plots.time_line** module has additional features that make working with datetimes easier, such as easily resampling the
 data to alternate time frames.
 
 The sequences used in this module can include values like "days since an event" (e.g., -2, -1, 0, 1, 2) or "months
