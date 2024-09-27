@@ -141,3 +141,7 @@ cython_debug/
 
 # Data files
 *.csv
+
+# Claude Sync files
+.claudeignore
+.claudesync
