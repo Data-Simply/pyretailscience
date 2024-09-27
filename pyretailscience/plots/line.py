@@ -99,7 +99,7 @@ def plot(
         ax=ax,
         linewidth=3,
         color=colors.colors[: len(pivot_df.columns) if group_col is not None else 1],
-        legend=(group_col is not None),
+        legend=(group_col is not None) or (isinstance(value_col, list) and len(value_col) > 1),
         **kwargs,
     )
 
