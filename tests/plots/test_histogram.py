@@ -12,7 +12,7 @@ from pyretailscience.plots import histogram
 from pyretailscience.style import graph_utils as gu
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_dataframe():
     """A sample dataframe for testing."""
     data = {
