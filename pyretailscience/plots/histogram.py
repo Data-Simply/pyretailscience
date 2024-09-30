@@ -238,7 +238,7 @@ def _plot_histogram(
             ax=ax,
             alpha=0.5,
             legend=add_legend,
-            color=cmap.colors[:len(value_col)],
+            color=cmap.colors[: len(value_col)],
             **kwargs,
         )
 
