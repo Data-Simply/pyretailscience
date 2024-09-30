@@ -59,6 +59,22 @@ def human_format(
     return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
 
 
+def _add_plot_legend(ax: Axes, legend_title: str | None, move_legend_outside: bool) -> Axes:
+    """Add a legend to a Matplotlib graph.
+
+    Args:
+        ax (Axes): The axes object of the plot.
+        legend_title (str, optional): The title for the legend.
+        move_legend_outside (bool, optional): Whether to move legend outside the plot.
+    """
+    has_legend = ax.get_legend() is not None
+    if has_legend or legend_title is not None or move_legend_outside:
+        legend = ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left") if move_legend_outside else ax.legend()
+        if legend_title:
+            legend.set_title(legend_title)
+    return ax
+
+
 def standard_graph_styles(
     ax: Axes,
     title: str | None = None,
@@ -117,15 +133,7 @@ def standard_graph_styles(
             labelpad=y_label_pad,
         )
 
-    # Add the legend only if legend_title is provided or move_legend_outside is True
-    if legend_title or move_legend_outside:
-        legend = ax.legend()
-        if move_legend_outside and legend:
-            legend.set_bbox_to_anchor((1.05, 1))
-        if legend_title and legend:
-            legend.set_title(legend_title)
-
-    return ax
+    return _add_plot_legend(ax=ax, legend_title=legend_title, move_legend_outside=move_legend_outside)
 
 
 def standard_tick_styles(ax: Axes) -> Axes:

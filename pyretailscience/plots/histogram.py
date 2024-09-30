@@ -152,36 +152,6 @@ def _prepare_value_col(df: pd.DataFrame | pd.Series, value_col: str | list[str] 
     return value_col
 
 
-def _prepare_dataframe(
-    data: pd.DataFrame | pd.Series,
-    value_col: str | list[str] | None,
-    group_col: str | None,
-) -> pd.DataFrame:
-    """Prepares and returns the dataframe with appropriate columns for plotting.
-
-    Args:
-        data (pd.DataFrame | pd.Series): The input dataframe or series to prepare.
-        value_col (str or list of str, optional): The column(s) to plot. If a single string, it is converted to a list.
-        group_col (str, optional): The column used to group data.
-
-    Returns:
-        pd.DataFrame: The prepared dataframe ready for plotting.
-    """
-    if isinstance(data, pd.Series):
-        if group_col is not None:
-            raise ValueError("When passing a Series, 'group_col' should not be provided.")
-        value_col = ["value"] if value_col is None else [value_col]
-        return data.to_frame(name=value_col[0])
-
-    if value_col is None:
-        raise ValueError("Please provide a value column to plot.")
-
-    if isinstance(value_col, str):
-        value_col = [value_col]
-
-    return data
-
-
 def apply_range_clipping(
     df: pd.DataFrame,
     value_col: list[str],
