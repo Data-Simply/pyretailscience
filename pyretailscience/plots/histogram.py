@@ -233,8 +233,16 @@ def _plot_histogram(
     add_legend = num_histograms > 1
 
     if group_col is None:
-        return df[value_col].plot(kind="hist", ax=ax, alpha=0.5, legend=add_legend, color=cmap.colors[0], **kwargs)
+        return df[value_col].plot(
+            kind="hist",
+            ax=ax,
+            alpha=0.5,
+            legend=add_legend,
+            color=cmap.colors[:len(value_col)],
+            **kwargs,
+        )
 
+    # if group_col is provided, only use a single value_col
     df_pivot = df.pivot(columns=group_col, values=value_col[0])
 
     # Plot all columns at once
