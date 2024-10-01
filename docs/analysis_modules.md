@@ -93,6 +93,7 @@ histogram.plot(
     y_label="Number of Customers",
     source_text="Source: PyRetailScience - 2024",
     move_legend_outside=True,
+    use_hatch=True
 )
 ```
 
