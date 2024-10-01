@@ -1,12 +1,12 @@
 """Tests for the plots.line module."""
 
 import warnings
+from itertools import cycle
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
-from matplotlib.colors import ListedColormap
 
 from pyretailscience.plots import line
 from pyretailscience.style import graph_utils as gu
@@ -25,9 +25,11 @@ def sample_dataframe():
 
 @pytest.fixture()
 def _mock_get_base_cmap(mocker):
-    """Mock the get_base_cmap function to return a custom colormap."""
-    cmap = ListedColormap(["#FF0000", "#00FF00", "#0000FF"])
-    mocker.patch("pyretailscience.style.tailwind.get_base_cmap", return_value=cmap)
+    """Mock the get_base_cmap function to return a custom color generator."""
+    # Create a mock generator that cycles through the colors you want to use for testing
+    colors = ["#FF0000", "#00FF00", "#0000FF"]  # Custom mock colors
+    color_gen = cycle(colors)  # Cycle through the color list indefinitely
+    mocker.patch("pyretailscience.style.tailwind.get_base_cmap", return_value=color_gen)
 
 
 @pytest.fixture()

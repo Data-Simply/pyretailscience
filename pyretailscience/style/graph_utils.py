@@ -1,12 +1,20 @@
 """Helper functions for styling graphs."""
 
 import importlib.resources as pkg_resources
+from collections.abc import Generator
+from itertools import cycle
 
 import matplotlib.font_manager as fm
 from matplotlib.axes import Axes
 from matplotlib.text import Text
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
+
+
+def _hatches_gen() -> Generator[str, None, None]:
+    """Returns a generator that cycles through the hatch patterns."""
+    _hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
+    return cycle(_hatches)
 
 
 class GraphStyles:
@@ -69,7 +77,11 @@ def _add_plot_legend(ax: Axes, legend_title: str | None, move_legend_outside: bo
     """
     has_legend = ax.get_legend() is not None
     if has_legend or legend_title is not None or move_legend_outside:
-        legend = ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left") if move_legend_outside else ax.legend()
+        legend = (
+            ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", frameon=False)
+            if move_legend_outside
+            else ax.legend(frameon=False)
+        )
         if legend_title:
             legend.set_title(legend_title)
     return ax
@@ -103,7 +115,7 @@ def standard_graph_styles(
     Returns:
         Axes: The graph with the styles applied.
     """
-    ax.set_facecolor("w")  # set background colour to white
+    ax.set_facecolor("w")  # set background color to white
     ax.set_axisbelow(True)  # set grid lines behind the plot
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
@@ -150,6 +162,19 @@ def standard_tick_styles(ax: Axes) -> Axes:
     for tick in ax.get_yticklabels():
         tick.set_fontproperties(GraphStyles.POPPINS_REG)
 
+    return ax
+
+
+def apply_hatches(ax: Axes, num_segments: int) -> Axes:
+    """Apply hatches to a plot. Useful for bars/histograms/area plots."""
+    import numpy as np
+
+    hatches = _hatches_gen()
+    patch_groups = np.array_split(ax.patches, num_segments)
+    for patch_group in patch_groups:
+        hatch = next(hatches)
+        for patch in patch_group:
+            patch.set_hatch(hatch)
     return ax
 
 
