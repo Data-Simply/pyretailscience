@@ -184,13 +184,13 @@ def _apply_range_clipping(
 
     return df.assign(
         **{
-            col: df[col].apply(
-                lambda x: np.nan
-                if (range_lower is not None and x < range_lower) or (range_upper is not None and x > range_upper)
-                else x,
+            col: df[col].where(
+                ((range_lower is None) | (df[col] >= range_lower)) &
+                ((range_upper is None) | (df[col] <= range_upper)),
+                np.nan
             )
             for col in value_col
-        },
+        }
     )
 
 
