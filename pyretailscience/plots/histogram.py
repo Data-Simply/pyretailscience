@@ -39,7 +39,7 @@ the plot for clarity.
 
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ def plot(
     range_upper: float | None = None,
     range_method: Literal["clip", "fillna"] = "clip",
     use_hatch: bool = False,
-    **kwargs: dict[str, any],
+    **kwargs: dict[str, Any],
 ) -> SubplotBase:
     """Plots a histogram of `value_col`, optionally split by `group_col`.
 

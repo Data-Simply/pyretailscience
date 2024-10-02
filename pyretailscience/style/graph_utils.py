@@ -5,6 +5,7 @@ from collections.abc import Generator
 from itertools import cycle
 
 import matplotlib.font_manager as fm
+import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.text import Text
 
@@ -12,7 +13,11 @@ ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 
 
 def _hatches_gen() -> Generator[str, None, None]:
-    """Returns a generator that cycles through the hatch patterns."""
+    """Returns a generator that cycles through predefined hatch patterns.
+
+    Yields:
+        str: The next hatch pattern in the sequence.
+    """
     _hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
     return cycle(_hatches)
 
@@ -166,9 +171,18 @@ def standard_tick_styles(ax: Axes) -> Axes:
 
 
 def apply_hatches(ax: Axes, num_segments: int) -> Axes:
-    """Apply hatches to a plot. Useful for bars/histograms/area plots."""
-    import numpy as np
+    """Apply hatch patterns to patches in a plot, such as bars, histograms, or area plots.
 
+    This function divides the patches in the given Axes object into the specified
+    number of segments and applies a different hatch pattern to each segment.
+
+    Args:
+        ax (Axes): The matplotlib Axes object containing the plot with patches (bars, histograms, etc.).
+        num_segments (int): The number of segments to divide the patches into, with each segment receiving a different hatch pattern.
+
+    Returns:
+        Axes: The modified Axes object with hatches applied to the patches.
+    """
     hatches = _hatches_gen()
     patch_groups = np.array_split(ax.patches, num_segments)
     for patch_group in patch_groups:
