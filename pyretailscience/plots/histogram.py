@@ -238,9 +238,9 @@ def _plot_histogram(
     Returns:
         Axes: The matplotlib axes object with the plotted histogram.
     """
-    alpha = kwargs.pop("alpha", 0.5)
-
     is_multi_histogram = num_histograms > 1
+
+    alpha = kwargs.pop("alpha", 0.7) if is_multi_histogram else kwargs.pop("alpha", None)
 
     if group_col is None:
         return df[value_col].plot(

@@ -72,7 +72,7 @@ def human_format(
     return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
 
 
-def _add_plot_legend(ax: Axes, legend_title: str | None, move_legend_outside: bool) -> Axes:
+def _add_legend(ax: Axes, legend_title: str | None, move_legend_outside: bool) -> Axes:
     """Add a legend to a Matplotlib graph.
 
     Args:
@@ -89,6 +89,7 @@ def _add_plot_legend(ax: Axes, legend_title: str | None, move_legend_outside: bo
         )
         if legend_title:
             legend.set_title(legend_title)
+
     return ax
 
 
@@ -150,7 +151,7 @@ def standard_graph_styles(
             labelpad=y_label_pad,
         )
 
-    return _add_plot_legend(ax=ax, legend_title=legend_title, move_legend_outside=move_legend_outside)
+    return _add_legend(ax=ax, legend_title=legend_title, move_legend_outside=move_legend_outside)
 
 
 def standard_tick_styles(ax: Axes) -> Axes:
@@ -183,12 +184,20 @@ def apply_hatches(ax: Axes, num_segments: int) -> Axes:
     Returns:
         Axes: The modified Axes object with hatches applied to the patches.
     """
-    hatches = _hatches_gen()
+    available_hatches = _hatches_gen()
     patch_groups = np.array_split(ax.patches, num_segments)
     for patch_group in patch_groups:
-        hatch = next(hatches)
+        hatch = next(available_hatches)
         for patch in patch_group:
             patch.set_hatch(hatch)
+
+    legend = ax.get_legend()
+    if legend:
+        existing_hatches = [patch.get_hatch() for patch in ax.patches if patch.get_hatch() is not None]
+        unique_hatches = [hatch for idx, hatch in enumerate(existing_hatches) if hatch not in existing_hatches[:idx]]
+        for legend_patch, hatch in zip(legend.get_patches(), cycle(unique_hatches)):
+            legend_patch.set_hatch(hatch)
+
     return ax
 
 
