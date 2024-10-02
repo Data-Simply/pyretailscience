@@ -24,12 +24,13 @@ def sample_dataframe():
 
 
 @pytest.fixture()
-def _mock_get_base_cmap(mocker):
-    """Mock the get_base_cmap function to return a custom color generator."""
-    # Create a mock generator that cycles through the colors you want to use for testing
-    colors = ["#FF0000", "#00FF00", "#0000FF"]  # Custom mock colors
-    color_gen = cycle(colors)  # Cycle through the color list indefinitely
-    mocker.patch("pyretailscience.style.tailwind.get_base_cmap", return_value=color_gen)
+def _mock_color_generators(mocker):
+    """Mock the color generators for single and multi color maps."""
+    single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
+    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator (red, green, blue)
+
+    mocker.patch("pyretailscience.style.tailwind.get_single_color_cmap", return_value=single_color_gen)
+    mocker.patch("pyretailscience.style.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture()
@@ -39,7 +40,7 @@ def _mock_gu_functions(mocker):
     mocker.patch("pyretailscience.style.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_group_col(sample_dataframe):
     """Test the plot function with a group column."""
     _, ax = plt.subplots()
@@ -60,7 +61,7 @@ def test_plot_with_group_col(sample_dataframe):
     assert len(result_ax.get_lines()) == expected_num_lines  # One line for each group
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_without_group_col(sample_dataframe):
     """Test the plot function without a group column."""
     _, ax = plt.subplots()
@@ -80,7 +81,7 @@ def test_plot_without_group_col(sample_dataframe):
     assert len(result_ax.get_lines()) == expected_num_lines  # Only one line
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_warns_if_xcol_is_datetime(sample_dataframe, mocker):
     """Test the plot function warns if the x_col is datetime-like."""
     mocker.patch("warnings.warn")
@@ -104,7 +105,7 @@ def test_plot_warns_if_xcol_is_datetime(sample_dataframe, mocker):
     )
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_moves_legend_outside(sample_dataframe):
     """Test the plot function moves the legend outside the plot."""
     _, ax = plt.subplots()
@@ -133,7 +134,7 @@ def test_plot_moves_legend_outside(sample_dataframe):
     )
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_moves_legend_inside(sample_dataframe):
     """Test the plot function moves the legend inside the plot."""
     _, ax = plt.subplots()
@@ -162,7 +163,7 @@ def test_plot_moves_legend_inside(sample_dataframe):
     )
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_adds_source_text(sample_dataframe):
     """Test the plot function adds source text to the plot."""
     _, ax = plt.subplots()
@@ -182,7 +183,7 @@ def test_plot_adds_source_text(sample_dataframe):
     gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_legend_title(sample_dataframe):
     """Test the plot function with a legend title."""
     _, ax = plt.subplots()
@@ -212,7 +213,7 @@ def test_plot_with_legend_title(sample_dataframe):
     )
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_legend_title_and_move_outside(sample_dataframe):
     """Test the plot function with both move_legend_outside=True and legend_title."""
     _, ax = plt.subplots()
@@ -243,7 +244,7 @@ def test_plot_with_legend_title_and_move_outside(sample_dataframe):
     )
 
 
-@pytest.mark.usefixtures("_mock_get_base_cmap", "_mock_gu_functions")
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_datetime_index_warns(sample_dataframe, mocker):
     """Test the plot function with a datetime index and no x_col, expecting a warning."""
     df_with_datetime_index = sample_dataframe.set_index("x")
@@ -270,4 +271,59 @@ def test_plot_with_datetime_index_warns(sample_dataframe, mocker):
         "The DataFrame index is datetime-like. Consider using the 'plots.time_line' module for time-based plots.",
         UserWarning,
         stacklevel=2,
+    )
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_line_plot_single_value_col_calls_dataframe_plot(mocker, sample_dataframe):
+    """Test that pandas.DataFrame.plot is called with correct arguments when group_col is None."""
+    # Mock DataFrame's plot method
+    mock_df_plot = mocker.patch("pandas.DataFrame.plot")
+
+    # Prepare input
+    _, ax = plt.subplots()
+
+    # Call the line plot function without a group column (single line)
+    line.plot(
+        df=sample_dataframe,
+        value_col="y",
+        ax=ax,
+        x_col="x",
+        title="Test Single Line Plot",
+    )
+
+    # Check that DataFrame.plot was called with the correct arguments
+    mock_df_plot.assert_called_once_with(
+        ax=mocker.ANY,
+        linewidth=3,
+        color=mocker.ANY,  # Dynamic color generation
+        legend=False,
+    )
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_line_plot_grouped_series_calls_dataframe_plot(mocker, sample_dataframe):
+    """Test that pandas.DataFrame.plot is called with correct arguments when group_col is provided."""
+    # Mock DataFrame's plot method
+    mock_df_plot = mocker.patch("pandas.DataFrame.plot")
+
+    # Prepare input
+    _, ax = plt.subplots()
+
+    # Call the line plot function with a group column (multiple lines)
+    line.plot(
+        df=sample_dataframe,
+        value_col="y",
+        group_col="group",
+        ax=ax,
+        x_col="x",
+        title="Test Grouped Line Plot",
+    )
+
+    # Check that DataFrame.plot was called with the correct arguments for grouped plot
+    mock_df_plot.assert_called_once_with(
+        ax=mocker.ANY,
+        linewidth=3,
+        color=mocker.ANY,  # Dynamic color generation
+        legend=True,  # Legend should be present for grouped lines
     )

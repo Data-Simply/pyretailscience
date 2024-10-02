@@ -8,7 +8,7 @@ import pytest
 from matplotlib.colors import to_hex
 
 from pyretailscience.standard_graphs import get_indexes, waterfall_plot
-from pyretailscience.style.tailwind import COLORS, get_base_cmap
+from pyretailscience.style.tailwind import COLORS, get_multi_color_cmap, get_single_color_cmap
 
 
 def test_get_indexes_single_column():
@@ -129,90 +129,25 @@ def test_get_indexes_index_filter_all_same():
         )
 
 
-def test_get_base_cmap_three_or_fewer_colors():
-    """Test the get_base_cmap function with three or fewer colors."""
-    # Test with 3 colors (all green shades)
-    gen = get_base_cmap(num_colors=3)
-    expected_colors = [COLORS["green"][500], COLORS["green"][300], COLORS["green"][700]]
+def test_get_single_color_cmap_three_colors():
+    """Test the get_single_color_cmap function with three shades of green."""
+    gen = get_single_color_cmap()
+    expected_colors = [
+        COLORS["green"][500],
+        COLORS["green"][300],
+        COLORS["green"][700],
+    ]
 
     # Get the first three colors from the generator
     generated_colors = list(islice(gen, 3))
 
-    # Ensure the generated colors match the expected ones
+    # Ensure the generated colors match the expected green shades
     assert generated_colors == expected_colors
 
 
-def test_get_base_cmap_two_colors():
-    """Test the get_base_cmap function with two colors."""
-    # Test with 2 colors (only green 500 and green 300)
-    gen = get_base_cmap(num_colors=2)
-    expected_colors = [COLORS["green"][500], COLORS["green"][300]]
-
-    # Get the first two colors from the generator
-    generated_colors = list(islice(gen, 2))
-
-    # Ensure the generated colors match the expected ones
-    assert generated_colors == expected_colors
-
-
-def test_get_base_cmap_one_color():
-    """Test the get_base_cmap function with one color."""
-    # Test with 1 color (only green 500)
-    gen = get_base_cmap(num_colors=1)
-    expected_colors = [COLORS["green"][500]]
-
-    # Get the first color from the generator
-    generated_colors = list(islice(gen, 1))
-
-    # Ensure the generated color matches the expected one
-    assert generated_colors == expected_colors
-
-
-def test_get_base_cmap_more_than_three_colors():
-    """Test the get_base_cmap function with more than three colors."""
-    # Test with 4 colors (mix of all colors)
-    gen = get_base_cmap(num_colors=4)
-    expected_colors = [
-        COLORS["green"][500],
-        COLORS["orange"][500],
-        COLORS["red"][500],
-        COLORS["blue"][500],
-    ]
-
-    # Get the first four colors from the generator
-    generated_colors = list(islice(gen, 4))
-
-    # Ensure the generated colors match the expected ones
-    assert generated_colors == expected_colors
-
-
-def test_get_base_cmap_more_than_available_colors():
-    """Test the get_base_cmap function with more colors than available."""
-    # Test with more colors than available, ensure cycling occurs
-    gen = get_base_cmap(num_colors=9)
-    expected_colors = [
-        COLORS["green"][500],
-        COLORS["orange"][500],
-        COLORS["red"][500],
-        COLORS["blue"][500],
-        COLORS["yellow"][500],
-        COLORS["violet"][500],
-        COLORS["pink"][500],
-        COLORS["green"][300],
-        COLORS["orange"][300],
-    ]
-
-    # Get the first nine colors from the generator
-    generated_colors = list(islice(gen, 9))
-
-    # Ensure the generated colors match the expected ones
-    assert generated_colors == expected_colors
-
-
-def test_get_base_cmap_cycle_behavior():
-    """Test the cycling behavior of the get_base_cmap function."""
-    # Test with cycling colors
-    gen = get_base_cmap(num_colors=3)
+def test_get_single_color_cmap_cycle_behavior():
+    """Test the cycling behavior of the get_single_color_cmap function."""
+    gen = get_single_color_cmap()
 
     # Get the first six colors (should cycle after the third)
     generated_colors = list(islice(gen, 6))
@@ -226,6 +161,86 @@ def test_get_base_cmap_cycle_behavior():
     ]
 
     # Ensure the generated colors match the expected cycling behavior
+    assert generated_colors == expected_colors
+
+
+def test_get_multi_color_cmap_seven_colors():
+    """Test the get_multi_color_cmap function with seven colors."""
+    gen = get_multi_color_cmap()
+    expected_colors = [
+        COLORS["green"][500],
+        COLORS["blue"][500],
+        COLORS["red"][500],
+        COLORS["orange"][500],
+        COLORS["yellow"][500],
+        COLORS["violet"][500],
+        COLORS["pink"][500],
+    ]
+
+    # Get the first seven colors from the generator
+    generated_colors = list(islice(gen, 7))
+
+    # Ensure the generated colors match the expected ones
+    assert generated_colors == expected_colors
+
+
+def test_get_multi_color_cmap_cycle_behavior():
+    """Test the cycling behavior of the get_multi_color_cmap function."""
+    gen = get_multi_color_cmap()
+
+    # Get the first 14 colors (should cycle after the 7th)
+    generated_colors = list(islice(gen, 14))
+    expected_colors = [
+        COLORS["green"][500],
+        COLORS["blue"][500],
+        COLORS["red"][500],
+        COLORS["orange"][500],
+        COLORS["yellow"][500],
+        COLORS["violet"][500],
+        COLORS["pink"][500],
+        COLORS["green"][300],
+        COLORS["blue"][300],
+        COLORS["red"][300],
+        COLORS["orange"][300],
+        COLORS["yellow"][300],
+        COLORS["violet"][300],
+        COLORS["pink"][300],
+    ]
+
+    # Ensure the generated colors match the expected cycling behavior
+    assert generated_colors == expected_colors
+
+
+def test_get_single_color_cmap_two_colors():
+    """Test the get_single_color_cmap function with two shades of green."""
+    gen = get_single_color_cmap()
+    expected_colors = [
+        COLORS["green"][500],
+        COLORS["green"][300],
+    ]
+
+    # Get the first two colors from the generator
+    generated_colors = list(islice(gen, 2))
+
+    # Ensure the generated colors match the expected ones
+    assert generated_colors == expected_colors
+
+
+def test_get_multi_color_cmap_five_colors():
+    """Test the get_multi_color_cmap function with five colors."""
+    gen = get_multi_color_cmap()
+    expected_colors = [
+        COLORS["green"][500],
+        COLORS["blue"][500],
+        COLORS["red"][500],
+        COLORS["orange"][500],
+        COLORS["yellow"][500],
+    ]
+
+    # Get the first five colors from the generator
+    generated_colors = list(islice(gen, 5))
+
+    # Ensure the generated colors match the expected ones
     assert generated_colors == expected_colors
 
 

@@ -90,7 +90,9 @@ def plot(
         )
 
     if group_col is None:
-        pivot_df = df.set_index(x_col if x_col is not None else df.index)[value_col]
+        pivot_df = df.set_index(x_col if x_col is not None else df.index)[
+            [value_col] if isinstance(value_col, str) else value_col
+        ]
     else:
         pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
 

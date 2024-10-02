@@ -96,13 +96,14 @@ def plot(
     if isinstance(df, pd.Series):
         df = df.to_frame(name=value_col[0])
 
-    df = apply_range_clipping(
-        df=df,
-        value_col=value_col,
-        range_lower=range_lower,
-        range_upper=range_upper,
-        range_method=range_method,
-    )
+    if range_lower is not None and range_upper is not None:
+        df = _apply_range_clipping(
+            df=df,
+            value_col=value_col,
+            range_lower=range_lower,
+            range_upper=range_upper,
+            range_method=range_method,
+        )
 
     num_histograms = _get_num_histograms(df=df, value_col=value_col, group_col=group_col)
 
@@ -159,11 +160,11 @@ def _prepare_value_col(df: pd.DataFrame | pd.Series, value_col: str | list[str] 
     return value_col
 
 
-def apply_range_clipping(
+def _apply_range_clipping(
     df: pd.DataFrame,
     value_col: list[str],
-    range_lower: float | None,
-    range_upper: float | None,
+    range_lower: float,
+    range_upper: float,
     range_method: Literal["clip", "fillna"],
 ) -> pd.DataFrame:
     """Applies range clipping or filling based on the provided method and returns the modified dataframe.
@@ -171,16 +172,13 @@ def apply_range_clipping(
     Args:
         df (pd.DataFrame): The dataframe to apply range clipping to.
         value_col (list of str): The column(s) to apply clipping or filling to.
-        range_lower (float, optional): Lower bound for clipping or filling NA values.
-        range_upper (float, optional): Upper bound for clipping or filling NA values.
+        range_lower (float): Lower bound for clipping or filling NA values.
+        range_upper (float): Upper bound for clipping or filling NA values.
         range_method (Literal, optional): Whether to "clip" values outside the range or "fillna". Defaults to "clip".
 
     Returns:
         pd.DataFrame: The modified dataframe with the clipping or filling applied.
     """
-    if range_lower is None and range_upper is None:
-        return df
-
     if range_method == "clip":
         return df.assign(**{col: df[col].clip(lower=range_lower, upper=range_upper) for col in value_col})
 
