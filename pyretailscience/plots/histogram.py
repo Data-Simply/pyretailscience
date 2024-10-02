@@ -179,18 +179,17 @@ def _apply_range_clipping(
     Returns:
         pd.DataFrame: The modified dataframe with the clipping or filling applied.
     """
+    if range_method not in ["clip", "fillna"]:
+        error_msg = f"Invalid range_method: {range_method}. Expected 'clip' or 'fillna'."
+        raise ValueError(error_msg)
+
     if range_method == "clip":
         return df.assign(**{col: df[col].clip(lower=range_lower, upper=range_upper) for col in value_col})
 
-    return df.assign(
-        **{
-            col: df[col].where(
-                ((range_lower is None) | (df[col] >= range_lower)) & ((range_upper is None) | (df[col] <= range_upper)),
-                np.nan,
-            )
-            for col in value_col
-        },
-    )
+    # create a single boolean mask for all columns at once, which can be more efficient for large
+    # DataFrames with multiple value columns.
+    mask = ((range_lower is None) | (df[value_col] >= range_lower)) & ((range_upper is None) | (df[value_col] <= range_upper))
+    return df.assign(**{col: df[col].where(mask[col], np.nan) for col in value_col})
 
 
 def _get_num_histograms(df: pd.DataFrame, value_col: list[str], group_col: str | None) -> int:
