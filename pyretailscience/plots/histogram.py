@@ -14,7 +14,6 @@ or regions), allowing for easy comparison of distributions across groups.
 clipping them or filling values outside the range with **NaN**. This is particularly useful when visualizing specific
 data ranges.
 - **Comprehensive Customization**: Customize plot titles, axis labels, and legends, with the option to move the legend outside the plot.
-- **Support for Pre-Aggregated Data**: The module assumes that the data has already been aggregated. No aggregation occurs during the plotting process.
 
 ### Use Cases
 
@@ -40,15 +39,14 @@ the plot for clarity.
 
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
-from matplotlib.colors import ListedColormap
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.tailwind import get_base_cmap
+from pyretailscience.style.tailwind import get_multi_color_cmap
 
 
 def plot(
@@ -65,7 +63,8 @@ def plot(
     range_lower: float | None = None,
     range_upper: float | None = None,
     range_method: Literal["clip", "fillna"] = "clip",
-    **kwargs: dict[str, any],
+    use_hatch: bool = False,
+    **kwargs: dict[str, Any],
 ) -> SubplotBase:
     """Plots a histogram of `value_col`, optionally split by `group_col`.
 
@@ -83,34 +82,40 @@ def plot(
         range_lower (float, optional): Lower bound for clipping or filling NA values.
         range_upper (float, optional): Upper bound for clipping or filling NA values.
         range_method (str, optional): Whether to "clip" values outside the range or "fillna". Defaults to "clip".
+        use_hatch (bool, optional): Whether to use hatching for the bars.
         **kwargs: Additional keyword arguments for Pandas' `plot` function.
 
     Returns:
         SubplotBase: The matplotlib axes object.
     """
+    if isinstance(value_col, list) and group_col is not None:
+        raise ValueError("`value_col` cannot be a list when `group_col` is provided. Please choose one or the other.")
+
     value_col = _prepare_value_col(df=df, value_col=value_col)
 
     if isinstance(df, pd.Series):
         df = df.to_frame(name=value_col[0])
 
-    df = apply_range_clipping(
-        df=df,
-        value_col=value_col,
-        range_lower=range_lower,
-        range_upper=range_upper,
-        range_method=range_method,
-    )
-
-    cmap = get_base_cmap()
+    if (range_lower is not None) or (range_upper is not None):
+        df = _apply_range_clipping(
+            df=df,
+            value_col=value_col,
+            range_lower=range_lower,
+            range_upper=range_upper,
+            range_method=range_method,
+        )
 
     num_histograms = _get_num_histograms(df=df, value_col=value_col, group_col=group_col)
+
+    color_gen = get_multi_color_cmap()
+    colors = [next(color_gen) for _ in range(num_histograms)]
 
     ax = _plot_histogram(
         df=df,
         value_col=value_col,
         group_col=group_col,
         ax=ax,
-        cmap=cmap,
+        colors=colors,
         num_histograms=num_histograms,
         **kwargs,
     )
@@ -123,6 +128,9 @@ def plot(
         legend_title=legend_title,
         move_legend_outside=move_legend_outside,
     )
+
+    if use_hatch:
+        ax = gu.apply_hatches(ax=ax, num_segments=num_histograms)
 
     if source_text:
         gu.add_source_text(ax=ax, source_text=source_text)
@@ -152,70 +160,44 @@ def _prepare_value_col(df: pd.DataFrame | pd.Series, value_col: str | list[str] 
     return value_col
 
 
-def _prepare_dataframe(
-    data: pd.DataFrame | pd.Series,
-    value_col: str | list[str] | None,
-    group_col: str | None,
-) -> pd.DataFrame:
-    """Prepares and returns the dataframe with appropriate columns for plotting.
-
-    Args:
-        data (pd.DataFrame | pd.Series): The input dataframe or series to prepare.
-        value_col (str or list of str, optional): The column(s) to plot. If a single string, it is converted to a list.
-        group_col (str, optional): The column used to group data.
-
-    Returns:
-        pd.DataFrame: The prepared dataframe ready for plotting.
-    """
-    if isinstance(data, pd.Series):
-        if group_col is not None:
-            raise ValueError("When passing a Series, 'group_col' should not be provided.")
-        value_col = ["value"] if value_col is None else [value_col]
-        return data.to_frame(name=value_col[0])
-
-    if value_col is None:
-        raise ValueError("Please provide a value column to plot.")
-
-    if isinstance(value_col, str):
-        value_col = [value_col]
-
-    return data
-
-
-def apply_range_clipping(
+def _apply_range_clipping(
     df: pd.DataFrame,
     value_col: list[str],
-    range_lower: float | None,
-    range_upper: float | None,
-    range_method: Literal["clip", "fillna"],
+    range_lower: float | None = None,
+    range_upper: float | None = None,
+    range_method: Literal["clip", "fillna"] = "fillna",
 ) -> pd.DataFrame:
     """Applies range clipping or filling based on the provided method and returns the modified dataframe.
 
     Args:
         df (pd.DataFrame): The dataframe to apply range clipping to.
         value_col (list of str): The column(s) to apply clipping or filling to.
-        range_lower (float, optional): Lower bound for clipping or filling NA values.
-        range_upper (float, optional): Upper bound for clipping or filling NA values.
-        range_method (Literal, optional): Whether to "clip" values outside the range or "fillna". Defaults to "clip".
+        range_lower (float | None, optional): Lower bound for clipping or filling NA values.
+        range_upper (float | None, optional): Upper bound for clipping or filling NA values.
+        range_method (Literal, optional): Whether to "clip" values outside the range or "fillna". Defaults to "fillna".
 
     Returns:
         pd.DataFrame: The modified dataframe with the clipping or filling applied.
     """
-    if range_lower is not None or range_upper is not None:
-        if range_method == "clip":
-            return df.assign(**{col: df[col].clip(lower=range_lower, upper=range_upper) for col in value_col})
-        return df.assign(
-            **{
-                col: df[col].apply(
-                    lambda x: np.nan
-                    if (range_lower is not None and x < range_lower) or (range_upper is not None and x > range_upper)
-                    else x,
-                )
-                for col in value_col
-            },
-        )
+    if range_method not in ["clip", "fillna"]:
+        error_msg = f"Invalid range_method: {range_method}. Expected 'clip' or 'fillna'."
+        raise ValueError(error_msg)
 
-    return df
+    if range_method == "clip":
+        # Clip values based on the provided lower and upper bounds
+        return df.assign(**{col: df[col].clip(lower=range_lower, upper=range_upper) for col in value_col})
+
+    # For the "fillna" method, we will create a mask for the valid range and replace out-of-range values with NaN
+    def apply_mask(col: str) -> pd.Series:
+        mask = pd.Series([True] * len(df))
+        if range_lower is not None:
+            mask &= df[col] >= range_lower
+        if range_upper is not None:
+            mask &= df[col] <= range_upper
+        return df[col].where(mask, np.nan)
+
+    # Apply the mask to each column
+    return df.assign(**{col: apply_mask(col) for col in value_col})
 
 
 def _get_num_histograms(df: pd.DataFrame, value_col: list[str], group_col: str | None) -> int:
@@ -242,7 +224,7 @@ def _plot_histogram(
     value_col: list[str],
     group_col: str | None,
     ax: Axes | None,
-    cmap: ListedColormap,
+    colors: list[str],
     num_histograms: int,
     **kwargs: dict,
 ) -> Axes:
@@ -253,26 +235,36 @@ def _plot_histogram(
         value_col (list of str): The column(s) to plot.
         group_col (str, optional): The column used to group data into multiple histograms.
         ax (Axes, optional): Matplotlib axes object to plot on.
-        cmap (ListedColormap): The colormap to use for the plot.
+        colors: The list of colors use for the plot.
         num_histograms (int): The number of histograms being plotted.
         **kwargs: Additional keyword arguments for Pandas' `plot` function.
 
     Returns:
         Axes: The matplotlib axes object with the plotted histogram.
     """
-    add_legend = num_histograms > 1
+    is_multi_histogram = num_histograms > 1
+
+    alpha = kwargs.pop("alpha", 0.7) if is_multi_histogram else kwargs.pop("alpha", None)
 
     if group_col is None:
-        return df[value_col].plot(kind="hist", ax=ax, alpha=0.5, legend=add_legend, color=cmap.colors[0], **kwargs)
+        return df[value_col].plot(
+            kind="hist",
+            ax=ax,
+            legend=is_multi_histogram,
+            color=colors,
+            alpha=alpha,
+            **kwargs,
+        )
 
+    # if group_col is provided, only use a single value_col
     df_pivot = df.pivot(columns=group_col, values=value_col[0])
 
     # Plot all columns at once
     return df_pivot.plot(
         kind="hist",
         ax=ax,
-        alpha=0.5,
-        legend=add_legend,
-        color=cmap.colors[: len(df_pivot.columns)],  # Use the appropriate number of colors
+        legend=is_multi_histogram,
+        alpha=alpha,
+        color=colors,
         **kwargs,
     )

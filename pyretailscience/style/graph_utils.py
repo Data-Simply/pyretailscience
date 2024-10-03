@@ -1,12 +1,25 @@
 """Helper functions for styling graphs."""
 
 import importlib.resources as pkg_resources
+from collections.abc import Generator
+from itertools import cycle
 
 import matplotlib.font_manager as fm
+import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.text import Text
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
+
+
+def _hatches_gen() -> Generator[str, None, None]:
+    """Returns a generator that cycles through predefined hatch patterns.
+
+    Yields:
+        str: The next hatch pattern in the sequence.
+    """
+    _hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
+    return cycle(_hatches)
 
 
 class GraphStyles:
@@ -59,6 +72,27 @@ def human_format(
     return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
 
 
+def _add_legend(ax: Axes, legend_title: str | None, move_legend_outside: bool) -> Axes:
+    """Add a legend to a Matplotlib graph.
+
+    Args:
+        ax (Axes): The axes object of the plot.
+        legend_title (str, optional): The title for the legend.
+        move_legend_outside (bool, optional): Whether to move legend outside the plot.
+    """
+    has_legend = ax.get_legend() is not None
+    if has_legend or legend_title is not None or move_legend_outside:
+        legend = (
+            ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", frameon=False)
+            if move_legend_outside
+            else ax.legend(frameon=False)
+        )
+        if legend_title:
+            legend.set_title(legend_title)
+
+    return ax
+
+
 def standard_graph_styles(
     ax: Axes,
     title: str | None = None,
@@ -87,7 +121,7 @@ def standard_graph_styles(
     Returns:
         Axes: The graph with the styles applied.
     """
-    ax.set_facecolor("w")  # set background colour to white
+    ax.set_facecolor("w")  # set background color to white
     ax.set_axisbelow(True)  # set grid lines behind the plot
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
@@ -117,14 +151,7 @@ def standard_graph_styles(
             labelpad=y_label_pad,
         )
 
-    legend = ax.get_legend()
-    if legend:
-        if legend_title:
-            legend.set_title(legend_title)
-        if move_legend_outside:
-            legend.set_bbox_to_anchor((1.05, 1))
-
-    return ax
+    return _add_legend(ax=ax, legend_title=legend_title, move_legend_outside=move_legend_outside)
 
 
 def standard_tick_styles(ax: Axes) -> Axes:
@@ -140,6 +167,36 @@ def standard_tick_styles(ax: Axes) -> Axes:
         tick.set_fontproperties(GraphStyles.POPPINS_REG)
     for tick in ax.get_yticklabels():
         tick.set_fontproperties(GraphStyles.POPPINS_REG)
+
+    return ax
+
+
+def apply_hatches(ax: Axes, num_segments: int) -> Axes:
+    """Apply hatch patterns to patches in a plot, such as bars, histograms, or area plots.
+
+    This function divides the patches in the given Axes object into the specified
+    number of segments and applies a different hatch pattern to each segment.
+
+    Args:
+        ax (Axes): The matplotlib Axes object containing the plot with patches (bars, histograms, etc.).
+        num_segments (int): The number of segments to divide the patches into, with each segment receiving a different hatch pattern.
+
+    Returns:
+        Axes: The modified Axes object with hatches applied to the patches.
+    """
+    available_hatches = _hatches_gen()
+    patch_groups = np.array_split(ax.patches, num_segments)
+    for patch_group in patch_groups:
+        hatch = next(available_hatches)
+        for patch in patch_group:
+            patch.set_hatch(hatch)
+
+    legend = ax.get_legend()
+    if legend:
+        existing_hatches = [patch.get_hatch() for patch in ax.patches if patch.get_hatch() is not None]
+        unique_hatches = [hatch for idx, hatch in enumerate(existing_hatches) if hatch not in existing_hatches[:idx]]
+        for legend_patch, hatch in zip(legend.get_patches(), cycle(unique_hatches)):
+            legend_patch.set_hatch(hatch)
 
     return ax
 
