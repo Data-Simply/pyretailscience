@@ -96,7 +96,7 @@ def plot(
     if isinstance(df, pd.Series):
         df = df.to_frame(name=value_col[0])
 
-    if range_lower is not None and range_upper is not None:
+    if (range_lower is not None) or (range_upper is not None):
         df = _apply_range_clipping(
             df=df,
             value_col=value_col,
@@ -163,18 +163,18 @@ def _prepare_value_col(df: pd.DataFrame | pd.Series, value_col: str | list[str] 
 def _apply_range_clipping(
     df: pd.DataFrame,
     value_col: list[str],
-    range_lower: float,
-    range_upper: float,
-    range_method: Literal["clip", "fillna"],
+    range_lower: float | None = None,
+    range_upper: float | None = None,
+    range_method: Literal["clip", "fillna"] = "fillna",
 ) -> pd.DataFrame:
     """Applies range clipping or filling based on the provided method and returns the modified dataframe.
 
     Args:
         df (pd.DataFrame): The dataframe to apply range clipping to.
         value_col (list of str): The column(s) to apply clipping or filling to.
-        range_lower (float): Lower bound for clipping or filling NA values.
-        range_upper (float): Upper bound for clipping or filling NA values.
-        range_method (Literal, optional): Whether to "clip" values outside the range or "fillna". Defaults to "clip".
+        range_lower (float | None, optional): Lower bound for clipping or filling NA values.
+        range_upper (float | None, optional): Upper bound for clipping or filling NA values.
+        range_method (Literal, optional): Whether to "clip" values outside the range or "fillna". Defaults to "fillna".
 
     Returns:
         pd.DataFrame: The modified dataframe with the clipping or filling applied.
@@ -184,12 +184,20 @@ def _apply_range_clipping(
         raise ValueError(error_msg)
 
     if range_method == "clip":
+        # Clip values based on the provided lower and upper bounds
         return df.assign(**{col: df[col].clip(lower=range_lower, upper=range_upper) for col in value_col})
 
-    # create a single boolean mask for all columns at once, which can be more efficient for large
-    # DataFrames with multiple value columns.
-    mask = ((range_lower is None) | (df[value_col] >= range_lower)) & ((range_upper is None) | (df[value_col] <= range_upper))
-    return df.assign(**{col: df[col].where(mask[col], np.nan) for col in value_col})
+    # For the "fillna" method, we will create a mask for the valid range and replace out-of-range values with NaN
+    def apply_mask(col: str) -> pd.Series:
+        mask = pd.Series([True] * len(df))
+        if range_lower is not None:
+            mask &= df[col] >= range_lower
+        if range_upper is not None:
+            mask &= df[col] <= range_upper
+        return df[col].where(mask, np.nan)
+
+    # Apply the mask to each column
+    return df.assign(**{col: apply_mask(col) for col in value_col})
 
 
 def _get_num_histograms(df: pd.DataFrame, value_col: list[str], group_col: str | None) -> int:

@@ -105,7 +105,7 @@ def test_plot_enforces_range_clipping(sample_dataframe):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_range_fillna(sample_dataframe, mocker):
+def test_plot_with_range_fillna(sample_dataframe):
     """Test the plot function with range fillna."""
     _, ax = plt.subplots()
     range_lower = 3
@@ -127,6 +127,79 @@ def test_plot_with_range_fillna(sample_dataframe, mocker):
     clipped_values = [patch.get_x() for patch in x_data]
 
     # Ensure that the x values (bars' positions) respect the clipping limits
+    assert all(range_lower <= val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_range_lower_none(sample_dataframe):
+    """Test the plot function with range_lower=None (no lower bound) and a specific upper bound."""
+    _, ax = plt.subplots()
+    range_upper = 8  # No lower bound
+
+    result_ax = histogram.plot(
+        df=sample_dataframe,
+        value_col="value_1",
+        ax=ax,
+        title="Test Histogram with Upper Bound Only",
+        range_lower=None,
+        range_upper=range_upper,
+        range_method="clip",
+    )
+
+    # Get the data limits from the resulting Axes object
+    x_data = result_ax.patches
+    clipped_values = [patch.get_x() for patch in x_data]
+
+    # Ensure that the x values (bars' positions) respect the upper bound, but no lower bound is applied
+    assert all(val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_range_upper_none(sample_dataframe):
+    """Test the plot function with range_upper=None (no upper bound) and a specific lower bound."""
+    _, ax = plt.subplots()
+    range_lower = 3  # No upper bound
+
+    result_ax = histogram.plot(
+        df=sample_dataframe,
+        value_col="value_1",
+        ax=ax,
+        title="Test Histogram with Lower Bound Only",
+        range_lower=range_lower,
+        range_upper=None,
+        range_method="clip",
+    )
+
+    # Get the data limits from the resulting Axes object
+    x_data = result_ax.patches
+    clipped_values = [patch.get_x() for patch in x_data]
+
+    # Ensure that the x values (bars' positions) respect the lower bound, but no upper bound is applied
+    assert all(range_lower <= val + np.finfo(np.float64).eps for val in clipped_values)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_fillna_outside_range(sample_dataframe):
+    """Test the fillna method, ensuring values outside the range are replaced by NaN."""
+    _, ax = plt.subplots()
+    range_lower = 3
+    range_upper = 8
+
+    result_ax = histogram.plot(
+        df=sample_dataframe,
+        value_col="value_1",
+        ax=ax,
+        title="Test Histogram with Range Fillna",
+        range_lower=range_lower,
+        range_upper=range_upper,
+        range_method="fillna",
+    )
+
+    # Extract data from the resulting Axes
+    x_data = result_ax.patches
+    clipped_values = [patch.get_x() for patch in x_data]
+
+    # Ensure that values outside the range are not plotted (NaN)
     assert all(range_lower <= val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
 
 
