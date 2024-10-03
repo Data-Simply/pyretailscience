@@ -1,12 +1,13 @@
 """This module provides flexible functionality for creating bar plots from pandas DataFrames or Series.
 
 It allows you to create bar plots with optional grouping, sorting, orientation, and data labels. The module supports
-both single and grouped bar plots, where grouped bars are created by providing a grouping column.
+both single and grouped bar plots, where grouped bars are created by providing a `group_col`, which defines the x-axis labels or categories.
 
 ### Core Features
 
-- **Single or Grouped Bar Plots**: Plot one or more value columns (`value_col`) as bars. Grouped bars are created by
-  specifying both `value_col` (list of columns) and `group_col` (column used for grouping bars).
+- **Single or Grouped Bar Plots**: Plot one or more value columns (`value_col`) as bars. The `group_col` is used to define
+  the categories or groups on the x-axis (e.g., products, categories, or regions). Grouped bars can be created by
+  specifying both `value_col` (list of columns) and `group_col`.
 - **Sorting and Orientation**: Customize the sorting of bars (ascending or descending) and choose between vertical or
   horizontal bar orientation.
 - **Data Labels**: Add data labels to bars, either showing absolute values or percentages.
@@ -16,17 +17,18 @@ both single and grouped bar plots, where grouped bars are created by providing a
 ### Use Cases
 
 - **Sales and Revenue Analysis**: Visualize sales or revenue across different products or categories by creating grouped
-  bar plots (e.g., revenue across quarters or regions).
+  bar plots (e.g., revenue across quarters or regions). The `group_col` will define the products or categories displayed on the x-axis.
 - **Comparative Analysis**: Compare multiple metrics simultaneously by plotting grouped bars. For instance, you can
-  compare product sales for different periods side by side.
+  compare product sales for different periods side by side, with `group_col` defining the x-axis categories.
 - **Distribution Analysis**: Visualize the distribution of categorical data (e.g., product sales) across different
-  categories.
+  categories, where `group_col` defines the x-axis labels.
 
 ### Limitations and Handling of Data
 
 - **Pre-Aggregated Data Required**: The module does not perform any data aggregation, so all data must be pre-aggregated before
   being passed in for plotting.
-- **Grouped Bars**: When `group_col` is provided, it will group the data and create a set of bars for each group.
+- **Series Support**: The module can also handle pandas Series, though **`group_col`** cannot be provided when plotting a Series.
+  In this case, the index of the Series will define the x-axis labels.
 
 ### Additional Features
 
