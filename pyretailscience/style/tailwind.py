@@ -8,6 +8,9 @@ https://raw.githubusercontent.com/tailwindlabs/tailwindcss/a1e74f055b13a7ef5775b
 
 """
 
+from collections.abc import Generator
+from itertools import cycle
+
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 COLORS = {
@@ -345,11 +348,52 @@ def get_base_cmap() -> ListedColormap:
     Returns:
         ListedColormap: A ListedColormap with all the Tailwind colors.
     """
-    color_order = ["green", "orange", "red", "blue", "yellow", "violet", "pink"]
+    color_order = [
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "teal",
+        "sky",
+        "indigo",
+        "purple",
+        "pink",
+        "slate",
+        "amber",
+        "lime",
+        "emerald",
+        "cyan",
+        "blue",
+        "violet",
+        "fuchsia",
+        "rose",
+    ]
     color_numbers = [500, 300, 700]
     colors = [COLORS[color][color_number] for color_number in color_numbers for color in color_order]
 
     return ListedColormap(colors)
+
+
+def get_single_color_cmap() -> Generator[str, None, None]:
+    """Returns a generator for Tailwind green shades.
+
+    Returns:
+        Generator: A generator yielding green shades in a looping fashion.
+    """
+    color_numbers = [500, 300, 700]
+    return cycle([COLORS["green"][shade] for shade in color_numbers])
+
+
+def get_multi_color_cmap() -> Generator[str, None, None]:
+    """Returns a generator for multiple Tailwind colors and shades.
+
+    Returns:
+        Generator: A generator yielding the required colors in a looping fashion.
+    """
+    color_order = ["green", "blue", "red", "orange", "yellow", "violet", "pink"]
+    color_numbers = [500, 300, 700]
+
+    return cycle([COLORS[color][color_number] for color_number in color_numbers for color in color_order])
 
 
 slate_cmap = get_listed_cmap("slate")

@@ -2,7 +2,7 @@
 
 It focuses on visualizing sequences that are ordered or sequential but not necessarily categorical, such as "days since
 an event" or "months since a competitor opened." However, while this module can handle datetime values on the x-axis,
-the **timeline** module has additional features that make working with datetimes easier, such as easily resampling the
+the **plots.time_line** module has additional features that make working with datetimes easier, such as easily resampling the
 data to alternate time frames.
 
 The sequences used in this module can include values like "days since an event" (e.g., -2, -1, 0, 1, 2) or "months
@@ -39,7 +39,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.tailwind import get_base_cmap
+from pyretailscience.style.tailwind import get_multi_color_cmap, get_single_color_cmap
 
 
 def plot(
@@ -88,18 +88,26 @@ def plot(
             UserWarning,
             stacklevel=2,
         )
-    colors = get_base_cmap()
 
     if group_col is None:
-        pivot_df = df.set_index(x_col if x_col is not None else df.index)[value_col]
+        pivot_df = df.set_index(x_col if x_col is not None else df.index)[
+            [value_col] if isinstance(value_col, str) else value_col
+        ]
     else:
         pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
+
+    is_multi_line = (group_col is not None) or (isinstance(value_col, list) and len(value_col) > 1)
+
+    color_gen_threshold = 4
+    num_colors = len(pivot_df.columns) if is_multi_line else 1
+    color_gen = get_single_color_cmap() if num_colors < color_gen_threshold else get_multi_color_cmap()
+    colors = [next(color_gen) for _ in range(num_colors)]
 
     ax = pivot_df.plot(
         ax=ax,
         linewidth=3,
-        color=colors.colors[: len(pivot_df.columns) if group_col is not None else 1],
-        legend=(group_col is not None),
+        color=colors,
+        legend=is_multi_line,
         **kwargs,
     )
 

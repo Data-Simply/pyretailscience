@@ -50,6 +50,53 @@ line.plot(
 )
 ```
 
+### Histogram Plot
+<div class="clear" markdown>
+
+![Image title](assets/images/analysis_modules/plots/histogram_plot.svg){ align=right loading=lazy width="50%"}
+
+Histograms are particularly useful for visualizing the distribution of data, allowing you to see how values in one or more metrics are spread across different ranges. This module also supports grouping by categories, enabling you to compare the distributions across different groups. When grouping by a category, multiple histograms are generated on the same plot, allowing for easy comparison across categories.
+
+Histograms are commonly used to analyze:
+
+- Sales, revenue or other metric distributions
+- Distribution of customer segments (e.g., by age, income)
+- Comparing metric distributions across product categories
+
+This module allows you to customize legends, axes, and other visual elements, as well as apply clipping or filtering on the data values to focus on specific ranges.
+
+</div>
+
+Example:
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from pyretailscience.plots import histogram
+
+df = pd.DataFrame({
+    'first_purchase_revenue': np.concatenate([
+        np.random.normal(70, 10, 50000),
+        np.random.normal(90, 15, 50000)
+    ]),
+    'product': ['Product A'] * 50000 + ['Product B'] * 50000
+})
+
+histogram.plot(
+    df=df,
+    value_col='first_purchase_revenue',
+    group_col='product',
+    title="First Purchase Revenue by Product (£)",
+    x_label="Revenue (£)",
+    y_label="Number of Customers",
+    source_text="Source: PyRetailScience - 2024",
+    move_legend_outside=True,
+    use_hatch=True
+)
+```
+
 ### Waterfall Plot
 
 <div class="clear" markdown>
