@@ -25,6 +25,7 @@ nav:
       - Product Association: api/product_association.md
       - Line Plot: api/plots/line.md
       - Histogram Plot: api/plots/histogram.md
+      - Bar Plot: api/plots/bar.md
 
 
 theme:
