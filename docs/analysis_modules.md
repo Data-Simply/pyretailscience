@@ -97,6 +97,51 @@ histogram.plot(
 )
 ```
 
+### Bar Plot
+
+<div class="clear" markdown>
+
+![Image title](assets/images/analysis_modules/plots/bar_plot.svg){ align=right loading=lazy width="50%"}
+
+Bar plots are ideal for visualizing comparisons between categories or groups, showing how metrics such as revenue, sales, or other values vary across different categories. This module allows you to easily group bars by different categories and stack them when comparing multiple metrics. You can also add data labels to display absolute or percentage values for each bar.
+
+Bar plots are frequently used to compare:
+
+- Product sales across regions or quarters
+- Revenue across product categories or customer segments
+- Performance metrics side by side
+
+This module provides flexibility in customizing legends, axes, and other visual elements, making it easy to represent data across different dimensions, either as grouped or single bar plots.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.plots import bar
+
+# Example DataFrame with sales data for different product categories
+df = pd.DataFrame({
+    "product": ["A", "B", "C", "D"],
+    "sales_q1": [25000, 18000, 22000, 15000],
+    "sales_q2": [35000, 50000, 2000, 5000]
+})
+
+# Plot grouped bar chart to show sales across different products and quarters
+bar.plot(
+    df=df,
+    value_col=["sales_q1", "sales_q2"],
+    group_col="product",
+    title="Sales by Product",
+    x_label="Product",
+    y_label="Sales (£)",
+    data_label_format="absolute",
+    source_text="Source: PyRetailScience - 2024",
+    move_legend_outside=True,
+)
+```
+
 ### Waterfall Plot
 
 <div class="clear" markdown>
