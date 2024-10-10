@@ -2,7 +2,6 @@
 
 from itertools import cycle
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -48,12 +47,9 @@ def _mock_gu_functions(mocker):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_histogram(sample_dataframe):
     """Test the plot function with a single histogram."""
-    _, ax = plt.subplots()
-
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Single Histogram",
     )
 
@@ -64,13 +60,10 @@ def test_plot_single_histogram(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_grouped_histogram(sample_dataframe):
     """Test the plot function with grouped histograms."""
-    _, ax = plt.subplots()
-
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
         group_col="group",
-        ax=ax,
         title="Test Grouped Histogram",
     )
 
@@ -81,7 +74,6 @@ def test_plot_grouped_histogram(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_enforces_range_clipping(sample_dataframe):
     """Test that the plot function enforces range clipping through the Axes limits and print the min/max values."""
-    _, ax = plt.subplots()
     range_lower = 2
     range_upper = 8
 
@@ -89,7 +81,6 @@ def test_plot_enforces_range_clipping(sample_dataframe):
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Histogram with Range Clipping",
         range_lower=range_lower,
         range_upper=range_upper,
@@ -107,7 +98,6 @@ def test_plot_enforces_range_clipping(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_range_fillna(sample_dataframe):
     """Test the plot function with range fillna."""
-    _, ax = plt.subplots()
     range_lower = 3
     range_upper = 9
 
@@ -115,7 +105,6 @@ def test_plot_with_range_fillna(sample_dataframe):
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Histogram with Range Clipping",
         range_lower=range_lower,
         range_upper=range_upper,
@@ -133,13 +122,11 @@ def test_plot_with_range_fillna(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_range_lower_none(sample_dataframe):
     """Test the plot function with range_lower=None (no lower bound) and a specific upper bound."""
-    _, ax = plt.subplots()
     range_upper = 8  # No lower bound
 
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Histogram with Upper Bound Only",
         range_lower=None,
         range_upper=range_upper,
@@ -157,13 +144,11 @@ def test_plot_with_range_lower_none(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_range_upper_none(sample_dataframe):
     """Test the plot function with range_upper=None (no upper bound) and a specific lower bound."""
-    _, ax = plt.subplots()
     range_lower = 3  # No upper bound
 
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Histogram with Lower Bound Only",
         range_lower=range_lower,
         range_upper=None,
@@ -181,14 +166,12 @@ def test_plot_with_range_upper_none(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_fillna_outside_range(sample_dataframe):
     """Test the fillna method, ensuring values outside the range are replaced by NaN."""
-    _, ax = plt.subplots()
     range_lower = 3
     range_upper = 8
 
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Histogram with Range Fillna",
         range_lower=range_lower,
         range_upper=range_upper,
@@ -206,11 +189,8 @@ def test_plot_fillna_outside_range(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_histogram_series(sample_series):
     """Test the plot function with a pandas series."""
-    _, ax = plt.subplots()
-
     result_ax = histogram.plot(
         df=sample_series,
-        ax=ax,
         title="Test Single Histogram (Series)",
     )
 
@@ -221,12 +201,9 @@ def test_plot_single_histogram_series(sample_series):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_histogram_with_hatch(sample_dataframe):
     """Test the plot function with hatching."""
-    _, ax = plt.subplots()
-
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test Histogram with Hatch",
         use_hatch=True,
     )
@@ -237,14 +214,11 @@ def test_plot_histogram_with_hatch(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_invalid_value_col_with_group_col(sample_dataframe):
     """Test the plot function raises an error when both `value_col` is a list and `group_col` is provided."""
-    _, ax = plt.subplots()
-
     with pytest.raises(ValueError, match="`value_col` cannot be a list when `group_col` is provided"):
         histogram.plot(
             df=sample_dataframe,
             value_col=["value_1", "value_2"],
             group_col="group",
-            ax=ax,
             title="Test Invalid Value Col with Group Col",
         )
 
@@ -252,13 +226,10 @@ def test_plot_invalid_value_col_with_group_col(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_legend_outside(sample_dataframe):
     """Test the plot function moves the legend outside the plot."""
-    _, ax = plt.subplots()
-
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
         group_col="group",
-        ax=ax,
         title="Test Legend Outside",
         move_legend_outside=True,
     )
@@ -276,13 +247,10 @@ def test_plot_legend_outside(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_adds_source_text(sample_dataframe):
     """Test the plot function adds source text to the plot."""
-    _, ax = plt.subplots()
-
     source_text = "Source: Test Data"
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
-        ax=ax,
         title="Test with Source Text",
         source_text=source_text,
     )
@@ -293,12 +261,9 @@ def test_plot_adds_source_text(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_histograms(sample_dataframe):
     """Test the plot function with multiple histograms."""
-    _, ax = plt.subplots()
-
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col=["value_1", "value_2"],
-        ax=ax,
         title="Test Multiple Histograms",
     )
 
@@ -313,7 +278,6 @@ def test_plot_single_histogram_calls_dataframe_plot(mocker, sample_dataframe):
     mock_df_plot = mocker.patch("pandas.DataFrame.plot")
 
     # Prepare input
-    _, ax = plt.subplots()
     value_col = "value_1"
     range_lower = 2
     range_upper = 8
@@ -322,7 +286,6 @@ def test_plot_single_histogram_calls_dataframe_plot(mocker, sample_dataframe):
     histogram.plot(
         df=sample_dataframe,
         value_col=value_col,
-        ax=ax,
         range_lower=range_lower,
         range_upper=range_upper,
         title="Test Single Histogram",
@@ -345,7 +308,6 @@ def test_plot_grouped_histogram_calls_dataframe_plot(mocker, sample_dataframe):
     mock_df_plot = mocker.patch("pandas.DataFrame.plot")
 
     # Prepare input
-    _, ax = plt.subplots()
     value_col = "value_1"
     group_col = "group"
     range_lower = 2
@@ -356,7 +318,6 @@ def test_plot_grouped_histogram_calls_dataframe_plot(mocker, sample_dataframe):
         df=sample_dataframe,
         value_col=value_col,
         group_col=group_col,
-        ax=ax,
         range_lower=range_lower,
         range_upper=range_upper,
         title="Test Grouped Histogram",
