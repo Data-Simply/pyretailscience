@@ -10,6 +10,7 @@ from matplotlib.axes import Axes
 from matplotlib.text import Text
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
+_MAGNITUDE_SUFFIXES = ["", "K", "M", "B", "T", "P"]
 
 
 def _hatches_gen() -> Generator[str, None, None]:
@@ -49,7 +50,7 @@ def human_format(
     decimals: int = 0,
     prefix: str = "",
 ) -> str:
-    """Format a number in a human readable format for Matplotlib.
+    """Format a number in a human-readable format for Matplotlib, discarding trailing zeros.
 
     Args:
         num (float): The number to format.
@@ -58,18 +59,89 @@ def human_format(
         prefix (str, optional): The prefix of the returned string, eg '$'. Defaults to "".
 
     Returns:
-        str: The formatted number.
+        str: The formatted number, with trailing zeros removed.
     """
-    # The minimum difference between two numbers to recieve a different suffix
+    # The minimum difference between two numbers to receive a different suffix
     minimum_magnitude_difference = 1000.0
-
     magnitude = 0
+
+    # Keep dividing by 1000 until the number is small enough
     while abs(num) >= minimum_magnitude_difference:
         magnitude += 1
         num /= minimum_magnitude_difference
 
-    # Add more suffixes if you need them
-    return f"{prefix}%.{decimals}f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
+    # Check if the number rounds to exactly 1000 at the current magnitude
+    if round(abs(num), decimals) == minimum_magnitude_difference:
+        num /= minimum_magnitude_difference
+        magnitude += 1
+
+    # If magnitude exceeds the predefined suffixes, continue with multiples of "P"
+    if magnitude < len(_MAGNITUDE_SUFFIXES):
+        suffix = _MAGNITUDE_SUFFIXES[magnitude]
+    else:
+        # Calculate how many times beyond "P" we've gone and append that to "P"
+        extra_magnitude = magnitude - (len(_MAGNITUDE_SUFFIXES) - 1)
+        suffix = f"{1000 ** extra_magnitude}P"
+
+    # Format the number and remove trailing zeros
+    formatted_num = f"{prefix}%.{decimals}f" % num
+    formatted_num = formatted_num.rstrip("0").rstrip(".") if "." in formatted_num else formatted_num
+
+    return f"{formatted_num}{suffix}"
+
+
+def truncate_to_x_digits(num_str: str, digits: int) -> str:
+    """Truncate a human-formatted number to the first `num_digits` significant digits.
+
+    Args:
+        num_str (str): The formatted number (e.g., '999.999K').
+        digits (int): The number of digits to keep.
+
+    Returns:
+        str: The truncated formatted number (e.g., '999.9K').
+    """
+    # Split the number part and the suffix (e.g., "999.999K" -> "999.999" and "K")
+    suffix = ""
+    for s in _MAGNITUDE_SUFFIXES:
+        if num_str.endswith(s) and s != "":
+            suffix = s
+            num_str = num_str[: -len(s)]  # Remove the suffix for now
+            break
+
+    # Handle negative numbers
+    is_negative = num_str.startswith("-")
+    if is_negative:
+        num_str = num_str[1:]  # Remove the negative sign for now
+
+    # Handle zero case explicitly
+    if float(num_str) == 0:
+        return f"0{suffix}"
+
+    # Handle small numbers explicitly to avoid scientific notation
+    scientific_notation_threshold = 1e-4
+    if abs(float(num_str)) < scientific_notation_threshold:
+        return f"{float(num_str):.{digits}f}".rstrip("0").rstrip(".")
+
+    digits_before_decimal = len(num_str.split(".")[0])
+    # Calculate how many digits to keep after the decimal
+    digits_to_keep_after_decimal = digits - digits_before_decimal
+
+    # Ensure truncation without rounding
+    if digits_to_keep_after_decimal > 0:
+        factor = 10**digits_to_keep_after_decimal
+        truncated_num = str(int(float(num_str) * factor) / factor)
+    else:
+        factor = 10**digits
+        truncated_num = str(int(float(num_str) * factor) / factor)
+
+    # Reapply the negative sign if needed
+    if is_negative:
+        truncated_num = f"-{truncated_num}"
+
+    # Remove unnecessary trailing zeros and decimal point
+    truncated_num = truncated_num.rstrip("0").rstrip(".")
+
+    return f"{truncated_num}{suffix}"
 
 
 def _add_legend(ax: Axes, legend_title: str | None, move_legend_outside: bool) -> Axes:
