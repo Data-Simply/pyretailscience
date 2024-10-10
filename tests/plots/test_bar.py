@@ -2,10 +2,10 @@
 
 from itertools import cycle
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
+from matplotlib.patches import Rectangle
 
 from pyretailscience.plots import bar
 from pyretailscience.style import graph_utils as gu
@@ -47,15 +47,26 @@ def _mock_gu_functions(mocker):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_empty_dataframe():
+    """Test bar plot with an empty DataFrame."""
+    empty_df = pd.DataFrame(columns=["sales_q1", "sales_q2"])
+
+    with pytest.raises(ValueError, match="Cannot plot with empty DataFrame"):
+        bar.plot(
+            df=empty_df,
+            value_col="sales_q1",
+            x_col="product",
+            title="Test Plot with Empty DataFrame",
+        )
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_bar(sample_dataframe):
     """Test the bar plot function with a single value column."""
-    _, ax = plt.subplots()
-
     result_ax = bar.plot(
         df=sample_dataframe,
         value_col="sales_q1",
-        group_col="product",
-        ax=ax,
+        x_col="product",
         title="Test Single Bar Plot",
     )
 
@@ -64,122 +75,114 @@ def test_plot_single_bar(sample_dataframe):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_multiple_bars(sample_dataframe):
-    """Test the bar plot function with multiple value columns."""
-    _, ax = plt.subplots()
-
-    result_ax = bar.plot(
-        df=sample_dataframe,
-        value_col=["sales_q1", "sales_q2"],
-        group_col="product",
-        ax=ax,
-        title="Test Multiple Bar Plot",
-    )
-
-    assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
+def test_missing_x_col_in_dataframe(sample_dataframe):
+    """Test bar plot when the provided x_col does not exist in the DataFrame."""
+    with pytest.raises(KeyError, match="x_col 'missing_col' not found in DataFrame"):
+        bar.plot(
+            df=sample_dataframe,
+            value_col="sales_q1",
+            x_col="missing_col",
+            title="Test Plot with Missing x_col",
+        )
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_sorting(sample_dataframe):
-    """Test the bar plot function with sorting in ascending order."""
-    _, ax = plt.subplots()
+def test_plot_with_none_value_col(sample_dataframe):
+    """Test bar plot with None for value_col (default 'Value' column)."""
+    result_ax = bar.plot(
+        df=sample_dataframe["sales_q1"],
+        title="Test Plot with None Value Col",
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert len(result_ax.patches) > 0  # Ensure that bars were plotted
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_nan_values():
+    """Test bar plot with NaN values in the data."""
+    nan_dataframe = pd.DataFrame(
+        {
+            "product": ["A", "B", "C", "D"],
+            "sales_q1": [1000, 1500, None, 2500],
+            "sales_q2": [1100, 1600, 2100, None],
+        },
+    )
 
     result_ax = bar.plot(
-        df=sample_dataframe,
-        value_col="sales_q1",
-        group_col="product",
-        sort_order="ascending",
-        ax=ax,
-        title="Test Sorted Bar Plot",
+        df=nan_dataframe,
+        value_col=["sales_q1", "sales_q2"],
+        x_col="product",
+        data_label_format="absolute",
+        title="Test Plot with NaN Values",
     )
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.patches) > 0
-    assert result_ax.get_xticklabels()[0].get_text() == "A"  # Ensure the sorting was applied
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_hatch(sample_dataframe):
-    """Test the bar plot function with hatching."""
-    _, ax = plt.subplots()
-
+def test_plot_horizontal_orientation(sample_dataframe):
+    """Test bar plot with horizontal orientation."""
     result_ax = bar.plot(
         df=sample_dataframe,
         value_col="sales_q1",
-        group_col="product",
-        use_hatch=True,
-        ax=ax,
-        title="Test Bar Plot with Hatch",
+        x_col="product",
+        orientation="horizontal",
+        title="Test Horizontal Bar Plot",
     )
 
-    gu.apply_hatches.assert_called_once_with(ax=result_ax, num_segments=1)
+    expected_height = 0.8
+
+    assert isinstance(result_ax, Axes)
+    # Check that the bars are oriented horizontally by checking their width, not height
+    assert all(p.get_width() > 0 for p in result_ax.patches)
+    assert all(p.get_height() == expected_height for p in result_ax.patches)  # Default bar height in horizontal bars
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_data_labels(sample_dataframe):
-    """Test the bar plot function with data labels in absolute format."""
-    _, ax = plt.subplots()
-
+def test_plot_vertical_orientation(sample_dataframe):
+    """Test bar plot with vertical orientation."""
     result_ax = bar.plot(
         df=sample_dataframe,
         value_col="sales_q1",
-        group_col="product",
-        data_label_format="absolute",
-        ax=ax,
-        title="Test Bar Plot with Data Labels",
+        x_col="product",
+        orientation="vertical",
+        title="Test Vertical Bar Plot",
+    )
+
+    expected_width = 0.8
+
+    assert isinstance(result_ax, Axes)
+    # Check that the bars are oriented vertically by checking their height, not width
+    assert all(p.get_height() > 0 for p in result_ax.patches)
+    assert all(p.get_width() == expected_width for p in result_ax.patches)  # Default bar width in vertical bars
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_custom_bar_width(sample_dataframe):
+    """Test bar plot with a custom width for bars."""
+    custom_width = 0.5
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col="sales_q1",
+        x_col="product",
+        width=custom_width,
+        title="Test Plot with Custom Bar Width",
     )
 
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.containers) > 0  # Ensure that bars were plotted with labels
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_percentage_labels(sample_dataframe):
-    """Test the bar plot function with data labels in percentage format."""
-    _, ax = plt.subplots()
-
-    result_ax = bar.plot(
-        df=sample_dataframe,
-        value_col="sales_q1",
-        group_col="product",
-        data_label_format="percentage",
-        ax=ax,
-        title="Test Bar Plot with Percentage Labels",
-    )
-
-    assert isinstance(result_ax, Axes)
-    assert len(result_ax.containers) > 0  # Ensure that bars were plotted with percentage labels
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_adds_source_text(sample_dataframe):
-    """Test the bar plot function adds source text to the plot."""
-    _, ax = plt.subplots()
-
-    source_text = "Source: Test Data"
-    result_ax = bar.plot(
-        df=sample_dataframe,
-        value_col="sales_q1",
-        group_col="product",
-        ax=ax,
-        title="Test Bar Plot with Source Text",
-        source_text=source_text,
-    )
-
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    # Check the width of individual bars
+    assert all(p.get_width() == custom_width for p in result_ax.patches if isinstance(p, Rectangle))
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_legend_outside(sample_dataframe):
     """Test the bar plot function moves the legend outside the plot."""
-    _, ax = plt.subplots()
-
     result_ax = bar.plot(
         df=sample_dataframe,
         value_col="sales_q1",
-        group_col="product",
-        ax=ax,
+        x_col="product",
         title="Test Bar Plot with Legend Outside",
         move_legend_outside=True,
     )
@@ -195,19 +198,147 @@ def test_plot_legend_outside(sample_dataframe):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_hatch(sample_dataframe):
+    """Test the bar plot function with hatching."""
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col="sales_q1",
+        x_col="product",
+        use_hatch=True,
+        title="Test Bar Plot with Hatch",
+    )
+
+    gu.apply_hatches.assert_called_once_with(ax=result_ax, num_segments=1)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_multiple_bars(sample_dataframe):
+    """Test the bar plot function with multiple value columns."""
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col=["sales_q1", "sales_q2"],
+        x_col="product",
+        title="Test Multiple Bar Plot",
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_sorting(sample_dataframe):
+    """Test the bar plot function with sorting in ascending order."""
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col="sales_q1",
+        x_col="product",
+        sort_order="ascending",
+        title="Test Sorted Bar Plot",
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert len(result_ax.patches) > 0
+    assert result_ax.get_xticklabels()[0].get_text() == "A"  # Ensure the sorting was applied
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_data_labels(sample_dataframe):
+    """Test the bar plot function with data labels in absolute format."""
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col="sales_q1",
+        x_col="product",
+        data_label_format="absolute",
+        title="Test Bar Plot with Data Labels",
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert len(result_ax.containers) > 0  # Ensure that bars were plotted with labels
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_percentage_by_bar_group_labels(sample_dataframe):
+    """Test the bar plot function with data labels in 'percentage_by_bar_group' format and verify percentages."""
+    # Plot the bars with percentage labels
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col=["sales_q1", "sales_q2"],
+        x_col="product",
+        data_label_format="percentage_by_bar_group",
+        title="Test Bar Plot with Percentage Within Bar Groups Labels",
+    )
+
+    # Calculate expected percentages within each bar group (sum within each row)
+    total_sales_per_product = sample_dataframe["sales_q1"] + sample_dataframe["sales_q2"]
+    expected_percentages_q1 = (sample_dataframe["sales_q1"] / total_sales_per_product) * 100
+    expected_percentages_q2 = (sample_dataframe["sales_q2"] / total_sales_per_product) * 100
+
+    # Combine the expected percentages for both Q1 and Q2
+    expected_percentages = list(expected_percentages_q1) + list(expected_percentages_q2)
+
+    # Retrieve all text labels applied to the bars
+    labels = [t.get_text() for t in result_ax.texts]
+
+    # Check that the retrieved labels match the expected percentages
+    for label, expected_percentage in zip(labels, expected_percentages, strict=False):
+        assert float(label.strip("%")) == pytest.approx(expected_percentage, 0.01)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_with_percentage_by_series_labels(sample_dataframe):
+    """Test the bar plot function with data labels in 'percentage_by_series' format and verify percentages."""
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col=["sales_q1", "sales_q2"],
+        x_col="product",
+        data_label_format="percentage_by_series",
+        title="Test Bar Plot with Percentage Across Bar Groups Labels",
+    )
+
+    # Calculate expected percentages across bar groups for each value column
+    total_sum_q1 = sample_dataframe["sales_q1"].sum()
+    total_sum_q2 = sample_dataframe["sales_q2"].sum()
+
+    expected_percentages_q1 = (sample_dataframe["sales_q1"] / total_sum_q1) * 100
+    expected_percentages_q2 = (sample_dataframe["sales_q2"] / total_sum_q2) * 100
+
+    # Combine the expected percentages for both Q1 and Q2
+    expected_percentages = list(expected_percentages_q1) + list(expected_percentages_q2)
+
+    # Retrieve all text labels applied to the bars
+    labels = [t.get_text() for t in result_ax.texts]
+
+    # Check that the retrieved labels match the expected percentages
+    for label, expected_percentage in zip(labels, expected_percentages, strict=False):
+        assert float(label.strip("%")) == pytest.approx(expected_percentage, 0.29)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_adds_source_text(sample_dataframe):
+    """Test the bar plot function adds source text to the plot."""
+    source_text = "Source: Test Data"
+    result_ax = bar.plot(
+        df=sample_dataframe,
+        value_col="sales_q1",
+        x_col="product",
+        title="Test Bar Plot with Source Text",
+        source_text=source_text,
+    )
+
+    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_calls_dataframe_plot(mocker, sample_dataframe):
     """Test that pandas.DataFrame.plot is called with correct arguments."""
     # Spy on DataFrame.plot
     mock_df_plot = mocker.patch("pandas.DataFrame.plot")
 
-    _, ax = plt.subplots()
-
     # Call the bar plot function
     bar.plot(
         df=sample_dataframe,
         value_col="sales_q1",
-        group_col="product",
-        ax=ax,
+        x_col="product",
         title="Test Bar Plot",
     )
 
@@ -219,7 +350,7 @@ def test_plot_calls_dataframe_plot(mocker, sample_dataframe):
         ax=mocker.ANY,
         color=mocker.ANY,
         legend=False,
-        width=0.35,
+        width=0.8,
     )
 
 
@@ -230,7 +361,7 @@ def test_invalid_orientation(sample_dataframe):
         bar.plot(
             df=sample_dataframe,
             value_col="sales",
-            group_col="category",
+            x_col="product",
             orientation="invalid_orientation",  # Invalid value
         )
 
@@ -242,7 +373,7 @@ def test_invalid_sort_order(sample_dataframe):
         bar.plot(
             df=sample_dataframe,
             value_col="sales",
-            group_col="category",
+            x_col="product",
             sort_order="invalid_sort_order",  # Invalid value
         )
 
@@ -254,7 +385,7 @@ def test_invalid_data_label_format(sample_dataframe):
         bar.plot(
             df=sample_dataframe,
             value_col="sales",
-            group_col="category",
+            x_col="product",
             data_label_format="invalid_format",  # Invalid value
         )
 
@@ -262,11 +393,8 @@ def test_invalid_data_label_format(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_default_value_col_handling(sample_series):
     """Test that a default 'Value' column is created when no value_col is passed."""
-    _, ax = plt.subplots()
-
     result_ax = bar.plot(
         df=sample_series,
-        ax=ax,
         title="Test Default Value Column Handling",
     )
 
@@ -277,11 +405,8 @@ def test_default_value_col_handling(sample_series):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_series(sample_series):
     """Test the bar plot function works with a pandas Series."""
-    _, ax = plt.subplots()
-
     result_ax = bar.plot(
         df=sample_series,
-        ax=ax,
         title="Test Bar Plot with Series",
     )
 
@@ -290,14 +415,11 @@ def test_plot_with_series(sample_series):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_no_group_col_string_value_col(sample_dataframe):
-    """Test bar plot when group_col is None and value_col is a string."""
-    _, ax = plt.subplots()
-
+def test_plot_no_x_col_string_value_col(sample_dataframe):
+    """Test bar plot when x_col is None and value_col is a string."""
     result_ax = bar.plot(
         df=sample_dataframe,
         value_col="sales_q1",
-        ax=ax,
         title="Test Plot: No Group Col and String Value Col",
     )
 
@@ -306,14 +428,11 @@ def test_plot_no_group_col_string_value_col(sample_dataframe):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_no_group_col_list_value_col(sample_dataframe):
-    """Test bar plot when group_col is None and value_col is a list."""
-    _, ax = plt.subplots()
-
+def test_plot_no_x_col_list_value_col(sample_dataframe):
+    """Test bar plot when x_col is None and value_col is a list."""
     result_ax = bar.plot(
         df=sample_dataframe,
         value_col=["sales_q1", "sales_q2"],
-        ax=ax,
         title="Test Plot: No Group Col and List Value Col",
     )
 
