@@ -132,13 +132,14 @@ df = pd.DataFrame({
 bar.plot(
     df=df,
     value_col=["sales_q1", "sales_q2"],
-    group_col="product",
-    title="Sales by Product",
+    x_col="product",
+    title="Sales by Product (Q1 vs Q2)",
     x_label="Product",
     y_label="Sales (£)",
-    data_label_format="absolute",
+    data_label_format="percentage_by_bar_group",
     source_text="Source: PyRetailScience - 2024",
     move_legend_outside=True,
+    num_digits=3
 )
 ```
 
