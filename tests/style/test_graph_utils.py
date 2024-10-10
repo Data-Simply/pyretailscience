@@ -1,6 +1,5 @@
 """Tests for the graph_utils module in the style package."""
 
-
 from pyretailscience.style import graph_utils as gu
 
 
