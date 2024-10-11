@@ -70,8 +70,10 @@ def test_plot_single_bar(sample_dataframe):
         title="Test Single Bar Plot",
     )
 
+    expected_num_patches = 4
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
+    assert len(result_ax.patches) == expected_num_patches
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -94,8 +96,14 @@ def test_plot_with_none_value_col(sample_dataframe):
         title="Test Plot with None Value Col",
     )
 
+    expected_heights = sample_dataframe["sales_q1"].tolist()
+    actual_heights = [p.get_height() for p in result_ax.patches]
+
+    expected_num_patches = 4
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0  # Ensure that bars were plotted
+    assert len(result_ax.patches) == expected_num_patches
+    assert actual_heights == pytest.approx(expected_heights)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -117,8 +125,14 @@ def test_plot_with_nan_values():
         title="Test Plot with NaN Values",
     )
 
+    expected_heights = [1000.0, 1500.0, 0.0, 2500.0, 1100.0, 1600.0, 2100.0, 0.0]
+    actual_heights = [p.get_height() for p in result_ax.patches]
+
+    expected_num_patches = 8
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0
+    assert len(result_ax.patches) == expected_num_patches
+    assert actual_heights == pytest.approx(expected_heights)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -221,8 +235,14 @@ def test_plot_multiple_bars(sample_dataframe):
         title="Test Multiple Bar Plot",
     )
 
+    expected_heights = sample_dataframe["sales_q1"].tolist() + sample_dataframe["sales_q2"].tolist()
+    actual_heights = [p.get_height() for p in result_ax.patches]
+
+    expected_num_patches = 8
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
+    assert len(result_ax.patches) == expected_num_patches
+    assert actual_heights == pytest.approx(expected_heights)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -236,9 +256,16 @@ def test_plot_with_sorting(sample_dataframe):
         title="Test Sorted Bar Plot",
     )
 
+    expected_order = ["A", "B", "C", "D"]
+    actual_order = [label.get_text() for label in result_ax.get_xticklabels()]
+    bar_heights = [patch.get_height() for patch in result_ax.patches]
+    expected_num_patches = 4
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0
-    assert result_ax.get_xticklabels()[0].get_text() == "A"  # Ensure the sorting was applied
+    assert len(result_ax.patches) == expected_num_patches
+    assert result_ax.get_xticklabels()[0].get_text() == "A"
+    assert actual_order == expected_order
+    assert bar_heights == sorted(bar_heights)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -252,8 +279,12 @@ def test_plot_with_data_labels(sample_dataframe):
         title="Test Bar Plot with Data Labels",
     )
 
+    expected_labels = ["1K", "1.5K", "2K", "2.5K"]
+    actual_labels = [text.get_text() for text in result_ax.texts]
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.containers) > 0  # Ensure that bars were plotted with labels
+    assert len(result_ax.containers) == 1
+    assert actual_labels == expected_labels
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -398,8 +429,10 @@ def test_default_value_col_handling(sample_series):
         title="Test Default Value Column Handling",
     )
 
+    expected_num_patches = 4
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0  # Ensure bars were plotted
+    assert len(result_ax.patches) == expected_num_patches
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -410,8 +443,10 @@ def test_plot_with_series(sample_series):
         title="Test Bar Plot with Series",
     )
 
+    expected_num_patches = 4
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0  # Ensure that bars were plotted
+    assert len(result_ax.patches) == expected_num_patches
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -423,8 +458,10 @@ def test_plot_no_x_col_string_value_col(sample_dataframe):
         title="Test Plot: No Group Col and String Value Col",
     )
 
+    expected_num_patches = 4
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0
+    assert len(result_ax.patches) == expected_num_patches
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -436,5 +473,7 @@ def test_plot_no_x_col_list_value_col(sample_dataframe):
         title="Test Plot: No Group Col and List Value Col",
     )
 
+    expected_num_patches = 8
+
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.patches) > 0
+    assert len(result_ax.patches) == expected_num_patches
