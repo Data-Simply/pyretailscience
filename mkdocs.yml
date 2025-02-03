@@ -15,6 +15,7 @@ nav:
       - Cross Shop Analysis: examples/cross_shop.ipynb
       - Segmentation: examples/segmentation.ipynb
       - Product Association: examples/product_association.ipynb
+      - Revenue Tree: examples/revenue_tree.ipynb
   - Reference:
       - Gain Loss: api/gain_loss.md
       - Range Planning: api/range_planning.md

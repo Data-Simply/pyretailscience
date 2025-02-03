@@ -11,17 +11,20 @@ social:
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/plots/line_plot.svg){ align=right loading=lazy width="50%"}
+![Line Plot](assets/images/analysis_modules/plots/line_plot.svg){ align=right loading=lazy width="50%"}
 
-Line plots are particularly good for visualizing sequences that are ordered or sequential, but not necessarily categorical, such as:
+Line plots are particularly good for visualizing sequences that are ordered or sequential, but not necessarily
+categorical, such as:
 
 - Days since an event (e.g., -2, -1, 0, 1, 2)
 - Months since a competitor opened
 - Tracking how metrics change across key events
 
-They are often used to compare trends across categories, show the impact of events on performance, and visualize changes over time-like sequences.
+They are often used to compare trends across categories, show the impact of events on performance, and visualize
+changes over time-like sequences.
 
-Note: While this module can handle datetime values on the x-axis, the **plots.time_line** plot module has additional features that make working with datetimes easier, such as easily resampling the data to alternate time frames.
+Note: While this module can handle datetime values on the x-axis, the **plots.time_line** plot module has additional
+features that make working with datetimes easier, such as easily resampling the data to alternate time frames.
 
 </div>
 
@@ -51,9 +54,10 @@ line.plot(
 ```
 
 ### Histogram Plot
+
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/plots/histogram_plot.svg){ align=right loading=lazy width="50%"}
+![Histogram Plot](assets/images/analysis_modules/plots/histogram_plot.svg){ align=right loading=lazy width="50%"}
 
 Histograms are particularly useful for visualizing the distribution of data, allowing you to see how values in one or more metrics are spread across different ranges. This module also supports grouping by categories, enabling you to compare the distributions across different groups. When grouping by a category, multiple histograms are generated on the same plot, allowing for easy comparison across categories.
 
@@ -101,7 +105,7 @@ histogram.plot(
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/plots/bar_plot.svg){ align=right loading=lazy width="50%"}
+![Bar Plot](assets/images/analysis_modules/plots/bar_plot.svg){ align=right loading=lazy width="50%"}
 
 Bar plots are ideal for visualizing comparisons between categories or groups, showing how metrics such as revenue, sales, or other values vary across different categories. This module allows you to easily group bars by different categories and stack them when comparing multiple metrics. You can also add data labels to display absolute or percentage values for each bar.
 
@@ -147,7 +151,7 @@ bar.plot(
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/waterfall.svg){ align=right loading=lazy width="50%"}
+![Waterfall Plot](assets/images/analysis_modules/waterfall.svg){ align=right loading=lazy width="50%"}
 
 Waterfall plots are particularly good for showing how different things add or subtract from a starting number. For
 instance,
@@ -183,7 +187,7 @@ waterfall_plot(
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/index_plot.svg){ align=right loading=lazy width="50%"}
+![Index Plot](assets/images/analysis_modules/index_plot.svg){ align=right loading=lazy width="50%"}
 
 Index plots are visual tools used in retail analytics to compare different categories or segments against a baseline or
 average value, typically set at 100. Index plots allow analysts to:
@@ -229,7 +233,7 @@ index_plot(
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/time_plot.svg){ align=right loading=lazy width="50%"}
+![Time Plot](assets/images/analysis_modules/time_plot.svg){ align=right loading=lazy width="50%"}
 
 Timeline plots are a fundamental tool for interpreting transactional data within a temporal context. By presenting data
 in a chronological sequence, these visualizations reveal patterns and trends that might otherwise remain hidden in raw
@@ -372,7 +376,7 @@ PASTE CODE HERE
 
 <div class="clear" markdown>
 
-![Image title](assets/images/analysis_modules/customer_decision_hierarchy.svg){ align=right loading=lazy width="50%"}
+![Customer Decision Hierarchy](assets/images/analysis_modules/customer_decision_hierarchy.svg){ align=right loading=lazy width="50%"}
 
 A Customer Decision Hierarchy (CDH), also known as a Customer Decision Tree, is a powerful tool in retail analytics that
  visually represents the sequential steps and criteria customers use when making purchase decisions within a specific
@@ -415,16 +419,42 @@ ax = cdh.plot(
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Revenue Tree](assets/images/analysis_modules/revenue_tree.svg){ align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+The Revenue Tree is a hierarchical breakdown of factors contributing to overall revenue, allowing for
+detailed analysis of sales performance and identification of areas for improvement.
+
+Key Components of the Revenue Tree:
+
+1. Revenue: The top-level metric, calculated as Customers * Revenue per Customer.
+
+2. Revenue per Customer: Average revenue generated per customer, calculated as:
+   Orders per Customer * Average Order Value.
+
+3. Orders per Customer: Average number of orders placed by each customer.
+
+4. Average Order Value: Average monetary value of each order, calculated as:
+   Items per Order * Price per Item.
+
+5. Items per Order: Average number of items in each order.
+
+6. Price per Item: Average price of each item sold.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+from pyretailscience import revenue_tree
+
+p1_index = df["transaction_datetime"] < "2023-06-01"
+p2_index = df["transaction_datetime"] >= "2023-06-01"
+
+rev_tree = revenue_tree.RevenueTree(
+    df=df,
+    p1_index=p1_index,
+    p2_index=p2_index,
+)
 ```
 
 ### HML Segmentation
