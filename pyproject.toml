@@ -20,6 +20,7 @@ matplotlib-set-diagrams = "~0.0.2"
 toml = "^0.10.2"
 duckdb = "^1.0.0"
 graphviz = "^0.20.3"
+ibis-framework = {extras = ["duckdb"], version = "^9.5.0"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

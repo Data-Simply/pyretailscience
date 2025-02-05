@@ -3,12 +3,13 @@
 from typing import Literal
 
 import duckdb
+import ibis
 import pandas as pd
 from duckdb import DuckDBPyRelation
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.options import get_option
+from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -29,7 +30,7 @@ class BaseSegmentation:
         """
         rows_before = len(df)
         df = df.merge(
-            self.df[["segment_name", "segment_id"]],
+            self.df["segment_name"],
             how="left",
             left_on=get_option("column.customer_id"),
             right_index=True,
@@ -48,46 +49,45 @@ class ExistingSegmentation(BaseSegmentation):
         """Segments customers based on an existing segment in the dataframe.
 
         Args:
-            df (pd.DataFrame): A dataframe with the customer_id, segment_name and segment_id columns.
+            df (pd.DataFrame): A dataframe with the customer_id and segment_name columns.
 
         Raises:
-            ValueError: If the dataframe does not have the columns customer_id, segment_name and segment_id.
+            ValueError: If the dataframe does not have the columns customer_id and segment_name.
         """
-        required_cols = get_option("column.customer_id"), "segment_name", "segment_id"
+        cols = ColumnHelper()
+        required_cols = [cols.customer_id, "segment_name"]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        self.df = df[[get_option("column.customer_id"), "segment_name", "segment_id"]].set_index(
-            get_option("column.customer_id"),
-        )
+        self.df = df[[cols.customer_id, "segment_name"]].set_index(cols.customer_id)
 
 
 class ThresholdSegmentation(BaseSegmentation):
     """Segments customers based on user-defined thresholds and segments."""
 
+    _df: pd.DataFrame | None = None
+
     def __init__(
         self,
-        df: pd.DataFrame,
+        df: pd.DataFrame | ibis.Table,
         thresholds: list[float],
         segments: dict[any, str],
         value_col: str | None = None,
         agg_func: str = "sum",
         zero_segment_name: str = "Zero",
-        zero_segment_id: str = "Z",
         zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
     ) -> None:
         """Segments customers based on user-defined thresholds and segments.
 
         Args:
-            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must contain a customer_id column.
+            df (pd.DataFrame | ibis.Table): A dataframe with the transaction data. The dataframe must contain a customer_id column.
             thresholds (List[float]): The percentile thresholds for segmentation.
             segments (Dict[str, str]): A dictionary where keys are segment IDs and values are segment names.
             value_col (str, optional): The column to use for the segmentation. Defaults to get_option("column.unit_spend").
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".
             zero_segment_name (str, optional): The name of the segment for customers with zero spend. Defaults to "Zero".
-            zero_segment_id (str, optional): The ID of the segment for customers with zero spend. Defaults to "Z".
             zero_value_customers (Literal["separate_segment", "exclude", "include_with_light"], optional): How to handle
                 customers with zero spend. Defaults to "separate_segment".
 
@@ -95,59 +95,59 @@ class ThresholdSegmentation(BaseSegmentation):
             ValueError: If the dataframe is missing the columns "customer_id" or `value_col`, or these columns contain
                 null values.
         """
-        if df.empty:
-            raise ValueError("Input DataFrame is empty")
+        if len(thresholds) != len(set(thresholds)):
+            raise ValueError("The thresholds must be unique.")
+
+        if len(thresholds) != len(segments):
+            raise ValueError("The number of thresholds must match the number of segments.")
+
+        if isinstance(df, pd.DataFrame):
+            df: ibis.Table = ibis.memtable(df)
 
         value_col = get_option("column.unit_spend") if value_col is None else value_col
 
         required_cols = [get_option("column.customer_id"), value_col]
+
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        if len(df) < len(thresholds):
-            msg = f"There are {len(df)} customers, which is less than the number of segment thresholds."
-            raise ValueError(msg)
-
-        if set(thresholds) != set(thresholds):
-            raise ValueError("The thresholds must be unique.")
-
-        thresholds = sorted(thresholds)
-        if thresholds[0] != 0:
-            thresholds = [0, *thresholds]
-        if thresholds[-1] != 1:
-            thresholds.append(1)
-
-        if len(thresholds) - 1 != len(segments):
-            raise ValueError("The number of thresholds must match the number of segments.")
-
-        # Group by customer_id and calculate total_spend
-        grouped_df = df.groupby(get_option("column.customer_id"))[value_col].agg(agg_func).to_frame(value_col)
-
-        # Separate customers with zero spend
-        self.df = grouped_df
-        if zero_value_customers in ["separate_segment", "exclude"]:
-            zero_idx = grouped_df[value_col] == 0
-            zero_cust_df = grouped_df[zero_idx].copy()
-            zero_cust_df["segment_name"] = zero_segment_name
-            zero_cust_df["segment_id"] = zero_segment_id
-
-            self.df = grouped_df[~zero_idx].copy()
-
-        # Create a new column 'segment' based on the total_spend
-        labels = list(segments.values())
-
-        self.df["segment_name"] = pd.qcut(
-            self.df[value_col],
-            q=thresholds,
-            labels=labels,
+        df = df.group_by(get_option("column.customer_id")).aggregate(
+            **{value_col: getattr(df[value_col], agg_func)()},
         )
 
-        self.df["segment_id"] = self.df["segment_name"].map({v: k for k, v in segments.items()})
+        # Separate customers with zero spend
+        zero_df = None
+        if zero_value_customers == "exclude":
+            df = df.filter(df[value_col] != 0)
+        elif zero_value_customers == "separate_segment":
+            zero_df = df.filter(df[value_col] == 0).mutate(segment_name=ibis.literal(zero_segment_name))
+            df = df.filter(df[value_col] != 0)
+
+        window = ibis.window(order_by=ibis.asc(df[value_col]))
+        df = df.mutate(ptile=ibis.percent_rank().over(window))
+
+        case = ibis.case()
+
+        for quantile, segment in zip(thresholds, segments, strict=True):
+            case = case.when(df["ptile"] <= quantile, segment)
+
+        case = case.end()
+
+        df = df.mutate(segment_name=case).drop(["ptile"])
 
         if zero_value_customers == "separate_segment":
-            self.df = pd.concat([self.df, zero_cust_df])
+            df = ibis.union(df, zero_df)
+
+        self.table = df
+
+    @property
+    def df(self) -> pd.DataFrame:
+        """Returns the dataframe with the segment names."""
+        if self._df is None:
+            self._df = self.table.execute().set_index(get_option("column.customer_id"))
+        return self._df
 
 
 class HMLSegmentation(ThresholdSegmentation):
@@ -174,8 +174,8 @@ class HMLSegmentation(ThresholdSegmentation):
             zero_value_customers (Literal["separate_segment", "exclude", "include_with_light"], optional): How to handle
                 customers with zero spend. Defaults to "separate_segment".
         """
-        thresholds = [0, 0.500, 0.800, 1]
-        segments = {"L": "Light", "M": "Medium", "H": "Heavy"}
+        thresholds = [0.500, 0.800, 1]
+        segments = ["Light", "Medium", "Heavy"]
         super().__init__(
             df=df,
             value_col=value_col,
@@ -189,7 +189,7 @@ class HMLSegmentation(ThresholdSegmentation):
 class SegTransactionStats:
     """Calculates transaction statistics by segment."""
 
-    def __init__(self, data: pd.DataFrame | DuckDBPyRelation, segment_col: str = "segment_id") -> None:
+    def __init__(self, data: pd.DataFrame | DuckDBPyRelation, segment_col: str = "segment_name") -> None:
         """Calculates transaction statistics by segment.
 
         Args:
@@ -197,7 +197,7 @@ class SegTransactionStats:
                 customer_id, unit_spend and transaction_id. If the dataframe contains the column unit_quantity, then
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
-            segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_id".
+            segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_name".
         """
         required_cols = [
             get_option("column.customer_id"),
