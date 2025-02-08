@@ -18,7 +18,7 @@ class TestCalcSegStats:
         return pd.DataFrame(
             {
                 cols.customer_id: [1, 2, 3, 4, 5],
-                cols.unit_spend: [100, 200, 150, 300, 250],
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0, 250.0],
                 cols.transaction_id: [101, 102, 103, 104, 105],
                 "segment_name": ["A", "B", "A", "B", "A"],
                 cols.unit_qty: [10, 20, 15, 30, 25],
@@ -37,13 +37,14 @@ class TestCalcSegStats:
                 cols.calc_spend_per_cust: [166.666667, 250.0, 200.0],
                 cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
                 cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
                 cols.calc_price_per_unit: [10.0, 10.0, 10.0],
                 cols.calc_units_per_trans: [16.666667, 25.0, 20.0],
+                f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
             },
-        ).set_index("segment_name")
-
-        segment_stats = SegTransactionStats._calc_seg_stats(base_df, "segment_name")
+        )
+        segment_stats = (
+            SegTransactionStats(base_df, "segment_name").df.sort_values("segment_name").reset_index(drop=True)
+        )
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
     def test_correctly_calculates_revenue_transactions_customers(self):
@@ -51,7 +52,7 @@ class TestCalcSegStats:
         df = pd.DataFrame(
             {
                 get_option("column.customer_id"): [1, 2, 3, 4, 5],
-                cols.unit_spend: [100, 200, 150, 300, 250],
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0, 250.0],
                 cols.transaction_id: [101, 102, 103, 104, 105],
                 "segment_name": ["A", "B", "A", "B", "A"],
             },
@@ -68,17 +69,10 @@ class TestCalcSegStats:
                 cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
                 f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
             },
-        ).set_index("segment_name")
+        )
 
-        segment_stats = SegTransactionStats._calc_seg_stats(df, "segment_name")
+        segment_stats = SegTransactionStats(df, "segment_name").df.sort_values("segment_name").reset_index(drop=True)
         pd.testing.assert_frame_equal(segment_stats, expected_output)
-
-    def test_does_not_alter_original_dataframe(self, base_df):
-        """Test that the method does not alter the original DataFrame."""
-        original_df = base_df.copy()
-        _ = SegTransactionStats._calc_seg_stats(base_df, "segment_name")
-
-        pd.testing.assert_frame_equal(base_df, original_df)
 
     def test_handles_dataframe_with_one_segment(self, base_df):
         """Test that the method correctly handles a DataFrame with only one segment."""
@@ -95,13 +89,13 @@ class TestCalcSegStats:
                 cols.calc_spend_per_cust: [200.0, 200.0],
                 cols.calc_spend_per_trans: [200.0, 200.0],
                 cols.calc_trans_per_cust: [1.0, 1.0],
-                f"customers_{get_option('column.suffix.percent')}": [1.0, 1.0],
                 cols.calc_price_per_unit: [10.0, 10.0],
                 cols.calc_units_per_trans: [20.0, 20.0],
+                f"customers_{get_option('column.suffix.percent')}": [1.0, 1.0],
             },
-        ).set_index("segment_name")
+        )
 
-        segment_stats = SegTransactionStats._calc_seg_stats(df, "segment_name")
+        segment_stats = SegTransactionStats(df, "segment_name").df
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
 

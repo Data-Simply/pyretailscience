@@ -237,7 +237,7 @@ class Options:
 
         for section, options in toml_data.items():
             for option_name, option_value in Options.flatten_options(section, options).items():
-                if option_name in options_instance._options:  # noqa: SLF001
+                if option_name in options_instance._options:
                     options_instance.set_option(option_name, option_value)
                 else:
                     msg = f"Unknown option in TOML file: {option_name}"
@@ -392,6 +392,7 @@ class ColumnHelper:
         self.agg_customer_id_diff = self.join_options("column.agg.customer_id", "column.suffix.difference")
         self.agg_customer_id_pct_diff = self.join_options("column.agg.customer_id", "column.suffix.percent_difference")
         self.agg_customer_id_contrib = self.join_options("column.agg.customer_id", "column.suffix.contribution")
+        self.customers_pct = self.join_options("column.agg.customer_id", "column.suffix.percent")
         # Transactions
         self.transaction_id = get_option("column.transaction_id")
         self.agg_transaction_id = get_option("column.agg.transaction_id")

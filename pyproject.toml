@@ -68,6 +68,7 @@ ignore = [
     "TRY003", # Disable until we start creating proper exception classes
     "PT011",  # Disable until we start creating proper exception classes
     "PTH123", # Not using open() to open files
+    "SLF001", # Ibis makes a lot of use of the ibis._[column] which triggers this
 ]
 select = [
     "A",    # Builtins
