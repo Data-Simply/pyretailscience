@@ -1,5 +1,6 @@
 """Tests for the SegTransactionStats class."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -39,7 +40,7 @@ class TestCalcSegStats:
                 cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
                 cols.calc_price_per_unit: [10.0, 10.0, 10.0],
                 cols.calc_units_per_trans: [16.666667, 25.0, 20.0],
-                f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
+                cols.customers_pct: [0.6, 0.4, 1.0],
             },
         )
         segment_stats = (
@@ -67,7 +68,7 @@ class TestCalcSegStats:
                 cols.calc_spend_per_cust: [166.666667, 250.0, 200.0],
                 cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
                 cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                f"customers_{get_option('column.suffix.percent')}": [0.6, 0.4, 1.0],
+                cols.customers_pct: [0.6, 0.4, 1.0],
             },
         )
 
@@ -91,11 +92,35 @@ class TestCalcSegStats:
                 cols.calc_trans_per_cust: [1.0, 1.0],
                 cols.calc_price_per_unit: [10.0, 10.0],
                 cols.calc_units_per_trans: [20.0, 20.0],
-                f"customers_{get_option('column.suffix.percent')}": [1.0, 1.0],
+                cols.customers_pct: [1.0, 1.0],
             },
         )
 
         segment_stats = SegTransactionStats(df, "segment_name").df
+        pd.testing.assert_frame_equal(segment_stats, expected_output)
+
+    def test_handles_dataframe_with_zero_net_units(self, base_df):
+        """Test that the method correctly handles a DataFrame with a segment with net zero units."""
+        df = base_df.copy()
+        df[cols.unit_qty] = [10, 20, 15, 30, -25]
+
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B", "Total"],
+                cols.agg_unit_spend: [500.0, 500.0, 1000.0],
+                cols.agg_transaction_id: [3, 2, 5],
+                cols.agg_customer_id: [3, 2, 5],
+                cols.agg_unit_qty: [0, 50, 50],
+                cols.calc_spend_per_cust: [166.666667, 250.0, 200.0],
+                cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
+                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
+                cols.calc_price_per_unit: [np.nan, 10.0, 20.0],
+                cols.calc_units_per_trans: [0, 25.0, 10.0],
+                cols.customers_pct: [0.6, 0.4, 1.0],
+            },
+        )
+        segment_stats = SegTransactionStats(df, "segment_name").df.sort_values("segment_name").reset_index(drop=True)
+
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
 
