@@ -2,10 +2,8 @@
 
 from typing import Literal
 
-import duckdb
 import ibis
 import pandas as pd
-from duckdb import DuckDBPyRelation
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
@@ -155,7 +153,7 @@ class HMLSegmentation(ThresholdSegmentation):
 
     def __init__(
         self,
-        df: pd.DataFrame,
+        df: pd.DataFrame | ibis.Table,
         value_col: str | None = None,
         agg_func: str = "sum",
         zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
@@ -189,24 +187,27 @@ class HMLSegmentation(ThresholdSegmentation):
 class SegTransactionStats:
     """Calculates transaction statistics by segment."""
 
-    def __init__(self, data: pd.DataFrame | DuckDBPyRelation, segment_col: str = "segment_name") -> None:
+    _df: pd.DataFrame | None = None
+
+    def __init__(self, data: pd.DataFrame | ibis.Table, segment_col: str = "segment_name") -> None:
         """Calculates transaction statistics by segment.
 
         Args:
-            data (pd.DataFrame | DuckDBPyRelation): The transaction data. The dataframe must contain the columns
+            data (pd.DataFrame | ibis.Table): The transaction data. The dataframe must contain the columns
                 customer_id, unit_spend and transaction_id. If the dataframe contains the column unit_quantity, then
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
             segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_name".
         """
+        cols = ColumnHelper()
         required_cols = [
-            get_option("column.customer_id"),
-            get_option("column.unit_spend"),
-            get_option("column.transaction_id"),
+            cols.customer_id,
+            cols.unit_spend,
+            cols.transaction_id,
             segment_col,
         ]
-        if get_option("column.unit_quantity") in data.columns:
-            required_cols.append(get_option("column.unit_quantity"))
+        if cols.unit_qty in data.columns:
+            required_cols.append(cols.unit_qty)
 
         missing_cols = set(required_cols) - set(data.columns)
         if len(missing_cols) > 0:
@@ -215,14 +216,43 @@ class SegTransactionStats:
 
         self.segment_col = segment_col
 
-        self.df = self._calc_seg_stats(data, segment_col)
+        self.table = self._calc_seg_stats(data, segment_col)
 
     @staticmethod
-    def _calc_seg_stats(data: pd.DataFrame | DuckDBPyRelation, segment_col: str) -> pd.DataFrame:
+    def _get_col_order(include_quantity: bool) -> list[str]:
+        """Returns the default column order.
+
+        Columns should be supplied in the same order regardless of the function being called.
+
+        Args:
+            include_quantity (bool): Whether to include the columns related to quantity.
+
+        Returns:
+            list[str]: The default column order.
+        """
+        cols = ColumnHelper()
+        col_order = [
+            cols.agg_unit_spend,
+            cols.agg_transaction_id,
+            cols.agg_customer_id,
+            cols.calc_spend_per_cust,
+            cols.calc_spend_per_trans,
+            cols.calc_trans_per_cust,
+            cols.customers_pct,
+        ]
+        if include_quantity:
+            col_order.insert(3, "units")
+            col_order.insert(7, cols.calc_units_per_trans)
+            col_order.insert(7, cols.calc_price_per_unit)
+
+        return col_order
+
+    @staticmethod
+    def _calc_seg_stats(data: pd.DataFrame | ibis.Table, segment_col: str) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
         Args:
-            data (DuckDBPyRelation): The transaction data.
+            data (pd.DataFrame | ibis.Table): The transaction data.
             segment_col (str): The column to use for the segmentation.
 
         Returns:
@@ -230,51 +260,59 @@ class SegTransactionStats:
 
         """
         if isinstance(data, pd.DataFrame):
-            data = duckdb.from_df(data)
-        elif not isinstance(data, DuckDBPyRelation):
-            raise TypeError("data must be either a pandas DataFrame or a DuckDBPyRelation")
+            data = ibis.memtable(data)
 
-        base_aggs = [
-            f"SUM({get_option('column.unit_spend')}) as {get_option('column.agg.unit_spend')},",
-            f"COUNT(DISTINCT {get_option('column.transaction_id')}) as {get_option('column.agg.transaction_id')},",
-            f"COUNT(DISTINCT {get_option('column.customer_id')}) as {get_option('column.agg.customer_id')},",
-        ]
+        elif not isinstance(data, ibis.Table):
+            raise TypeError("data must be either a pandas DataFrame or a ibis Table")
 
-        total_customers = data.aggregate("COUNT(DISTINCT customer_id)").fetchone()[0]
-        return_cols = [
-            "*,",
-            f"{get_option('column.agg.unit_spend')} / {get_option('column.agg.customer_id')} ",
-            f"as {get_option('column.calc.spend_per_customer')},",
-            f"{get_option('column.agg.unit_spend')} / {get_option('column.agg.transaction_id')} ",
-            f"as {get_option('column.calc.spend_per_transaction')},",
-            f"{get_option('column.agg.transaction_id')} / {get_option('column.agg.customer_id')} ",
-            f"as {get_option('column.calc.transactions_per_customer')},",
-            f"{get_option('column.agg.customer_id')} / {total_customers}",
-            f"as customers_{get_option('column.suffix.percent')},",
-        ]
+        cols = ColumnHelper()
 
-        if get_option("column.unit_quantity") in data.columns:
-            base_aggs.append(
-                f"SUM({get_option('column.unit_quantity')})::bigint as {get_option('column.agg.unit_quantity')},",
+        # Base aggregations for segments
+        aggs = {
+            cols.agg_unit_spend: data[cols.unit_spend].sum(),
+            cols.agg_transaction_id: data[cols.transaction_id].nunique(),
+            cols.agg_customer_id: data[cols.customer_id].nunique(),
+        }
+        if cols.unit_qty in data.columns:
+            aggs[cols.agg_unit_qty] = data[cols.unit_qty].sum()
+
+        # Calculate metrics for segments and total
+        segment_metrics = data.group_by(segment_col).aggregate(**aggs)
+        total_metrics = data.aggregate(**aggs).mutate(**{segment_col: ibis.literal("Total")})
+
+        total_customers = data[cols.customer_id].nunique()
+
+        # Cross join with total_customers to make it available for percentage calculation
+        final_metrics = ibis.union(segment_metrics, total_metrics).mutate(
+            **{
+                cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
+                cols.calc_spend_per_trans: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_transaction_id],
+                cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id] / ibis._[cols.agg_customer_id],
+                cols.customers_pct: ibis._[cols.agg_customer_id] / total_customers,
+            },
+        )
+
+        if cols.unit_qty in data.columns:
+            final_metrics = final_metrics.mutate(
+                **{
+                    cols.calc_price_per_unit: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_unit_qty],
+                    cols.calc_units_per_trans: ibis._[cols.agg_unit_qty] / ibis._[cols.agg_transaction_id],
+                },
             )
-            return_cols.extend(
-                [
-                    f"({get_option('column.agg.unit_spend')} / {get_option('column.agg.unit_quantity')}) ",
-                    f"as {get_option('column.calc.price_per_unit')},",
-                    f"({get_option('column.agg.unit_quantity')} / {get_option('column.agg.transaction_id')}) ",
-                    f"as {get_option('column.calc.units_per_transaction')},",
-                ],
-            )
 
-        segment_stats = data.aggregate(f"{segment_col} as segment_name," + "".join(base_aggs))
-        total_stats = data.aggregate("'Total' as segment_name," + "".join(base_aggs))
-        final_stats_df = segment_stats.union(total_stats).select("".join(return_cols)).df()
-        final_stats_df = final_stats_df.set_index("segment_name").sort_index()
+        return final_metrics
 
-        # Make sure Total is the last row
-        desired_index_sort = final_stats_df.index.drop("Total").tolist() + ["Total"]  # noqa: RUF005
-
-        return final_stats_df.reindex(desired_index_sort)
+    @property
+    def df(self) -> pd.DataFrame:
+        """Returns the dataframe with the transaction statistics by segment."""
+        if self._df is None:
+            cols = ColumnHelper()
+            col_order = [
+                self.segment_col,
+                *SegTransactionStats._get_col_order(include_quantity=cols.agg_unit_qty in self.table.columns),
+            ]
+            self._df = self.table.execute()[col_order]
+        return self._df
 
     def plot(
         self,
@@ -325,9 +363,9 @@ class SegTransactionStats:
         if orientation == "horizontal":
             kind = "barh"
 
-        val_s = self.df[value_col]
+        val_s = self.df.set_index(self.segment_col)[value_col]
         if hide_total:
-            val_s = val_s[val_s.index != "total"]
+            val_s = val_s[val_s.index != "Total"]
 
         if sort_order is not None:
             ascending = sort_order == "ascending"
