@@ -57,7 +57,7 @@ class ProductAssociation:
         value_col (str): The name of the column in the input DataFrame that contains
             the product identifiers.
         group_col (str, optional): The name of the column that identifies unique
-            transactions or customers. Defaults to option column.unit_spend.
+            transactions or customers. Defaults to option column.column_id.
         target_item (str or None, optional): A specific product to focus the
             association analysis on. If None, associations for all products are
             calculated. Defaults to None.

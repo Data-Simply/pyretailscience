@@ -54,7 +54,7 @@ class CustomerDecisionHierarchy:
 
         self.random_state = random_state
         self.product_col = product_col
-        self.pairs_df = self._get_pairs(df, exclude_same_transaction_products)
+        self.pairs_df = self._get_pairs(df, exclude_same_transaction_products, product_col)
         self.distances = self._calculate_distances(method=method, min_var_explained=min_var_explained)
 
     @staticmethod

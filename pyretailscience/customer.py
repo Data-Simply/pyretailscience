@@ -38,7 +38,7 @@ class PurchasesPerCustomer:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        self.cust_purchases_s = df.groupby(cols.customer_id)[cols.customer_id].nunique()
+        self.cust_purchases_s = df.groupby(cols.customer_id)[cols.transaction_id].nunique()
 
     def plot(
         self,
