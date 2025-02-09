@@ -3,7 +3,10 @@
 import pandas as pd
 import pytest
 
+from pyretailscience.options import ColumnHelper
 from pyretailscience.product_association import ProductAssociation
+
+cols = ColumnHelper()
 
 
 class TestProductAssociations:
@@ -14,7 +17,7 @@ class TestProductAssociations:
         """Return a sample DataFrame for testing."""
         # fmt: off
         return pd.DataFrame({
-            "transaction_id": [1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 5],
+            cols.transaction_id: [1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 5],
             "product": ["milk", "bread", "fruit", "butter", "eggs", "fruit", "beer", "diapers",
                         "milk", "bread", "butter", "eggs", "fruit", "bread"],
         })
@@ -106,7 +109,7 @@ class TestProductAssociations:
         associations_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
         )
 
         pd.testing.assert_frame_equal(associations_df, expected_results_single_items_df)
@@ -118,7 +121,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             target_item=target_item,
         )
 
@@ -134,7 +137,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             number_of_combinations=3,
         )
 
@@ -145,7 +148,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             number_of_combinations=3,
             target_item=("bread", "butter"),
         )
@@ -164,7 +167,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             min_occurrences=min_occurrences,
         )
 
@@ -183,7 +186,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             min_cooccurrences=min_cooccurrences,
         )
 
@@ -201,7 +204,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             min_support=min_support,
         )
 
@@ -219,7 +222,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             min_confidence=min_confidence,
         )
 
@@ -237,7 +240,7 @@ class TestProductAssociations:
         calc_df = ProductAssociation._calc_association(
             df=transactions_df,
             value_col="product",
-            group_col="transaction_id",
+            group_col=cols.transaction_id,
             min_uplift=min_uplift,
         )
 
@@ -254,14 +257,14 @@ class TestProductAssociations:
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 number_of_combinations=4,
             )
         with pytest.raises(ValueError, match="Number of combinations must be either 2 or 3."):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 number_of_combinations=1,
             )
 
@@ -271,7 +274,7 @@ class TestProductAssociations:
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_occurrences=0,
             )
 
@@ -281,7 +284,7 @@ class TestProductAssociations:
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_cooccurrences=0,
             )
 
@@ -291,14 +294,14 @@ class TestProductAssociations:
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_support=-0.1,
             )
         with pytest.raises(ValueError, match="Minimum support must be between 0 and 1."):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_support=1.1,
             )
 
@@ -308,14 +311,14 @@ class TestProductAssociations:
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_confidence=-0.1,
             )
         with pytest.raises(ValueError, match="Minimum confidence must be between 0 and 1."):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_confidence=1.1,
             )
 
@@ -325,6 +328,6 @@ class TestProductAssociations:
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
-                group_col="transaction_id",
+                group_col=cols.transaction_id,
                 min_uplift=-0.1,
             )

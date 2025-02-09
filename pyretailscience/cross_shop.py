@@ -5,6 +5,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
+from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.style import graph_utils as gu
 from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS
@@ -20,7 +21,7 @@ class CrossShop:
         group_2_idx: list[bool] | pd.Series,
         group_3_idx: list[bool] | pd.Series | None = None,
         labels: list[str] | None = None,
-        value_col: str = "total_price",
+        value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
     ) -> None:
         """Creates a cross-shop diagram that is used to show the overlap of customers between different groups.
@@ -34,7 +35,7 @@ class CrossShop:
             group_3_idx (list[bool], pd.Series, optional): An optional list of bool values determining whether the
                 row is a part of the third group. Defaults to None. If not supplied, only two groups will be considered.
             labels (list[str], optional): The labels for the groups. Defaults to None.
-            value_col (str, optional): The column to aggregate. Defaults to "total_price".
+            value_col (str, optional): The column to aggregate. Defaults to the option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
 
         Returns:
@@ -44,7 +45,7 @@ class CrossShop:
             ValueError: If the dataframe does not contain the required columns or if the number of labels does not match
                 the number of group indexes given.
         """
-        required_cols = ["customer_id", value_col]
+        required_cols = [get_option("column.customer_id"), value_col]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
@@ -76,7 +77,7 @@ class CrossShop:
         group_1_idx: list[bool],
         group_2_idx: list[bool],
         group_3_idx: list[bool] | None = None,
-        value_col: str = "total_price",
+        value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
     ) -> pd.DataFrame:
         """Calculate the cross-shop dataframe that will be used to plot the diagram.
@@ -87,7 +88,7 @@ class CrossShop:
             group_2_idx (list[bool]): A list of bool values determining whether the row is a part of the second group.
             group_3_idx (list[bool], optional): An optional list of bool values determining whether the row is a part
                 of the third group. Defaults to None. If not supplied, only two groups will be considered.
-            value_col (str, optional): The column to aggregate. Defaults to "total_price".
+            value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
 
         Returns:
@@ -96,6 +97,7 @@ class CrossShop:
         Raises:
             ValueError: If the groups are not mutually exclusive.
         """
+        cols = ColumnHelper()
         if isinstance(group_1_idx, list):
             group_1_idx = pd.Series(group_1_idx)
         if isinstance(group_2_idx, list):
@@ -103,7 +105,7 @@ class CrossShop:
         if group_3_idx is not None and isinstance(group_3_idx, list):
             group_3_idx = pd.Series(group_3_idx)
 
-        cs_df = df[["customer_id"]].copy()
+        cs_df = df[[cols.customer_id]].copy()
 
         cs_df["group_1"] = group_1_idx.astype(int)
         cs_df["group_2"] = group_2_idx.astype(int)
@@ -119,23 +121,23 @@ class CrossShop:
         if not any(group_1_idx) or not any(group_2_idx) or (group_3_idx is not None and not any(group_3_idx)):
             raise ValueError("There must at least one row selected for group_1_idx, group_2_idx, and group_3_idx.")
 
-        cs_df = cs_df.groupby("customer_id")[group_cols].max()
+        cs_df = cs_df.groupby(cols.customer_id)[group_cols].max()
         cs_df["groups"] = cs_df[group_cols].apply(lambda x: tuple(x), axis=1)
 
-        kpi_df = df.groupby("customer_id")[value_col].agg(agg_func)
+        kpi_df = df.groupby(cols.customer_id)[value_col].agg(agg_func)
 
         return cs_df.merge(kpi_df, left_index=True, right_index=True)
 
     @staticmethod
     def _calc_cross_shop_table(
         df: pd.DataFrame,
-        value_col: str = "total_price",
+        value_col: str = get_option("column.unit_spend"),
     ) -> pd.DataFrame:
         """Calculate the aggregated cross-shop table that will be used to plot the diagram.
 
         Args:
             df (pd.DataFrame): The cross-shop dataframe.
-            value_col (str, optional): The column to aggregate. Defaults to "total_price".
+            value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
 
         Returns:
             pd.DataFrame: The cross-shop table.

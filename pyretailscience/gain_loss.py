@@ -20,6 +20,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
+from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -36,7 +37,7 @@ class GainLoss:
         comparison_group_index: list[bool] | pd.Series,
         comparison_group_name: str,
         group_col: str | None = None,
-        value_col: str = "total_price",
+        value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
     ) -> None:
         """Calculate the gain loss table for a given DataFrame at the customer level.
@@ -50,7 +51,7 @@ class GainLoss:
             comparison_group_index (list[bool]): The index for the comparison group.
             comparison_group_name (str): The name of the comparison group.
             group_col (str | None, optional): The column to group by. Defaults to None.
-            value_col (str, optional): The column to calculate the gain loss from. Defaults to "total_price".
+            value_col (str, optional): The column to calculate the gain loss from. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function to use. Defaults to "sum".
         """
         # # Ensure no overlap between p1 and p2
@@ -65,7 +66,7 @@ class GainLoss:
                 "p1_index, p2_index, focus_group_index, and comparison_group_index should have the same length",
             )
 
-        required_cols = ["customer_id", value_col] + ([group_col] if group_col is not None else [])
+        required_cols = [get_option("column.customer_id"), value_col] + ([group_col] if group_col is not None else [])
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
@@ -142,7 +143,7 @@ class GainLoss:
         focus_group_index: list[bool],
         comparison_group_index: list,
         group_col: str | None = None,
-        value_col: str = "total_price",
+        value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
     ) -> pd.DataFrame:
         """Calculate the gain loss table for a given DataFrame at the customer level.
@@ -154,16 +155,17 @@ class GainLoss:
             focus_group_index (list[bool]): The index for the focus group.
             comparison_group_index (list[bool]): The index for the comparison group.
             group_col (str | None, optional): The column to group by. Defaults to None.
-            value_col (str, optional): The column to calculate the gain loss from. Defaults to "total_price".
+            value_col (str, optional): The column to calculate the gain loss from. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function to use. Defaults to "sum".
 
         Returns:
             pd.DataFrame: The gain loss table.
         """
+        cols = ColumnHelper()
         df = df[p1_index | p2_index].copy()
-        df["customer_id"] = df["customer_id"].astype("category")
+        df[cols.customer_id] = df[cols.customer_id].astype("category")
 
-        grp_cols = ["customer_id"] if group_col is None else [group_col, "customer_id"]
+        grp_cols = [cols.customer_id] if group_col is None else [group_col, cols.customer_id]
 
         p1_df = pd.concat(
             [
@@ -306,6 +308,7 @@ class GainLoss:
             title=gu.not_none(title, f"Gain Loss from {self.focus_group_name} to {self.comparison_group_name}"),
             y_label=gu.not_none(y_label, default_y_label),
             x_label=gu.not_none(x_label, self.value_col),
+            move_legend_outside=move_legend_outside,
         )
 
         decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())

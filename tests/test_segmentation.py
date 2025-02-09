@@ -96,7 +96,7 @@ class TestCalcSegStats:
             },
         )
 
-        segment_stats = SegTransactionStats(df, "segment_name").df
+        segment_stats = SegTransactionStats(df, "segment_name").df.sort_values("segment_name").reset_index(drop=True)
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
     def test_handles_dataframe_with_zero_net_units(self, base_df):
@@ -189,7 +189,7 @@ class TestThresholdSegmentation:
                 "segment_name": ["Low", "High", "Medium", "Medium", "Medium"],
             },
         )
-        pd.testing.assert_frame_equal(my_seg.df.sort_values("customer_id").reset_index(), expected_result)
+        pd.testing.assert_frame_equal(my_seg.df.sort_values(cols.customer_id).reset_index(), expected_result)
 
     def test_correctly_checks_segment_data(self):
         """Test that the method correctly merges segment data back into the original DataFrame."""
@@ -308,7 +308,7 @@ class TestSegTransactionStats:
     def test_handles_empty_dataframe_with_errors(self):
         """Test that the method raises an error when the DataFrame is missing a required column."""
         df = pd.DataFrame(
-            columns=[cols.unit_spend, cols.transaction_id, "quantity"],
+            columns=[cols.unit_spend, cols.transaction_id, cols.unit_qty],
         )
 
         with pytest.raises(ValueError):
@@ -384,8 +384,8 @@ class TestHMLSegmentation:
 
     def test_alternate_value_col(self, base_df):
         """Test that the method correctly segments a DataFrame with an alternate value column."""
-        base_df = base_df.rename(columns={cols.unit_spend: "quantity"})
-        hml_segmentation = HMLSegmentation(base_df, value_col="quantity")
+        base_df = base_df.rename(columns={cols.unit_spend: cols.unit_qty})
+        hml_segmentation = HMLSegmentation(base_df, value_col=cols.unit_qty)
         result_df = hml_segmentation.df
 
         assert result_df.loc[1, "segment_name"] == "Heavy"

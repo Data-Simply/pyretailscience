@@ -259,7 +259,7 @@ from pyretailscience.standard_graphs import time_plot
 rng = np.random.default_rng(42)
 df = pd.DataFrame(
     {
-        "transaction_datetime": pd.concat(
+        "transaction_date": pd.concat(
             [pd.Series(pd.date_range(start="2022-01-01", periods=200, freq="D"))] * 3
         ),
         "total_price": np.concatenate(
@@ -447,8 +447,8 @@ Example:
 ```python
 from pyretailscience import revenue_tree
 
-p1_index = df["transaction_datetime"] < "2023-06-01"
-p2_index = df["transaction_datetime"] >= "2023-06-01"
+p1_index = df["transaction_date"] < "2023-06-01"
+p2_index = df["transaction_date"] >= "2023-06-01"
 
 rev_tree = revenue_tree.RevenueTree(
     df=df,

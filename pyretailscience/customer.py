@@ -7,6 +7,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
+from pyretailscience.options import ColumnHelper
 from pyretailscience.style.graph_utils import human_format, standard_graph_styles
 from pyretailscience.style.tailwind import COLORS
 
@@ -30,13 +31,14 @@ class PurchasesPerCustomer:
                 are null.
 
         """
-        required_cols = ["customer_id", "transaction_id"]
+        cols = ColumnHelper()
+        required_cols = [cols.customer_id, cols.transaction_id]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        self.cust_purchases_s = df.groupby("customer_id")["transaction_id"].nunique()
+        self.cust_purchases_s = df.groupby(cols.customer_id)[cols.customer_id].nunique()
 
     def plot(
         self,
@@ -173,14 +175,15 @@ class DaysBetweenPurchases:
 
         Args:
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must have the columns customer_id
-                and transaction_datetime, which must be non-null.
+                and transaction_date, which must be non-null.
 
         Raises:
             ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id, or if the
                 columns are null.
 
         """
-        required_cols = ["customer_id", "transaction_datetime"]
+        cols = ColumnHelper()
+        required_cols = [cols.customer_id, cols.transaction_date]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
@@ -194,25 +197,26 @@ class DaysBetweenPurchases:
 
         Args:
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must have the columns customer_id
-                and transaction_datetime, which must be non-null.
+                and transaction_date, which must be non-null.
 
         Returns:
             pd.Series: The average number of days between purchases per customer.
         """
-        required_cols = ["customer_id", "transaction_datetime"]
+        cols = ColumnHelper()
+        required_cols = [cols.customer_id, cols.transaction_date]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        purchase_dist_df = df[["customer_id", "transaction_datetime"]].copy()
-        purchase_dist_df["transaction_datetime"] = df["transaction_datetime"].dt.floor("D")
-        purchase_dist_df = purchase_dist_df.drop_duplicates().sort_values(["customer_id", "transaction_datetime"])
-        purchase_dist_df["diff"] = purchase_dist_df["transaction_datetime"].diff()
-        new_cust_mask = purchase_dist_df["customer_id"] != purchase_dist_df["customer_id"].shift(1)
+        purchase_dist_df = df[[cols.customer_id, cols.transaction_date]].copy()
+        purchase_dist_df[cols.transaction_date] = df[cols.transaction_date].dt.floor("D")
+        purchase_dist_df = purchase_dist_df.drop_duplicates().sort_values([cols.customer_id, cols.transaction_date])
+        purchase_dist_df["diff"] = purchase_dist_df[cols.transaction_date].diff()
+        new_cust_mask = purchase_dist_df[cols.customer_id] != purchase_dist_df[cols.customer_id].shift(1)
         purchase_dist_df = purchase_dist_df[~new_cust_mask]
         purchase_dist_df["diff"] = purchase_dist_df["diff"].dt.days
-        return purchase_dist_df.groupby("customer_id")["diff"].mean()
+        return purchase_dist_df.groupby(cols.customer_id)["diff"].mean()
 
     def plot(
         self,
@@ -322,30 +326,31 @@ class TransactionChurn:
 
         Args:
             df (pd.DataFrame): A dataframe with the transaction data. The dataframe must have the columns customer_id
-                and transaction_datetime.
+                and transaction_date.
             churn_period (float): The number of days to consider a customer churned.
 
         Raises:
             ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id.
         """
-        required_cols = ["customer_id", "transaction_datetime"]
+        cols = ColumnHelper()
+        required_cols = [cols.customer_id, cols.transaction_date]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        purchase_dist_df = df[["customer_id", "transaction_datetime"]].copy()
-        # Truncate the transaction_datetime to the day
-        purchase_dist_df["transaction_datetime"] = df["transaction_datetime"].dt.floor("D")
+        purchase_dist_df = df[[cols.customer_id, cols.transaction_date]].copy()
+        # Truncate the transaction_date to the day
+        purchase_dist_df[cols.transaction_date] = df[cols.transaction_date].dt.floor("D")
         purchase_dist_df = purchase_dist_df.drop_duplicates()
-        purchase_dist_df = purchase_dist_df.sort_values(["customer_id", "transaction_datetime"])
-        purchase_dist_df["transaction_number"] = purchase_dist_df.groupby("customer_id").cumcount() + 1
+        purchase_dist_df = purchase_dist_df.sort_values([cols.customer_id, cols.transaction_date])
+        purchase_dist_df["transaction_number"] = purchase_dist_df.groupby(cols.customer_id).cumcount() + 1
 
         purchase_dist_df["last_transaction"] = (
-            purchase_dist_df.groupby("customer_id")["transaction_datetime"].shift(-1).isna()
+            purchase_dist_df.groupby(cols.customer_id)[cols.transaction_date].shift(-1).isna()
         )
-        purchase_dist_df["transaction_before_churn_window"] = purchase_dist_df["transaction_datetime"] < (
-            purchase_dist_df["transaction_datetime"].max() - pd.Timedelta(days=churn_period)
+        purchase_dist_df["transaction_before_churn_window"] = purchase_dist_df[cols.transaction_date] < (
+            purchase_dist_df[cols.transaction_date].max() - pd.Timedelta(days=churn_period)
         )
         purchase_dist_df["churned"] = (
             purchase_dist_df["last_transaction"] & purchase_dist_df["transaction_before_churn_window"]
@@ -361,7 +366,7 @@ class TransactionChurn:
         purchase_dist_df["churned_pct"] = purchase_dist_df["churned"].div(purchase_dist_df.sum(axis=1))
         self.purchase_dist_df = purchase_dist_df
 
-        self.n_unique_customers = df["customer_id"].nunique()
+        self.n_unique_customers = df[cols.customer_id].nunique()
 
     def plot(
         self,
