@@ -5,6 +5,9 @@ import pandas as pd
 import pytest
 
 import pyretailscience.range_planning as rp
+from pyretailscience.options import ColumnHelper
+
+cols = ColumnHelper()
 
 
 class TestCustomerDecisionHierarchy:
@@ -52,7 +55,9 @@ class TestCustomerDecisionHierarchy:
 
     def test_init_invalid_dataframe(self):
         """Test that the function raises a ValueError when the dataframe is invalid."""
-        df = pd.DataFrame({"customer_id": [1, 2, 3], "transaction_id": [1, 2, 3], "product_name": ["A", "B", "C"]})
+        df = pd.DataFrame(
+            {cols.customer_id: [1, 2, 3], cols.transaction_id: [1, 2, 3], "product_name": ["A", "B", "C"]},
+        )
         exclude_same_transaction_products = True
         random_state = 42
 
@@ -63,16 +68,20 @@ class TestCustomerDecisionHierarchy:
         """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is True."""
         df = pd.DataFrame(
             {
-                "customer_id": [1, 1, 1, 2, 2, 2, 3, 3],
-                "transaction_id": [1, 1, 2, 3, 3, 4, 5, 6],
+                cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3],
+                cols.transaction_id: [1, 1, 2, 3, 3, 4, 5, 6],
                 "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
             },
         )
         exclude_same_transaction_products = True
 
-        pairs_df = rp.CustomerDecisionHierarchy._get_pairs(df, exclude_same_transaction_products)
+        pairs_df = rp.CustomerDecisionHierarchy._get_pairs(
+            df,
+            exclude_same_transaction_products,
+            product_col="product_name",
+        )
 
-        expected_pairs_df = pd.DataFrame({"customer_id": [1, 3], "product_name": ["C", "E"]}).astype("category")
+        expected_pairs_df = pd.DataFrame({cols.customer_id: [1, 3], "product_name": ["C", "E"]}).astype("category")
 
         assert pairs_df.equals(expected_pairs_df)
 
@@ -80,17 +89,21 @@ class TestCustomerDecisionHierarchy:
         """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is False."""
         df = pd.DataFrame(
             {
-                "customer_id": [1, 1, 1, 2, 2, 2, 3, 3],
-                "transaction_id": [1, 1, 2, 3, 3, 4, 5, 6],
+                cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3],
+                cols.transaction_id: [1, 1, 2, 3, 3, 4, 5, 6],
                 "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
             },
         )
         exclude_same_transaction_products = False
 
-        pairs_df = rp.CustomerDecisionHierarchy._get_pairs(df, exclude_same_transaction_products)
+        pairs_df = rp.CustomerDecisionHierarchy._get_pairs(
+            df,
+            exclude_same_transaction_products,
+            product_col="product_name",
+        )
 
         expected_pairs_df = pd.DataFrame(
-            {"customer_id": [1, 1, 1, 2, 2, 3], "product_name": ["A", "B", "C", "D", "E", "E"]},
+            {cols.customer_id: [1, 1, 1, 2, 2, 3], "product_name": ["A", "B", "C", "D", "E", "E"]},
         ).astype("category")
 
         assert pairs_df.equals(expected_pairs_df)

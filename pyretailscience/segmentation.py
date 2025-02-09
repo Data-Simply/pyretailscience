@@ -90,8 +90,8 @@ class ThresholdSegmentation(BaseSegmentation):
                 customers with zero spend. Defaults to "separate_segment".
 
         Raises:
-            ValueError: If the dataframe is missing the columns "customer_id" or `value_col`, or these columns contain
-                null values.
+            ValueError: If the dataframe is missing the columns option column.customer_id or `value_col`, or these
+                columns contain null values.
         """
         if len(thresholds) != len(set(thresholds)):
             raise ValueError("The thresholds must be unique.")

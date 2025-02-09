@@ -8,6 +8,7 @@ from matplotlib.axes import Axes, SubplotBase
 from pandas.tseries.offsets import BaseOffset
 
 import pyretailscience.style.graph_utils as gu
+from pyretailscience.options import get_option
 from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS, get_linear_cmap
 
@@ -64,7 +65,7 @@ def time_plot(
     Returns:
         SubplotBase: The matplotlib axes object.
     """
-    df["transaction_period"] = df["transaction_datetime"].dt.to_period(period)
+    df["transaction_period"] = df[get_option("column.transaction_date")].dt.to_period(period)
 
     if group_col is None:
         colors = COLORS["green"][500]

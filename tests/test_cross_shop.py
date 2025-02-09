@@ -4,6 +4,9 @@ import pandas as pd
 import pytest
 
 from pyretailscience.cross_shop import CrossShop
+from pyretailscience.options import ColumnHelper
+
+cols = ColumnHelper()
 
 
 @pytest.fixture()
@@ -11,11 +14,11 @@ def sample_data():
     """Sample data for testing."""
     return pd.DataFrame(
         {
-            "customer_id": [1, 2, 3, 4, 5, 5, 6, 7, 8, 8, 9, 10],
+            cols.customer_id: [1, 2, 3, 4, 5, 5, 6, 7, 8, 8, 9, 10],
             "group_1_idx": [True, False, False, False, False, True, True, False, False, True, False, True],
             "group_2_idx": [False, True, False, False, True, False, False, True, False, False, True, False],
             "group_3_idx": [False, False, True, False, False, False, False, False, True, False, False, False],
-            "total_price": [10, 20, 30, 40, 20, 50, 10, 20, 30, 15, 40, 50],
+            cols.unit_spend: [10, 20, 30, 40, 20, 50, 10, 20, 30, 15, 40, 50],
         },
     )
 
@@ -29,13 +32,13 @@ def test_calc_cross_shop_two_groups(sample_data):
     )
     ret_df = pd.DataFrame(
         {
-            "customer_id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            cols.customer_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "group_1": [1, 0, 0, 0, 1, 1, 0, 1, 0, 1],
             "group_2": [0, 1, 0, 0, 1, 0, 1, 0, 1, 0],
             "groups": [(1, 0), (0, 1), (0, 0), (0, 0), (1, 1), (1, 0), (0, 1), (1, 0), (0, 1), (1, 0)],
-            "total_price": [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
+            cols.unit_spend: [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
         },
-    ).set_index("customer_id")
+    ).set_index(cols.customer_id)
 
     assert cross_shop_df.equals(ret_df)
 
@@ -50,7 +53,7 @@ def test_calc_cross_shop_three_groups(sample_data):
     )
     ret_df = pd.DataFrame(
         {
-            "customer_id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            cols.customer_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "group_1": [1, 0, 0, 0, 1, 1, 0, 1, 0, 1],
             "group_2": [0, 1, 0, 0, 1, 0, 1, 0, 1, 0],
             "group_3": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
@@ -66,9 +69,9 @@ def test_calc_cross_shop_three_groups(sample_data):
                 (0, 1, 0),
                 (1, 0, 0),
             ],
-            "total_price": [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
+            cols.unit_spend: [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
         },
-    ).set_index("customer_id")
+    ).set_index(cols.customer_id)
 
     assert cross_shop_df.equals(ret_df)
 
@@ -103,7 +106,7 @@ def test_calc_cross_shop_three_groups_customer_id_nunique(sample_data):
         group_1_idx=sample_data["group_1_idx"],
         group_2_idx=sample_data["group_2_idx"],
         group_3_idx=sample_data["group_3_idx"],
-        value_col="customer_id",
+        value_col=cols.customer_id,
         agg_func="nunique",
     )
     ret_df = pd.DataFrame(
@@ -123,11 +126,11 @@ def test_calc_cross_shop_three_groups_customer_id_nunique(sample_data):
                 (0, 1, 0),
                 (1, 0, 0),
             ],
-            "customer_id": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            cols.customer_id: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         },
         index=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     )
-    ret_df.index.name = "customer_id"
+    ret_df.index.name = cols.customer_id
 
     assert cross_shop_df.equals(ret_df)
 
@@ -139,11 +142,11 @@ def test_calc_cross_shop_table(sample_data):
         group_1_idx=sample_data["group_1_idx"],
         group_2_idx=sample_data["group_2_idx"],
         group_3_idx=sample_data["group_3_idx"],
-        value_col="total_price",
+        value_col=cols.unit_spend,
     )
     cross_shop_table = CrossShop._calc_cross_shop_table(
         cross_shop_df,
-        value_col="total_price",
+        value_col=cols.unit_spend,
     )
     ret_df = pd.DataFrame(
         {
@@ -155,7 +158,7 @@ def test_calc_cross_shop_table(sample_data):
                 (1, 0, 1),
                 (1, 1, 0),
             ],
-            "total_price": [40, 30, 80, 70, 45, 70],
+            cols.unit_spend: [40, 30, 80, 70, 45, 70],
             "percent": [0.119402985, 0.089552239, 0.23880597, 0.208955224, 0.134328358, 0.208955224],
         },
     )
@@ -174,17 +177,17 @@ def test_calc_cross_shop_table_customer_id_nunique(sample_data):
         group_1_idx=sample_data["group_1_idx"],
         group_2_idx=sample_data["group_2_idx"],
         group_3_idx=sample_data["group_3_idx"],
-        value_col="customer_id",
+        value_col=cols.customer_id,
         agg_func="nunique",
     )
     cross_shop_table = CrossShop._calc_cross_shop_table(
         cross_shop_df,
-        value_col="customer_id",
+        value_col=cols.customer_id,
     )
     ret_df = pd.DataFrame(
         {
             "groups": [(0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 0, 0), (1, 0, 1), (1, 1, 0)],
-            "customer_id": [1, 1, 3, 3, 1, 1],
+            cols.customer_id: [1, 1, 3, 3, 1, 1],
             "percent": [0.1, 0.1, 0.3, 0.3, 0.1, 0.1],
         },
     )

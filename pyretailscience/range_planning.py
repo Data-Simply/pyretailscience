@@ -9,6 +9,7 @@ from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 import pyretailscience.style.graph_utils as gu
+from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.style.graph_utils import GraphStyles
 
 
@@ -18,6 +19,7 @@ class CustomerDecisionHierarchy:
     def __init__(
         self,
         df: pd.DataFrame,
+        product_col: str,
         exclude_same_transaction_products: bool = True,
         method: Literal["truncated_svd", "yules_q"] = "truncated_svd",
         min_var_explained: float = 0.8,
@@ -28,6 +30,7 @@ class CustomerDecisionHierarchy:
         Args:
             df (pd.DataFrame): The input dataframe containing transaction data. The dataframe must have the columns
                 customer_id, transaction_id, product_name.
+            product_col (str): The name of the column containing the product or category names.
             exclude_same_transaction_products (bool, optional): Flag indicating whether to exclude products found in
                 the same transaction from a customer's distinct list of products bought. The idea is that if a
                 customer bought two products in the same transaction they can't be substitutes for that customer.
@@ -42,35 +45,38 @@ class CustomerDecisionHierarchy:
             ValueError: If the dataframe does not have the require columns.
 
         """
-        required_cols = ["customer_id", "transaction_id", "product_name"]
+        cols = ColumnHelper()
+        required_cols = [cols.customer_id, cols.transaction_id, product_col]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
         self.random_state = random_state
+        self.product_col = product_col
         self.pairs_df = self._get_pairs(df, exclude_same_transaction_products)
         self.distances = self._calculate_distances(method=method, min_var_explained=min_var_explained)
 
     @staticmethod
-    def _get_pairs(df: pd.DataFrame, exclude_same_transaction_products: bool) -> pd.DataFrame:
+    def _get_pairs(df: pd.DataFrame, exclude_same_transaction_products: bool, product_col: str) -> pd.DataFrame:
+        cols = ColumnHelper()
         if exclude_same_transaction_products:
-            pairs_df = df[["customer_id", "transaction_id", "product_name"]].drop_duplicates()
+            pairs_df = df[[cols.customer_id, cols.transaction_id, product_col]].drop_duplicates()
             pairs_to_exclude_df = (
-                pairs_df.groupby("transaction_id")
-                .filter(lambda x: len(x) > 1)[["customer_id", "product_name"]]
+                pairs_df.groupby(cols.transaction_id)
+                .filter(lambda x: len(x) > 1)[[cols.customer_id, product_col]]
                 .drop_duplicates()
             )
             # Drop all rows from pairs_df where customer_id and product_name are in pairs_to_exclude_df
             pairs_df = pairs_df.merge(
                 pairs_to_exclude_df,
-                on=["customer_id", "product_name"],
+                on=[cols.customer_id, product_col],
                 how="left",
                 indicator=True,
             )
-            pairs_df = pairs_df[pairs_df["_merge"] == "left_only"][["customer_id", "product_name"]].drop_duplicates()
+            pairs_df = pairs_df[pairs_df["_merge"] == "left_only"][[cols.customer_id, product_col]].drop_duplicates()
         else:
-            pairs_df = df[["customer_id", "product_name"]].drop_duplicates()
+            pairs_df = df[[cols.customer_id, product_col]].drop_duplicates()
 
         return pairs_df.reset_index(drop=True).astype("category")
 
@@ -90,8 +96,8 @@ class CustomerDecisionHierarchy:
             (
                 [1] * len(self.pairs_df),
                 (
-                    self.pairs_df["product_name"].cat.codes,
-                    self.pairs_df["customer_id"].cat.codes,
+                    self.pairs_df[self.product_col].cat.codes,
+                    self.pairs_df[get_option("column.customer_id")].cat.codes,
                 ),
             ),
         )
@@ -159,8 +165,8 @@ class CustomerDecisionHierarchy:
             (
                 [True] * len(self.pairs_df),
                 (
-                    self.pairs_df["product_name"].cat.codes,
-                    self.pairs_df["customer_id"].cat.codes,
+                    self.pairs_df[self.product_col].cat.codes,
+                    self.pairs_df[get_option("column.customer_id")].cat.codes,
                 ),
             ),
             dtype=bool,

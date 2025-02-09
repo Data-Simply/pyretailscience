@@ -384,6 +384,9 @@ class ColumnHelper:
 
     def __init__(self) -> None:
         """A class to help with column naming conventions."""
+        # Date/Time
+        self.transaction_date = get_option("column.transaction_date")
+        self.transaction_time = get_option("column.transaction_time")
         # Customers
         self.customer_id = get_option("column.customer_id")
         self.agg_customer_id = get_option("column.agg.customer_id")

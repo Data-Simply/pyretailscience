@@ -43,6 +43,8 @@ import pandas as pd
 from scipy.sparse import csc_matrix
 from tqdm import tqdm
 
+from pyretailscience.options import get_option
+
 
 class ProductAssociation:
     """A class for generating and analyzing product association rules.
@@ -55,7 +57,7 @@ class ProductAssociation:
         value_col (str): The name of the column in the input DataFrame that contains
             the product identifiers.
         group_col (str, optional): The name of the column that identifies unique
-            transactions or customers. Defaults to "customer_id".
+            transactions or customers. Defaults to option column.unit_spend.
         target_item (str or None, optional): A specific product to focus the
             association analysis on. If None, associations for all products are
             calculated. Defaults to None.
@@ -91,7 +93,7 @@ class ProductAssociation:
         self,
         df: pd.DataFrame,
         value_col: str,
-        group_col: str = "customer_id",
+        group_col: str = get_option("column.customer_id"),
         target_item: str | None = None,
         number_of_combinations: Literal[2, 3] = 2,
         min_occurrences: int = 1,
@@ -107,7 +109,7 @@ class ProductAssociation:
             df (pandas.DataFrame): The input DataFrame containing transaction data.
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
-                to "customer_id".
+                to option column.unit_spend.
             target_item (str or None, optional): A specific product to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
             number_of_combinations (int, optional): The number of products to consider in the association analysis. Can
@@ -154,7 +156,7 @@ class ProductAssociation:
     def _calc_association(  # noqa: C901 (ignore complexity) - Excluded due to min_* arguments checks
         df: pd.DataFrame,
         value_col: str,
-        group_col: str = "customer_id",
+        group_col: str = get_option("column.customer_id"),
         target_item: str | None = None,
         number_of_combinations: Literal[2, 3] = 2,
         min_occurrences: int = 1,
@@ -173,7 +175,7 @@ class ProductAssociation:
             df (pandas.DataFrame): The input DataFrame containing transaction data.
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
-                to "customer_id".
+                to option column.unit_spend.
             target_item (str or None, optional): A specific product to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
             number_of_combinations (int, optional): The number of products to consider in the association analysis. Can
