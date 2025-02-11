@@ -168,12 +168,12 @@ complex data stories to stakeholders in an intuitive manner.
 Example:
 
 ```python
-from pyretailscience.standard_graphs import waterfall_plot
+from pyretailscience.plots import waterfall
 
 labels = ["New", "Continuning", "Churned"]
 amounts = [660000, 420000, -382000]
 
-waterfall_plot(
+waterfall.plot(
     labels=labels,
     amounts=amounts,
     title="New customer growth hiding churn issue",
@@ -212,9 +212,9 @@ deviations from expected performance, supporting more informed decision-making i
 Example:
 
 ```python
-from pyretailscience.standard_graphs import index_plot
+from pyretailscience.plots import index
 
-index_plot(
+index.plot(
     df,
     df_index_filter=df["segment_name"] == "Light",
     value_col="unit_price",
@@ -253,7 +253,7 @@ Example:
 import numpy as np
 import pandas as pd
 
-from pyretailscience.standard_graphs import time_plot
+from pyretailscience.plots import time
 
 # Create a sample DataFrame with 3 groups
 rng = np.random.default_rng(42)
@@ -269,7 +269,7 @@ df = pd.DataFrame(
     },
 )
 
-time_plot(
+time.plot(
     df,
     period="M",
     group_col="group",

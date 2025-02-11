@@ -175,6 +175,7 @@ def standard_graph_styles(
     y_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
     legend_title: str | None = None,
     move_legend_outside: bool = False,
+    show_legend: bool = True,
 ) -> Axes:
     """Apply standard styles to a Matplotlib graph.
 
@@ -189,6 +190,7 @@ def standard_graph_styles(
             GraphStyles.DEFAULT_AXIS_LABEL_PAD.
         legend_title (str, optional): The title of the legend. If None, no legend title is applied. Defaults to None.
         move_legend_outside (bool, optional): Whether to move the legend outside the plot. Defaults to False.
+        show_legend (bool): Whether to display the legend or not.
 
     Returns:
         Axes: The graph with the styles applied.
@@ -223,7 +225,14 @@ def standard_graph_styles(
             labelpad=y_label_pad,
         )
 
-    return _add_legend(ax=ax, legend_title=legend_title, move_legend_outside=move_legend_outside)
+    if not show_legend:
+        return ax
+
+    return _add_legend(
+        ax=ax,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
 
 
 def standard_tick_styles(ax: Axes) -> Axes:
