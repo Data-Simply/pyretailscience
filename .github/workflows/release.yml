@@ -36,15 +36,13 @@ jobs:
           python-version: "3.11"
       - name: Install uv Package
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pre-commit
           pip install --upgrade pip
           pip install build
           pip install uv==0.5.30
-          export UV_VENV_CREATE=false
           uv sync
           uv version
-
+      - name: Install Pre-commit in uv environment
+        run: uv run pip install pre-commit
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
