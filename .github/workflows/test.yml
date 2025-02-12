@@ -23,6 +23,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install uv==0.5.30
+          export UV_VENV_CREATE=false
           uv sync
       - name: Run Pre-commit
         run: pre-commit run --all-files
