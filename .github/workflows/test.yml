@@ -19,8 +19,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install uv Package
+      - name: Install Pre-commit and UV
         run: |
+          sudo apt-get update
+          sudo apt-get install -y pre-commit
           pip install --upgrade pip
           pip install uv==0.5.30
           export UV_VENV_CREATE=false

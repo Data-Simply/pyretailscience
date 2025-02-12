@@ -36,6 +36,8 @@ jobs:
           python-version: "3.11"
       - name: Install uv Package
         run: |
+          sudo apt-get update
+          sudo apt-get install -y pre-commit
           pip install --upgrade pip
           pip install build
           pip install uv==0.5.30
