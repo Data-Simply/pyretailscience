@@ -19,7 +19,7 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: pytest --cov=pyretailscience --cov-report=xml --cov-branch tests
+        entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests
         language: system
         types: [python]
         pass_filenames: false
