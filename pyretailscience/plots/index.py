@@ -38,6 +38,7 @@ offering valuable insights into retail operations.
 
 from typing import Literal
 
+import ibis
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
@@ -239,7 +240,7 @@ def plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
 
 
 def get_indexes(
-    df: pd.DataFrame,
+    df: pd.DataFrame | ibis.Table,
     df_index_filter: list[bool],
     index_col: str,
     value_col: str,
@@ -247,10 +248,10 @@ def get_indexes(
     agg_func: str = "sum",
     offset: int = 0,
 ) -> pd.DataFrame:
-    """Calculates the index of the value_col for the subset of a dataframe defined by df_index_filter.
+    """Calculates the index of the value_col using Ibis for efficient computation at scale.
 
     Args:
-        df (pd.DataFrame): The dataframe to calculate the index on.
+        df (pd.DataFrame | ibis.Table): The dataframe or Ibis table to calculate the index on.
         df_index_filter (list[bool]): The boolean index to filter the data by.
         index_col (str): The column to calculate the index on.
         value_col (str): The column to calculate the index on.
@@ -259,25 +260,55 @@ def get_indexes(
         offset (int, optional): The offset to subtract from the index. Defaults to 0.
 
     Returns:
-        pd.Series: The index of the value_col for the subset of data defined by filter_index.
+        pd.DataFrame: The calculated index values with grouping columns.
     """
     if all(df_index_filter) or not any(df_index_filter):
         raise ValueError("The df_index_filter cannot be all True or all False.")
 
-    grp_cols = [index_col] if index_subgroup_col is None else [index_subgroup_col, index_col]
-
-    overall_df = df.groupby(grp_cols)[value_col].agg(agg_func).to_frame(value_col)
-    if index_subgroup_col is None:
-        overall_total = overall_df[value_col].sum()
+    if isinstance(df, pd.DataFrame):
+        df = df.copy()
+        df["_filter"] = df_index_filter
+        table = ibis.memtable(df)
     else:
-        overall_total = overall_df.groupby(index_subgroup_col)[value_col].sum()
-    overall_s = overall_df[value_col] / overall_total
+        table = df.mutate(_filter=ibis.literal(df_index_filter))
 
-    subset_df = df[df_index_filter].groupby(grp_cols)[value_col].agg(agg_func).to_frame(value_col)
+    agg_func = agg_func.lower()
+    if agg_func not in {"sum", "mean", "max", "min", "nunique"}:
+        raise ValueError("Unsupported aggregation function.")
+
+    agg_fn = lambda x: getattr(x, agg_func)()
+
+    group_cols = [index_col] if index_subgroup_col is None else [index_subgroup_col, index_col]
+
+    overall_agg = table.group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
+
     if index_subgroup_col is None:
-        subset_total = subset_df[value_col].sum()
+        overall_total = overall_agg.value.sum().execute()
+        overall_props = overall_agg.mutate(proportion=overall_agg.value / overall_total)
     else:
-        subset_total = subset_df.groupby(index_subgroup_col)[value_col].sum()
-    subset_s = subset_df[value_col] / subset_total
+        overall_total = overall_agg.group_by(index_subgroup_col).aggregate(total=lambda t: t.value.sum())
+        overall_props = (
+            overall_agg.join(overall_total, index_subgroup_col)
+            .mutate(proportion=lambda t: t.value / t.total)
+            .drop("total")
+        )
 
-    return ((subset_s / overall_s * 100) - offset).to_frame("index").reset_index()
+    overall_props = overall_props.mutate(proportion_overall=overall_props.proportion).drop("proportion")
+
+    subset_agg = table.filter(table._filter).group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
+
+    if index_subgroup_col is None:
+        subset_total = subset_agg.value.sum().name("total")
+        subset_props = subset_agg.mutate(proportion=subset_agg.value / subset_total)
+    else:
+        subset_total = subset_agg.group_by(index_subgroup_col).aggregate(total=lambda t: t.value.sum())
+        subset_props = (
+            subset_agg.join(subset_total, index_subgroup_col)
+            .mutate(proportion=lambda t: t.value / t.total)
+            .drop("total")
+        )
+
+    result = subset_props.join(overall_props, group_cols).mutate(
+        index=lambda t: (t.proportion / t.proportion_overall * 100) - offset,
+    )
+    return result.execute()
