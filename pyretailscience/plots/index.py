@@ -53,9 +53,10 @@ COLORMAP_MAX = 0.75
 
 def plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
     df: pd.DataFrame,
-    df_index_filter: list[bool],
     value_col: str,
     group_col: str,
+    index_col: str,
+    value_to_index: str,
     agg_func: str = "sum",
     series_col: str | None = None,
     title: str | None = None,
@@ -94,9 +95,10 @@ def plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
 
     Args:
         df (pd.DataFrame): The dataframe to plot.
-        df_index_filter (list[bool]): The filter to apply to the dataframe.
         value_col (str): The column to plot.
         group_col (str): The column to group the data by.
+        index_col (str): The column to calculate the index on (e.g., "category").
+        value_to_index (str): The baseline category or value to index against (e.g., "A").
         agg_func (str, optional): The aggregation function to apply to the value_col. Defaults to "sum".
         series_col (str, optional): The column to use as the series. Defaults to None.
         title (str, optional): The title of the plot. Defaults to None. When None the title is set to
@@ -136,15 +138,15 @@ def plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
         raise ValueError(
             "exclude_groups and include_only_groups cannot be used together.",
         )
-
     index_df = get_indexes(
         df=df,
-        df_index_filter=df_index_filter,
-        index_col=group_col,
+        index_col=index_col,
+        value_to_index=value_to_index,
         index_subgroup_col=series_col,
         value_col=value_col,
         agg_func=agg_func,
         offset=100,
+        group_col=group_col,
     )
 
     if exclude_groups is not None:
@@ -241,9 +243,10 @@ def plot(  # noqa: C901, PLR0913 (ignore complexity and line length)
 
 def get_indexes(
     df: pd.DataFrame | ibis.Table,
-    df_index_filter: list[bool],
+    value_to_index: str,
     index_col: str,
     value_col: str,
+    group_col: str,
     index_subgroup_col: str | None = None,
     agg_func: str = "sum",
     offset: int = 0,
@@ -251,26 +254,24 @@ def get_indexes(
     """Calculates the index of the value_col using Ibis for efficient computation at scale.
 
     Args:
-        df (pd.DataFrame | ibis.Table): The dataframe or Ibis table to calculate the index on.
-        df_index_filter (list[bool]): The boolean index to filter the data by.
-        index_col (str): The column to calculate the index on.
-        value_col (str): The column to calculate the index on.
-        index_subgroup_col (str, optional): The column to subgroup the index by. Defaults to None.
-        agg_func (str): The aggregation function to apply to the value_col.
-        offset (int, optional): The offset to subtract from the index. Defaults to 0.
+        df (pd.DataFrame | ibis.Table): The dataframe or Ibis table to calculate the index on. Can be a pandas dataframe or an Ibis table.
+        value_to_index (str): The baseline category or value to index against (e.g., "A").
+        index_col (str): The column to calculate the index on (e.g., "category").
+        value_col (str): The column to calculate the index on (e.g., "sales").
+        group_col (str): The column to group the data by (e.g., "region").
+        index_subgroup_col (str, optional): The column to subgroup the index by (e.g., "store_type"). Defaults to None.
+        agg_func (str, optional): The aggregation function to apply to the `value_col`. Valid options are "sum", "mean", "max", "min", or "nunique". Defaults to "sum".
+        offset (int, optional): The offset value to subtract from the index. This allows for adjustments to the index values. Defaults to 0.
 
     Returns:
         pd.DataFrame: The calculated index values with grouping columns.
     """
-    if all(df_index_filter) or not any(df_index_filter):
-        raise ValueError("The df_index_filter cannot be all True or all False.")
-
     if isinstance(df, pd.DataFrame):
         df = df.copy()
-        df["_filter"] = df_index_filter
+        df["_filter"] = value_to_index
         table = ibis.memtable(df)
     else:
-        table = df.mutate(_filter=ibis.literal(df_index_filter))
+        table = df.mutate(_filter=ibis.literal(value_to_index))
 
     agg_func = agg_func.lower()
     if agg_func not in {"sum", "mean", "max", "min", "nunique"}:
@@ -278,7 +279,7 @@ def get_indexes(
 
     agg_fn = lambda x: getattr(x, agg_func)()
 
-    group_cols = [index_col] if index_subgroup_col is None else [index_subgroup_col, index_col]
+    group_cols = [group_col] if index_subgroup_col is None else [index_subgroup_col, group_col]
 
     overall_agg = table.group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
 
@@ -294,8 +295,8 @@ def get_indexes(
         )
 
     overall_props = overall_props.mutate(proportion_overall=overall_props.proportion).drop("proportion")
-
-    subset_agg = table.filter(table._filter).group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
+    table = table.filter(table[index_col] == value_to_index)
+    subset_agg = table.group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
 
     if index_subgroup_col is None:
         subset_total = subset_agg.value.sum().name("total")
@@ -311,4 +312,5 @@ def get_indexes(
     result = subset_props.join(overall_props, group_cols).mutate(
         index=lambda t: (t.proportion / t.proportion_overall * 100) - offset,
     )
+
     return result.execute()
