@@ -119,6 +119,69 @@ def test_get_indexes_with_offset():
     assert all(result["index"] >= OFFSET_THRESHOLD)
 
 
+def test_get_indexes_single_column():
+    """Test that the function works with a single column index."""
+    df = pd.DataFrame(
+        {
+            "group_col": ["A", "A", "B", "B", "C", "C"],
+            "value_col": [1, 2, 3, 4, 5, 6],
+        },
+    )
+
+    expected_output = pd.DataFrame(
+        {
+            "group_col": ["A"],
+            "value": [3],
+            "proportion": [1.0],
+            "value_right": [3],
+            "proportion_overall": [0.142857],
+            "index": [700.0],
+        },
+    )
+
+    output = get_indexes(
+        df=df,
+        value_to_index="A",
+        index_col="group_col",
+        value_col="value_col",
+        group_col="group_col",
+    )
+    pd.testing.assert_frame_equal(output, expected_output)
+
+
+def test_get_indexes_two_columns():
+    """Test that the function works with two columns as the index."""
+    df = pd.DataFrame(
+        {
+            "group_col1": ["A", "A", "B", "B", "C", "C", "A", "A", "B", "B", "C", "C"],
+            "group_col2": ["D", "D", "D", "D", "D", "D", "E", "E", "E", "E", "E", "E"],
+            "value_col": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        },
+    )
+
+    expected_output = pd.DataFrame(
+        {
+            "group_col1": ["A", "A"],
+            "group_col2": ["D", "E"],
+            "value": [3, 15],
+            "proportion": [0.166667, 0.833333],
+            "value_right": [3, 15],
+            "proportion_overall": [0.166667, 0.833333],
+            "index": [100.0, 100.0],
+        },
+    )
+
+    output = get_indexes(
+        df=df,
+        value_to_index="A",
+        index_col="group_col1",
+        value_col="value_col",
+        group_col="group_col2",
+        index_subgroup_col="group_col1",
+    )
+    pd.testing.assert_frame_equal(output, expected_output)
+
+
 class TestIndexPlot:
     """Tests for the index_plot function."""
 

@@ -268,10 +268,9 @@ def get_indexes(
     """
     if isinstance(df, pd.DataFrame):
         df = df.copy()
-        df["_filter"] = value_to_index
         table = ibis.memtable(df)
     else:
-        table = df.mutate(_filter=ibis.literal(value_to_index))
+        table = df
 
     agg_func = agg_func.lower()
     if agg_func not in {"sum", "mean", "max", "min", "nunique"}:
@@ -305,12 +304,17 @@ def get_indexes(
         subset_total = subset_agg.group_by(index_subgroup_col).aggregate(total=lambda t: t.value.sum())
         subset_props = (
             subset_agg.join(subset_total, index_subgroup_col)
+            .filter(lambda t: t.total != 0)
             .mutate(proportion=lambda t: t.value / t.total)
             .drop("total")
         )
 
-    result = subset_props.join(overall_props, group_cols).mutate(
-        index=lambda t: (t.proportion / t.proportion_overall * 100) - offset,
+    result = (
+        subset_props.join(overall_props, group_cols)
+        .mutate(
+            index=lambda t: (t.proportion / t.proportion_overall * 100) - offset,
+        )
+        .order_by(group_col)
     )
 
     return result.execute()
