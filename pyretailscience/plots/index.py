@@ -284,16 +284,15 @@ def get_indexes(
 
     if index_subgroup_col is None:
         overall_total = overall_agg.value.sum().execute()
-        overall_props = overall_agg.mutate(proportion=overall_agg.value / overall_total)
+        overall_props = overall_agg.mutate(proportion_overall=overall_agg.value / overall_total)
     else:
         overall_total = overall_agg.group_by(index_subgroup_col).aggregate(total=lambda t: t.value.sum())
         overall_props = (
             overall_agg.join(overall_total, index_subgroup_col)
-            .mutate(proportion=lambda t: t.value / t.total)
+            .mutate(proportion_overall=lambda t: t.value / t.total)
             .drop("total")
         )
 
-    overall_props = overall_props.mutate(proportion_overall=overall_props.proportion).drop("proportion")
     table = table.filter(table[index_col] == value_to_index)
     subset_agg = table.group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
 

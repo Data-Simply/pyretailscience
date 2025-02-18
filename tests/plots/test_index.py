@@ -1,5 +1,6 @@
 """Tests for the index plot module."""
 
+import ibis
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,7 +9,7 @@ import pytest
 from pyretailscience.plots.index import get_indexes, plot
 
 OFFSET_VALUE = 100
-OFFSET_THRESHOLD = -5
+OFFSET_THRESHOLD = 5
 
 
 def test_get_indexes_basic():
@@ -109,14 +110,14 @@ def test_get_indexes_with_offset():
         index_col="category",
         value_col="value",
         group_col="category",
-        offset=5,
+        offset=OFFSET_THRESHOLD,
     )
 
     assert isinstance(result, pd.DataFrame)
     assert "category" in result.columns
     assert "index" in result.columns
     assert not result.empty
-    assert all(result["index"] >= OFFSET_THRESHOLD)
+    assert all(result["index"] >= -OFFSET_THRESHOLD)
 
 
 def test_get_indexes_single_column():
@@ -166,6 +167,23 @@ def test_get_indexes_two_columns():
         index_subgroup_col="group_col2",
     )
     pd.testing.assert_frame_equal(output, expected_output)
+
+
+def test_get_indexes_with_ibis_table_input():
+    """Test that the get_indexes function works with an ibis Table."""
+    df = pd.DataFrame(
+        {
+            "category": ["A", "B", "C"],
+            "value": [10, 20, 30],
+        },
+    )
+    table = ibis.memtable(df)
+
+    result = get_indexes(table, value_to_index="A", index_col="category", value_col="value", group_col="category")
+    assert isinstance(result, pd.DataFrame)
+    assert "category" in result.columns
+    assert "index" in result.columns
+    assert not result.empty
 
 
 class TestIndexPlot:
