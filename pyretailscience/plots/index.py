@@ -314,7 +314,7 @@ def get_indexes(
         .mutate(
             index=lambda t: (t.proportion / t.proportion_overall * 100) - offset,
         )
-        .order_by(group_col)
+        .order_by(group_cols)
     )
 
-    return result.execute()
+    return result[[*group_cols, "index"]].execute()
