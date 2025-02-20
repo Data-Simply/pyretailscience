@@ -30,6 +30,7 @@ import subprocess
 from textwrap import dedent
 
 import graphviz
+import ibis
 import pandas as pd
 
 from pyretailscience.options import ColumnHelper, get_option
@@ -43,41 +44,32 @@ class RevenueTree:
     def __init__(
         self,
         df: pd.DataFrame,
-        p1_index: list[bool] | pd.Series,
-        p2_index: list[bool] | pd.Series,
+        period_col: str,
+        p1_value: str,
+        p2_value: str,
         group_col: str | None = None,
-        pre_aggregated: bool = False,
     ) -> None:
         """Initialize the Revenue Tree Analysis Class.
 
         Args:
             df (pd.DataFrame): The input DataFrame containing transaction data.
-            p1_index (list[bool] | pd.Series): A boolean index for the first period.
-            p2_index (list[bool] | pd.Series): A boolean index for the second period.
+            period_col (str): The column representing the period.
+            p1_value (str): The value representing the first period.
+            p2_value (str): The value representing the second period.
             group_col (str, optional): The column to group the data by. Defaults to None.
-            pre_aggregated (bool, optional): Whether the data is pre-aggregated. Defaults to False.
 
         Raises:
             ValueError: If the required columns are not present in the DataFrame.
-            ValueError: If the lengths of p1_index, p2_index, and df are not equal.
         """
         cols = ColumnHelper()
-        if pre_aggregated:
-            required_cols = [
-                cols.agg_customer_id,
-                cols.agg_transaction_id,
-                cols.agg_unit_spend,
-            ]
-            if cols.unit_qty in df.columns:
-                required_cols.append(cols.agg_unit_qty)
-        else:
-            required_cols = [
-                cols.customer_id,
-                cols.transaction_id,
-                cols.unit_spend,
-            ]
-            if cols.unit_qty in df.columns:
-                required_cols.append(cols.unit_qty)
+
+        required_cols = [
+            cols.customer_id,
+            cols.transaction_id,
+            cols.unit_spend,
+        ]
+        if cols.unit_qty in df.columns:
+            required_cols.append(cols.unit_qty)
 
         if group_col is not None:
             required_cols.append(group_col)
@@ -87,17 +79,7 @@ class RevenueTree:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        if not len(p1_index) == len(p2_index) == len(df):
-            raise ValueError("p1_index, p2_index, and df should have the same length")
-
-        p1_index = p1_index.values if isinstance(p1_index, pd.Series) else p1_index
-        p2_index = p2_index.values if isinstance(p2_index, pd.Series) else p2_index
-
-        if pre_aggregated:
-            if group_col in df.columns:
-                df = df.set_index(group_col)
-        else:
-            df, p1_index, p2_index = self._agg_data(df=df, p1_index=p1_index, p2_index=p2_index)
+        df, p1_index, p2_index = self._agg_data(df, period_col, p1_value, p2_value, group_col)
 
         self.df = self._calc_tree_kpis(
             df=df,
@@ -105,72 +87,89 @@ class RevenueTree:
             p2_index=p2_index,
         )
 
-    # TODO: Redo in Ibis
     @staticmethod
     def _agg_data(
-        df: pd.DataFrame,
-        p1_index: list[bool] | pd.Series,
-        p2_index: list[bool] | pd.Series,
+        df: pd.DataFrame | ibis.Table,
+        period_col: str,
+        p1_value: str,
+        p2_value: str,
         group_col: str | None = None,
     ) -> tuple[pd.DataFrame, list[bool], list[bool]]:
         cols = ColumnHelper()
 
-        if group_col is not None:
-            df[group_col] = pd.Categorical(df[group_col])
-            p1_group = df[p1_index].groupby(group_col, observed=False)
-            p2_group = df[p2_index].groupby(group_col, observed=False)
-            p1_df = p1_group.agg(
-                customers=(cols.customer_id, "nunique"),
-                transactions=(cols.transaction_id, "nunique"),
-                spend=(cols.unit_spend, "sum"),
-            ).rename(
-                columns={
-                    "customers": cols.agg_customer_id,
-                    "transactions": cols.agg_transaction_id,
-                    "spend": cols.agg_unit_spend,
-                },
-            )
-            p2_df = p2_group.agg(
-                customers=(cols.customer_id, "nunique"),
-                transactions=(cols.transaction_id, "nunique"),
-                spend=(cols.unit_spend, "sum"),
-            ).rename(
-                columns={
-                    "customers": cols.agg_customer_id,
-                    "transactions": cols.agg_transaction_id,
-                    "spend": cols.agg_unit_spend,
-                },
-            )
-            if cols.unit_qty in df.columns:
-                p1_df[cols.agg_unit_qty] = p1_group[cols.unit_qty].sum()
-                p2_df[cols.agg_unit_qty] = p2_group[cols.unit_qty].sum()
-        else:
-            p1_df = df[p1_index]
-            p2_df = df[p2_index]
-            p1_df = pd.DataFrame(
-                {
-                    cols.agg_customer_id: p1_df[cols.customer_id].nunique(),
-                    cols.agg_transaction_id: p1_df[cols.transaction_id].nunique(),
-                    cols.agg_unit_spend: p1_df[cols.unit_spend].sum(),
-                },
-                index=["p1"],
-            )
-            p2_df = pd.DataFrame(
-                {
-                    cols.agg_customer_id: p2_df[cols.customer_id].nunique(),
-                    cols.agg_transaction_id: p2_df[cols.transaction_id].nunique(),
-                    cols.agg_unit_spend: p2_df[cols.unit_spend].sum(),
-                },
-                index=["p2"],
-            )
-            if cols.unit_qty in df.columns:
-                p1_df[cols.agg_unit_qty] = df[p1_index][cols.unit_qty].sum()
-                p2_df[cols.agg_unit_qty] = df[p2_index][cols.unit_qty].sum()
+        if isinstance(df, pd.DataFrame):
+            df: ibis.Table = ibis.memtable(df)
 
-        new_p1_index = [True] * len(p1_df) + [False] * len(p2_df)
+        if group_col is not None:
+            p1_group = df.filter(df[period_col] == p1_value).group_by(group_col)
+            p2_group = df.filter(df[period_col] == p2_value).group_by(group_col)
+
+            p1_df = p1_group.aggregate(
+                **{
+                    cols.agg_customer_id: df[cols.customer_id].nunique(),
+                    cols.agg_transaction_id: df[cols.transaction_id].nunique(),
+                    cols.agg_unit_spend: df[cols.unit_spend].sum(),
+                },
+            ).order_by(group_col)
+
+            p2_df = p2_group.aggregate(
+                **{
+                    cols.agg_customer_id: df[cols.customer_id].nunique(),
+                    cols.agg_transaction_id: df[cols.transaction_id].nunique(),
+                    cols.agg_unit_spend: df[cols.unit_spend].sum(),
+                },
+            ).order_by(group_col)
+
+            if cols.unit_qty in df.columns:
+                unit_qty_df = p1_group.aggregate(**{cols.agg_unit_qty: df[cols.unit_qty].sum()})
+                p1_df = p1_df.join(unit_qty_df, [group_col])
+                unit_qty_df_p2 = p2_group.aggregate(**{cols.agg_unit_qty: df[cols.unit_qty].sum()})
+                p2_df = p2_df.join(unit_qty_df_p2, [group_col])
+
+        else:
+            p1_group = df.filter(df[period_col] == p1_value)
+            p2_group = df.filter(df[period_col] == p2_value)
+            p1_df = ibis.memtable(
+                pd.DataFrame(
+                    {
+                        cols.agg_customer_id: [p1_group[cols.customer_id].nunique().execute()],
+                        cols.agg_transaction_id: [p1_group[cols.transaction_id].nunique().execute()],
+                        cols.agg_unit_spend: [p1_group[cols.unit_spend].sum().execute()],
+                    },
+                    index=["p1"],
+                ),
+            )
+
+            p2_df = ibis.memtable(
+                pd.DataFrame(
+                    {
+                        cols.agg_customer_id: [p2_group[cols.customer_id].nunique().execute()],
+                        cols.agg_transaction_id: [p2_group[cols.transaction_id].nunique().execute()],
+                        cols.agg_unit_spend: [p2_group[cols.unit_spend].sum().execute()],
+                    },
+                    index=["p2"],
+                ),
+            )
+
+            if cols.unit_qty in df.columns:
+                p1_df = p1_df.mutate(**{cols.agg_unit_qty: p1_group[cols.unit_qty].sum().execute()})
+                p2_df = p2_df.mutate(**{cols.agg_unit_qty: p2_group[cols.unit_qty].sum().execute()})
+
+        new_p1_index = [True] * p1_df.count().execute() + [False] * p2_df.count().execute()
         new_p2_index = [not i for i in new_p1_index]
 
-        return pd.concat([p1_df, p2_df]), new_p1_index, new_p2_index
+        if group_col is not None:
+            p1_df = p1_df.order_by(group_col)
+            p2_df = p2_df.order_by(group_col)
+            result_df = ibis.union(p1_df, p2_df).execute()
+            result_df = pd.DataFrame(result_df)
+            result_df.set_index(group_col, inplace=True)
+            result_df.index = pd.CategoricalIndex(result_df.index)
+        else:
+            result_df = ibis.union(p1_df, p2_df).execute()
+            result_df.index = ["p1", "p2"]
+
+        return result_df, new_p1_index, new_p2_index
 
     @staticmethod
     def _calc_tree_kpis(
