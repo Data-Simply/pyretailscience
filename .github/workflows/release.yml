@@ -42,21 +42,35 @@ jobs:
           uv sync
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
-      - name: Bump Version Based on Release Type
+      - name: Install toml in uv environment
+        run: uv run pip install toml
+      - name: Bump Version
         run: |
-          version=$(grep 'version' pyproject.toml | cut -d '"' -f2)
+          new_version=$(python << EOF
+          import toml
+          import sys
 
-          if [ "${{ inputs.release }}" == "major" ]; then
-            new_version=$(echo $version | awk -F. '{print $1+1 ".0.0"}')
-          elif [ "${{ inputs.release }}" == "minor" ]; then
-            new_version=$(echo $version | awk -F. '{print $1 "." $2+1 ".0"}')
-          elif [ "${{ inputs.release }}" == "patch" ]; then
-            new_version=$(echo $version | awk -F. '{print $1 "." $2 "." $3+1}')
-          fi
+          with open('pyproject.toml', 'r') as f:
+              config = toml.load(f)
 
-          echo "Bumping version to $new_version"
-          sed -i 's/version = "'"$version"'"/version = "'"$new_version"'"/' pyproject.toml
+          version = config['project']['version']
+          release = "${{ inputs.release }}"
 
+          major, minor, patch = map(int, version.split('.'))
+
+          if release == "major":
+              new_version = f"{major + 1}.0.0"
+          elif release == "minor":
+              new_version = f"{major}.{minor + 1}.0"
+          elif release == "patch":
+              new_version = f"{major}.{minor}.{patch + 1}"
+
+          config['project']['version'] = new_version
+
+          with open('pyproject.toml', 'w') as f:
+              toml.dump(config, f)
+          EOF)
+          echo "New Version: $new_version"
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
@@ -71,10 +85,9 @@ jobs:
           git add pyproject.toml
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
-          VERSION=$(uv version)
-          echo "RELEASE_TAG=${VERSION}" >> $GITHUB_ENV
-          git tag -a $VERSION -m "Auto-generated tag"
-          git push origin $VERSION
+          echo "RELEASE_TAG=${new_version}" >> $GITHUB_ENV
+          git tag -a $new_version -m "Auto-generated tag"
+          git push origin $new_version
 
       - name: "Create release"
         uses: actions/github-script@v7
