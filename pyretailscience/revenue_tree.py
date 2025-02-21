@@ -108,13 +108,10 @@ class RevenueTree:
         if cols.unit_qty in df.columns:
             aggs[cols.agg_unit_qty] = df[cols.unit_qty].sum()
 
-        p1_group = df.filter(df[period_col] == p1_value)
-        p2_group = df.filter(df[period_col] == p2_value)
-        if group_col is not None:
-            p1_group = p1_group.group_by(group_col)
-            p2_group = p2_group.group_by(group_col)
-        p1_df = pd.DataFrame(p1_group.aggregate(**aggs).execute())
-        p2_df = pd.DataFrame(p2_group.aggregate(**aggs).execute())
+        group_by_cols = [group_col, period_col] if group_col else [period_col]
+        df = pd.DataFrame(df.group_by(group_by_cols).aggregate(**aggs).execute())
+        p1_df = df[df[period_col] == p1_value].drop(columns=[period_col])
+        p2_df = df[df[period_col] == p2_value].drop(columns=[period_col])
 
         if group_col is not None:
             p1_df = p1_df.sort_values(by=group_col)
@@ -144,7 +141,7 @@ class RevenueTree:
         if cols.agg_unit_qty in df.columns:
             required_cols.append(cols.agg_unit_qty)
 
-        df = df[required_cols]
+        df = df[required_cols].copy()
         df_cols = df.columns
 
         if cols.agg_unit_qty in df_cols:
