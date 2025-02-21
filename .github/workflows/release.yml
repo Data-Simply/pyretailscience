@@ -42,32 +42,21 @@ jobs:
           uv sync
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
-      - name: Bump Version
+      - name: Bump Version Based on Release Type
         run: |
-          python << 'EOF'
-          import toml
-          import sys
+          version=$(grep 'version' pyproject.toml | cut -d '"' -f2)
 
-          with open('pyproject.toml', 'r') as f:
-              config = toml.load(f)
+          if [ "${{ inputs.release }}" == "major" ]; then
+            new_version=$(echo $version | awk -F. '{print $1+1 ".0.0"}')
+          elif [ "${{ inputs.release }}" == "minor" ]; then
+            new_version=$(echo $version | awk -F. '{print $1 "." $2+1 ".0"}')
+          elif [ "${{ inputs.release }}" == "patch" ]; then
+            new_version=$(echo $version | awk -F. '{print $1 "." $2 "." $3+1}')
+          fi
 
-          version = config['project']['version']
-          release = "${{ inputs.release }}"
+          echo "Bumping version to $new_version"
+          sed -i 's/version = "'"$version"'"/version = "'"$new_version"'"/' pyproject.toml
 
-          major, minor, patch = map(int, version.split('.'))
-
-          if release == "major":
-              new_version = f"{major + 1}.0.0"
-          elif release == "minor":
-              new_version = f"{major}.{minor + 1}.0"
-          elif release == "patch":
-              new_version = f"{major}.{minor}.{patch + 1}"
-
-          config['project']['version'] = new_version
-
-          with open('pyproject.toml', 'w') as f:
-              toml.dump(config, f)
-          EOF
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
