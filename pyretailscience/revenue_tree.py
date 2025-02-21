@@ -122,11 +122,11 @@ class RevenueTree:
 
         result_df = pd.concat([p1_df, p2_df], ignore_index=True)
 
-        if group_col is not None:
+        if group_col is None:
+            result_df.index = ["p1", "p2"]
+        else:
             result_df.set_index(group_col, inplace=True)
             result_df.index = pd.CategoricalIndex(result_df.index)
-        else:
-            result_df.index = ["p1", "p2"]
         return result_df, new_p1_index, new_p2_index
 
     @staticmethod
