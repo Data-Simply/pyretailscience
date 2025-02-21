@@ -19,12 +19,14 @@ class TestRevenueTree:
 
     def test_dataframe_missing_required_columns(self, cols: ColumnHelper):
         """Test that an error is raised when the DataFrame is missing required columns."""
-        data = {cols.customer_id: [1, 2, 3]}
+        data = {
+            cols.customer_id: [1, 2, 3],
+            cols.transaction_date: ["2023-01-01", "2023-06-02", "2023-01-03"],
+            "period": ["P1", "P2", "P1"],
+        }
         df = pd.DataFrame(data)
-        p1_index = [True, False, True]
-        p2_index = [False, True, False]
         with pytest.raises(ValueError) as excinfo:
-            RevenueTree(df=df, p1_index=p1_index, p2_index=p2_index)
+            RevenueTree(df=df, period_col="period", p1_value="P1", p2_value="P2")
         assert "The following columns are required but missing:" in str(excinfo.value)
 
     def test_dataframe_missing_group_col(self, cols: ColumnHelper):
@@ -32,12 +34,13 @@ class TestRevenueTree:
         data = {
             cols.customer_id: [1, 2, 3],
             cols.unit_spend: [100, 200, 300],
+            cols.transaction_date: ["2023-01-01", "2023-06-02", "2023-01-03"],
+            "period": ["P1", "P2", "P1"],
         }
         df = pd.DataFrame(data)
-        p1_index = [True, False, True]
-        p2_index = [False, True, False]
+
         with pytest.raises(ValueError) as excinfo:
-            RevenueTree(df=df, p1_index=p1_index, p2_index=p2_index, group_col="group_id")
+            RevenueTree(df=df, period_col="period", p1_value="P1", p2_value="P2", group_col="group_id")
         assert "The following columns are required but missing:" in str(excinfo.value)
 
     @pytest.mark.parametrize("include_quantity", [True, False])
@@ -48,11 +51,17 @@ class TestRevenueTree:
                 cols.customer_id: [1, 2, 3, 4, 5, 6],
                 cols.transaction_id: [1, 2, 3, 4, 5, 6],
                 cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+                cols.transaction_date: [
+                    "2023-01-01",
+                    "2023-01-05",
+                    "2023-01-03",
+                    "2023-01-06",
+                    "2023-01-02",
+                    "2023-01-04",
+                ],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2"],
             },
         )
-
-        p1_index = [True, False, True, False, True, False]
-        p2_index = [False, True, False, True, False, True]
 
         expected_df = pd.DataFrame(
             {
@@ -69,8 +78,9 @@ class TestRevenueTree:
 
         result_df, new_p1_index, new_p2_index = RevenueTree._agg_data(
             df=df,
-            p1_index=p1_index,
-            p2_index=p2_index,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
         )
 
         pd.testing.assert_frame_equal(result_df, expected_df)
@@ -86,11 +96,17 @@ class TestRevenueTree:
                 cols.customer_id: [1, 2, 3, 4, 5, 6],
                 cols.transaction_id: [1, 2, 3, 4, 5, 6],
                 cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+                cols.transaction_date: [
+                    "2023-01-01",
+                    "2023-01-05",
+                    "2023-01-03",
+                    "2023-01-06",
+                    "2023-01-02",
+                    "2023-01-04",
+                ],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2"],
             },
         )
-
-        p1_index = [True, False, True, False, True, False]
-        p2_index = [False, True, False, True, False, True]
 
         expected_df = pd.DataFrame(
             {
@@ -107,9 +123,10 @@ class TestRevenueTree:
             expected_df[cols.agg_unit_qty] = [4, 5, 2, 10]
 
         result_df, new_p1_index, new_p2_index = RevenueTree._agg_data(
-            df=df,
-            p1_index=p1_index,
-            p2_index=p2_index,
+            df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
             group_col="group_id",
         )
 
@@ -125,17 +142,27 @@ class TestRevenueTree:
                 cols.customer_id: [1, 2, 3, 4, 5, 6],
                 cols.transaction_id: [1, 2, 3, 4, 5, 6],
                 cols.unit_spend: [150.0, 75.5, 220.0, 310.0, 450.0, 120.0],
+                cols.transaction_date: [
+                    "2023-01-01",
+                    "2023-01-05",
+                    "2023-01-03",
+                    "2023-01-06",
+                    "2023-01-02",
+                    "2023-01-04",
+                ],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2"],
             },
         )
 
         if include_quantity:
             df[cols.unit_qty] = [2, 1, 3, 4, 5, 2]
 
-        p1_index = [True, False, True, False, True, False]
-        p2_index = [False, True, False, True, False, True]
-
-        rt = RevenueTree(df=df, p1_index=p1_index, p2_index=p2_index)
-
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+        )
         tree_index = 0
         tree_data = rt.df.to_dict(orient="records")[tree_index]
 
@@ -203,36 +230,35 @@ class TestRevenueTree:
                 cols.customer_id: [1, 2, 3, 4, 5, 6, 7],
                 cols.transaction_id: [1, 2, 3, 4, 5, 6, 7],
                 cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2", "P1"],
             },
         )
 
-        p1_index = [True, False, True, False, True, False, True]
-        p2_index = [False, True, False, True, False, True, False]
-
         expected_df = pd.DataFrame(
             {
-                "group_id": [1, 2, 3, 1, 2, 3],
-                cols.agg_customer_id: [2, 1, 1, 1, 2, 0],
-                cols.agg_transaction_id: [2, 1, 1, 1, 2, 0],
-                cols.agg_unit_spend: [400.0, 500.0, 700.0, 200.0, 1000.0, 0.0],
+                "group_id": [1, 2, 3, 1, 2],
+                cols.agg_customer_id: [2, 1, 1, 1, 2],
+                cols.agg_transaction_id: [2, 1, 1, 1, 2],
+                cols.agg_unit_spend: [400.0, 500.0, 700.0, 200.0, 1000.0],
             },
         ).set_index("group_id")
         expected_df.index = pd.CategoricalIndex(expected_df.index)
 
         if include_quantity:
             df[cols.unit_qty] = [1, 2, 3, 4, 5, 6, 7]
-            expected_df[cols.agg_unit_qty] = [4, 5, 7, 2, 10, 0]
+            expected_df[cols.agg_unit_qty] = [4, 5, 7, 2, 10]
 
         result_df, new_p1_index, new_p2_index = RevenueTree._agg_data(
             df=df,
-            p1_index=p1_index,
-            p2_index=p2_index,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
             group_col="group_id",
         )
 
         pd.testing.assert_frame_equal(result_df, expected_df)
-        assert new_p1_index == [True, True, True, False, False, False]
-        assert new_p2_index == [False, False, False, True, True, True]
+        assert new_p1_index == [True, True, True, False, False]
+        assert new_p2_index == [False, False, False, True, True]
 
     @pytest.mark.parametrize("include_quantity", [True, False])
     def test_contrib_sum_p1_only_group(self, cols: ColumnHelper, include_quantity: bool):
@@ -243,16 +269,28 @@ class TestRevenueTree:
                 cols.customer_id: [1, 2, 3, 4, 5, 6, 7],
                 cols.transaction_id: [1, 2, 3, 4, 5, 6, 7],
                 cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0],
+                cols.transaction_date: [
+                    "2023-01-01",
+                    "2023-01-05",
+                    "2023-01-03",
+                    "2023-01-06",
+                    "2023-01-02",
+                    "2023-01-04",
+                    "2022-12-10",
+                ],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2", "P1"],
             },
         )
 
         if include_quantity:
             df[cols.unit_qty] = [1, 2, 3, 4, 5, 6, 7]
 
-        p1_index = [True, False, True, False, True, False, True]
-        p2_index = [False, True, False, True, False, True, False]
-
-        rt = RevenueTree(df=df, p1_index=p1_index, p2_index=p2_index)
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+        )
 
         tree_index = 0
         tree_data = rt.df.to_dict(orient="records")[tree_index]
