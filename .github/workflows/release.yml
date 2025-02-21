@@ -40,9 +40,22 @@ jobs:
           pip install build
           pip install uv==0.5.30
           uv sync
-          uv version
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
+      - name: Bump Version Based on Release Type
+        run: |
+          version=$(grep 'version' pyproject.toml | cut -d '"' -f2)
+
+          if [ "${{ inputs.release }}" == "major" ]; then
+            new_version=$(echo $version | awk -F. '{print $1+1 ".0.0"}')
+          elif [ "${{ inputs.release }}" == "minor" ]; then
+            new_version=$(echo $version | awk -F. '{print $1 "." $2+1 ".0"}')
+          elif [ "${{ inputs.release }}" == "patch" ]; then
+            new_version=$(echo $version | awk -F. '{print $1 "." $2 "." $3+1}')
+          fi
+
+          echo "Bumping version to $new_version"
+          sed -i "s/version = \"$version\"/version = \"$new_version\"/" pyproject.toml
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
