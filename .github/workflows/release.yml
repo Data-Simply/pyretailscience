@@ -48,15 +48,12 @@ jobs:
         run: |
           new_version=$(python - <<EOF
           import toml
-          import sys
 
           with open('pyproject.toml', 'r') as f:
               config = toml.load(f)
 
           version = config['project']['version']
-          print(f"version: {version}")
           release = "${{ inputs.release }}"
-          print(f"release: {release}")
 
           major, minor, patch = map(int, version.split('.'))
 
@@ -66,17 +63,19 @@ jobs:
               new_version = f"{major}.{minor + 1}.0"
           elif release == "patch":
               new_version = f"{major}.{minor}.{patch + 1}"
-          print(release, new_version)
 
           config['project']['version'] = new_version
 
           with open('pyproject.toml', 'w') as f:
               toml.dump(config, f)
 
+          print(new_version)
           EOF
           )
-          echo "New Version: ${new_version}"
-          echo "RELEASE_TAG=$new_version" >> $GITHUB_ENV
+
+          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+          echo "New Version: ${VERSION}"
+          echo "RELEASE_TAG=${VERSION}" >> $GITHUB_ENV
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
@@ -91,14 +90,9 @@ jobs:
           git add pyproject.toml
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
-          echo "New Version: ${RELEASE_TAG}"
-          if [[ -n "$RELEASE_TAG" ]]; then
-            git tag -a "$RELEASE_TAG" -m "Auto-generated tag"
-            git push origin "$RELEASE_TAG"
-          else
-            echo "Failed to create tag: Version is empty"
-            exit 1
-          fi
+          echo "Tagging new version: $RELEASE_TAG"
+          git tag -a "$RELEASE_TAG" -m "Auto-generated tag"
+          git push origin "$RELEASE_TAG"
 
       - name: "Create release"
         uses: actions/github-script@v7
