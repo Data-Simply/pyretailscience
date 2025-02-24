@@ -1,6 +1,6 @@
 [project]
 name = "pyretailscience"
-version = "0.5.0"
+version = "0.6.0"
 description = "Retail Data Science Tools"
 requires-python = ">=3.10,<3.13"
 readme = "README.md"
@@ -27,6 +27,10 @@ target-version = "py310"
 line-length = 120
 show-fixes = true
 
+[tool.ruff.lint]
+ignore = [ "ANN101", "ANN102", "EM101", "TRY003", "PT011", "PTH123", "SLF001",]
+select = [ "A", "ANN", "ARG", "B", "BLE", "C4", "C90", "COM", "D", "D1", "D2", "D3", "D4", "DTZ", "EM", "ERA", "EXE", "F", "FA", "FLY", "G", "I", "ICN", "INP", "INT", "ISC", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "Q", "RET", "RUF", "RSE", "S", "SIM", "SLF", "SLOT", "T10", "T20", "TCH", "TID", "TRY", "UP", "W", "YTT",]
+
 [tool.pytest.ini_options]
 addopts = "--cov=pyretailscience --cov-report=term-missing  --cov-branch"
 
@@ -37,10 +41,6 @@ source = [ "pyretailscience",]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-
-[tool.ruff.lint]
-ignore = [ "ANN101", "ANN102", "EM101", "TRY003", "PT011", "PTH123", "SLF001",]
-select = [ "A", "ANN", "ARG", "B", "BLE", "C4", "C90", "COM", "D", "D1", "D2", "D3", "D4", "DTZ", "EM", "ERA", "EXE", "F", "FA", "FLY", "G", "I", "ICN", "INP", "INT", "ISC", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "Q", "RET", "RUF", "RSE", "S", "SIM", "SLF", "SLOT", "T10", "T20", "TCH", "TID", "TRY", "UP", "W", "YTT",]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = [ "F401", "F403", "F405", "D104",]
