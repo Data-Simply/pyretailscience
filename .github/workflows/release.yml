@@ -54,7 +54,9 @@ jobs:
               config = toml.load(f)
 
           version = config['project']['version']
+          echo "version: $version"
           release = "${{ inputs.release }}"
+          echo "release: $release"
 
           major, minor, patch = map(int, version.split('.'))
 
@@ -64,6 +66,7 @@ jobs:
               new_version = f"{major}.{minor + 1}.0"
           elif release == "patch":
               new_version = f"{major}.{minor}.{patch + 1}"
+          echo "new_version-: $new_version"
 
           config['project']['version'] = new_version
 
