@@ -46,7 +46,7 @@ jobs:
         run: uv run pip install toml
       - name: Bump Version
         run: |
-          new_version=$(python << EOF
+          new_version=$(python - <<EOF
           import toml
           import sys
 
@@ -66,13 +66,15 @@ jobs:
               new_version = f"{major}.{minor + 1}.0"
           elif release == "patch":
               new_version = f"{major}.{minor}.{patch + 1}"
-          print(f"new_version: {new_version}")
+          print(release, new_version)
 
           config['project']['version'] = new_version
 
           with open('pyproject.toml', 'w') as f:
               toml.dump(config, f)
-          EOF)
+
+          EOF
+          )
           echo "New Version: $new_version"
       - name: Build package
         run: python -m build
@@ -88,8 +90,10 @@ jobs:
           git add pyproject.toml
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
+          echo "RELEASE_TAG=$new_version"
+          echo "RELEASE_TAG=$new_version" >> $GITHUB_ENV
           echo "RELEASE_TAG=${new_version}" >> $GITHUB_ENV
-          git tag -a $new_version -m "Auto-generated tag"
+          git tag -a "$new_version" -m "Auto-generated tag" || echo "Failed to create tag: $new_version"
           git push origin $new_version
 
       - name: "Create release"
