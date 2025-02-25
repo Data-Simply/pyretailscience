@@ -462,6 +462,7 @@ rev_tree = revenue_tree.RevenueTree(
 <div class="clear" markdown>
 
 ![HML Segmentation Distribution](assets/images/analysis_modules/hml_segmentation.svg){ align=right loading=lazy width="50%"}
+
 Heavy, Medium, Light (HML) is a segmentation that places customers into groups based on their percentile of spend or the
 number of products they bought. Heavy customers are the top 20% of customers, medium are the next 30%, and light are the
 bottom 50% of customers. These values are chosen based on the proportions of the Pareto distribution. Often, purchase
@@ -515,16 +516,67 @@ bar.plot(
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Threshold Segmentation Distribution](
+    assets/images/analysis_modules/threshold_segmentation.svg
+){align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+Threshold Segmentation offers a flexible approach to customer grouping based on custom-defined percentile thresholds.
+Unlike the fixed 20/30/50 split in HML segmentation, Threshold Segmentation allows you to specify your own thresholds
+and segment names, making it adaptable to various business needs.
+
+This flexibility enables you to:
+
+- Create quartile segmentations (e.g., top 25%, next 25%, etc.)
+- Define custom tiers based on your specific business model
+- Segment customers based on alternative metrics beyond spend, such as visit frequency or product variety
+
+Like HML segmentation, the module provides options for handling customers with zero values, allowing you to include
+them with the lowest segment, exclude them entirely, or place them in a separate segment.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+import numpy as np
+import pandas as pd
+
+from pyretailscience.plots import bar
+from pyretailscience.segmentation import ThresholdSegmentation
+
+# Create sample transaction data
+rng = np.random.default_rng(42)
+df = pd.DataFrame(
+    {
+        "customer_id": np.repeat(range(1, 51), 3),  # 50 customers with 3 transactions each
+        "unit_spend": rng.pareto(a=1.5, size=150) * 20,  # Pareto distribution to mimic real spending
+    },
+)
+
+# Create custom segmentation with quartiles
+# Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
+thresholds = [0.25, 0.50, 0.75, 1.0]
+segments = ["Bronze", "Silver", "Gold", "Platinum"]
+
+# Create threshold segmentation
+seg = ThresholdSegmentation(
+    df=df,
+    thresholds=thresholds,
+    segments=segments,
+    zero_value_customers="separate_segment",
+)
+
+# Visualize spend by segment
+bar.plot(
+    seg.df.groupby("segment_name")["unit_spend"].sum(),
+    value_col="unit_spend",
+    source_text="Source: PyRetailScience",
+    sort_order="descending",
+    x_label="",
+    y_label="Segment Spend",
+    title="Customer Value by Segment",
+    rot=0,
+)
 ```
 
 ### Segmentation Stats
