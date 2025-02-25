@@ -461,8 +461,7 @@ rev_tree = revenue_tree.RevenueTree(
 
 <div class="clear" markdown>
 
-![HML Segementation Distribution](assets/images/analysis_modules/hml_segmentation.svg){ align=right loading=lazy width="50%"}
-
+![HML Segmentation Distribution](assets/images/analysis_modules/hml_segmentation.svg){ align=right loading=lazy width="50%"}
 Heavy, Medium, Light (HML) is a segmentation that places customers into groups based on their percentile of spend or the
 number of products they bought. Heavy customers are the top 20% of customers, medium are the next 30%, and light are the
 bottom 50% of customers. These values are chosen based on the proportions of the Pareto distribution. Often, purchase
