@@ -461,16 +461,55 @@ rev_tree = revenue_tree.RevenueTree(
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![HML Segementation Distribution](assets/images/analysis_modules/hml_segmentation.svg){ align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+Heavy, Medium, Light (HML) is a segmentation that places customers into groups based on their percentile of spend or the
+number of products they bought. Heavy customers are the top 20% of customers, medium are the next 30%, and light are the
+bottom 50% of customers. These values are chosen based on the proportions of the Pareto distribution. Often, purchase
+behavior follows this distribution, typified by the expression "20% of your customers generate 80% of your sales."
+HML segmentation helps answer questions such as:
+
+- How much more are your best customers worth?
+- How much more could you spend acquiring your best customers?
+- What is the concentration of sales with your top (heavy) customers?
+
+The module also handles customers with zero spend, with options to include them with light customers, exclude them
+entirely, or place them in a separate "Zero" segment.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+import numpy as np
+import pandas as pd
+
+from pyretailscience.plots import bar
+from pyretailscience.segmentation import HMLSegmentation
+
+# Create sample transaction data
+rng = np.random.default_rng(42)
+df = pd.DataFrame(
+    {
+        "customer_id": np.repeat(range(1, 51), 3),  # 50 customers with 3 transactions each
+        "unit_spend": rng.pareto(a=1.5, size=150) * 20,  # Pareto distribution to mimic real spending
+    },
+)
+
+# Create HML segmentation
+seg = HMLSegmentation(df, zero_value_customers="include_with_light")
+
+# Visualize spend by segment
+bar.plot(
+    seg.df.groupby("segment_name")["unit_spend"].sum(),
+    value_col="unit_spend",
+    source_text="Source: PyRetailScience",
+    sort_order="descending",
+    x_label="",
+    y_label="Segment Spend",
+    title="What's the value of a Heavy customer?",
+    rot=0,
+)
 ```
 
 ### Threshold Segmentation
