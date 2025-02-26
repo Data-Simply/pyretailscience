@@ -1,5 +1,7 @@
 """This module contains the CrossShop class that is used to create a cross-shop diagram."""
 
+
+import ibis
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
@@ -16,10 +18,13 @@ class CrossShop:
 
     def __init__(
         self,
-        df: pd.DataFrame,
-        group_1_idx: list[bool] | pd.Series,
-        group_2_idx: list[bool] | pd.Series,
-        group_3_idx: list[bool] | pd.Series | None = None,
+        df: pd.DataFrame | ibis.Table,
+        group_1_col: str,
+        group_1_val: str,
+        group_2_col: str,
+        group_2_val: str,
+        group_3_col: str | None = None,
+        group_3_val: str | None = None,
         labels: list[str] | None = None,
         value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
@@ -27,13 +32,13 @@ class CrossShop:
         """Creates a cross-shop diagram that is used to show the overlap of customers between different groups.
 
         Args:
-            df (pd.DataFrame): The dataframe with transactional data.
-            group_1_idx (list[bool], pd.Series): A list of bool values determining whether the row is a part of the
-                first group.
-            group_2_idx (list[bool], pd.Series): A list of bool values determining whether the row is a part of the
-                second group.
-            group_3_idx (list[bool], pd.Series, optional): An optional list of bool values determining whether the
-                row is a part of the third group. Defaults to None. If not supplied, only two groups will be considered.
+            df (pd.DataFrame | ibis.Table):  The input DataFrame or ibis Table containing transactional data.
+            group_1_col (str): The column name for the first group.
+            group_1_val (str): The value of the first group to match.
+            group_2_col (str): The column name for the second group.
+            group_2_val (str): The value of the second group to match.
+            group_3_col (str, optional): The column name for the third group. Defaults to None.
+            group_3_val (str, optional): The value of the third group to match. Defaults to None.
             labels (list[str], optional): The labels for the groups. Defaults to None.
             value_col (str, optional): The column to aggregate. Defaults to the option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
@@ -51,7 +56,7 @@ class CrossShop:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        self.group_count = 2 if group_3_idx is None else 3
+        self.group_count = 2 if group_3_col is None else 3
 
         if (labels is not None) and (len(labels) != self.group_count):
             raise ValueError("The number of labels must be equal to the number of group indexes given")
@@ -60,9 +65,12 @@ class CrossShop:
 
         self.cross_shop_df = self._calc_cross_shop(
             df=df,
-            group_1_idx=group_1_idx,
-            group_2_idx=group_2_idx,
-            group_3_idx=group_3_idx,
+            group_1_col=group_1_col,
+            group_1_val=group_1_val,
+            group_2_col=group_2_col,
+            group_2_val=group_2_val,
+            group_3_col=group_3_col,
+            group_3_val=group_3_val,
             value_col=value_col,
             agg_func=agg_func,
         )
@@ -73,21 +81,26 @@ class CrossShop:
 
     @staticmethod
     def _calc_cross_shop(
-        df: pd.DataFrame,
-        group_1_idx: list[bool],
-        group_2_idx: list[bool],
-        group_3_idx: list[bool] | None = None,
+        df: pd.DataFrame | ibis.Table,
+        group_1_col: str,
+        group_1_val: str,
+        group_2_col: str,
+        group_2_val: str,
+        group_3_col: str | None = None,
+        group_3_val: str | None = None,
         value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
     ) -> pd.DataFrame:
         """Calculate the cross-shop dataframe that will be used to plot the diagram.
 
         Args:
-            df (pd.DataFrame): The dataframe with transactional data.
-            group_1_idx (list[bool]): A list of bool values determining whether the row is a part of the first group.
-            group_2_idx (list[bool]): A list of bool values determining whether the row is a part of the second group.
-            group_3_idx (list[bool], optional): An optional list of bool values determining whether the row is a part
-                of the third group. Defaults to None. If not supplied, only two groups will be considered.
+            df (pd.DataFrame | ibis.Table):  The input DataFrame or ibis Table containing transactional data.
+            group_1_col (str): Column name for the first group.
+            group_1_val (str): Value to filter for the first group.
+            group_2_col (str): Column name for the second group.
+            group_2_val (str): Value to filter for the second group.
+            group_3_col (str, optional): Column name for the third group. Defaults to None.
+            group_3_val (str, optional): Value to filter for the third group. Defaults to None.
             value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
 
@@ -95,38 +108,44 @@ class CrossShop:
             pd.DataFrame: The cross-shop dataframe.
 
         Raises:
-            ValueError: If the groups are not mutually exclusive.
+            ValueError: If group_3_col or group_3_val is populated, then the other must be as well.
         """
         cols = ColumnHelper()
-        if isinstance(group_1_idx, list):
-            group_1_idx = pd.Series(group_1_idx)
-        if isinstance(group_2_idx, list):
-            group_2_idx = pd.Series(group_2_idx)
-        if group_3_idx is not None and isinstance(group_3_idx, list):
-            group_3_idx = pd.Series(group_3_idx)
 
-        cs_df = df[[cols.customer_id]].copy()
+        if isinstance(df, pd.DataFrame):
+            df: ibis.Table = ibis.memtable(df)
+        if (group_3_col is None) != (group_3_val is None):
+            raise ValueError("If group_3_col or group_3_val is populated, then the other must be as well")
 
-        cs_df["group_1"] = group_1_idx.astype(int)
-        cs_df["group_2"] = group_2_idx.astype(int)
+        # Using a temporary value column to avoid duplicate column errors during selection. This happens when `value_col` has the same name as `customer_id`, causing conflicts in `.select()`.
+        temp_value_col = "temp_value_col"
+        df = df.mutate(**{temp_value_col: df[value_col]})
+
+        group_1 = (df[group_1_col] == group_1_val).cast("int32").name("group_1")
+        group_2 = (df[group_2_col] == group_2_val).cast("int32").name("group_2")
+        group_3 = (df[group_3_col] == group_3_val).cast("int32").name("group_3") if group_3_col else None
+
         group_cols = ["group_1", "group_2"]
+        select_cols = [df[cols.customer_id], group_1, group_2]
+        if group_3 is not None:
+            group_cols.append("group_3")
+            select_cols.append(group_3)
 
-        if group_3_idx is not None:
-            cs_df["group_3"] = group_3_idx.astype(int)
-            group_cols += ["group_3"]
+        cs_df = df.select([*select_cols, df[temp_value_col]]).order_by(cols.customer_id)
+        cs_df = (
+            cs_df.group_by(cols.customer_id)
+            .aggregate(
+                **{col: cs_df[col].max().name(col) for col in group_cols},
+                **{temp_value_col: getattr(cs_df[temp_value_col], agg_func)().name(temp_value_col)},
+            )
+            .order_by(cols.customer_id)
+        ).execute()
 
-        if (cs_df[group_cols].sum(axis=1) > 1).any():
-            raise ValueError("The groups must be mutually exclusive.")
-
-        if not any(group_1_idx) or not any(group_2_idx) or (group_3_idx is not None and not any(group_3_idx)):
-            raise ValueError("There must at least one row selected for group_1_idx, group_2_idx, and group_3_idx.")
-
-        cs_df = cs_df.groupby(cols.customer_id)[group_cols].max()
         cs_df["groups"] = cs_df[group_cols].apply(lambda x: tuple(x), axis=1)
-
-        kpi_df = df.groupby(cols.customer_id)[value_col].agg(agg_func)
-
-        return cs_df.merge(kpi_df, left_index=True, right_index=True)
+        column_order = [cols.customer_id, *group_cols, "groups", temp_value_col]
+        cs_df = cs_df[column_order]
+        cs_df.set_index(cols.customer_id, inplace=True)
+        return cs_df.rename(columns={temp_value_col: value_col})
 
     @staticmethod
     def _calc_cross_shop_table(
