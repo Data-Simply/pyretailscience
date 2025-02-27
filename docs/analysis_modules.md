@@ -664,7 +664,7 @@ segment_stats.df
 ){align=right loading=lazy width="50%"}
 
 The Purchases Per Customer module analyzes and visualizes the distribution of transaction frequency across your customer
-base. This module helps you understand customer purchasing patterns by percentile and is useful for deteriming values
+base. This module helps you understand customer purchasing patterns by percentile and is useful for determining values
 like your churn window.
 
 </div>
@@ -724,7 +724,7 @@ dbp.plot(
 ![Transaction Churn](assets/images/analysis_modules/transaction_churn.svg){align=right loading=lazy width="50%"}
 
 The Transaction Churn module analyzes how customer churn rates vary based on the number of purchases customers have
-made. This help reveal critical retention thresholds in the customer lifecycle when setting a churn window
+made. This helps reveal critical retention thresholds in the customer lifecycle when setting a churn window
 
 </div>
 
