@@ -737,7 +737,7 @@ tc = TransactionChurn(transactions, churn_period=churn_period)
 
 tc.plot(
     title="Churn Rate by Number of Purchases",
-    cumlative=True,
+    cumulative=True,
     source_text="Source: PyRetailScience",
 )
 ```

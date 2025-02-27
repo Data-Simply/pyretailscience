@@ -108,7 +108,7 @@ Here is an excerpt from the customer retention analysis example [notebook](https
 ax = dbp.plot(
     figsize=(10, 5),
     bins=20,
-    cumlative=True,
+    cumulative=True,
     draw_percentile_line=True,
     percentile_line=0.8,
     source_text="Source: Transactions in 2023",
