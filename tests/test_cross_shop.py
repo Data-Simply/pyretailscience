@@ -15,9 +15,20 @@ def sample_data():
     return pd.DataFrame(
         {
             cols.customer_id: [1, 2, 3, 4, 5, 5, 6, 7, 8, 8, 9, 10],
-            "group_1_idx": [True, False, False, False, False, True, True, False, False, True, False, True],
-            "group_2_idx": [False, True, False, False, True, False, False, True, False, False, True, False],
-            "group_3_idx": [False, False, True, False, False, False, False, False, True, False, False, False],
+            "category_1_name": [
+                "Jeans",
+                "Shoes",
+                "Dresses",
+                "Hats",
+                "Shoes",
+                "Jeans",
+                "Jeans",
+                "Shoes",
+                "Dresses",
+                "Jeans",
+                "Shoes",
+                "Jeans",
+            ],
             cols.unit_spend: [10, 20, 30, 40, 20, 50, 10, 20, 30, 15, 40, 50],
         },
     )
@@ -27,14 +38,16 @@ def test_calc_cross_shop_two_groups(sample_data):
     """Test the _calc_cross_shop method with two groups."""
     cross_shop_df = CrossShop._calc_cross_shop(
         sample_data,
-        group_1_idx=sample_data["group_1_idx"],
-        group_2_idx=sample_data["group_2_idx"],
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",
+        group_2_val="Shoes",
     )
     ret_df = pd.DataFrame(
         {
             cols.customer_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "group_1": [1, 0, 0, 0, 1, 1, 0, 1, 0, 1],
-            "group_2": [0, 1, 0, 0, 1, 0, 1, 0, 1, 0],
+            "group_1": pd.Series([1, 0, 0, 0, 1, 1, 0, 1, 0, 1], dtype="int32"),
+            "group_2": pd.Series([0, 1, 0, 0, 1, 0, 1, 0, 1, 0], dtype="int32"),
             "groups": [(1, 0), (0, 1), (0, 0), (0, 0), (1, 1), (1, 0), (0, 1), (1, 0), (0, 1), (1, 0)],
             cols.unit_spend: [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
         },
@@ -47,16 +60,19 @@ def test_calc_cross_shop_three_groups(sample_data):
     """Test the _calc_cross_shop method with three groups."""
     cross_shop_df = CrossShop._calc_cross_shop(
         sample_data,
-        group_1_idx=sample_data["group_1_idx"],
-        group_2_idx=sample_data["group_2_idx"],
-        group_3_idx=sample_data["group_3_idx"],
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",
+        group_2_val="Shoes",
+        group_3_col="category_1_name",
+        group_3_val="Dresses",
     )
     ret_df = pd.DataFrame(
         {
             cols.customer_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "group_1": [1, 0, 0, 0, 1, 1, 0, 1, 0, 1],
-            "group_2": [0, 1, 0, 0, 1, 0, 1, 0, 1, 0],
-            "group_3": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+            "group_1": pd.Series([1, 0, 0, 0, 1, 1, 0, 1, 0, 1], dtype="int32"),
+            "group_2": pd.Series([0, 1, 0, 0, 1, 0, 1, 0, 1, 0], dtype="int32"),
+            "group_3": pd.Series([0, 0, 1, 0, 0, 0, 0, 1, 0, 0], dtype="int32"),
             "groups": [
                 (1, 0, 0),
                 (0, 1, 0),
@@ -73,39 +89,19 @@ def test_calc_cross_shop_three_groups(sample_data):
         },
     ).set_index(cols.customer_id)
 
-    assert cross_shop_df.equals(ret_df)
-
-
-def test_calc_cross_shop_two_groups_overlap_error(sample_data):
-    """Test the _calc_cross_shop method with two groups and overlapping group indices."""
-    with pytest.raises(ValueError):
-        CrossShop._calc_cross_shop(
-            sample_data,
-            # Pass the same group index for both groups
-            group_1_idx=sample_data["group_1_idx"],
-            group_2_idx=sample_data["group_1_idx"],
-        )
-
-
-def test_calc_cross_shop_three_groups_overlap_error(sample_data):
-    """Test the _calc_cross_shop method with three groups and overlapping group indices."""
-    with pytest.raises(ValueError):
-        CrossShop._calc_cross_shop(
-            sample_data,
-            # Pass the same group index for groups 1 and 3
-            group_1_idx=sample_data["group_1_idx"],
-            group_2_idx=sample_data["group_2_idx"],
-            group_3_idx=sample_data["group_1_idx"],
-        )
+    pd.testing.assert_frame_equal(cross_shop_df, ret_df, check_dtype=False)
 
 
 def test_calc_cross_shop_three_groups_customer_id_nunique(sample_data):
     """Test the _calc_cross_shop method with three groups and customer_id as the value column."""
     cross_shop_df = CrossShop._calc_cross_shop(
         sample_data,
-        group_1_idx=sample_data["group_1_idx"],
-        group_2_idx=sample_data["group_2_idx"],
-        group_3_idx=sample_data["group_3_idx"],
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",
+        group_2_val="Shoes",
+        group_3_col="category_1_name",
+        group_3_val="Dresses",
         value_col=cols.customer_id,
         agg_func="nunique",
     )
@@ -131,7 +127,7 @@ def test_calc_cross_shop_three_groups_customer_id_nunique(sample_data):
         index=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     )
     ret_df.index.name = cols.customer_id
-
+    ret_df = ret_df.astype({"group_1": "int32", "group_2": "int32", "group_3": "int32"})
     assert cross_shop_df.equals(ret_df)
 
 
@@ -139,9 +135,12 @@ def test_calc_cross_shop_table(sample_data):
     """Test the _calc_cross_shop_table method."""
     cross_shop_df = CrossShop._calc_cross_shop(
         sample_data,
-        group_1_idx=sample_data["group_1_idx"],
-        group_2_idx=sample_data["group_2_idx"],
-        group_3_idx=sample_data["group_3_idx"],
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",
+        group_2_val="Shoes",
+        group_3_col="category_1_name",
+        group_3_val="Dresses",
         value_col=cols.unit_spend,
     )
     cross_shop_table = CrossShop._calc_cross_shop_table(
@@ -174,9 +173,12 @@ def test_calc_cross_shop_table_customer_id_nunique(sample_data):
     """Test the _calc_cross_shop_table method with customer_id as the value column."""
     cross_shop_df = CrossShop._calc_cross_shop(
         sample_data,
-        group_1_idx=sample_data["group_1_idx"],
-        group_2_idx=sample_data["group_2_idx"],
-        group_3_idx=sample_data["group_3_idx"],
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",
+        group_2_val="Shoes",
+        group_3_col="category_1_name",
+        group_3_val="Dresses",
         value_col=cols.customer_id,
         agg_func="nunique",
     )
@@ -195,19 +197,24 @@ def test_calc_cross_shop_table_customer_id_nunique(sample_data):
     assert cross_shop_table.equals(ret_df)
 
 
-def test_calc_cross_shop_all_groups_false(sample_data):
-    """Test the _calc_cross_shop method with all group indices set to False."""
-    with pytest.raises(ValueError):
+def test_calc_cross_shop_invalid_group_3(sample_data):
+    """Test that _calc_cross_shop raises ValueError if only one of group_3_col or group_3_val is provided."""
+    with pytest.raises(ValueError, match="If group_3_col or group_3_val is populated, then the other must be as well"):
         CrossShop._calc_cross_shop(
             sample_data,
-            group_1_idx=[False] * len(sample_data),
-            group_2_idx=[False] * len(sample_data),
+            group_1_col="category_1_name",
+            group_1_val="Jeans",
+            group_2_col="category_1_name",
+            group_2_val="Shoes",
+            group_3_col="category_1_name",
         )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="If group_3_col or group_3_val is populated, then the other must be as well"):
         CrossShop._calc_cross_shop(
             sample_data,
-            group_1_idx=[False] * len(sample_data),
-            group_2_idx=[False] * len(sample_data),
-            group_3_idx=[False] * len(sample_data),
+            group_1_col="category_1_name",
+            group_1_val="Jeans",
+            group_2_col="category_1_name",
+            group_2_val="Shoes",
+            group_3_val="T-Shirts",
         )
