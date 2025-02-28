@@ -171,3 +171,45 @@ def test_truncate_to_x_digits_decimal_edge_cases():
     assert gu.truncate_to_x_digits("0.9999", 3) == "0.99"
     assert gu.truncate_to_x_digits("999.999K", 4) == "999.9K"
     assert gu.truncate_to_x_digits("100.0001M", 4) == "100M"
+
+
+def test_set_axis_percent():
+    """Test set_axis_percent function formats axis correctly."""
+    import matplotlib.pyplot as plt
+    import matplotlib.ticker as mtick
+
+    # Create a test plot
+    fig, ax = plt.subplots()
+    ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
+
+    # Apply our function to the y-axis
+    gu.set_axis_percent(ax.yaxis)
+
+    # Check that the formatter is properly applied
+    assert isinstance(ax.yaxis.get_major_formatter(), mtick.PercentFormatter)
+
+    # Check default parameters
+    formatter = ax.yaxis.get_major_formatter()
+    assert formatter.xmax == 1
+    assert formatter._symbol == "%"
+
+    # Test with custom parameters
+    fig, ax = plt.subplots()
+    ax.plot([0, 25, 50, 75, 100], [0, 30, 50, 70, 100])
+
+    # Define test values
+    test_xmax = 100
+    test_decimals = 2
+    test_symbol = "pct"
+
+    # Apply with custom parameters
+    gu.set_axis_percent(ax.xaxis, xmax=test_xmax, decimals=test_decimals, symbol=test_symbol)
+
+    # Check that the formatter is properly applied with custom params
+    formatter = ax.xaxis.get_major_formatter()
+    assert isinstance(formatter, mtick.PercentFormatter)
+    assert formatter.xmax == test_xmax
+    assert formatter.decimals == test_decimals
+    assert formatter._symbol == test_symbol
+
+    plt.close("all")  # Clean up

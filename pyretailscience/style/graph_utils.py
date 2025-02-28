@@ -5,8 +5,10 @@ from collections.abc import Generator
 from itertools import cycle
 
 import matplotlib.font_manager as fm
+import matplotlib.ticker as mtick
 import numpy as np
 from matplotlib.axes import Axes
+from matplotlib.axis import XAxis, YAxis
 from matplotlib.text import Text
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
@@ -81,7 +83,7 @@ def human_format(
     else:
         # Calculate how many times beyond "P" we've gone and append that to "P"
         extra_magnitude = magnitude - (len(_MAGNITUDE_SUFFIXES) - 1)
-        suffix = f"{1000 ** extra_magnitude}P"
+        suffix = f"{1000**extra_magnitude}P"
 
     # Format the number and remove trailing zeros
     formatted_num = f"{prefix}%.{decimals}f" % num
@@ -368,3 +370,39 @@ def add_source_text(
         fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
         color="dimgray",
     )
+
+
+def set_axis_percent(
+    fmt_axis: YAxis | XAxis,
+    xmax: float = 1,
+    decimals: int | None = None,
+    symbol: str | None = "%",
+) -> None:
+    """Format an axis to display values as percentages.
+
+    This function configures a matplotlib axis to display its tick labels as percentages
+    using matplotlib's PercentFormatter.
+
+    Args:
+        fmt_axis (YAxis | XAxis): The axis to format (either ax.yaxis or ax.xaxis).
+        xmax (float, optional): The value that represents 100%. Defaults to 1.
+        decimals (int | None, optional): Number of decimal places to include. If None,
+            automatically selects based on data range. Defaults to None.
+        symbol (str | None, optional): The symbol to use for percentage. If None,
+            no symbol is displayed. Defaults to "%".
+
+    Returns:
+        None: The function modifies the axis formatter in place.
+
+    Example:
+        ```python
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
+        # Format y-axis as percentage
+        set_axis_percent(ax.yaxis)
+        # Format x-axis as percentage with 1 decimal place
+        set_axis_percent(ax.xaxis, decimals=1)
+        ```
+    """
+    return fmt_axis.set_major_formatter(mtick.PercentFormatter(xmax=xmax, decimals=decimals, symbol=symbol))
