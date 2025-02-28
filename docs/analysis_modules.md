@@ -53,6 +53,53 @@ line.plot(
 )
 ```
 
+### **Area Plot**
+
+<div class="clear" markdown>
+
+![Area Plot](assets/images/analysis_modules/plots/area.svg){ align=right loading=lazy width="50%"}
+
+Area plots are useful for visualizing **cumulative** trends, showing **relative contributions**, and comparing
+**multiple data series over time**. They are often used for:
+
+- Visualizing **stacked** contributions (e.g., market share over time)
+- Comparing **cumulative** sales or revenue
+- Showing **growth trends** across multiple categories
+
+Similar to line plots, **area plots** can display time-series data, but they emphasize the **area under the curve**, making them ideal for tracking proportions and cumulative metrics.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import area
+
+periods = 6
+rng = np.random.default_rng(42)
+data = {
+    "transaction_date": np.repeat(pd.date_range("2023-01-01", periods=periods, freq="M"), 3),
+    "unit_spend": rng.integers(1, 6, size=3 * periods),
+    "category": ["Jeans", "Shoes", "Dresses"] * periods,
+}
+df = pd.DataFrame(data)
+df_pivoted = df.pivot(index="transaction_date", columns="category", values="unit_spend").reset_index()
+
+area.plot(
+    df=df_pivoted,
+    value_col=["Jeans", "Dresses", "Shoes"],
+    x_label="",
+    y_label="Sales",
+    title="Sales Trends by Product Category",
+    x_col="transaction_date",
+    source_text="Source: PyRetailScience - 2024",
+    move_legend_outside=True,
+    alpha=0.5,
+)
+```
+
 ### Histogram Plot
 
 <div class="clear" markdown>
