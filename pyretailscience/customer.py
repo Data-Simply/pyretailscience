@@ -43,7 +43,7 @@ class PurchasesPerCustomer:
     def plot(
         self,
         bins: int = 10,
-        cumlative: bool = False,
+        cumulative: bool = False,
         ax: Axes | None = None,
         percentile_line: float | None = None,
         source_text: str | None = None,
@@ -56,7 +56,7 @@ class PurchasesPerCustomer:
 
         Args:
             bins (int, optional): The number of bins to plot. Defaults to 10.
-            cumlative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
+            cumulative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
             ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
             percentile_line (float, optional): The percentile to draw a line at. Defaults to None. When None then no
                 line is drawn.
@@ -70,7 +70,7 @@ class PurchasesPerCustomer:
             SubplotBase: The Matplotlib axes of the plot
         """
         density = False
-        if cumlative:
+        if cumulative:
             density = True
 
         if x_label is None:
@@ -78,7 +78,7 @@ class PurchasesPerCustomer:
 
         ax = self.cust_purchases_s.hist(
             bins=bins,
-            cumulative=cumlative,
+            cumulative=cumulative,
             ax=ax,
             density=density,
             color=COLORS["green"][500],
@@ -87,8 +87,8 @@ class PurchasesPerCustomer:
 
         ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
 
-        if cumlative:
-            default_title = "Number of Purchases Cumulative Distribution"
+        if cumulative:
+            default_title = "Number of Purchases cumulative Distribution"
             default_y_label = "Percentage of customers"
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
 
@@ -221,7 +221,7 @@ class DaysBetweenPurchases:
     def plot(
         self,
         bins: int = 10,
-        cumlative: bool = False,
+        cumulative: bool = False,
         ax: Axes | None = None,
         percentile_line: float | None = None,
         title: str | None = None,
@@ -234,7 +234,7 @@ class DaysBetweenPurchases:
 
         Args:
             bins (int, optional): The number of bins to plot. Defaults to 10.
-            cumlative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
+            cumulative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
             ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
             percentile_line (float, optional): The percentile to draw a line at. Defaults to None. When None then no
                 line is drawn.
@@ -248,12 +248,12 @@ class DaysBetweenPurchases:
             SubplotBase: The Matplotlib axes of the plot
         """
         density = False
-        if cumlative:
+        if cumulative:
             density = True
 
         ax = self.purchase_dist_s.hist(
             bins=bins,
-            cumulative=cumlative,
+            cumulative=cumulative,
             ax=ax,
             density=density,
             color=COLORS["green"][500],
@@ -264,8 +264,8 @@ class DaysBetweenPurchases:
 
         ax = standard_graph_styles(ax)
 
-        if cumlative:
-            default_title = "Average Days Between Purchases Cumulative Distribution"
+        if cumulative:
+            default_title = "Average Days Between Purchases cumulative Distribution"
             default_y_label = "Percentage of Customers"
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
 
@@ -370,7 +370,7 @@ class TransactionChurn:
 
     def plot(
         self,
-        cumlative: bool = False,
+        cumulative: bool = False,
         ax: Axes | None = None,
         title: str | None = None,
         x_label: str | None = None,
@@ -381,7 +381,7 @@ class TransactionChurn:
         """Plot the churn rate by number of purchases.
 
         Args:
-            cumlative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
+            cumulative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
             ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
             title (str, optional): The title of the plot. Defaults to None.
             x_label (str, optional): The x-axis label. Defaults to None.
@@ -392,7 +392,7 @@ class TransactionChurn:
         Returns:
             SubplotBase: The Matplotlib axes of the plot
         """
-        if cumlative:
+        if cumulative:
             cumulative_churn_rate_s = self.purchase_dist_df["churned"].cumsum().div(self.n_unique_customers)
             ax = cumulative_churn_rate_s.plot.area(
                 color=COLORS["green"][500],

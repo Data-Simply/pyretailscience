@@ -294,3 +294,19 @@ def test_line_plot_grouped_series_calls_dataframe_plot(mocker, sample_dataframe)
         color=mocker.ANY,  # Dynamic color generation
         legend=True,  # Legend should be present for grouped lines
     )
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_multiple_columns_with_group_col(sample_dataframe):
+    """Test the plot function when using multiple columns along with a group column."""
+    sample_dataframe["y1"] = range(10, 20)
+    with pytest.raises(ValueError, match="Cannot use both a list for `value_col` and a `group_col`. Choose one."):
+        line.plot(
+            df=sample_dataframe,
+            value_col=["y", "y1"],
+            x_label="Transaction Date",
+            y_label="Sales",
+            title="Sales Trend (Grouped by Category)",
+            x_col="x",
+            group_col="group",
+        )

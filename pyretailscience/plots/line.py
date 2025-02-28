@@ -74,6 +74,9 @@ def plot(
 
     Returns:
         SubplotBase: The matplotlib axes object.
+
+    Raises:
+        ValueError: If `value_col` is a list and `group_col` is provided (which causes ambiguity in plotting).
     """
     if x_col is not None and pd.api.types.is_datetime64_any_dtype(df[x_col]):
         warnings.warn(
@@ -88,7 +91,8 @@ def plot(
             UserWarning,
             stacklevel=2,
         )
-
+    if isinstance(value_col, list) and group_col:
+        raise ValueError("Cannot use both a list for `value_col` and a `group_col`. Choose one.")
     if group_col is None:
         pivot_df = df.set_index(x_col if x_col is not None else df.index)[
             [value_col] if isinstance(value_col, str) else value_col

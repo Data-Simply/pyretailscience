@@ -124,3 +124,18 @@ def test_plot_adds_source_text(sample_dataframe):
     )
 
     gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_single_column_series(sample_dataframe):
+    """Test the plot function with a single value as a Pandas Series."""
+    result_ax = area.plot(
+        df=sample_dataframe["unit_spend"],
+        value_col="unit_spend",
+        x_label="Transaction Date",
+        y_label="Sales",
+        title="Product Sales (Series)",
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert len(result_ax.get_children()) > 0

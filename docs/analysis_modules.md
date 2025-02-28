@@ -106,7 +106,10 @@ area.plot(
 
 ![Histogram Plot](assets/images/analysis_modules/plots/histogram_plot.svg){ align=right loading=lazy width="50%"}
 
-Histograms are particularly useful for visualizing the distribution of data, allowing you to see how values in one or more metrics are spread across different ranges. This module also supports grouping by categories, enabling you to compare the distributions across different groups. When grouping by a category, multiple histograms are generated on the same plot, allowing for easy comparison across categories.
+Histograms are particularly useful for visualizing the distribution of data, allowing you to see how values in one or
+more metrics are spread across different ranges. This module also supports grouping by categories, enabling you to
+compare the distributions across different groups. When grouping by a category, multiple histograms are generated on the
+ same plot, allowing for easy comparison across categories.
 
 Histograms are commonly used to analyze:
 
@@ -114,7 +117,8 @@ Histograms are commonly used to analyze:
 - Distribution of customer segments (e.g., by age, income)
 - Comparing metric distributions across product categories
 
-This module allows you to customize legends, axes, and other visual elements, as well as apply clipping or filtering on the data values to focus on specific ranges.
+This module allows you to customize legends, axes, and other visual elements, as well as apply clipping or filtering on
+the data values to focus on specific ranges.
 
 </div>
 
@@ -154,7 +158,10 @@ histogram.plot(
 
 ![Bar Plot](assets/images/analysis_modules/plots/bar_plot.svg){ align=right loading=lazy width="50%"}
 
-Bar plots are ideal for visualizing comparisons between categories or groups, showing how metrics such as revenue, sales, or other values vary across different categories. This module allows you to easily group bars by different categories and stack them when comparing multiple metrics. You can also add data labels to display absolute or percentage values for each bar.
+Bar plots are ideal for visualizing comparisons between categories or groups, showing how metrics such as revenue,
+sales, or other values vary across different categories. This module allows you to easily group bars by different
+categories and stack them when comparing multiple metrics. You can also add data labels to display absolute or
+percentage values for each bar.
 
 Bar plots are frequently used to compare:
 
@@ -162,7 +169,8 @@ Bar plots are frequently used to compare:
 - Revenue across product categories or customer segments
 - Performance metrics side by side
 
-This module provides flexibility in customizing legends, axes, and other visual elements, making it easy to represent data across different dimensions, either as grouped or single bar plots.
+This module provides flexibility in customizing legends, axes, and other visual elements, making it easy to represent
+data across different dimensions, either as grouped or single bar plots.
 
 </div>
 
@@ -391,39 +399,97 @@ pa.df.head()
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Cross Shop](assets/images/analysis_modules/cross_shop.svg){ align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+Cross Shop analysis visualizes the overlap between different customer groups or product categories, helping retailers
+understand cross-purchasing behaviors. This powerful visualization technique employs Venn or Euler diagrams to show how
+customers interact across different product categories or segments.
+
+Key applications include:
+
+- Identifying opportunities for cross-selling and bundling
+- Evaluating product category relationships
+- Analyzing promotion cannibalization
+- Understanding customer shopping patterns across departments
+- Planning targeted marketing campaigns based on complementary purchasing behavior
+
+The module provides options to visualize both the proportional size of each group and the percentage of overlap, making
+it easy to identify significant patterns in customer shopping behavior.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+from pyretailscience import cross_shop
+
+cs_customers = cross_shop.CrossShop(
+    df,
+    group_1_idx=df["category_name"] == "Electronics",
+    group_2_idx=df["category_name"] == "Clothing",
+    group_3_idx=df["category_name"] == "Home",
+    labels=["Electronics", "Clothing", "Home"],
+)
+
+cs_customers.plot(
+    title="Customer Spend Overlap Across Categories",
+    source_text="Source: PyRetailScience",
+)
 ```
 
 ### Gain Loss
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Gain Loss](assets/images/analysis_modules/gain_loss.svg){ align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+The Gain Loss module (also known as switching analysis) helps analyze changes in customer behavior between two time
+periods. It breaks down revenue or customer movement between a focus group and a comparison group by:
+
+- New customers: Customers who didn't purchase in period 1 but did in period 2
+- Lost customers: Customers who purchased in period 1 but not in period 2
+- Increased/decreased spending: Existing customers who changed their spending level
+- Switching: Customers who moved between the focus and comparison groups
+
+This module is particularly valuable for:
+
+- Analyzing promotion cannibalization
+- Understanding customer migration between brands or categories
+- Evaluating the effectiveness of marketing campaigns
+- Quantifying the sources of revenue changes
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+from pyretailscience.gain_loss import GainLoss
+
+gl = GainLoss(
+    df=df,
+    p1_index=df["transaction_date"] < "2023-05-01",
+    p2_index=df["transaction_date"] >= "2023-05-01",
+    focus_group_index=df["brand"] == "Brand A",
+    focus_group_name="Brand A",
+    comparison_group_index=df["brand"] == "Brand B",
+    comparison_group_name="Brand B",
+)
+
+gl.plot(
+    title="Brand A vs Brand B: Customer Movement Analysis",
+    x_label="Revenue Change",
+    source_text="Source: PyRetailScience",
+    move_legend_outside=True,
+)
 ```
 
 ### Customer Decision Hierarchy
 
 <div class="clear" markdown>
 
-![Customer Decision Hierarchy](assets/images/analysis_modules/customer_decision_hierarchy.svg){ align=right loading=lazy width="50%"}
+![Customer Decision Hierarchy](
+    assets/images/analysis_modules/customer_decision_hierarchy.svg
+){ align=right loading=lazy width="50%"}
 
 A Customer Decision Hierarchy (CDH), also known as a Customer Decision Tree, is a powerful tool in retail analytics that
  visually represents the sequential steps and criteria customers use when making purchase decisions within a specific
@@ -494,13 +560,10 @@ Example:
 ```python
 from pyretailscience import revenue_tree
 
-p1_index = df["transaction_date"] < "2023-06-01"
-p2_index = df["transaction_date"] >= "2023-06-01"
-
 rev_tree = revenue_tree.RevenueTree(
     df=df,
-    p1_index=p1_index,
-    p2_index=p2_index,
+    p1_index=df["transaction_date"] < "2023-06-01",
+    p2_index=df["transaction_date"] >= "2023-06-01",
 )
 ```
 
@@ -528,25 +591,11 @@ entirely, or place them in a separate "Zero" segment.
 Example:
 
 ```python
-import numpy as np
-import pandas as pd
-
 from pyretailscience.plots import bar
 from pyretailscience.segmentation import HMLSegmentation
 
-# Create sample transaction data
-rng = np.random.default_rng(42)
-df = pd.DataFrame(
-    {
-        "customer_id": np.repeat(range(1, 51), 3),  # 50 customers with 3 transactions each
-        "unit_spend": rng.pareto(a=1.5, size=150) * 20,  # Pareto distribution to mimic real spending
-    },
-)
-
-# Create HML segmentation
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
-# Visualize spend by segment
 bar.plot(
     seg.df.groupby("segment_name")["unit_spend"].sum(),
     value_col="unit_spend",
@@ -585,27 +634,14 @@ them with the lowest segment, exclude them entirely, or place them in a separate
 Example:
 
 ```python
-import numpy as np
-import pandas as pd
-
 from pyretailscience.plots import bar
 from pyretailscience.segmentation import ThresholdSegmentation
-
-# Create sample transaction data
-rng = np.random.default_rng(42)
-df = pd.DataFrame(
-    {
-        "customer_id": np.repeat(range(1, 51), 3),  # 50 customers with 3 transactions each
-        "unit_spend": rng.pareto(a=1.5, size=150) * 20,  # Pareto distribution to mimic real spending
-    },
-)
 
 # Create custom segmentation with quartiles
 # Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
 thresholds = [0.25, 0.50, 0.75, 1.0]
 segments = ["Bronze", "Silver", "Gold", "Platinum"]
 
-# Create threshold segmentation
 seg = ThresholdSegmentation(
     df=df,
     thresholds=thresholds,
@@ -613,7 +649,6 @@ seg = ThresholdSegmentation(
     zero_value_customers="separate_segment",
 )
 
-# Visualize spend by segment
 bar.plot(
     seg.df.groupby("segment_name")["unit_spend"].sum(),
     value_col="unit_spend",
@@ -630,62 +665,126 @@ bar.plot(
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
-
-PASTE TEXT HERE
+The Segmentation Stats module provides functionality to calculate transaction statistics by segment for a particular
+segmentation. It makes it easy to compare key metrics across different segments, helping you understand how your
+customer (or transactions or promotions) groups differ in terms of spending behavior and transaction patterns.
+This module calculates metrics such as total spend, number of transactions, average spend per customer, and transactions
+per customer for each segment. It's particularly useful when combined with other segmentation approaches like HML
+segmentation.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+from pyretailscience.segmentation import HMLSegmentation, SegTransactionStats
+
+seg = HMLSegmentation(df, zero_value_customers="include_with_light")
+
+# First, segment customers using HML segmentation
+segmentation = HMLSegmentation(df)
+
+# Add segment labels to the transaction data
+df_with_segments = segmentation.add_segment(df)
+
+# Calculate transaction statistics by segment
+segment_stats = SegTransactionStats(df_with_segments)
+
+# Display the statistics
+segment_stats.df
 ```
+<!-- markdownlint-disable MD013 -->
+| segment_name   |    spend |   transactions |   customers |   spend_per_customer |   spend_per_transaction |   transactions_per_customer |   customers_pct |
+|:---------------|---------:|---------------:|------------:|---------------------:|------------------------:|----------------------------:|----------------:|
+| Heavy          | 2927.21  |             30 |          10 |             292.721  |                97.5735  |                           3 |             0.2 |
+| Medium         | 1014.97  |             45 |          15 |              67.6644 |                22.5548  |                           3 |             0.3 |
+| Light          |  662.107 |             75 |          25 |              26.4843 |                 8.82809 |                           3 |             0.5 |
+| Total          | 4604.28  |            150 |          50 |              92.0856 |                30.6952  |                           3 |             1   |
+<!-- markdownlint-enable MD013 -->
 
 ### Purchases Per Customer
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Purchases Per Customer](
+    assets/images/analysis_modules/purchases_per_customer.svg
+){align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+The Purchases Per Customer module analyzes and visualizes the distribution of transaction frequency across your customer
+base. This module helps you understand customer purchasing patterns by percentile and is useful for determining values
+like your churn window.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+from pyretailscience.customer import PurchasesPerCustomer
+
+ppc = PurchasesPerCustomer(transactions)
+
+ppc.plot(
+    title="Purchases per Customer",
+    percentile_line=0.8,
+    source_text="Source: PyRetailScience",
+)
 ```
 
 ### Days Between Purchases
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Days Between Purchases](
+    assets/images/analysis_modules/days_between_purchases.svg
+){align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+The Days Between Purchases module analyzes the time intervals between customer transactions, providing valuable insights
+into purchasing frequency and shopping patterns. This analysis helps you understand:
+
+- How frequently your customers typically return to make purchases
+- The distribution of purchase intervals across your customer base
+- Which customer segments have shorter or longer repurchase cycles
+- Where intervention might be needed to prevent customer churn
+
+This information is critical for planning communication frequency, timing promotional campaigns, and developing
+effective retention strategies. The module can visualize both standard and cumulative distributions of days between
+purchases.
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+dbp = DaysBetweenPurchases(transactions)
+
+dbp.plot(
+    bins=15,
+    title="Average Days Between Customer Purchases",
+    percentile_line=0.5,  # Mark the median with a line
+)
 ```
 
 ### Transaction Churn
 
 <div class="clear" markdown>
 
-![Image title](https://placehold.co/600x400/EEE/31343C){ align=right loading=lazy width="50%"}
+![Transaction Churn](assets/images/analysis_modules/transaction_churn.svg){align=right loading=lazy width="50%"}
 
-PASTE TEXT HERE
+The Transaction Churn module analyzes how customer churn rates vary based on the number of purchases customers have
+made. This helps reveal critical retention thresholds in the customer lifecycle when setting a churn window
 
 </div>
 
 Example:
 
 ```python
-PASTE CODE HERE
+from pyretailscience.customer import TransactionChurn
+
+tc = TransactionChurn(transactions, churn_period=churn_period)
+
+tc.plot(
+    title="Churn Rate by Number of Purchases",
+    cumulative=True,
+    source_text="Source: PyRetailScience",
+)
 ```

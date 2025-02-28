@@ -71,6 +71,9 @@ def plot(
     Raises:
         ValueError: If `value_col` is a list and `group_col` is provided (which causes ambiguity in plotting).
     """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+
     if isinstance(value_col, list) and group_col:
         raise ValueError("Cannot use both a list for `value_col` and a `group_col`. Choose one.")
 
