@@ -99,7 +99,57 @@ area.plot(
     alpha=0.5,
 )
 ```
+### **Scatter Plot**
 
+<div class="clear" markdown>
+
+![Scatter Plot](assets/images/analysis_modules/plots/scatter.svg){ align=right loading=lazy width="50%"}
+
+Scatter plots are useful for visualizing **relationships** between two numerical variables, detecting **patterns**, and identifying **outliers**. They are often used for:
+
+- Exploring **correlations** between variables
+- Identifying **clusters** in data
+- Spotting **trends** and **outliers**
+
+Scatter plots are particularly useful when analyzing **distributions** and understanding how one variable influences another. They can also be enhanced with **colors** and **sizes** to represent additional dimensions in the data.
+
+</div>
+
+Example:
+
+```python
+import random
+import pandas as pd
+from pyretailscience.plots import scatter
+
+months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+]
+categories = ["Electronics", "Clothing", "Home Decor", "Sports", "Books"]
+
+data = {
+    "month": months * len(categories),
+    "sales": [random.randint(500, 5000) for _ in range(12 * len(categories))],
+    "profit": [random.randint(100, 2000) for _ in range(12 * len(categories))],
+    "expenses": [random.randint(300, 4000) for _ in range(12 * len(categories))],
+    "category": categories * 12,
+}
+
+df = pd.DataFrame(data)
+
+scatter.plot(
+    df=df,
+    value_col=["sales", "profit", "expenses"],
+    x_col="month",
+    x_label="",
+    y_label="Sales",
+    title="Sales, Profit & Expenses Scatter Plot",
+    source_text="Source: PyRetailScience - 2024",
+    move_legend_outside=True,
+    alpha=0.8,
+)
+```
 ### Histogram Plot
 
 <div class="clear" markdown>
