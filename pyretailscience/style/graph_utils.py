@@ -248,8 +248,10 @@ def standard_tick_styles(ax: Axes) -> Axes:
     """
     for tick in ax.get_xticklabels():
         tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        tick.set_fontsize(GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
     for tick in ax.get_yticklabels():
         tick.set_fontproperties(GraphStyles.POPPINS_REG)
+        tick.set_fontsize(GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
 
     return ax
 
