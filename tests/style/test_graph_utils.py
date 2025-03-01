@@ -1,5 +1,12 @@
 """Tests for the graph_utils module in the style package."""
 
+import datetime
+
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import numpy as np
+import pytest
+
 from pyretailscience.style import graph_utils as gu
 
 
@@ -175,9 +182,6 @@ def test_truncate_to_x_digits_decimal_edge_cases():
 
 def test_set_axis_percent():
     """Test set_axis_percent function formats axis correctly."""
-    import matplotlib.pyplot as plt
-    import matplotlib.ticker as mtick
-
     # Create a test plot
     fig, ax = plt.subplots()
     ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
@@ -213,3 +217,86 @@ def test_set_axis_percent():
     assert formatter._symbol == test_symbol
 
     plt.close("all")  # Clean up
+
+
+class TestRegressionLine:
+    """Test class for the add_regression_line function."""
+
+    # Constants to avoid magic numbers
+    ORIGINAL_LINE_COUNT = 1
+    EXPECTED_LINE_COUNT_AFTER_REGRESSION = 2
+
+    def test_line_plot_with_numeric_data(self):
+        """Test regression line with a standard line plot and numeric data."""
+        fig, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([2, 3, 5, 7, 11])  # Not a perfect line to test regression
+        ax.plot(x, y)
+
+        gu.add_regression_line(ax, color="blue", show_equation=True, show_r2=True)
+
+        # Check that a line was added (should now have 2 lines)
+        assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
+
+        plt.close("all")
+
+    def test_line_plot_with_datetime_data(self):
+        """Test regression line with datetime x-axis data."""
+        _, ax = plt.subplots()
+        dates = [
+            datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2023, 2, 1, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2023, 3, 1, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2023, 4, 1, tzinfo=datetime.timezone.utc),
+        ]
+        values = [10, 15, 14, 25]
+        ax.plot(dates, values)
+
+        gu.add_regression_line(ax, show_equation=True, show_r2=False)
+
+        # Check that a line was added
+        assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
+
+        plt.close("all")
+
+    def test_scatter_plot(self):
+        """Test regression line with a scatter plot."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([2, 3.5, 4.5, 7.5, 10])
+        ax.scatter(x, y)
+
+        gu.add_regression_line(ax, color="green", linestyle="-.")
+
+        # Check that a line was added to the scatter plot
+        assert len(ax.get_lines()) == self.ORIGINAL_LINE_COUNT
+
+        plt.close("all")
+
+    def test_large_numbers(self):
+        """Test regression line with very large numbers (billions)."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([2.5, 3.2, 4.7, 7.1, 8.9]) * 1e9  # Values in billions
+        ax.plot(x, y)
+
+        gu.add_regression_line(ax, color="purple", show_equation=True, show_r2=True)
+
+        # Check that a line was added
+        assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
+
+        plt.close("all")
+
+    def test_single_data_point(self):
+        """Test that regression line raises ValueError with a single data point."""
+        _, ax = plt.subplots()
+        ax.plot([10], [20])
+
+        # Use pytest.raises to check for the expected exception
+        with pytest.raises(ValueError) as excinfo:
+            gu.add_regression_line(ax)
+
+        # Check for appropriate error message
+        assert "regression" in str(excinfo.value).lower()
+
+        plt.close("all")

@@ -2,14 +2,18 @@
 
 import importlib.resources as pkg_resources
 from collections.abc import Generator
+from datetime import datetime
 from itertools import cycle
 
 import matplotlib.font_manager as fm
 import matplotlib.ticker as mtick
 import numpy as np
+import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.axis import XAxis, YAxis
+from matplotlib.dates import date2num
 from matplotlib.text import Text
+from scipy import stats
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 _MAGNITUDE_SUFFIXES = ["", "K", "M", "B", "T", "P"]
@@ -415,3 +419,206 @@ def set_axis_percent(
         ```
     """
     return fmt_axis.set_major_formatter(mtick.PercentFormatter(xmax=xmax, decimals=decimals, symbol=symbol))
+
+
+def _add_equation_text(
+    ax: Axes,
+    slope: float,
+    intercept: float,
+    r_squared: float,
+    color: str,
+    text_position: float,
+    show_equation: bool,
+    show_r2: bool,
+) -> None:
+    """Add equation and R² text to the plot.
+
+    Args:
+        ax (Axes): The matplotlib axes object.
+        slope (float): The slope of the regression line.
+        intercept (float): The intercept of the regression line.
+        r_squared (float): The R² value of the regression.
+        color (str): The color of the text.
+        text_position (float): The relative y-position of the text.
+        show_equation (bool): Whether to display the equation.
+        show_r2 (bool): Whether to display the R² value.
+    """
+    if not (show_equation or show_r2):
+        return
+
+    equation_parts = []
+
+    if show_equation:
+        sign = "+" if intercept >= 0 else "-"
+        equation = f"y = {slope:.4g}x {sign} {abs(intercept):.4g}"
+        equation_parts.append(equation)
+
+    if show_r2:
+        r2_text = f"R² = {r_squared:.4g}"
+        equation_parts.append(r2_text)
+
+    text = "\n".join(equation_parts)
+
+    # Calculate text position (relative to axis bounds)
+    x_min, x_max = ax.get_xlim()
+    y_min, y_max = ax.get_ylim()
+    text_x = x_min + 0.05 * (x_max - x_min)  # 5% from left
+    text_y = y_min + text_position * (y_max - y_min)
+
+    ax.text(
+        text_x,
+        text_y,
+        text,
+        color=color,
+        fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+        fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
+        bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
+    )
+
+
+def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
+    """Extract x and y data from a matplotlib plot (line or scatter).
+
+    Args:
+        ax (Axes): The matplotlib axes object containing the plot.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: The x and y data arrays.
+
+    Raises:
+        ValueError: If no plot data can be extracted.
+    """
+    # Try to get data from lines first (line plots)
+    lines = [line for line in ax.get_lines() if line.get_visible()]
+
+    if len(lines) > 0:
+        x_data = lines[0].get_xdata()
+        y_data = lines[0].get_ydata()
+    # If no lines, check for scatter plots (or other collections)
+    elif hasattr(ax, "collections") and ax.collections:
+        # Extract data from the first collection (e.g., scatter plot)
+        collection = ax.collections[0]
+        # Get the offsets which contain the x,y coordinates
+        if hasattr(collection, "get_offsets") and callable(collection.get_offsets):
+            offset_data = collection.get_offsets()
+            if len(offset_data) > 0:
+                x_data = offset_data[:, 0]
+                y_data = offset_data[:, 1]
+            else:
+                raise ValueError("No data points found in the collection.")
+        else:
+            raise ValueError("Cannot extract data from this type of collection.")
+    else:
+        raise ValueError("No visible lines or collections found in the plot.")
+
+    return x_data, y_data
+
+
+def _prepare_numeric_data(x_data: np.ndarray, y_data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Convert plot data to numeric arrays suitable for regression analysis.
+
+    Args:
+        x_data (np.ndarray): The raw x-axis data from the plot.
+        y_data (np.ndarray): The raw y-axis data from the plot.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: The numeric x and y data.
+
+    Raises:
+        ValueError: If data cannot be converted to numeric format or has insufficient valid points.
+    """
+    # Simple fallback indices in case we can't process the data
+    x_indices = np.arange(len(x_data))
+
+    # Check if x_data contains datetime objects
+    is_datetime = False
+    try:
+        # Try to find a non-null value to check its type
+        for val in x_data:
+            if val is not None:
+                is_datetime = isinstance(val, datetime | pd.Timestamp)
+                break
+    except (TypeError, IndexError):
+        pass
+
+    try:
+        # Handle datetime or numeric data appropriately
+        x_numeric = date2num(x_data) if is_datetime else np.array(x_data, dtype=float)
+    except (TypeError, ValueError):
+        # Fallback to simple indices if conversion fails
+        x_numeric = x_indices
+
+    try:
+        y_numeric = np.array(y_data, dtype=float)
+    except (TypeError, ValueError) as err:
+        raise ValueError("Cannot convert y-axis values to numeric format for regression") from err
+
+    # Create mask to filter out NaN values
+    valid_mask = ~np.isnan(x_numeric) & ~np.isnan(y_numeric)
+    if not np.any(valid_mask):
+        raise ValueError("No valid (non-NaN) data points for regression")
+
+    # Check that we have enough valid data points for regression
+    min_points_for_regression = 2
+    if np.sum(valid_mask) < min_points_for_regression:
+        error_msg = f"At least {min_points_for_regression} valid data points are required for regression analysis"
+        raise ValueError(error_msg)
+
+    return x_numeric[valid_mask], y_numeric[valid_mask]
+
+
+def add_regression_line(
+    ax: Axes,
+    color: str = "red",
+    linestyle: str = "--",
+    text_position: float = 0.6,
+    show_equation: bool = True,
+    show_r2: bool = True,
+    **kwargs: dict[str, any],
+) -> Axes:
+    """Add a regression line to a plot.
+
+    This function examines the data in a matplotlib Axes object and adds a linear
+    regression line to it. It can work with both line plots and scatter plots, and
+    can handle both numeric and datetime x-axis values.
+
+    Args:
+        ax (Axes): The matplotlib axes object containing the plot (line or scatter).
+        color (str, optional): Color of the regression line. Defaults to "red".
+        linestyle (str, optional): Style of the regression line. Defaults to "--".
+        alpha (float, optional): Transparency of the regression line. Defaults to 0.8.
+        linewidth (float, optional): Width of the regression line. Defaults to 2.0.
+        label (str, optional): Label for the regression line in the legend. Defaults to "Regression Line".
+        text_position (float, optional): Relative position (0-1) for the equation text. Defaults to 0.6.
+        show_equation (bool, optional): Whether to display the equation on the plot. Defaults to True.
+        show_r2 (bool, optional): Whether to display the R² value on the plot. Defaults to True.
+        kwargs: Additional keyword arguments to pass to the plot function.
+
+    Returns:
+        Axes: The matplotlib axes with the regression line added.
+
+    Raises:
+        ValueError: If the plot contains no visible lines or scatter points.
+    """
+    # Extract data from the plot
+    x_data, y_data = _extract_plot_data(ax)
+
+    # Convert to numeric data and validate
+    x_numeric, y_numeric = _prepare_numeric_data(x_data, y_data)
+
+    # Calculate linear regression using scipy.stats.linregress
+    slope, intercept, r_value, _, _ = stats.linregress(x_numeric, y_numeric)
+    r_squared = r_value**2
+
+    # Calculate the regression line endpoints
+    y_min = intercept + slope * min(x_numeric)
+    y_max = intercept + slope * max(x_numeric)
+
+    # Plot the regression line
+    x_min, x_max = ax.get_xlim()
+    ax.plot([x_min, x_max], [y_min, y_max], color=color, linestyle=linestyle, **kwargs)
+
+    # Add equation and R² text if requested
+    _add_equation_text(ax, slope, intercept, r_squared, color, text_position, show_equation, show_r2)
+
+    return ax
