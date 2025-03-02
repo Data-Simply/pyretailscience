@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.plots.index import get_indexes, plot
+from pyretailscience.plots.index import filter_top_bottom_n, get_indexes, plot
 
 OFFSET_VALUE = 100
 OFFSET_THRESHOLD = 5
@@ -325,3 +325,197 @@ class TestIndexPlot:
         assert isinstance(result_ax, plt.Axes)
         assert result_ax.get_xlabel() == "Sales Value"
         assert result_ax.get_ylabel() == "Category Group"
+
+    def test_drop_na_index_values(self, test_data):
+        """Test that the function can drop NA index values."""
+        df = test_data.copy()
+        # Introduce NA value by making one group have the same proportion
+        df.loc[0, "sales"] = df.loc[5, "sales"]
+
+        # This should work without error
+        result_ax = plot(
+            df,
+            value_col="sales",
+            group_col="category",
+            index_col="category",
+            value_to_index="A",
+            drop_na=True,
+        )
+
+        assert isinstance(result_ax, plt.Axes)
+
+    def test_filter_by_index_values(self, test_data):
+        """Test that the function can filter indexes by value."""
+        df = test_data
+
+        # Create plot with value-based filtering (use a reasonable value for filter_above)
+        result_ax = plot(
+            df,
+            value_col="sales",
+            group_col="category",
+            index_col="category",
+            value_to_index="A",
+            filter_above=0,  # Using a lower value that should pass
+        )
+
+        assert isinstance(result_ax, plt.Axes)
+
+    def test_empty_dataset_after_filtering(self, test_data):
+        """Test that filtering that results in an empty dataset raises ValueError."""
+        df = test_data
+
+        # Use an extreme filter value that will result in an empty dataset
+        with pytest.raises(ValueError, match="Filtering resulted in an empty dataset"):
+            plot(
+                df,
+                value_col="sales",
+                group_col="category",
+                index_col="category",
+                value_to_index="A",
+                filter_above=1000,  # Using a high value that should cause all data to be filtered out
+            )
+
+    def test_top_and_bottom_n(self, test_data):
+        """Test that the function can display only top and/or bottom N indexes."""
+        # Use a non-reference category to get more groups in the result
+        df = test_data
+
+        # First verify available groups to work with
+        result_df = get_indexes(
+            df=df,
+            value_to_index="C",  # Use a different value for indexing to get more groups
+            index_col="category",
+            value_col="sales",
+            group_col="category",
+        )
+        available_groups = result_df["category"].unique()
+
+        group_count = len(available_groups)
+
+        # Test with top_n (making sure value is ≤ available groups)
+        top_count = min(1, group_count)
+        result_ax = plot(
+            df,
+            value_col="sales",
+            group_col="category",
+            index_col="category",
+            value_to_index="C",  # Use non-A value as reference
+            top_n=top_count,
+        )
+
+        assert isinstance(result_ax, plt.Axes)
+
+        # Test with bottom_n (making sure value is ≤ available groups)
+        bottom_count = min(1, group_count)
+        result_ax = plot(
+            df,
+            value_col="sales",
+            group_col="category",
+            index_col="category",
+            value_to_index="C",  # Use non-A value as reference
+            bottom_n=bottom_count,
+        )
+
+        assert isinstance(result_ax, plt.Axes)
+
+        # Test with both top_n and bottom_n if we have enough groups
+        minimum_group_count = 2
+        if group_count >= minimum_group_count:
+            result_ax = plot(
+                df,
+                value_col="sales",
+                group_col="category",
+                index_col="category",
+                value_to_index="C",  # Use non-A value as reference
+                top_n=1,
+                bottom_n=1,
+            )
+
+            assert isinstance(result_ax, plt.Axes)
+
+    def test_error_with_series_and_filtering(self, test_data):
+        """Test that appropriate error is raised when using filtering with series_col."""
+        df = test_data
+
+        with pytest.raises(
+            ValueError,
+            match="top_n, bottom_n, filter_above, and filter_below cannot be used when series_col is provided",
+        ):
+            plot(
+                df,
+                value_col="sales",
+                group_col="category",
+                index_col="category",
+                value_to_index="A",
+                series_col="region",
+                top_n=2,
+            )
+
+    def test_error_with_excessive_top_and_bottom_n(self, test_data):
+        """Test that appropriate error is raised when top_n + bottom_n exceeds group count."""
+        df = test_data
+        unique_count = len(df["category"].unique())
+
+        # Since validation flow changed, we now get a different error message
+        # when top_n exceeds available groups
+        with pytest.raises(ValueError, match="top_n .* cannot exceed the number of available groups"):
+            plot(
+                df,
+                value_col="sales",
+                group_col="category",
+                index_col="category",
+                value_to_index="A",
+                top_n=unique_count,
+                bottom_n=1,
+            )
+
+    def test_error_with_top_n_exceeding_available_groups(self, test_data):
+        """Test that appropriate error is raised when top_n exceeds available groups."""
+        df = test_data
+        total_count = len(df["category"].unique())
+
+        with pytest.raises(ValueError, match="top_n .* cannot exceed the number of available groups"):
+            plot(
+                df,
+                value_col="sales",
+                group_col="category",
+                index_col="category",
+                value_to_index="A",
+                top_n=total_count + 1,
+            )
+
+    def test_error_with_bottom_n_exceeding_available_groups(self, test_data):
+        """Test that appropriate error is raised when bottom_n exceeds available groups."""
+        df = test_data
+        total_count = len(df["category"].unique())
+
+        with pytest.raises(ValueError, match="bottom_n .* cannot exceed the number of available groups"):
+            plot(
+                df,
+                value_col="sales",
+                group_col="category",
+                index_col="category",
+                value_to_index="A",
+                bottom_n=total_count + 1,
+            )
+
+    def test_error_with_sum_of_top_and_bottom_n(self):
+        """Test that appropriate error is raised when top_n + bottom_n exceeds available groups."""
+        # Create a test index dataframe with the same groups
+        test_df = pd.DataFrame(
+            {
+                "category": ["A", "B", "C"],
+                "index": [90, 110, 120],
+            },
+        )
+
+        # Test that sum of top_n and bottom_n validation works
+        with pytest.raises(
+            ValueError,
+            match="The sum of top_n .* and bottom_n .* cannot exceed the total number of groups",
+        ):
+            filter_top_bottom_n(
+                df=test_df,
+                top_n=2,
+                bottom_n=2,
+            )
