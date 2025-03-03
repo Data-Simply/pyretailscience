@@ -327,6 +327,7 @@ def add_source_text(
     source_text: str,
     font_size: float = GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
     vertical_padding: float = 2,
+    is_venn_diagram: bool = False,
 ) -> Text:
     """Add source text to the bottom left corner of a graph.
 
@@ -336,29 +337,35 @@ def add_source_text(
         font_size (float, optional): The font size of the source text.
             Defaults to GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE.
         vertical_padding (float, optional): The padding in ems below the x-axis label. Defaults to 2.
+        is_venn_diagram (bool, optional): Flag to indicate if the diagram is a Venn diagram.
+            If True, `x_norm` and `y_norm` will be set to fixed values.
+            Defaults to False.
 
     Returns:
         Text: The source text.
     """
     ax.figure.canvas.draw()
+    if is_venn_diagram:
+        x_norm = 0.01
+        y_norm = 0.02
+    else:
+        # Get y coordinate of the text
+        xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
 
-    # Get y coordinate of the text
-    xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+        top_of_label_px = xlabel_box.y0
 
-    top_of_label_px = xlabel_box.y0
+        padding_px = vertical_padding * font_size
 
-    padding_px = vertical_padding * font_size
+        y_disp = top_of_label_px - padding_px - (xlabel_box.height)
 
-    y_disp = top_of_label_px - padding_px - (xlabel_box.height)
+        # Convert display coordinates to normalized figure coordinates
+        y_norm = y_disp / ax.figure.bbox.height
 
-    # Convert display coordinates to normalized figure coordinates
-    y_norm = y_disp / ax.figure.bbox.height
-
-    # Get x coordinate of the text
-    ylabel_box = ax.yaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
-    title_box = ax.title.get_window_extent(renderer=ax.figure.canvas.get_renderer())
-    min_x0 = min(ylabel_box.x0, title_box.x0)
-    x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
+        # Get x coordinate of the text
+        ylabel_box = ax.yaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+        title_box = ax.title.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+        min_x0 = min(ylabel_box.x0, title_box.x0)
+        x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
 
     # Add text to the bottom left corner of the figure
     return ax.figure.text(
