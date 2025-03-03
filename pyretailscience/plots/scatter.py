@@ -18,8 +18,6 @@ It is designed to visualize relationships between variables, highlight distribut
 
 ### Limitations and Warnings
 
-- **Handling of Datetime Data**: If a datetime column is passed as **`x_col`**, a warning suggests using
-the **plots.time_scatter** module for better handling.
 - **Pre-Aggregated Data Required**: The module does not perform data aggregation; data should be pre-aggregated
 before being passed to the function.
 """
