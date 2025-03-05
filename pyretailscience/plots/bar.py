@@ -298,12 +298,12 @@ def _generate_percentage_by_bar_group_labels(
     """
     labels = []
     for i, v in enumerate(container):
-        if group_totals[i] == 0:
+        if group_totals.iloc[i] == 0:
             division_by_zero_list.append(True)  # Track division by zero
             labels.append("")
         else:
             bar_value = _get_bar_value(v, plot_kind)
-            percentage_value = (bar_value / group_totals[i]) * 100
+            percentage_value = (bar_value / group_totals.iloc[i]) * 100
             human_percentage_value: str = gu.human_format(num=percentage_value, decimals=num_digits)
             truncated_value: str = gu.truncate_to_x_digits(num_str=human_percentage_value, digits=num_digits)
             labels.append(truncated_value)

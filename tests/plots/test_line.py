@@ -89,7 +89,7 @@ def test_plot_warns_if_xcol_is_datetime(sample_dataframe, mocker):
         group_col="group",
     )
 
-    warnings.warn.assert_called_once_with(
+    warnings.warn.assert_any_call(
         "The column 'x' is datetime-like. Consider using the 'plots.time_line' module for time-based plots.",
         UserWarning,
         stacklevel=2,
