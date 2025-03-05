@@ -4,6 +4,7 @@ from itertools import cycle
 
 import pandas as pd
 import pytest
+from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
 
@@ -477,3 +478,41 @@ def test_plot_no_x_col_list_value_col(sample_dataframe):
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.patches) == expected_num_patches
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_percentage_by_bar_group_with_negative_values():
+    """Test percentage_by_bar_group with negative values, triggering warning."""
+    df = pd.DataFrame(
+        {
+            "product": ["A", "B", "C", "D"],
+            "sales_q1": [1000, -1500, 2000, -2500],
+            "sales_q2": [-1100, 1600, -2100, 2600],
+        },
+    )
+    with pytest.warns(UserWarning, match="Negative values detected"):
+        bar.plot(
+            df=df,
+            value_col=["sales_q1", "sales_q2"],
+            x_col="product",
+            data_label_format="percentage_by_bar_group",
+        )
+    plt.close("all")
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_percentage_by_bar_group_with_zero_group_total():
+    """Test percentage_by_bar_group with zero group totals and suppress the warning."""
+    df = pd.DataFrame({"product": ["A", "B"], "sales": [0, 0]})
+
+    with pytest.warns(UserWarning, match="Division by zero detected"):
+        result_ax = bar.plot(
+            df=df,
+            value_col="sales",
+            x_col="product",
+            data_label_format="percentage_by_bar_group",
+        )
+
+    labels = [t.get_text() for t in result_ax.texts]
+    assert all(label == "" for label in labels)  # Should all be empty due to division by zero
+    plt.close("all")
