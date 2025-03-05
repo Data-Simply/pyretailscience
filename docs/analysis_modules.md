@@ -53,7 +53,7 @@ line.plot(
 )
 ```
 
-### **Area Plot**
+### Area Plot
 
 <div class="clear" markdown>
 
@@ -99,7 +99,8 @@ area.plot(
     alpha=0.5,
 )
 ```
-### **Scatter Plot**
+
+### Scatter Plot
 
 <div class="clear" markdown>
 
@@ -150,6 +151,44 @@ scatter.plot(
     alpha=0.8,
 )
 ```
+
+### Venn Diagram
+
+<div class="clear" markdown>
+
+![Venn Diagram](assets/images/analysis_modules/plots/venn.svg){ align=right loading=lazy width="50%"}
+
+Venn diagrams are useful for visualizing **overlaps** and **relationships** between multiple categorical sets. They help in:
+
+- Identifying **commonalities** and **differences** between groups
+- Understanding **intersections** between two or three sets
+- Highlighting **exclusive and shared** elements
+
+Venn diagrams provide a clear way to analyze how different groups relate to each other. They are often used in market segmentation, user behavior analysis, and set comparisons.
+
+</div>
+
+Example:
+
+```python
+from pyretailscience.plots import venn
+
+df =  pd.DataFrame({
+    "groups": [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (1, 1, 1)],
+    "percent": [0.119403, 0.089552, 0.238806, 0.208955, 0.134328, 0.208955, 0.104111]
+})
+labels = ["Frequent Buyers", "High-Spenders", "Loyal Members"]
+
+venn.plot(
+    df,
+    labels=labels,
+    title="E-commerce Customer Segmentation",
+    source_text="Source: PyRetailScience - 2024",
+    vary_size=False,
+    subset_label_formatter=lambda v: f"{v:.1%}"
+)
+```
+
 ### Histogram Plot
 
 <div class="clear" markdown>
