@@ -1,3 +1,0 @@
-# Segmentation
-
-::: pyretailscience.segmentation

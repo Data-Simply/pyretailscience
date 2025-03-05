@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyretailscience.gain_loss import GainLoss
+from pyretailscience.analysis.gain_loss import GainLoss
 
 
 @pytest.mark.parametrize(

@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from pyretailscience.analysis.segmentation import HMLSegmentation, SegTransactionStats, ThresholdSegmentation
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.segmentation import HMLSegmentation, SegTransactionStats, ThresholdSegmentation
 
 cols = ColumnHelper()
 
