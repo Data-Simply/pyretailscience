@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from pyretailscience.cross_shop import CrossShop
+from pyretailscience.analysis.cross_shop import CrossShop
 from pyretailscience.options import ColumnHelper
 
 cols = ColumnHelper()
