@@ -465,7 +465,7 @@ associations:
 Example:
 
 ```python
-from pyretailscience.product_association import ProductAssociation
+from pyretailscience.analysis.product_association import ProductAssociation
 
 pa = ProductAssociation(
     df,
@@ -510,7 +510,7 @@ it easy to identify significant patterns in customer shopping behavior.
 Example:
 
 ```python
-from pyretailscience import cross_shop
+from pyretailscience.analysis import cross_shop
 
 cs_customers = cross_shop.CrossShop(
     df,
@@ -552,7 +552,7 @@ This module is particularly valuable for:
 Example:
 
 ```python
-from pyretailscience.gain_loss import GainLoss
+from pyretailscience.analysis.gain_loss import GainLoss
 
 gl = GainLoss(
     df=df,
@@ -647,7 +647,7 @@ Key Components of the Revenue Tree:
 Example:
 
 ```python
-from pyretailscience import revenue_tree
+from pyretailscience.analysis import revenue_tree
 
 rev_tree = revenue_tree.RevenueTree(
     df=df,
@@ -681,7 +681,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.segmentation import HMLSegmentation
+from pyretailscience.analysis.segmentation import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -724,7 +724,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.segmentation import ThresholdSegmentation
+from pyretailscience.analysis.segmentation import ThresholdSegmentation
 
 # Create custom segmentation with quartiles
 # Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
@@ -766,7 +766,7 @@ segmentation.
 Example:
 
 ```python
-from pyretailscience.segmentation import HMLSegmentation, SegTransactionStats
+from pyretailscience.analysis.segmentation import HMLSegmentation, SegTransactionStats
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -808,7 +808,7 @@ like your churn window.
 Example:
 
 ```python
-from pyretailscience.customer import PurchasesPerCustomer
+from pyretailscience.analysis.customer import PurchasesPerCustomer
 
 ppc = PurchasesPerCustomer(transactions)
 
@@ -867,7 +867,7 @@ made. This helps reveal critical retention thresholds in the customer lifecycle 
 Example:
 
 ```python
-from pyretailscience.customer import TransactionChurn
+from pyretailscience.analysis.customer import TransactionChurn
 
 tc = TransactionChurn(transactions, churn_period=churn_period)
 

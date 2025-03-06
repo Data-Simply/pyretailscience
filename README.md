@@ -41,7 +41,7 @@ pip install git+https://github.com/Data-Simply/pyretailscience.git
 Here is an excerpt from the gain loss analysis example [notebook](https://pyretailscience.datasimply.co/examples/gain_loss/)
 
 ```python
-from pyretailscience.gain_loss import GainLoss
+from pyretailscience.analysis.gain_loss import GainLoss
 
 gl = GainLoss(
     df,
@@ -77,7 +77,7 @@ plt.show()
 Here is an excerpt from the cross shop analysis example [notebook](https://pyretailscience.datasimply.co/examples/cross_shop/)
 
 ```python
-from pyretailscience import cross_shop
+from pyretailscience.analysis import cross_shop
 
 cs = cross_shop.CrossShop(
     df,

@@ -5,8 +5,8 @@ import math
 import pandas as pd
 import pytest
 
+from pyretailscience.analysis.revenue_tree import RevenueTree
 from pyretailscience.options import ColumnHelper
-from pyretailscience.revenue_tree import RevenueTree
 
 
 class TestRevenueTree:
