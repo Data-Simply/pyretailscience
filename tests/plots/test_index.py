@@ -6,7 +6,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.plots.index import filter_top_bottom_n, get_indexes, plot
+from pyretailscience.plots.index import (
+    filter_by_groups,
+    filter_by_value_thresholds,
+    filter_top_bottom_n,
+    get_indexes,
+    plot,
+)
 
 OFFSET_VALUE = 100
 OFFSET_THRESHOLD = 5
@@ -451,6 +457,67 @@ class TestIndexPlot:
                 top_n=2,
             )
 
+    def test_sort_values_with_series_col(self):
+        """Test that the sort_values function works correctly with [group_col, series_col]."""
+        # Create a test dataframe directly to test the sorting functionality
+        test_df = pd.DataFrame(
+            {
+                "category": ["C", "A", "B", "C", "A", "B"],
+                "region": ["X", "X", "X", "Y", "Y", "Y"],
+                "index": [100, 90, 110, 105, 95, 115],
+            },
+        )
+
+        # Test ascending sort
+        sorted_asc = test_df.sort_values(by=["category", "region"], ascending=True)
+
+        # Verify sorting is correct for ascending
+        expected_order_asc = [
+            ("A", "X"),
+            ("A", "Y"),
+            ("B", "X"),
+            ("B", "Y"),
+            ("C", "X"),
+            ("C", "Y"),
+        ]
+        actual_order_asc = list(zip(sorted_asc["category"], sorted_asc["region"], strict=True))
+        assert actual_order_asc == expected_order_asc
+
+        # Test descending sort
+        sorted_desc = test_df.sort_values(by=["category", "region"], ascending=False)
+
+        # Verify sorting is correct for descending
+        expected_order_desc = [
+            ("C", "Y"),
+            ("C", "X"),
+            ("B", "Y"),
+            ("B", "X"),
+            ("A", "Y"),
+            ("A", "X"),
+        ]
+        actual_order_desc = list(zip(sorted_desc["category"], sorted_desc["region"], strict=True))
+        assert actual_order_desc == expected_order_desc
+
+        # Now test the actual implementation in the plot function
+        # Create a plot with series_col to trigger the code path we're testing
+        result_ax = plot(
+            test_df,
+            value_col="index",
+            group_col="category",
+            index_col="category",
+            value_to_index="A",
+            series_col="region",
+            sort_by="group",
+            sort_order="ascending",
+        )
+
+        # Verify the plot was created
+        assert isinstance(result_ax, plt.Axes)
+
+        # Verify legend exists
+        legend = result_ax.get_legend()
+        assert legend is not None
+
     def test_error_with_excessive_top_and_bottom_n(self, test_data):
         """Test that appropriate error is raised when top_n + bottom_n exceeds group count."""
         df = test_data
@@ -519,3 +586,63 @@ class TestIndexPlot:
                 top_n=2,
                 bottom_n=2,
             )
+
+
+def test_filter_by_groups_exclude_groups():
+    """Test that filter_by_groups correctly excludes specified groups."""
+    # Create test dataframe with multiple categories
+    test_df = pd.DataFrame(
+        {
+            "category": ["A", "B", "C", "D", "E"],
+            "value": [10, 20, 30, 40, 50],
+        },
+    )
+
+    # Test excluding specific groups
+    exclude_list = ["B", "D"]
+    result_df = filter_by_groups(
+        df=test_df,
+        group_col="category",
+        exclude_groups=exclude_list,
+    )
+
+    # Check that excluded groups are not in the result
+    assert all(value not in result_df["category"].values for value in ["B", "D"])
+
+    # Check that other groups are still in the result
+    assert all(value in result_df["category"].values for value in ["A", "C", "E"])
+
+    # Check that the result has the expected number of rows
+    expected_row_count = len(test_df) - len(exclude_list)
+    assert len(result_df) == expected_row_count
+
+
+def test_filter_by_value_thresholds_filter_below():
+    """Test that filter_by_value_thresholds correctly filters values below a threshold."""
+    # Create test dataframe with varying index values
+    test_df = pd.DataFrame(
+        {
+            "category": ["A", "B", "C", "D", "E"],
+            "index": [80, 90, 100, 110, 120],
+        },
+    )
+
+    # Define the threshold value
+    threshold = 105
+
+    # Apply the filter
+    result_df = filter_by_value_thresholds(
+        df=test_df,
+        filter_below=threshold,
+    )
+
+    # Verify only values below the threshold remain
+    assert all(result_df["index"] < threshold)
+
+    # Check that correct values are included and excluded
+    assert all(value in result_df["index"].values for value in [80, 90, 100])
+    assert all(value not in result_df["index"].values for value in [110, 120])
+
+    # Check that the result has the expected number of rows
+    expected_count = len(test_df[test_df["index"] < threshold])
+    assert len(result_df) == expected_count
