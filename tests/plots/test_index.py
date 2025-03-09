@@ -370,7 +370,7 @@ class TestIndexPlot:
         """Test that filtering that results in an empty dataset raises ValueError."""
         df = test_data
 
-        # Use an extreme filter value that will result in an empty dataset
+        # Use an extremely high filter value that will result in an empty dataset
         with pytest.raises(ValueError, match="Filtering resulted in an empty dataset"):
             plot(
                 df,
@@ -378,7 +378,7 @@ class TestIndexPlot:
                 group_col="category",
                 index_col="category",
                 value_to_index="A",
-                filter_above=1000,  # Using a high value that should cause all data to be filtered out
+                filter_above=100000,  # Using an extremely high value that should cause all data to be filtered out
             )
 
     def test_top_and_bottom_n(self, test_data):
@@ -615,6 +615,53 @@ def test_filter_by_groups_exclude_groups():
     # Check that the result has the expected number of rows
     expected_row_count = len(test_df) - len(exclude_list)
     assert len(result_df) == expected_row_count
+
+
+def test_filter_by_groups_validation_error():
+    """Test that filter_by_groups raises ValueError when both exclude and include params are provided."""
+    test_df = pd.DataFrame(
+        {
+            "category": ["A", "B", "C", "D", "E"],
+            "value": [10, 20, 30, 40, 50],
+        },
+    )
+
+    exclude_list = ["B", "D"]
+    include_list = ["A", "C"]
+
+    # Test with both exclude_groups and include_only_groups
+    with pytest.raises(ValueError, match="exclude_groups and include_only_groups cannot be used together."):
+        plot(
+            df=test_df,
+            value_col="value",
+            group_col="category",
+            index_col="category",
+            value_to_index="A",
+            exclude_groups=exclude_list,
+            include_only_groups=include_list,
+        )
+
+
+def test_series_col_with_sort_by_value_validation_error():
+    """Test that providing series_col with sort_by='value' raises ValueError."""
+    test_df = pd.DataFrame(
+        {
+            "category": ["A", "B", "C"] * 2,
+            "series": ["X", "X", "X", "Y", "Y", "Y"],
+            "value": [10, 20, 30, 40, 50, 60],
+        },
+    )
+
+    with pytest.raises(ValueError, match="sort_by cannot be 'value' when series_col is provided."):
+        plot(
+            df=test_df,
+            value_col="value",
+            group_col="category",
+            index_col="category",
+            value_to_index="A",
+            series_col="series",
+            sort_by="value",
+        )
 
 
 def test_filter_by_value_thresholds_filter_below():
