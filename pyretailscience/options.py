@@ -62,8 +62,8 @@ class Options:
             "column.suffix.difference": "diff",
             "column.suffix.percent_difference": "pct_diff",
             "column.suffix.contribution": "contrib",
-            "column.suffix.period_1": "_p1",
-            "column.suffix.period_2": "_p2",
+            "column.suffix.period_1": "p1",
+            "column.suffix.period_2": "p2",
         }
         self._descriptions: dict[str, str] = {
             # Database columns
