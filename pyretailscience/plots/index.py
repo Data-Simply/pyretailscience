@@ -124,6 +124,9 @@ def filter_top_bottom_n(df: pd.DataFrame, top_n: int | None = None, bottom_n: in
         ValueError: If the sum of top_n and bottom_n exceeds the total number of groups.
         ValueError: If filtering results in an empty dataset.
     """
+    top_n = None if top_n == 0 else top_n
+    bottom_n = None if bottom_n == 0 else bottom_n
+
     if (top_n is None and bottom_n is None) or len(df) == 0:
         return df
 
@@ -149,12 +152,6 @@ def filter_top_bottom_n(df: pd.DataFrame, top_n: int | None = None, bottom_n: in
         selected_rows = pd.concat([selected_rows, temp_df.head(top_n)])
     if bottom_n is not None:
         selected_rows = pd.concat([selected_rows, temp_df.tail(bottom_n)])
-
-    # Check if filtering resulted in an empty dataframe (should not happen but just in case)
-    if len(selected_rows) == 0:
-        raise ValueError(
-            "Top/bottom filtering resulted in an empty dataset. Check your parameters.",
-        )
 
     return selected_rows
 
