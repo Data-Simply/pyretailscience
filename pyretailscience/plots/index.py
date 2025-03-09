@@ -295,12 +295,6 @@ def plot(  # noqa: C901, PLR0913
             filter_below=filter_below,
         )
 
-        index_df = filter_top_bottom_n(
-            df=index_df,
-            top_n=top_n,
-            bottom_n=bottom_n,
-        )
-
         colors = COLORS["green"][500]
         show_legend = False
         index_df = index_df[[group_col, "index"]].set_index(group_col)
@@ -309,6 +303,13 @@ def plot(  # noqa: C901, PLR0913
                 by=group_col if sort_by == "group" else "index",
                 ascending=sort_order == "ascending",
             )
+
+        index_df = filter_top_bottom_n(
+            df=index_df,
+            top_n=top_n,
+            bottom_n=bottom_n,
+        )
+
     else:
         show_legend = True
         colors = get_linear_cmap("green")(np.linspace(COLORMAP_MIN, COLORMAP_MAX, df[series_col].nunique()))
