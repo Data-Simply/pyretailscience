@@ -132,34 +132,6 @@ class TestProductAssociations:
             ),
         )
 
-    def test_calc_association_all_pair_items(self, transactions_df, expected_results_pair_items_df):
-        """Test calculating association rules for a pairs of items versus another item for all items."""
-        calc_df = ProductAssociation._calc_association(
-            df=transactions_df,
-            value_col="product",
-            group_col=cols.transaction_id,
-            number_of_combinations=3,
-        )
-
-        pd.testing.assert_frame_equal(calc_df, expected_results_pair_items_df)
-
-    def test_calc_association_target_pair_items(self, transactions_df, expected_results_pair_items_df):
-        """Test calculating association rules for a target pairs of items versus another item."""
-        calc_df = ProductAssociation._calc_association(
-            df=transactions_df,
-            value_col="product",
-            group_col=cols.transaction_id,
-            number_of_combinations=3,
-            target_item=("bread", "butter"),
-        )
-
-        pd.testing.assert_frame_equal(
-            calc_df,
-            expected_results_pair_items_df[
-                expected_results_pair_items_df["product_1"] == ("bread", "butter")
-            ].reset_index(drop=True),
-        )
-
     def test_calc_association_min_occurrences(self, transactions_df, expected_results_single_items_df):
         """Test calculating association rules with a min occurrences level."""
         min_occurrences = 2
@@ -250,23 +222,6 @@ class TestProductAssociations:
                 drop=True,
             ),
         )
-
-    def test_calc_association_invalid_number_of_combinations(self, transactions_df):
-        """Test calculating association rules with an invalid number of combinations."""
-        with pytest.raises(ValueError, match="Number of combinations must be either 2 or 3."):
-            ProductAssociation._calc_association(
-                df=transactions_df,
-                value_col="product",
-                group_col=cols.transaction_id,
-                number_of_combinations=4,
-            )
-        with pytest.raises(ValueError, match="Number of combinations must be either 2 or 3."):
-            ProductAssociation._calc_association(
-                df=transactions_df,
-                value_col="product",
-                group_col=cols.transaction_id,
-                number_of_combinations=1,
-            )
 
     def test_calc_association_invalid_min_occurrences(self, transactions_df):
         """Test calculating association rules with an invalid minimum occurrences value."""

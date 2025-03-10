@@ -35,15 +35,13 @@ By leveraging these association rules, retailers can make data-driven decisions 
 operations, and drive business growth.
 """
 
-from itertools import combinations
-from typing import Literal
 
-import numpy as np
+import ibis
 import pandas as pd
-from scipy.sparse import csc_matrix
-from tqdm import tqdm
 
 from pyretailscience.options import get_option
+
+SUPPORTED_COMBINATIONS = 2
 
 
 class ProductAssociation:
@@ -83,19 +81,14 @@ class ProductAssociation:
         - support: The proportion of transactions containing both products.
         - confidence: The probability of buying product_2 given that product_1 was bought.
         - uplift: The ratio of the observed support to the expected support if the products were independent.
-
-        The class uses efficient sparse matrix operations to handle large datasets and
-        calculates associations for either pairs (2) or triples (3) of products, depending
-        on the 'number_of_combinations' parameter in _calc_association.
     """
 
     def __init__(
         self,
-        df: pd.DataFrame,
+        df: pd.DataFrame | ibis.Table,
         value_col: str,
         group_col: str = get_option("column.customer_id"),
         target_item: str | None = None,
-        number_of_combinations: Literal[2, 3] = 2,
         min_occurrences: int = 1,
         min_cooccurrences: int = 1,
         min_support: float = 0.0,
@@ -106,14 +99,12 @@ class ProductAssociation:
         """Initialize the ProductAssociation object.
 
         Args:
-            df (pandas.DataFrame): The input DataFrame containing transaction data.
+            df (pd.DataFrame | ibis.Table) : The input DataFrame or ibis Table containing transaction data.
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
             target_item (str or None, optional): A specific product to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
-            number_of_combinations (int, optional): The number of products to consider in the association analysis. Can
-                be either 2 or 3. Defaults to 2.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.
             min_cooccurrences (int, optional): The minimum number of co-occurrences required for the product pairs in
@@ -143,7 +134,6 @@ class ProductAssociation:
             value_col=value_col,
             group_col=group_col,
             target_item=target_item,
-            number_of_combinations=number_of_combinations,
             min_occurrences=min_occurrences,
             min_cooccurrences=min_cooccurrences,
             min_support=min_support,
@@ -153,18 +143,16 @@ class ProductAssociation:
         )
 
     @staticmethod
-    def _calc_association(  # noqa: C901 (ignore complexity) - Excluded due to min_* arguments checks
-        df: pd.DataFrame,
+    def _calc_association(  # (ignore complexity) - Excluded due to min_* arguments checks
+        df: pd.DataFrame | ibis.Table,
         value_col: str,
         group_col: str = get_option("column.customer_id"),
         target_item: str | None = None,
-        number_of_combinations: Literal[2, 3] = 2,
         min_occurrences: int = 1,
         min_cooccurrences: int = 1,
         min_support: float = 0.0,
         min_confidence: float = 0.0,
         min_uplift: float = 0.0,
-        show_progress: bool = False,
     ) -> pd.DataFrame:
         """Calculate product association rules based on transaction data.
 
@@ -172,14 +160,12 @@ class ProductAssociation:
         helping to identify patterns in customer purchasing behavior.
 
         Args:
-            df (pandas.DataFrame): The input DataFrame containing transaction data.
+            df (pd.DataFrame | ibis.Table) : The input DataFrame or ibis Table containing transaction data.
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
             target_item (str or None, optional): A specific product to focus the association analysis on. If None,
-                associations for all products are calculated. Defaults to None.
-            number_of_combinations (int, optional): The number of products to consider in the association analysis. Can
-                be either 2 or 3. Defaults to 2.
+                associations for all products are calculated. Defaults to   None.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.
             min_cooccurrences (int, optional): The minimum number of co-occurrences required for the product pairs in
@@ -208,13 +194,7 @@ class ProductAssociation:
             - support: The proportion of transactions containing both products.
             - confidence: The probability of buying product_2 given that product_1 was bought.
             - uplift: The ratio of the observed support to the expected support if the products were independent.
-
-            The method uses efficient sparse matrix operations to handle large datasets and
-            calculates associations for either pairs (2) or triples (3) of products, depending
-            on the 'number_of_combinations' parameter.
         """
-        if number_of_combinations not in [2, 3]:
-            raise ValueError("Number of combinations must be either 2 or 3.")
         if min_occurrences < 1:
             raise ValueError("Minimum occurrences must be at least 1.")
         if min_cooccurrences < 1:
@@ -226,83 +206,171 @@ class ProductAssociation:
         if min_uplift < 0.0:
             raise ValueError("Minimum uplift must be greater or equal to 0.")
 
-        unique_combo_df = df[[group_col, value_col]].drop_duplicates()
-        unique_combo_df[value_col] = pd.Categorical(unique_combo_df[value_col], ordered=True)
-        unique_combo_df[group_col] = pd.Categorical(unique_combo_df[group_col], ordered=True)
+        if isinstance(df, pd.DataFrame):
+            df = ibis.memtable(df)
 
-        sparse_matrix = csc_matrix(
-            (
-                [1] * len(unique_combo_df),
-                (
-                    unique_combo_df[group_col].cat.codes,
-                    unique_combo_df[value_col].cat.codes,
-                ),
-            ),
+        unique_transactions = (
+            df.group_by(group_col).aggregate(products=lambda t, col=value_col: t[col].collect()).order_by(group_col)
+        )
+        unique_transactions = unique_transactions.mutate(
+            item=ibis.expr.operations.Unnest(unique_transactions["products"]),
+        ).drop("products")
+
+        total_transactions = unique_transactions[group_col].nunique().execute()
+
+        product_occurrences = (
+            unique_transactions.group_by("item")
+            .aggregate(occurrences=lambda t, col=group_col: t[col].nunique())
+            .order_by("item")
+        )
+        product_occurrences = product_occurrences.mutate(
+            occurrence_probability=product_occurrences["occurrences"] / total_transactions,
+        )
+        product_occurrences = product_occurrences.filter(product_occurrences["occurrences"] >= min_occurrences)
+
+        left_table = unique_transactions.rename({"item_1": "item"})
+        right_table = unique_transactions.rename({"item_2": "item"})
+
+        merged_df = ibis.join(
+            left_table,
+            right_table,
+            predicates=[left_table[group_col] == right_table[group_col]],
+        )
+        merged_df = merged_df.filter(merged_df["item_1"] < merged_df["item_2"])
+
+        product_occurrences_1 = product_occurrences.rename(
+            {"item_1": "item", "occurrences_x": "occurrences", "occurrence_probability_x": "occurrence_probability"},
+        )
+        product_occurrences_2 = product_occurrences.rename(
+            {"item_2": "item", "occurrences_y": "occurrences", "occurrence_probability_y": "occurrence_probability"},
         )
 
-        row_count = sparse_matrix.shape[0]
+        merged_df = ibis.join(
+            merged_df,
+            product_occurrences_1,
+            predicates=[merged_df["item_1"] == product_occurrences_1["item_1"]],
+        )
 
-        results = []
+        merged_df = ibis.join(
+            merged_df,
+            product_occurrences_2,
+            predicates=[merged_df["item_2"] == product_occurrences_2["item_2"]],
+        ).order_by([group_col, "item_1", "item_2"])
 
-        occurrences = np.array(sparse_matrix.sum(axis=0)).flatten()
-        occurence_prob = occurrences / row_count
+        cooccurrences = (
+            merged_df.group_by(["item_1", "item_2"])
+            .aggregate(cooccurrences=merged_df[group_col].nunique())
+            .order_by(["item_1", "cooccurrences"])
+        )
+        cooccurrences = cooccurrences.mutate(
+            total_count=total_transactions,
+            support=cooccurrences.cooccurrences / total_transactions,
+        )
+        cooccurrences = cooccurrences.filter(
+            (cooccurrences.cooccurrences >= min_cooccurrences) & (cooccurrences.support >= min_support),
+        )
 
-        base_items = [target_item]
-        if number_of_combinations == 2:  # noqa: PLR2004
-            if target_item is None:
-                base_items = unique_combo_df[value_col].cat.categories
-            items = [([unique_combo_df[value_col].cat.categories.get_loc(cat)], cat) for cat in base_items]
-        elif number_of_combinations == 3:  # noqa: PLR2004
-            if target_item is None:
-                base_items = sorted(combinations(unique_combo_df[value_col].cat.categories, 2))
-            items = [
-                ([unique_combo_df[value_col].cat.categories.get_loc(i) for i in cats], cats) for cats in base_items
+        product_occurrences_1_rename = product_occurrences.rename(
+            {"item_1": "item", "occurrences_1": "occurrences", "prob_1": "occurrence_probability"},
+        )
+        product_occurrences_2_rename = product_occurrences.rename(
+            {"item_2": "item", "occurrences_2": "occurrences", "prob_2": "occurrence_probability"},
+        )
+
+        product_pairs = ibis.join(
+            cooccurrences,
+            product_occurrences_1_rename,
+            predicates=[cooccurrences["item_1"] == product_occurrences_1_rename["item_1"]],
+        )
+        product_pairs = ibis.join(
+            product_pairs,
+            product_occurrences_2_rename,
+            predicates=[product_pairs["item_2"] == product_occurrences_2_rename["item_2"]],
+        ).order_by(["item_1", "item_2"])
+
+        product_pairs = product_pairs.mutate(
+            confidence=product_pairs["cooccurrences"] / product_pairs["occurrences_1"],
+            uplift=product_pairs["support"] / (product_pairs["prob_1"] * product_pairs["prob_2"]),
+        )
+
+        result = product_pairs.filter(
+            (product_pairs.confidence >= min_confidence) & (product_pairs.uplift >= min_uplift),
+        )
+
+        inverse_pairs = result.rename(
+            {
+                f"{value_col}_2": "item_1",
+                f"{value_col}_1": "item_2",
+                "occurrences_2": "occurrences_1",
+                "occurrences_1": "occurrences_2",
+            },
+        )
+
+        product_occurrences_1_rename2 = product_occurrences.rename({f"{value_col}_1": "item"})
+        product_occurrences_2_rename2 = product_occurrences.rename({f"{value_col}_2": "item"})
+
+        inverse_pairs = ibis.join(
+            inverse_pairs,
+            product_occurrences_1_rename2,
+            predicates=[inverse_pairs[f"{value_col}_1"] == product_occurrences_1_rename2[f"{value_col}_1"]],
+        )
+        inverse_pairs = ibis.join(
+            inverse_pairs,
+            product_occurrences_2_rename2,
+            predicates=[inverse_pairs[f"{value_col}_2"] == product_occurrences_2_rename2[f"{value_col}_2"]],
+        )
+        inverse_pairs = inverse_pairs.mutate(
+            confidence=inverse_pairs["cooccurrences"] / inverse_pairs["occurrences_1"],
+            uplift=inverse_pairs["support"] / (inverse_pairs["prob_1"] * inverse_pairs["prob_2"]),
+        )
+
+        result = result.rename({f"{value_col}_1": "item_1", f"{value_col}_2": "item_2"})
+        result = result[
+            [
+                f"{value_col}_1",
+                f"{value_col}_2",
+                "occurrences_1",
+                "occurrences_2",
+                "cooccurrences",
+                "support",
+                "confidence",
+                "uplift",
             ]
+        ]
+        inverse_pairs = inverse_pairs[
+            [
+                f"{value_col}_1",
+                f"{value_col}_2",
+                "occurrences_1",
+                "occurrences_2",
+                "cooccurrences",
+                "support",
+                "confidence",
+                "uplift",
+            ]
+        ]
 
-        if show_progress:
-            items = tqdm(items)
+        result = result.execute()
+        inverse_pairs = inverse_pairs.execute()
 
-        cols_mask = np.zeros(sparse_matrix.shape[1], dtype=bool)
+        final_result = (
+            pd.concat([result, inverse_pairs], ignore_index=True)
+            .sort_values(by=[f"{value_col}_1", f"{value_col}_2"])
+            .reset_index(drop=True)
+        )
 
-        for target_item_loc, item_2 in items:
-            target_item_col_index = cols_mask.copy()
-            target_item_col_index[target_item_loc] = True
-            rows_with_target_item = sparse_matrix[:, target_item_col_index].getnnz(axis=1) == len(target_item_loc)
+        if target_item is not None:
+            final_result = final_result[final_result[f"{value_col}_1"] == target_item].reset_index(drop=True)
 
-            cooccurrences = np.array(sparse_matrix[rows_with_target_item, :].sum(axis=0)).flatten()
-            if (cooccurrences == 0).all():
-                continue
-
-            rows_with_target_item_sum = rows_with_target_item.sum()
-            coocurrence_prob = cooccurrences / row_count
-
-            target_prob = rows_with_target_item_sum / row_count
-            expected_prob = target_prob * occurence_prob
-
-            # TODO: Try to avoid constructing a pandas Dataframe
-            pa_df = pd.DataFrame(
-                {
-                    f"{value_col}_1": [item_2] * sparse_matrix.shape[1],
-                    f"{value_col}_2": unique_combo_df[value_col].cat.categories.values,
-                    "occurrences_1": rows_with_target_item_sum,
-                    "occurrences_2": occurrences,
-                    "cooccurrences": cooccurrences,
-                    "support": coocurrence_prob,
-                    "confidence": cooccurrences / rows_with_target_item_sum,
-                    "uplift": coocurrence_prob / expected_prob,
-                },
-            )
-
-            excl_pairs_idx = (
-                target_item_col_index
-                | (pa_df["occurrences_1"] < min_occurrences)
-                | (pa_df["occurrences_2"] < min_occurrences)
-                | (pa_df["cooccurrences"] < min_cooccurrences)
-                | (pa_df["support"] < min_support)
-                | (pa_df["confidence"] < min_confidence)
-                | (pa_df["uplift"] < min_uplift)
-            )
-
-            results.append(pa_df[~excl_pairs_idx])
-
-        return pd.concat(results).sort_values([f"{value_col}_1", f"{value_col}_2"]).reset_index(drop=True)
+        return final_result[
+            [
+                f"{value_col}_1",
+                f"{value_col}_2",
+                "occurrences_1",
+                "occurrences_2",
+                "cooccurrences",
+                "support",
+                "confidence",
+                "uplift",
+            ]
+        ]
