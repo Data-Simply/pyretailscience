@@ -1,0 +1,17 @@
+[column]
+transaction_id = "new_transaction_id"
+transaction_date = "new_transaction_date"
+transaction_time = "new_transaction_time"
+
+[column.agg]
+unit_quantity = "new_units"
+unit_price = "new_prices"
+unit_spend = "new_spend"
+
+[column.calc]
+units_per_transaction = "new_units_per_transaction"
+transactions_per_customer = "new_transactions_per_customer"
+
+[column.suffix]
+period_1 = "new__p1"
+period_2 = "new__p2"

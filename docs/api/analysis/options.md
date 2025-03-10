@@ -1,0 +1,3 @@
+# Options Analysis
+
+::: pyretailscience.options
