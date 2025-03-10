@@ -216,3 +216,22 @@ class TestOptions:
         mock_is_dir.side_effect = [False, True]  # .git directory in parent
         mock_is_file.side_effect = [False]  # No pyretailscience.toml file
         assert opt.find_project_root() == Path("/home/user/project")
+
+    def test_load_walmart_toml(self):
+        """Test loading the walmart.toml file updates the options correctly."""
+        test_file_path = Path("data/walmart.toml").resolve()
+        options = opt.Options.load_from_toml(test_file_path)
+
+        assert options.get_option("column.transaction_id") == "new_transaction_id"
+        assert options.get_option("column.transaction_date") == "new_transaction_date"
+        assert options.get_option("column.transaction_time") == "new_transaction_time"
+
+        assert options.get_option("column.agg.unit_quantity") == "new_units"
+        assert options.get_option("column.agg.unit_price") == "new_prices"
+        assert options.get_option("column.agg.unit_spend") == "new_spend"
+
+        assert options.get_option("column.calc.units_per_transaction") == "new_units_per_transaction"
+        assert options.get_option("column.calc.transactions_per_customer") == "new_transactions_per_customer"
+
+        assert options.get_option("column.suffix.period_1") == "new__p1"
+        assert options.get_option("column.suffix.period_2") == "new__p2"
