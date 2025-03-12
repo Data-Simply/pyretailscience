@@ -46,9 +46,6 @@ import pyretailscience.style.graph_utils as gu
 from pyretailscience.style.graph_utils import GraphStyles
 from pyretailscience.style.tailwind import COLORS, get_linear_cmap
 
-COLORMAP_MIN = 0.25
-COLORMAP_MAX = 0.75
-
 
 def filter_by_groups(
     df: pd.DataFrame,
@@ -309,7 +306,7 @@ def plot(  # noqa: C901, PLR0913
 
     else:
         show_legend = True
-        colors = get_linear_cmap("green")(np.linspace(COLORMAP_MIN, COLORMAP_MAX, df[series_col].nunique()))
+        colors = get_linear_cmap("green")(np.linspace(0, 1, df[series_col].nunique()))
 
         if sort_by == "group":
             index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
