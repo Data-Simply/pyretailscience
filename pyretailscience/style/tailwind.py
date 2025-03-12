@@ -303,19 +303,21 @@ COLORS = {
 }
 
 
-def get_color_list(name: str) -> list[str]:
-    """Returns a list of colors from the Tailwind color pallete of the given name.
+def get_color_list(name: str, starting_color_code: int = 200, ending_color_code: int = 800) -> list[str]:
+    """Returns a filtered list of colors from the Tailwind color palette based on the given range.
 
     Args:
-        name (str): The name of the color pallete.
+        name (str): The name of the color palette (e.g., "blue", "red").
+        starting_color_code (int): The lowest color shade to use (default: 200).
+        ending_color_code (int): The highest color shade to use (default: 800).
 
     Returns:
-        list[str]: A list of colors from the Tailwind color pallete.
+        list[str]: A filtered list of colors from the Tailwind color palette.
     """
     if name not in COLORS:
         msg = f"Color pallete {name} not found. Available color palettes are: {', '.join(COLORS.keys())}."
         raise ValueError(msg)
-    return [COLORS[name][key] for key in COLORS[name]]
+    return [COLORS[name][key] for key in sorted(COLORS[name].keys()) if starting_color_code <= key <= ending_color_code]
 
 
 def get_listed_cmap(name: str) -> ListedColormap:
@@ -330,16 +332,23 @@ def get_listed_cmap(name: str) -> ListedColormap:
     return ListedColormap(get_color_list(name))
 
 
-def get_linear_cmap(name: str) -> LinearSegmentedColormap:
-    """Returns a LinearSegmentedColormap from the Tailwind color pallete of the given name.
+def get_linear_cmap(name: str, starting_color_code: int = 200, ending_color_code: int = 800) -> LinearSegmentedColormap:
+    """Returns a linear segmented colormap using Tailwind colors.
+
+    This function allows restricting the color range used in the colormap.
 
     Args:
-        name (str): The name of the color pallete.
+        name (str): The name of the Tailwind color (e.g., "blue", "red").
+        starting_color_code (int): The lowest color shade to use (default: 200).
+        ending_color_code (int): The highest color shade to use (default: 800).
 
     Returns:
-        LinearSegmentedColormap: The color pallete as a LinearSegmentedColormap.
+        LinearSegmentedColormap: A colormap object for matplotlib.
     """
-    return LinearSegmentedColormap.from_list(f"{name}_linear_colormap", get_color_list(name))
+    return LinearSegmentedColormap.from_list(
+        f"{name}_linear_colormap",
+        get_color_list(name, starting_color_code, ending_color_code),
+    )
 
 
 def get_base_cmap() -> ListedColormap:
