@@ -303,13 +303,13 @@ COLORS = {
 }
 
 
-def get_color_list(name: str, starting_color_code: int = 200, ending_color_code: int = 800) -> list[str]:
+def get_color_list(name: str, starting_color_code: int = 50, ending_color_code: int = 950) -> list[str]:
     """Returns a filtered list of colors from the Tailwind color palette based on the given range.
 
     Args:
         name (str): The name of the color palette (e.g., "blue", "red").
-        starting_color_code (int): The lowest color shade to use (default: 200).
-        ending_color_code (int): The highest color shade to use (default: 800).
+        starting_color_code (int): The lowest color shade to use (default: 50).
+        ending_color_code (int): The highest color shade to use (default: 950).
 
     Returns:
         list[str]: A filtered list of colors from the Tailwind color palette.
@@ -332,15 +332,15 @@ def get_listed_cmap(name: str) -> ListedColormap:
     return ListedColormap(get_color_list(name))
 
 
-def get_linear_cmap(name: str, starting_color_code: int = 200, ending_color_code: int = 800) -> LinearSegmentedColormap:
+def get_linear_cmap(name: str, starting_color_code: int = 50, ending_color_code: int = 950) -> LinearSegmentedColormap:
     """Returns a linear segmented colormap using Tailwind colors.
 
     This function allows restricting the color range used in the colormap.
 
     Args:
         name (str): The name of the Tailwind color (e.g., "blue", "red").
-        starting_color_code (int): The lowest color shade to use (default: 200).
-        ending_color_code (int): The highest color shade to use (default: 800).
+        starting_color_code (int): The lowest color shade to use (default: 50).
+        ending_color_code (int): The highest color shade to use (default: 950).
 
     Returns:
         LinearSegmentedColormap: A colormap object for matplotlib.
