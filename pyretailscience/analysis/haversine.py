@@ -1,65 +1,54 @@
-"""This module provides functionality for performing operations on geographic data using Ibis expressions.
+"""This module provides functionality for computing geospatial distances using Ibis expressions.
 
-It allows efficient computation of geospatial transformations and analyses on structured data tables.
+It defines functions for efficient geospatial analysis on structured data tables, leveraging
+Ibis for optimized query execution.
 
 ### Core Features
 
-- **Ibis Integration**: Converts Pandas DataFrames into Ibis tables for optimized query execution.
-- **Dynamic Column Selection**: Allows passing latitude, longitude, and other columns as parameters.
-- **Haversine Distance Calculation**: Computes great-circle distances between coordinate pairs.
-- **Supports Large Datasets**: Leverages Ibis for scalable computation across different backends.
-- **Unit Customization**: Defaults to kilometers but allows custom radius values.
+- **Ibis-Based Computation**: Uses Ibis expressions for scalable processing.
+- **Haversine Distance Calculation**: Computes great-circle distances dynamically as an Ibis expression.
+- **Backend Agnostic**: Works with multiple Ibis-supported backends, including SQL-based databases.
+- **Efficient Query Optimization**: Defers computation to the database or processing engine.
 
 ### Use Cases
 
-- **Distance-Based Filtering**: Identify locations within a specified radius.
-- **Geospatial Analysis**: Examine movement patterns and spatial distributions.
-- **Logistics & Routing**: Calculate optimal routes and service areas.
+- **Geospatial Filtering**: Identify locations within a certain radius using database queries.
+- **Spatial Analysis**: Analyze movement patterns and distances between geographic points.
+- **Logistics & Routing**: Optimize route planning by calculating distances dynamically.
 
 ### Limitations and Warnings
 
-- **Assumes Spherical Earth**: The function approximates Earth as a perfect sphere, which may introduce slight inaccuracies.
-- **Backend Support Varies**: Ensure the Ibis backend supports trigonometric functions before usage.
+- **Requires Ibis-Compatible Backend**: Ensure your Ibis backend supports trigonometric functions.
+- **Assumes Spherical Earth**: Uses the Haversine formula, which introduces slight inaccuracies due to Earth's oblate shape.
 """
 import ibis
-import pandas as pd
 
 
 def haversine_distance(
-    df: pd.DataFrame | ibis.Table,
-    lat_col: str,
-    lon_col: str,
-    target_lat_col: str,
-    target_lon_col: str,
+    lat_col: ibis.expr.types.Column,
+    lon_col: ibis.expr.types.Column,
+    target_lat_col: ibis.expr.types.Column,
+    target_lon_col: ibis.expr.types.Column,
     radius: float = 6371.0,
-) -> pd.DataFrame:
-    """Converts a Pandas DataFrame into an Ibis table and computes Haversine distances dynamically.
+) -> ibis.expr.types.Column:
+    """Computes the Haversine distance between two sets of latitude and longitude columns.
 
     Parameters:
-        df (pd.DataFrame | ibis.Table): The input DataFrame or ibis Table with latitude and longitude columns.
-        lat_col (str): Column name for the source latitude.
-        lon_col (str): Column name for the source longitude.
-        target_lat_col (str): Column name for the target latitude.
-        target_lon_col (str): Column name for the target longitude.
+        lat_col (ibis.expr.types.Column): Column containing source latitudes.
+        lon_col (ibis.expr.types.Column): Column containing source longitudes.
+        target_lat_col (ibis.expr.types.Column): Column containing target latitudes.
+        target_lon_col (ibis.expr.types.Column): Column containing target longitudes.
         radius (float, optional): Earth's radius in kilometers (default: 6371 km).
 
     Returns:
-        pd.DataFrame: DataFrame with an additional column for computed distances.
+        ibis.expr.types.Column: An Ibis expression representing the computed distances.
     """
-    if isinstance(df, pd.DataFrame):
-        df: ibis.Table = ibis.memtable(df)
-
-    lat1, lon1, lat2, lon2 = df[lat_col], df[lon_col], df[target_lat_col], df[target_lon_col]
-
-    lat1_rad = lat1.radians()
-    lat2_rad = lat2.radians()
-    delta_lat = (lat2 - lat1).radians()
-    delta_lon = (lon2 - lon1).radians()
+    lat1_rad = lat_col.radians()
+    lat2_rad = target_lat_col.radians()
+    delta_lat = (target_lat_col - lat_col).radians()
+    delta_lon = (target_lon_col - lon_col).radians()
 
     a = (delta_lat / 2).sin().pow(2) + lat1_rad.cos() * lat2_rad.cos() * (delta_lon / 2).sin().pow(2)
     c = 2 * a.sqrt().asin()
-    distance = radius * c
 
-    t_with_distance = df.mutate(distance=distance)
-
-    return t_with_distance.execute()
+    return radius * c

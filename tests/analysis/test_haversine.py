@@ -1,4 +1,5 @@
 """Tests for the haversine distance module."""
+import ibis
 import pandas as pd
 import pytest
 
@@ -6,23 +7,26 @@ from pyretailscience.analysis.haversine import haversine_distance
 
 
 @pytest.fixture()
-def sample_dataframe():
-    """Fixture to provide a sample DataFrame for testing."""
+def sample_ibis_table():
+    """Fixture to provide a sample Ibis table for testing."""
     data = {
         "lat1": [37.7749, 34.0522],
         "lon1": [-122.4194, -118.2437],
         "lat2": [40.7128, 36.1699],
         "lon2": [-74.0060, -115.1398],
     }
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    return ibis.memtable(df)
 
 
-def test_haversine_distance(sample_dataframe):
+def test_haversine_distance(sample_ibis_table):
     """Test the haversine_distance function for correct distance calculation."""
-    result_df = haversine_distance(sample_dataframe, "lat1", "lon1", "lat2", "lon2")
+    t = sample_ibis_table
+    distance_expr = haversine_distance(t["lat1"], t["lon1"], t["lat2"], t["lon2"])
 
-    assert "distance" in result_df.columns, "Output DataFrame should contain a 'distance' column."
-    assert result_df.shape[0] == sample_dataframe.shape[0], "Output DataFrame should have the same number of rows."
+    assert isinstance(distance_expr, ibis.expr.types.Column), "Output should be an Ibis expression."
+
+    result_df = t.mutate(distance=distance_expr).execute()
 
     expected_distances = [4129.086165, 367.606322]
 
