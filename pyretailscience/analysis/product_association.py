@@ -41,8 +41,6 @@ import pandas as pd
 
 from pyretailscience.options import get_option
 
-SUPPORTED_COMBINATIONS = 2
-
 
 class ProductAssociation:
     """A class for generating and analyzing product association rules.
@@ -143,7 +141,7 @@ class ProductAssociation:
         )
 
     @staticmethod
-    def _calc_association(  # (ignore complexity) - Excluded due to min_* arguments checks
+    def _calc_association(
         df: pd.DataFrame | ibis.Table,
         value_col: str,
         group_col: str = get_option("column.customer_id"),
@@ -209,40 +207,34 @@ class ProductAssociation:
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
 
-        unique_transactions = (
-            df.group_by(group_col).aggregate(products=lambda t, col=value_col: t[col].collect()).order_by(group_col)
-        )
-        unique_transactions = unique_transactions.mutate(
-            item=ibis.expr.operations.Unnest(unique_transactions["products"]),
-        ).drop("products")
+        unique_transactions = df.select(df[group_col], df[value_col].name("item")).distinct()
 
         total_transactions = unique_transactions[group_col].nunique().execute()
-
         product_occurrences = (
             unique_transactions.group_by("item")
-            .aggregate(occurrences=lambda t, col=group_col: t[col].nunique())
-            .order_by("item")
+            .aggregate(
+                occurrences=lambda t, col=group_col: t[col].nunique(),
+                occurrence_probability=lambda t, col=group_col: t[col].nunique() / total_transactions,
+            )
+            .filter(lambda t: t.occurrences >= min_occurrences)
         )
-        product_occurrences = product_occurrences.mutate(
-            occurrence_probability=product_occurrences["occurrences"] / total_transactions,
-        )
-        product_occurrences = product_occurrences.filter(product_occurrences["occurrences"] >= min_occurrences)
 
         left_table = unique_transactions.rename({"item_1": "item"})
         right_table = unique_transactions.rename({"item_2": "item"})
 
-        merged_df = ibis.join(
-            left_table,
+        merged_df = left_table.join(
             right_table,
-            predicates=[left_table[group_col] == right_table[group_col]],
+            predicates=[
+                left_table[group_col] == right_table[group_col],
+                left_table["item_1"] < right_table["item_2"],
+            ],
         )
-        merged_df = merged_df.filter(merged_df["item_1"] < merged_df["item_2"])
 
         product_occurrences_1 = product_occurrences.rename(
-            {"item_1": "item", "occurrences_x": "occurrences", "occurrence_probability_x": "occurrence_probability"},
+            {"item_1": "item", "occurrences_1": "occurrences", "occurrence_probability_1": "occurrence_probability"},
         )
         product_occurrences_2 = product_occurrences.rename(
-            {"item_2": "item", "occurrences_y": "occurrences", "occurrence_probability_y": "occurrence_probability"},
+            {"item_2": "item", "occurrences_2": "occurrences", "occurrence_probability_2": "occurrence_probability"},
         )
 
         merged_df = ibis.join(
@@ -255,13 +247,9 @@ class ProductAssociation:
             merged_df,
             product_occurrences_2,
             predicates=[merged_df["item_2"] == product_occurrences_2["item_2"]],
-        ).order_by([group_col, "item_1", "item_2"])
-
-        cooccurrences = (
-            merged_df.group_by(["item_1", "item_2"])
-            .aggregate(cooccurrences=merged_df[group_col].nunique())
-            .order_by(["item_1", "cooccurrences"])
         )
+
+        cooccurrences = merged_df.group_by(["item_1", "item_2"]).aggregate(cooccurrences=merged_df[group_col].nunique())
         cooccurrences = cooccurrences.mutate(
             total_count=total_transactions,
             support=cooccurrences.cooccurrences / total_transactions,
@@ -286,7 +274,7 @@ class ProductAssociation:
             product_pairs,
             product_occurrences_2_rename,
             predicates=[product_pairs["item_2"] == product_occurrences_2_rename["item_2"]],
-        ).order_by(["item_1", "item_2"])
+        )
 
         product_pairs = product_pairs.mutate(
             confidence=product_pairs["cooccurrences"] / product_pairs["occurrences_1"],

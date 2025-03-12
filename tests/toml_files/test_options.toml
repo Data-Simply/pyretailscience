@@ -1,0 +1,35 @@
+[column]
+customer_id = "new_customer_id"
+transaction_id = "new_transaction_id"
+transaction_date = "new_transaction_date"
+transaction_time = "new_transaction_time"
+product_id = "new_product_id"
+unit_quantity = "new_unit_quantity"
+unit_price = "new_unit_price"
+unit_spend = "new_unit_spend"
+store_id = "new_store_id"
+
+[column.agg]
+customer_id = "new_customers"
+transaction_id = "new_transactions"
+product_id = "new_products"
+unit_quantity = "new_units"
+unit_price = "new_prices"
+unit_spend = "new_spend"
+store_id = "new_stores"
+
+[column.calc]
+price_per_unit = "new_price_per_unit"
+units_per_transaction = "new_units_per_transaction"
+spend_per_customer = "new_spend_per_customer"
+spend_per_transaction = "new_spend_per_transaction"
+transactions_per_customer = "new_transactions_per_customer"
+
+[column.suffix]
+count = "new_cnt"
+percent = "new_pct"
+difference = "new_diff"
+percent_difference = "new_pct_diff"
+contribution = "new_contrib"
+period_1 = "new_p1"
+period_2 = "new_p2"
