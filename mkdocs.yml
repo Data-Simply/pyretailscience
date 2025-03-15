@@ -17,17 +17,29 @@ nav:
       - Product Association: examples/product_association.ipynb
       - Revenue Tree: examples/revenue_tree.ipynb
   - Reference:
-      - Gain Loss: api/gain_loss.md
+      - Options: api/options.md
       - Range Planning: api/range_planning.md
-      - Segmentation: api/segmentation.md
-      - Customer Retention: api/customer.md
-      - Standard Graphs: api/standard_graphs.md
-      - Cross Shop Analysis: api/cross_shop.md
-      - Product Association: api/product_association.md
-      - Line Plot: api/plots/line.md
-      - Histogram Plot: api/plots/histogram.md
-      - Bar Plot: api/plots/bar.md
-
+      - Analysis:
+          - Cross Shop Analysis: api/analysis/cross_shop.md
+          - Customer Retention: api/analysis/customer.md
+          - Gain Loss: api/analysis/gain_loss.md
+          - Haversine Distance: api/analysis/haversine.md
+          - Product Association: api/analysis/product_association.md
+          - Revenue Tree: api/analysis/revenue_tree.md
+          - Segmentation: api/analysis/segmentation.md
+      - Plots:
+          - Area Plot: api/plots/area.md
+          - Bar Plot: api/plots/bar.md
+          - Histogram Plot: api/plots/histogram.md
+          - Index Plot: api/plots/index.md
+          - Line Plot: api/plots/line.md
+          - Scatter Plot: api/plots/scatter.md
+          - Time Plot: api/plots/time.md
+          - Venn Diagram: api/plots/venn.md
+          - Waterfall Plot: api/plots/waterfall.md
+          - Style:
+              - Graph Utils: api/plots/style/graph_utils.md
+              - Tailwind Colors: api/plots/style/tailwind.md
 
 theme:
   name: material
