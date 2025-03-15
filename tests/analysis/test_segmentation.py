@@ -314,6 +314,93 @@ class TestSegTransactionStats:
         with pytest.raises(ValueError):
             SegTransactionStats(df, "segment_name")
 
+    def test_extra_aggs_functionality(self):
+        """Test that the extra_aggs parameter works correctly."""
+        # Constants for expected values
+        segment_a_store_count = 3  # Segment A has stores 1, 2, 4
+        segment_b_store_count = 2  # Segment B has stores 1, 3
+        total_store_count = 4  # Total has stores 1, 2, 3, 4
+
+        segment_a_product_count = 3  # Segment A has products 10, 20, 40
+        segment_b_product_count = 2  # Segment B has products 10, 30
+        total_product_count = 4  # Total has products 10, 20, 30, 40
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3],
+                cols.unit_spend: [100.0, 150.0, 200.0, 250.0, 300.0, 350.0],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "segment_name": ["A", "A", "B", "B", "A", "A"],
+                "store_id": [1, 2, 1, 3, 2, 4],
+                "product_id": [10, 20, 10, 30, 20, 40],
+            },
+        )
+
+        # Test with a single extra aggregation
+        seg_stats = SegTransactionStats(df, "segment_name", extra_aggs={"distinct_stores": ("store_id", "nunique")})
+
+        # Verify the extra column exists and has correct values
+        assert "distinct_stores" in seg_stats.df.columns
+
+        # Sort by segment_name to ensure consistent order
+        result_df = seg_stats.df.sort_values("segment_name").reset_index(drop=True)
+
+        assert result_df.loc[0, "distinct_stores"] == segment_a_store_count  # Segment A
+        assert result_df.loc[1, "distinct_stores"] == segment_b_store_count  # Segment B
+        assert result_df.loc[2, "distinct_stores"] == total_store_count  # Total
+
+        # Test with multiple extra aggregations
+        seg_stats_multi = SegTransactionStats(
+            df,
+            "segment_name",
+            extra_aggs={
+                "distinct_stores": ("store_id", "nunique"),
+                "distinct_products": ("product_id", "nunique"),
+            },
+        )
+
+        # Verify both extra columns exist
+        assert "distinct_stores" in seg_stats_multi.df.columns
+        assert "distinct_products" in seg_stats_multi.df.columns
+
+        # Sort by segment_name to ensure consistent order
+        result_df_multi = seg_stats_multi.df.sort_values("segment_name").reset_index(drop=True)
+
+        assert result_df_multi.loc[0, "distinct_products"] == segment_a_product_count  # Segment A
+        assert result_df_multi.loc[1, "distinct_products"] == segment_b_product_count  # Segment B
+        assert result_df_multi.loc[2, "distinct_products"] == total_product_count  # Total
+
+    def test_extra_aggs_with_invalid_column(self):
+        """Test that an error is raised when an invalid column is specified in extra_aggs."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3],
+                cols.unit_spend: [100.0, 200.0, 300.0],
+                cols.transaction_id: [101, 102, 103],
+                "segment_name": ["A", "B", "A"],
+            },
+        )
+
+        with pytest.raises(ValueError) as excinfo:
+            SegTransactionStats(df, "segment_name", extra_aggs={"invalid_agg": ("nonexistent_column", "nunique")})
+
+        assert "does not exist in the data" in str(excinfo.value)
+
+    def test_extra_aggs_with_invalid_function(self):
+        """Test that an error is raised when an invalid function is specified in extra_aggs."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3],
+                cols.unit_spend: [100.0, 200.0, 300.0],
+                cols.transaction_id: [101, 102, 103],
+                "segment_name": ["A", "B", "A"],
+            },
+        )
+
+        with pytest.raises(ValueError) as excinfo:
+            SegTransactionStats(df, "segment_name", extra_aggs={"invalid_agg": (cols.customer_id, "invalid_function")})
+
+        assert "not available for column" in str(excinfo.value)
+
 
 class TestHMLSegmentation:
     """Tests for the HMLSegmentation class."""

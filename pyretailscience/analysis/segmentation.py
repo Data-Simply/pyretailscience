@@ -189,7 +189,12 @@ class SegTransactionStats:
 
     _df: pd.DataFrame | None = None
 
-    def __init__(self, data: pd.DataFrame | ibis.Table, segment_col: str = "segment_name") -> None:
+    def __init__(
+        self,
+        data: pd.DataFrame | ibis.Table,
+        segment_col: str = "segment_name",
+        extra_aggs: dict[str, tuple[str, str]] | None = None,
+    ) -> None:
         """Calculates transaction statistics by segment.
 
         Args:
@@ -198,6 +203,12 @@ class SegTransactionStats:
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
             segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_name".
+            extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
+                The keys in the dictionary will be the column names for the aggregation results.
+                The values are tuples with (column_name, aggregation_function), where:
+                - column_name is the name of the column to aggregate
+                - aggregation_function is a string name of an Ibis aggregation function (e.g., "nunique", "sum")
+                Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
         """
         cols = ColumnHelper()
         required_cols = [
@@ -214,9 +225,21 @@ class SegTransactionStats:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        self.segment_col = segment_col
+        # Validate extra_aggs if provided
+        if extra_aggs:
+            for col_tuple in extra_aggs.values():
+                col, func = col_tuple
+                if col not in data.columns:
+                    msg = f"Column '{col}' specified in extra_aggs does not exist in the data"
+                    raise ValueError(msg)
+                if not hasattr(data[col], func):
+                    msg = f"Aggregation function '{func}' not available for column '{col}'"
+                    raise ValueError(msg)
 
-        self.table = self._calc_seg_stats(data, segment_col)
+        self.segment_col = segment_col
+        self.extra_aggs = {} if extra_aggs is None else extra_aggs
+
+        self.table = self._calc_seg_stats(data, segment_col, self.extra_aggs)
 
     @staticmethod
     def _get_col_order(include_quantity: bool) -> list[str]:
@@ -248,12 +271,19 @@ class SegTransactionStats:
         return col_order
 
     @staticmethod
-    def _calc_seg_stats(data: pd.DataFrame | ibis.Table, segment_col: str) -> ibis.Table:
+    def _calc_seg_stats(
+        data: pd.DataFrame | ibis.Table,
+        segment_col: str,
+        extra_aggs: dict[str, tuple[str, str]] | None = None,
+    ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
         Args:
             data (pd.DataFrame | ibis.Table): The transaction data.
             segment_col (str): The column to use for the segmentation.
+            extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
+                The keys in the dictionary will be the column names for the aggregation results.
+                The values are tuples with (column_name, aggregation_function).
 
         Returns:
             pd.DataFrame: The transaction statistics by segment.
@@ -275,6 +305,12 @@ class SegTransactionStats:
         }
         if cols.unit_qty in data.columns:
             aggs[cols.agg_unit_qty] = data[cols.unit_qty].sum()
+
+        # Add extra aggregations if provided
+        if extra_aggs:
+            for agg_name, col_tuple in extra_aggs.items():
+                col, func = col_tuple
+                aggs[agg_name] = getattr(data[col], func)()
 
         # Calculate metrics for segments and total
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
@@ -310,6 +346,11 @@ class SegTransactionStats:
                 self.segment_col,
                 *SegTransactionStats._get_col_order(include_quantity=cols.agg_unit_qty in self.table.columns),
             ]
+
+            # Add any extra aggregation columns to the column order
+            if hasattr(self, "extra_aggs") and self.extra_aggs:
+                col_order.extend(self.extra_aggs.keys())
+
             self._df = self.table.execute()[col_order]
         return self._df
 
