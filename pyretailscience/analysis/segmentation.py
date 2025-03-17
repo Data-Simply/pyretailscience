@@ -278,7 +278,7 @@ class SegTransactionStats:
 
         # Calculate metrics for segments and total
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
-        total_metrics = data.group_by(ibis.literal("Total").name(segment_col)).aggregate(**aggs)
+        total_metrics = data.aggregate(**aggs).mutate(segment_name=ibis.literal("Total"))
         total_customers = data[cols.customer_id].nunique()
 
         # Cross join with total_customers to make it available for percentage calculation
@@ -286,8 +286,8 @@ class SegTransactionStats:
             **{
                 cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
                 cols.calc_spend_per_trans: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_transaction_id],
-                cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id] / ibis._[cols.agg_customer_id],
-                cols.customers_pct: ibis._[cols.agg_customer_id] / total_customers,
+                cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id] / ibis._[cols.agg_customer_id].cast("float"),
+                cols.customers_pct: ibis._[cols.agg_customer_id].cast("float") / total_customers,
             },
         )
 
@@ -295,7 +295,8 @@ class SegTransactionStats:
             final_metrics = final_metrics.mutate(
                 **{
                     cols.calc_price_per_unit: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_unit_qty].nullif(0),
-                    cols.calc_units_per_trans: ibis._[cols.agg_unit_qty] / ibis._[cols.agg_transaction_id],
+                    cols.calc_units_per_trans: ibis._[cols.agg_unit_qty]
+                    / ibis._[cols.agg_transaction_id].cast("float"),
                 },
             )
         return final_metrics

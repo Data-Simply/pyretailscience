@@ -207,20 +207,20 @@ class ProductAssociation:
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
 
-        unique_transactions = df.select(df[group_col], df[value_col].name("item")).distinct()
+        unique_transactions = df
+        total_transactions = unique_transactions.alias("t")[group_col].nunique().name("total_count")
 
-        total_transactions = unique_transactions[group_col].nunique().execute()
         product_occurrences = (
-            unique_transactions.group_by("item")
+            unique_transactions.group_by(value_col)
             .aggregate(
-                occurrences=lambda t, col=group_col: t[col].nunique(),
-                occurrence_probability=lambda t, col=group_col: t[col].nunique() / total_transactions,
+                occurrences=lambda t: t[group_col].nunique(),
             )
+            .mutate(occurrence_probability=lambda t: t.occurrences / total_transactions)
             .filter(lambda t: t.occurrences >= min_occurrences)
         )
 
-        left_table = unique_transactions.rename({"item_1": "item"})
-        right_table = unique_transactions.rename({"item_2": "item"})
+        left_table = unique_transactions.mutate(item_1=unique_transactions[value_col]).drop(value_col)
+        right_table = unique_transactions.mutate(item_2=unique_transactions[value_col]).drop(value_col)
 
         merged_df = left_table.join(
             right_table,
@@ -228,13 +228,15 @@ class ProductAssociation:
                 left_table[group_col] == right_table[group_col],
                 left_table["item_1"] < right_table["item_2"],
             ],
+            lname="",
+            rname="{name}_right",
         )
 
         product_occurrences_1 = product_occurrences.rename(
-            {"item_1": "item", "occurrences_1": "occurrences", "occurrence_probability_1": "occurrence_probability"},
+            {"item_1": value_col, "occurrences_1": "occurrences", "occurrence_probability_1": "occurrence_probability"},
         )
         product_occurrences_2 = product_occurrences.rename(
-            {"item_2": "item", "occurrences_2": "occurrences", "occurrence_probability_2": "occurrence_probability"},
+            {"item_2": value_col, "occurrences_2": "occurrences", "occurrence_probability_2": "occurrence_probability"},
         )
 
         merged_df = ibis.join(
@@ -251,7 +253,6 @@ class ProductAssociation:
 
         cooccurrences = merged_df.group_by(["item_1", "item_2"]).aggregate(cooccurrences=merged_df[group_col].nunique())
         cooccurrences = cooccurrences.mutate(
-            total_count=total_transactions,
             support=cooccurrences.cooccurrences / total_transactions,
         )
         cooccurrences = cooccurrences.filter(
@@ -259,10 +260,10 @@ class ProductAssociation:
         )
 
         product_occurrences_1_rename = product_occurrences.rename(
-            {"item_1": "item", "occurrences_1": "occurrences", "prob_1": "occurrence_probability"},
+            {"item_1": value_col, "occurrences_1": "occurrences", "prob_1": "occurrence_probability"},
         )
         product_occurrences_2_rename = product_occurrences.rename(
-            {"item_2": "item", "occurrences_2": "occurrences", "prob_2": "occurrence_probability"},
+            {"item_2": value_col, "occurrences_2": "occurrences", "prob_2": "occurrence_probability"},
         )
 
         product_pairs = ibis.join(
@@ -294,8 +295,8 @@ class ProductAssociation:
             },
         )
 
-        product_occurrences_1_rename2 = product_occurrences.rename({f"{value_col}_1": "item"})
-        product_occurrences_2_rename2 = product_occurrences.rename({f"{value_col}_2": "item"})
+        product_occurrences_1_rename2 = product_occurrences.rename({f"{value_col}_1": value_col})
+        product_occurrences_2_rename2 = product_occurrences.rename({f"{value_col}_2": value_col})
 
         inverse_pairs = ibis.join(
             inverse_pairs,
