@@ -791,6 +791,55 @@ segment_stats.df
 | Total          | 4604.28  |            150 |          50 |              92.0856 |                30.6952  |                           3 |             1   |
 <!-- markdownlint-enable MD013 -->
 
+
+### RFM Segmentation
+
+<div class="clear" markdown>
+
+![RFM Segmentation Distribution](assets/images/analysis_modules/rfm_segmentation.svg){ align=right loading=lazy width="50%"}
+
+**Recency, Frequency, Monetary (RFM) segmentation** categorizes customers based on their purchasing behavior:
+
+- **Recency (R)**: How recently a customer made a purchase
+- **Frequency (F)**: How often a customer makes purchases
+- **Monetary (M)**: How much a customer spends
+
+Each metric is typically scored on a scale, and the combined RFM score helps businesses identify **loyal customers, at-risk customers, and high-value buyers**.
+
+RFM segmentation helps answer questions such as:
+
+- Who are your most valuable customers?
+- Which customers are at risk of churn?
+- Which customers should be targeted for re-engagement?
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.analysis.segmentation import RFMSegmentation
+
+data = pd.DataFrame({
+    "customer_id": [1, 1, 2, 2, 3, 3, 3],
+    "transaction_id": [101, 102, 201, 202, 301, 302, 303],
+    "transaction_date": ["2024-03-01", "2024-03-10", "2024-02-20", "2024-02-25", "2024-01-15", "2024-01-20", "2024-02-05"],
+    "unit_spend": [50, 75, 100, 150, 200, 250, 300]
+})
+
+data["transaction_date"] = pd.to_datetime(data["transaction_date"])
+current_date = "2024-07-01"
+
+rfm_segmenter = RFMSegmentation(df=data, current_date=current_date)
+rfm_results = rfm_segmenter.df
+```
+
+| customer_id | recency_days | frequency | monetary | r_score | f_score | m_score | rfm_segment |
+|-------------|--------------|-----------|----------|---------|---------|---------|-------------|
+| 3           | 147          | 3         | 750      | 0       | 0       | 0       | 0           |
+| 2           | 127          | 2         | 250      | 1       | 2       | 1       | 121         |
+| 1           | 113          | 2         | 125      | 2       | 1       | 2       | 212         |
+
 ### Purchases Per Customer
 
 <div class="clear" markdown>

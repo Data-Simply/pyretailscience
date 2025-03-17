@@ -4,7 +4,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.segmentation import HMLSegmentation, SegTransactionStats, ThresholdSegmentation
+from pyretailscience.analysis.segmentation import (
+    HMLSegmentation,
+    RFMSegmentation,
+    SegTransactionStats,
+    ThresholdSegmentation,
+)
 from pyretailscience.options import ColumnHelper, get_option
 
 cols = ColumnHelper()
@@ -392,3 +397,120 @@ class TestHMLSegmentation:
         assert result_df.loc[2, "segment_name"] == "Light"
         assert result_df.loc[4, "segment_name"] == "Medium"
         assert result_df.loc[5, "segment_name"] == "Light"
+
+
+class TestRFMSegmentation:
+    """Tests for the RFMSegmentation class."""
+
+    @pytest.fixture()
+    def base_df(self):
+        """Return a base DataFrame for testing."""
+        return pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3, 4, 5],
+                cols.transaction_id: [101, 102, 103, 104, 105],
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0, 250.0],
+                cols.transaction_date: [
+                    "2025-03-01",
+                    "2025-02-15",
+                    "2025-01-30",
+                    "2025-03-10",
+                    "2025-02-20",
+                ],
+            },
+        )
+
+    def test_correct_rfm_segmentation(self, base_df):
+        """Test that the RFM segmentation correctly calculates the RFM scores and segments."""
+        current_date = "2025-03-17"
+        rfm_segmentation = RFMSegmentation(df=base_df, current_date=current_date)
+        result_df = rfm_segmentation.df
+        expected_df = pd.DataFrame(
+            {
+                "customer_id": [1, 2, 3, 4, 5],
+                "rfm_segment": [104, 312, 423, 30, 241],
+            },
+        ).set_index("customer_id")
+
+        pd.testing.assert_frame_equal(
+            result_df[["rfm_segment"]].sort_index(),
+            expected_df[["rfm_segment"]].sort_index(),
+            check_like=True,
+        )
+
+    def test_handles_dataframe_with_missing_columns(self):
+        """Test that the method raises an error when required columns are missing."""
+        base_df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3],
+                cols.unit_spend: [100.0, 200.0, 150.0],
+                cols.transaction_id: [101, 102, 103],
+            },
+        )
+
+        with pytest.raises(ValueError):
+            RFMSegmentation(df=base_df, current_date="2025-03-17")
+
+    def test_single_customer(self):
+        """Test that the method correctly calculates RFM segmentation for a single customer."""
+        df_single_customer = pd.DataFrame(
+            {
+                cols.customer_id: [1],
+                cols.transaction_id: [101],
+                cols.unit_spend: [200.0],
+                cols.transaction_date: ["2025-03-01"],
+            },
+        )
+        current_date = "2025-03-17"
+        rfm_segmentation = RFMSegmentation(df=df_single_customer, current_date=current_date)
+        result_df = rfm_segmentation.df
+        assert result_df.loc[1, "rfm_segment"] == 0
+
+    def test_multiple_transactions_per_customer(self):
+        """Test that the method correctly handles multiple transactions for the same customer."""
+        df_multiple_transactions = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 1, 1, 1],
+                cols.transaction_id: [101, 102, 103, 104, 105],
+                cols.unit_spend: [120.0, 250.0, 180.0, 300.0, 220.0],
+                cols.transaction_date: [
+                    "2025-03-01",
+                    "2025-02-15",
+                    "2025-01-10",
+                    "2025-03-10",
+                    "2025-02-25",
+                ],
+            },
+        )
+        current_date = "2025-03-17"
+        rfm_segmentation = RFMSegmentation(df=df_multiple_transactions, current_date=current_date)
+        result_df = rfm_segmentation.df
+
+        assert result_df.loc[1, "rfm_segment"] == 0
+
+    def test_calculates_rfm_correctly_for_all_customers(self, base_df):
+        """Test that RFM scores are calculated correctly for all customers."""
+        current_date = "2025-03-17"
+        expected_customer_count = 5
+        rfm_segmentation = RFMSegmentation(df=base_df, current_date=current_date)
+        result_df = rfm_segmentation.df
+
+        assert len(result_df) == expected_customer_count
+        assert "rfm_segment" in result_df.columns
+
+    def test_rfm_segmentation_with_no_date(self, base_df):
+        """Test that the RFM segmentation correctly calculates the RFM scores and segments."""
+        rfm_segmentation = RFMSegmentation(df=base_df)
+        result_df = rfm_segmentation.df
+        expected_df = pd.DataFrame(
+            {
+                "customer_id": [1, 2, 3, 4, 5],
+                "rfm_segment": [104, 312, 423, 30, 241],
+            },
+        ).set_index("customer_id")
+
+        pd.testing.assert_frame_equal(
+            result_df[["rfm_segment"]].sort_index(),
+            expected_df[["rfm_segment"]].sort_index(),
+            check_like=True,
+        )

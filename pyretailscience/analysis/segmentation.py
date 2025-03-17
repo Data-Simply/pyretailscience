@@ -1,5 +1,6 @@
 """This module contains classes for segmenting customers based on their spend and transaction statistics by segment."""
 
+import datetime
 from typing import Literal
 
 import ibis
@@ -402,3 +403,106 @@ class SegTransactionStats:
         gu.standard_tick_styles(ax)
 
         return ax
+
+
+class RFMSegmentation:
+    """Segments customers using the RFM (Recency, Frequency, Monetary) methodology.
+
+    Customers are scored on three dimensions:
+    - Recency (R): Days since the last transaction (lower is better).
+    - Frequency (F): Number of unique transactions (higher is better).
+    - Monetary (M): Total amount spent (higher is better).
+
+    Each metric is ranked into 10 bins (0-9) using NTILE(10) where,
+    - 9 represents the best score (top 10% of customers).
+    - 0 represents the lowest score (bottom 10% of customers).
+    The RFM segment is a 3-digit number (R*100 + F*10 + M), representing customer value.
+    """
+
+    _df: pd.DataFrame | None = None
+
+    def __init__(self, df: pd.DataFrame | ibis.Table, current_date: str | None = None) -> None:
+        """Initializes the RFM segmentation process.
+
+        Args:
+            df (pd.DataFrame | ibis.Table): A DataFrame or Ibis table containing transaction data.
+                Must include the following columns:
+                - customer_id
+                - transaction_date
+                - unit_spend
+                - transaction_id
+            current_date (Optional[str]): The reference date for calculating recency (format: "YYYY-MM-DD").
+                If not provided, the current system date will be used.
+
+        Raises:
+            ValueError: If the dataframe is missing required columns.
+            TypeError: If the input data is not a pandas DataFrame or an Ibis Table.
+        """
+        cols = ColumnHelper()
+        required_cols = [
+            cols.customer_id,
+            cols.transaction_date,
+            cols.unit_spend,
+            cols.transaction_id,
+        ]
+
+        missing_cols = set(required_cols) - set(df.columns)
+        if missing_cols:
+            error_message = f"Missing required columns: {missing_cols}"
+            raise ValueError(error_message)
+        current_date = (
+            datetime.date.fromisoformat(current_date) if current_date else datetime.datetime.now(datetime.UTC).date()
+        )
+
+        self.table = self._compute_rfm(df, current_date)
+
+    def _compute_rfm(self, df: ibis.Table, current_date: datetime.date) -> ibis.Table:
+        """Computes the RFM metrics and segments customers accordingly.
+
+        Args:
+            df (ibis.Table): The transaction data table.
+            current_date (datetime.date): The reference date for calculating recency.
+
+        Returns:
+            ibis.Table: A table with RFM scores and segment values.
+        """
+        if isinstance(df, pd.DataFrame):
+            df = ibis.memtable(df)
+        elif not isinstance(df, ibis.Table):
+            raise TypeError("df must be either a pandas DataFrame or an Ibis Table")
+
+        cols = ColumnHelper()
+        current_date_expr = ibis.literal(current_date)
+
+        customer_metrics = df.group_by(cols.customer_id).aggregate(
+            recency_days=(current_date_expr - df[cols.transaction_date].max().cast("date")).cast("int32"),
+            frequency=df[cols.transaction_id].nunique(),
+            monetary=df[cols.unit_spend].sum(),
+        )
+
+        window_recency = ibis.window(
+            order_by=[ibis.asc(customer_metrics.recency_days), ibis.asc(customer_metrics.customer_id)],
+        )
+        window_frequency = ibis.window(
+            order_by=[ibis.desc(customer_metrics.frequency), ibis.asc(customer_metrics.customer_id)],
+        )
+        window_monetary = ibis.window(
+            order_by=[ibis.desc(customer_metrics.monetary), ibis.asc(customer_metrics.customer_id)],
+        )
+
+        rfm_scores = customer_metrics.mutate(
+            r_score=(ibis.ntile(10).over(window_recency)),
+            f_score=(ibis.ntile(10).over(window_frequency)),
+            m_score=(ibis.ntile(10).over(window_monetary)),
+        )
+
+        rfm_segment = (rfm_scores.r_score * 100 + rfm_scores.f_score * 10 + rfm_scores.m_score).name("rfm_segment")
+
+        return rfm_scores.mutate(rfm_segment=rfm_segment)
+
+    @property
+    def df(self) -> pd.DataFrame:
+        """Returns the dataframe with the segment names."""
+        if self._df is None:
+            self._df = self.table.execute().set_index(get_option("column.customer_id"))
+        return self._df
