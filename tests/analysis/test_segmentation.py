@@ -13,7 +13,7 @@ cols = ColumnHelper()
 class TestCalcSegStats:
     """Tests for the _calc_seg_stats method."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def base_df(self):
         """Return a base DataFrame for testing."""
         return pd.DataFrame(
@@ -314,6 +314,70 @@ class TestSegTransactionStats:
         with pytest.raises(ValueError):
             SegTransactionStats(df, "segment_name")
 
+    def test_multiple_segment_columns(self):
+        """Test that the class correctly handles multiple segment columns."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3],
+                cols.unit_spend: [100.0, 150.0, 200.0, 250.0, 300.0, 350.0],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "segment_name": ["A", "A", "B", "B", "A", "A"],
+                "region": ["North", "North", "South", "South", "East", "East"],
+            },
+        )
+
+        # Test with a list of segment columns
+        seg_stats = SegTransactionStats(df, ["segment_name", "region"])
+
+        # Create expected DataFrame with the combinations actually produced
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "A", "B", "Total"],
+                "region": ["East", "North", "South", "Total"],
+                cols.agg_unit_spend: [650.0, 250.0, 450.0, 1350.0],
+                cols.agg_transaction_id: [2, 2, 2, 6],
+                cols.agg_customer_id: [1, 1, 1, 3],
+                cols.calc_spend_per_cust: [650.0, 250.0, 450.0, 450.0],
+                cols.calc_spend_per_trans: [325.0, 125.0, 225.0, 225.0],
+                cols.calc_trans_per_cust: [2.0, 2.0, 2.0, 2.0],
+                cols.customers_pct: [1 / 3, 1 / 3, 1 / 3, 1.0],
+            },
+        )
+
+        # Sort both dataframes by the segment columns for consistent comparison
+        result_df = seg_stats.df.sort_values(["segment_name", "region"]).reset_index(drop=True)
+        expected_output = expected_output.sort_values(["segment_name", "region"]).reset_index(drop=True)
+
+        # Check that both segment columns are in the result
+        assert "segment_name" in result_df.columns
+        assert "region" in result_df.columns
+
+        # Check number of rows - the implementation only returns actual combinations that exist in data
+        # plus the Total row, not all possible combinations
+        assert len(result_df) == len(expected_output)
+
+        # Use pandas testing to compare the dataframes
+        pd.testing.assert_frame_equal(result_df[expected_output.columns], expected_output)
+
+    def test_plot_with_multiple_segment_columns(self):
+        """Test that plotting with multiple segment columns raises a ValueError."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3],
+                cols.unit_spend: [100.0, 200.0, 300.0],
+                cols.transaction_id: [101, 102, 103],
+                "segment_name": ["A", "B", "A"],
+                "region": ["North", "South", "East"],
+            },
+        )
+
+        seg_stats = SegTransactionStats(df, ["segment_name", "region"])
+
+        with pytest.raises(ValueError) as excinfo:
+            seg_stats.plot("spend")
+
+        assert "Plotting is only supported for a single segment column" in str(excinfo.value)
+
     def test_extra_aggs_functionality(self):
         """Test that the extra_aggs parameter works correctly."""
         # Constants for expected values
@@ -405,7 +469,7 @@ class TestSegTransactionStats:
 class TestHMLSegmentation:
     """Tests for the HMLSegmentation class."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def base_df(self):
         """Return a base DataFrame for testing."""
         return pd.DataFrame(

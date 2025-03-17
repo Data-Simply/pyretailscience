@@ -192,7 +192,7 @@ class SegTransactionStats:
     def __init__(
         self,
         data: pd.DataFrame | ibis.Table,
-        segment_col: str = "segment_name",
+        segment_col: str | list[str] = "segment_name",
         extra_aggs: dict[str, tuple[str, str]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
@@ -202,7 +202,8 @@ class SegTransactionStats:
                 customer_id, unit_spend and transaction_id. If the dataframe contains the column unit_quantity, then
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
-            segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_name".
+            segment_col (str | list[str], optional): The column or list of columns to use for the segmentation.
+                Defaults to "segment_name".
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function), where:
@@ -211,11 +212,14 @@ class SegTransactionStats:
                 Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
         """
         cols = ColumnHelper()
+
+        if isinstance(segment_col, str):
+            segment_col = [segment_col]
         required_cols = [
             cols.customer_id,
             cols.unit_spend,
             cols.transaction_id,
-            segment_col,
+            *segment_col,
         ]
         if cols.unit_qty in data.columns:
             required_cols.append(cols.unit_qty)
@@ -273,14 +277,14 @@ class SegTransactionStats:
     @staticmethod
     def _calc_seg_stats(
         data: pd.DataFrame | ibis.Table,
-        segment_col: str,
+        segment_col: list[str],
         extra_aggs: dict[str, tuple[str, str]] | None = None,
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
         Args:
             data (pd.DataFrame | ibis.Table): The transaction data.
-            segment_col (str): The column to use for the segmentation.
+            segment_col (list[str]): The columns to use for the segmentation.
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function).
@@ -314,7 +318,7 @@ class SegTransactionStats:
 
         # Calculate metrics for segments and total
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
-        total_metrics = data.aggregate(**aggs).mutate(segment_name=ibis.literal("Total"))
+        total_metrics = data.aggregate(**aggs).mutate({col: ibis.literal("Total") for col in segment_col})
         total_customers = data[cols.customer_id].nunique()
 
         # Cross join with total_customers to make it available for percentage calculation
@@ -343,7 +347,7 @@ class SegTransactionStats:
         if self._df is None:
             cols = ColumnHelper()
             col_order = [
-                self.segment_col,
+                *self.segment_col,
                 *SegTransactionStats._get_col_order(include_quantity=cols.agg_unit_qty in self.table.columns),
             ]
 
@@ -392,18 +396,23 @@ class SegTransactionStats:
         Raises:
             ValueError: If the sort_order is not "ascending", "descending" or None.
             ValueError: If the orientation is not "vertical" or "horizontal".
+            ValueError: If multiple segment columns are used, as plotting is only supported for a single segment column.
         """
         if sort_order not in ["ascending", "descending", None]:
             raise ValueError("sort_order must be either 'ascending' or 'descending' or None")
         if orientation not in ["vertical", "horizontal"]:
             raise ValueError("orientation must be either 'vertical' or 'horizontal'")
+        if len(self.segment_col) > 1:
+            raise ValueError("Plotting is only supported for a single segment column")
 
         default_title = f"{value_col.title()} by Segment"
         kind = "bar"
         if orientation == "horizontal":
             kind = "barh"
 
-        val_s = self.df.set_index(self.segment_col)[value_col]
+        # Use the first segment column for plotting
+        plot_segment_col = self.segment_col[0]
+        val_s = self.df.set_index(plot_segment_col)[value_col]
         if hide_total:
             val_s = val_s[val_s.index != "Total"]
 
