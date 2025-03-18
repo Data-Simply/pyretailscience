@@ -12,7 +12,7 @@ from pyretailscience.options import ColumnHelper
 class TestRevenueTree:
     """Test the RevenueTree class."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def cols(self):
         """Return a ColumnHelper instance."""
         return ColumnHelper()

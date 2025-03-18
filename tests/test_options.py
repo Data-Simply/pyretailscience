@@ -167,7 +167,7 @@ class TestOptions:
         }
         assert expected_flat_options == opt.Options.flatten_options("column", nested_options["column"])
 
-    @pytest.fixture()
+    @pytest.fixture
     def _reset_lru_cache(self):
         opt.find_project_root.cache_clear()
         yield

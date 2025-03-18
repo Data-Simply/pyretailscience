@@ -6,6 +6,7 @@ default parameters, custom titles, group columns, and handling invalid
 periods. Additionally, the tests ensure proper handling of source text and
 legend visibility.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ EXPECTED_SOURCE_TEXT_COUNT = 4
 class TestTimePlot:
     """Tests for the time_plot function."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_data(self):
         """Return a sample dataframe for plotting."""
         rng = np.random.default_rng()
