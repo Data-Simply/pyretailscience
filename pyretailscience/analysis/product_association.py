@@ -35,7 +35,6 @@ By leveraging these association rules, retailers can make data-driven decisions 
 operations, and drive business growth.
 """
 
-
 import ibis
 import pandas as pd
 
@@ -163,7 +162,7 @@ class ProductAssociation:
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
             target_item (str or None, optional): A specific product to focus the association analysis on. If None,
-                associations for all products are calculated. Defaults to   None.
+                associations for all products are calculated. Defaults to None.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.
             min_cooccurrences (int, optional): The minimum number of co-occurrences required for the product pairs in
@@ -207,7 +206,7 @@ class ProductAssociation:
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
 
-        unique_transactions = df
+        unique_transactions = df.select(df[group_col], df[value_col]).distinct()
         total_transactions = unique_transactions.alias("t")[group_col].nunique().name("total_count")
 
         product_occurrences = (
@@ -219,15 +218,22 @@ class ProductAssociation:
             .filter(lambda t: t.occurrences >= min_occurrences)
         )
 
-        left_table = unique_transactions.mutate(item_1=unique_transactions[value_col]).drop(value_col)
-        right_table = unique_transactions.mutate(item_2=unique_transactions[value_col]).drop(value_col)
+        left_table = unique_transactions.rename({"item_1": value_col})
+        right_table = unique_transactions.rename({"item_2": value_col})
 
+        join_logic = [left_table[group_col] == right_table[group_col]]
+        if target_item is None:
+            join_logic.append(left_table["item_1"] < right_table["item_2"])
+        else:
+            join_logic.extend(
+                [
+                    left_table["item_1"] != right_table["item_2"],
+                    left_table["item_1"] == target_item,
+                ],
+            )
         merged_df = left_table.join(
             right_table,
-            predicates=[
-                left_table[group_col] == right_table[group_col],
-                left_table["item_1"] < right_table["item_2"],
-            ],
+            predicates=join_logic,
             lname="",
             rname="{name}_right",
         )
@@ -239,14 +245,12 @@ class ProductAssociation:
             {"item_2": value_col, "occurrences_2": "occurrences", "occurrence_probability_2": "occurrence_probability"},
         )
 
-        merged_df = ibis.join(
-            merged_df,
+        merged_df = merged_df.join(
             product_occurrences_1,
             predicates=[merged_df["item_1"] == product_occurrences_1["item_1"]],
         )
 
-        merged_df = ibis.join(
-            merged_df,
+        merged_df = merged_df.join(
             product_occurrences_2,
             predicates=[merged_df["item_2"] == product_occurrences_2["item_2"]],
         )
@@ -266,13 +270,11 @@ class ProductAssociation:
             {"item_2": value_col, "occurrences_2": "occurrences", "prob_2": "occurrence_probability"},
         )
 
-        product_pairs = ibis.join(
-            cooccurrences,
+        product_pairs = cooccurrences.join(
             product_occurrences_1_rename,
             predicates=[cooccurrences["item_1"] == product_occurrences_1_rename["item_1"]],
         )
-        product_pairs = ibis.join(
-            product_pairs,
+        product_pairs = product_pairs.join(
             product_occurrences_2_rename,
             predicates=[product_pairs["item_2"] == product_occurrences_2_rename["item_2"]],
         )
@@ -282,42 +284,12 @@ class ProductAssociation:
             uplift=product_pairs["support"] / (product_pairs["prob_1"] * product_pairs["prob_2"]),
         )
 
-        result = product_pairs.filter(
-            (product_pairs.confidence >= min_confidence) & (product_pairs.uplift >= min_uplift),
-        )
+        result = product_pairs.filter(product_pairs.uplift >= min_uplift)
 
-        inverse_pairs = result.rename(
-            {
-                f"{value_col}_2": "item_1",
-                f"{value_col}_1": "item_2",
-                "occurrences_2": "occurrences_1",
-                "occurrences_1": "occurrences_2",
-            },
-        )
-
-        product_occurrences_1_rename2 = product_occurrences.rename({f"{value_col}_1": value_col})
-        product_occurrences_2_rename2 = product_occurrences.rename({f"{value_col}_2": value_col})
-
-        inverse_pairs = ibis.join(
-            inverse_pairs,
-            product_occurrences_1_rename2,
-            predicates=[inverse_pairs[f"{value_col}_1"] == product_occurrences_1_rename2[f"{value_col}_1"]],
-        )
-        inverse_pairs = ibis.join(
-            inverse_pairs,
-            product_occurrences_2_rename2,
-            predicates=[inverse_pairs[f"{value_col}_2"] == product_occurrences_2_rename2[f"{value_col}_2"]],
-        )
-        inverse_pairs = inverse_pairs.mutate(
-            confidence=inverse_pairs["cooccurrences"] / inverse_pairs["occurrences_1"],
-            uplift=inverse_pairs["support"] / (inverse_pairs["prob_1"] * inverse_pairs["prob_2"]),
-        )
-
-        result = result.rename({f"{value_col}_1": "item_1", f"{value_col}_2": "item_2"})
-        result = result[
-            [
-                f"{value_col}_1",
-                f"{value_col}_2",
+        if target_item is None:
+            col_order = [
+                "item_1",
+                "item_2",
                 "occurrences_1",
                 "occurrences_2",
                 "cooccurrences",
@@ -325,31 +297,21 @@ class ProductAssociation:
                 "confidence",
                 "uplift",
             ]
-        ]
-        inverse_pairs = inverse_pairs[
-            [
-                f"{value_col}_1",
-                f"{value_col}_2",
-                "occurrences_1",
-                "occurrences_2",
-                "cooccurrences",
-                "support",
-                "confidence",
-                "uplift",
-            ]
-        ]
+            inverse_pairs = result.mutate(
+                item_1=result["item_2"],
+                item_2=result["item_1"],
+                occurrences_1=result["occurrences_2"],
+                occurrences_2=result["occurrences_1"],
+                prob_1=result["prob_2"],
+                prob_2=result["prob_1"],
+                confidence=result["cooccurrences"] / result["occurrences_2"],
+            )
+            result = result[col_order].union(inverse_pairs[col_order])
 
-        result = result.execute()
-        inverse_pairs = inverse_pairs.execute()
+        result = result.filter(result.confidence >= min_confidence)
 
-        final_result = (
-            pd.concat([result, inverse_pairs], ignore_index=True)
-            .sort_values(by=[f"{value_col}_1", f"{value_col}_2"])
-            .reset_index(drop=True)
-        )
-
-        if target_item is not None:
-            final_result = final_result[final_result[f"{value_col}_1"] == target_item].reset_index(drop=True)
+        final_result = result.execute().sort_values(by=["item_1", "item_2"]).reset_index(drop=True)
+        final_result = final_result.rename(columns={"item_1": f"{value_col}_1", "item_2": f"{value_col}_2"})
 
         return final_result[
             [

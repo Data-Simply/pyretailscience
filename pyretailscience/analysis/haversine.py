@@ -21,6 +21,7 @@ Ibis for optimized query execution.
 - **Requires Ibis-Compatible Backend**: Ensure your Ibis backend supports trigonometric functions.
 - **Assumes Spherical Earth**: Uses the Haversine formula, which introduces slight inaccuracies due to Earth's oblate shape.
 """
+
 import ibis
 
 

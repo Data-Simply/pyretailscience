@@ -12,7 +12,7 @@ cols = ColumnHelper()
 class TestProductAssociations:
     """Tests for the ProductAssociations class."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def transactions_df(self) -> pd.DataFrame:
         """Return a sample DataFrame for testing."""
         # fmt: off
@@ -23,7 +23,7 @@ class TestProductAssociations:
         })
         # fmt: on
 
-    @pytest.fixture()
+    @pytest.fixture
     def expected_results_single_items_df(self) -> pd.DataFrame:
         """Return the expected results for the single items association analysis."""
         # fmt: off
@@ -58,7 +58,7 @@ class TestProductAssociations:
         )
         # fmt: on
 
-    @pytest.fixture()
+    @pytest.fixture
     def expected_results_pair_items_df(self) -> pd.DataFrame:
         """Return the expected results for the pair items association analysis."""
         # fmt: off

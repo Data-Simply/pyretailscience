@@ -1,4 +1,5 @@
 """Tests for the plots.area module."""
+
 from itertools import cycle
 
 import numpy as np
@@ -13,7 +14,7 @@ PERIODS = 6
 RNG = np.random.default_rng(42)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_dataframe():
     """A sample dataframe for Jeans sales data."""
     data = {
@@ -24,7 +25,7 @@ def sample_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_color_generators(mocker):
     """Mock the color generators for single and multi color maps."""
     single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
@@ -34,7 +35,7 @@ def _mock_color_generators(mocker):
     mocker.patch("pyretailscience.style.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_gu_functions(mocker):
     mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
     mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)

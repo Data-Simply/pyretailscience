@@ -1,6 +1,5 @@
 """Tests for the waterfall plot module."""
 
-
 import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
@@ -12,7 +11,7 @@ from pyretailscience.style.tailwind import COLORS
 class TestWaterfallPlot:
     """Tests for the waterfall_plot function."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_data(self):
         """Return a list of amounts."""
         return [100, -50, 30, -10], ["Start", "Decrease", "Increase", "End"]
