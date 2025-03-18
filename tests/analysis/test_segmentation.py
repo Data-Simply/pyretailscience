@@ -429,9 +429,11 @@ class TestSegTransactionStats:
         # Sort by segment_name to ensure consistent order
         result_df_multi = seg_stats_multi.df.sort_values("segment_name").reset_index(drop=True)
 
-        assert result_df_multi.loc[0, "distinct_products"] == segment_a_product_count  # Segment A
-        assert result_df_multi.loc[1, "distinct_products"] == segment_b_product_count  # Segment B
-        assert result_df_multi.loc[2, "distinct_products"] == total_product_count  # Total
+        assert result_df_multi["distinct_products"].to_list() == [
+            segment_a_product_count,
+            segment_b_product_count,
+            total_product_count,
+        ]
 
     def test_extra_aggs_with_invalid_column(self):
         """Test that an error is raised when an invalid column is specified in extra_aggs."""
