@@ -33,7 +33,6 @@ retail analysis, sales tracking, and customer behavior insights.
 - **Helper functions**: Utilizes utility functions from the `pyretailscience` package to handle styling, formatting, and other plot adjustments.
 """
 
-
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase

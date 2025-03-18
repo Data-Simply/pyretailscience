@@ -11,7 +11,7 @@ from pyretailscience.plots import histogram
 from pyretailscience.style import graph_utils as gu
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_dataframe():
     """A sample dataframe for testing."""
     data = {
@@ -22,20 +22,20 @@ def sample_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_series():
     """A sample series for testing."""
     return pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_color_generators(mocker):
     """Mock the color generator for multi color maps."""
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator
     mocker.patch("pyretailscience.style.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_gu_functions(mocker):
     """Mock standard graph utilities functions."""
     mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)

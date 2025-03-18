@@ -834,11 +834,11 @@ rfm_segmenter = RFMSegmentation(df=data, current_date=current_date)
 rfm_results = rfm_segmenter.df
 ```
 
-| customer_id | recency_days | frequency | monetary | r_score | f_score | m_score | rfm_segment |
-|-------------|--------------|-----------|----------|---------|---------|---------|-------------|
-| 3           | 147          | 3         | 750      | 0       | 0       | 0       | 0           |
-| 2           | 127          | 2         | 250      | 1       | 2       | 1       | 121         |
-| 1           | 113          | 2         | 125      | 2       | 1       | 2       | 212         |
+| customer_id | recency_days | frequency | monetary | r_score | f_score | m_score | rfm_segment | fm_segment |
+|-------------|--------------|-----------|----------|---------|---------|---------|-------------|------------|
+| 1           | 113          | 2         | 125      | 0       | 0       | 0       | 0           | 0          |
+| 2           | 127          | 2         | 250      | 1       | 1       | 1       | 111         | 11         |
+| 3           | 147          | 3         | 750      | 2       | 2       | 2       | 222         | 22         |
 
 ### Purchases Per Customer
 

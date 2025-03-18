@@ -193,7 +193,7 @@ class SegTransactionStats:
     def __init__(
         self,
         data: pd.DataFrame | ibis.Table,
-        segment_col: str = "segment_name",
+        segment_col: str | list[str] = "segment_name",
         extra_aggs: dict[str, tuple[str, str]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
@@ -203,7 +203,8 @@ class SegTransactionStats:
                 customer_id, unit_spend and transaction_id. If the dataframe contains the column unit_quantity, then
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
-            segment_col (str, optional): The column to use for the segmentation. Defaults to "segment_name".
+            segment_col (str | list[str], optional): The column or list of columns to use for the segmentation.
+                Defaults to "segment_name".
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function), where:
@@ -212,11 +213,14 @@ class SegTransactionStats:
                 Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
         """
         cols = ColumnHelper()
+
+        if isinstance(segment_col, str):
+            segment_col = [segment_col]
         required_cols = [
             cols.customer_id,
             cols.unit_spend,
             cols.transaction_id,
-            segment_col,
+            *segment_col,
         ]
         if cols.unit_qty in data.columns:
             required_cols.append(cols.unit_qty)
@@ -274,14 +278,14 @@ class SegTransactionStats:
     @staticmethod
     def _calc_seg_stats(
         data: pd.DataFrame | ibis.Table,
-        segment_col: str,
+        segment_col: list[str],
         extra_aggs: dict[str, tuple[str, str]] | None = None,
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
         Args:
             data (pd.DataFrame | ibis.Table): The transaction data.
-            segment_col (str): The column to use for the segmentation.
+            segment_col (list[str]): The columns to use for the segmentation.
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function).
@@ -315,7 +319,7 @@ class SegTransactionStats:
 
         # Calculate metrics for segments and total
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
-        total_metrics = data.aggregate(**aggs).mutate(segment_name=ibis.literal("Total"))
+        total_metrics = data.aggregate(**aggs).mutate({col: ibis.literal("Total") for col in segment_col})
         total_customers = data[cols.customer_id].nunique()
 
         # Cross join with total_customers to make it available for percentage calculation
@@ -344,7 +348,7 @@ class SegTransactionStats:
         if self._df is None:
             cols = ColumnHelper()
             col_order = [
-                self.segment_col,
+                *self.segment_col,
                 *SegTransactionStats._get_col_order(include_quantity=cols.agg_unit_qty in self.table.columns),
             ]
 
@@ -393,18 +397,23 @@ class SegTransactionStats:
         Raises:
             ValueError: If the sort_order is not "ascending", "descending" or None.
             ValueError: If the orientation is not "vertical" or "horizontal".
+            ValueError: If multiple segment columns are used, as plotting is only supported for a single segment column.
         """
         if sort_order not in ["ascending", "descending", None]:
             raise ValueError("sort_order must be either 'ascending' or 'descending' or None")
         if orientation not in ["vertical", "horizontal"]:
             raise ValueError("orientation must be either 'vertical' or 'horizontal'")
+        if len(self.segment_col) > 1:
+            raise ValueError("Plotting is only supported for a single segment column")
 
         default_title = f"{value_col.title()} by Segment"
         kind = "bar"
         if orientation == "horizontal":
             kind = "barh"
 
-        val_s = self.df.set_index(self.segment_col)[value_col]
+        # Use the first segment column for plotting
+        plot_segment_col = self.segment_col[0]
+        val_s = self.df.set_index(plot_segment_col)[value_col]
         if hide_total:
             val_s = val_s[val_s.index != "Total"]
 
@@ -462,7 +471,7 @@ class RFMSegmentation:
 
     _df: pd.DataFrame | None = None
 
-    def __init__(self, df: pd.DataFrame | ibis.Table, current_date: str | None = None) -> None:
+    def __init__(self, df: pd.DataFrame | ibis.Table, current_date: str | datetime.date | None = None) -> None:
         """Initializes the RFM segmentation process.
 
         Args:
@@ -472,8 +481,8 @@ class RFMSegmentation:
                 - transaction_date
                 - unit_spend
                 - transaction_id
-            current_date (Optional[str]): The reference date for calculating recency (format: "YYYY-MM-DD").
-                If not provided, the current system date will be used.
+            current_date (Optional[Union[str, datetime.date]]): The reference date for calculating recency.
+                Can be a string (format: "YYYY-MM-DD"), a date object, or None (defaults to the current system date).
 
         Raises:
             ValueError: If the dataframe is missing required columns.
@@ -486,14 +495,22 @@ class RFMSegmentation:
             cols.unit_spend,
             cols.transaction_id,
         ]
+        if isinstance(df, pd.DataFrame):
+            df = ibis.memtable(df)
+        elif not isinstance(df, ibis.Table):
+            raise TypeError("df must be either a pandas DataFrame or an Ibis Table")
 
         missing_cols = set(required_cols) - set(df.columns)
         if missing_cols:
             error_message = f"Missing required columns: {missing_cols}"
             raise ValueError(error_message)
-        current_date = (
-            datetime.date.fromisoformat(current_date) if current_date else datetime.datetime.now(datetime.UTC).date()
-        )
+
+        if isinstance(current_date, str):
+            current_date = datetime.date.fromisoformat(current_date)
+        elif current_date is None:
+            current_date = datetime.datetime.now(datetime.UTC).date()
+        elif not isinstance(current_date, datetime.date):
+            raise TypeError("current_date must be a string in 'YYYY-MM-DD' format, a datetime.date object, or None")
 
         self.table = self._compute_rfm(df, current_date)
 
@@ -507,11 +524,6 @@ class RFMSegmentation:
         Returns:
             ibis.Table: A table with RFM scores and segment values.
         """
-        if isinstance(df, pd.DataFrame):
-            df = ibis.memtable(df)
-        elif not isinstance(df, ibis.Table):
-            raise TypeError("df must be either a pandas DataFrame or an Ibis Table")
-
         cols = ColumnHelper()
         current_date_expr = ibis.literal(current_date)
 
@@ -537,9 +549,10 @@ class RFMSegmentation:
             m_score=(ibis.ntile(10).over(window_monetary)),
         )
 
-        rfm_segment = (rfm_scores.r_score * 100 + rfm_scores.f_score * 10 + rfm_scores.m_score).name("rfm_segment")
-
-        return rfm_scores.mutate(rfm_segment=rfm_segment)
+        return rfm_scores.mutate(
+            rfm_segment=(rfm_scores.r_score * 100 + rfm_scores.f_score * 10 + rfm_scores.m_score),
+            fm_segment=(rfm_scores.f_score * 10 + rfm_scores.m_score),
+        )
 
     @property
     def df(self) -> pd.DataFrame:
@@ -547,3 +560,8 @@ class RFMSegmentation:
         if self._df is None:
             self._df = self.table.execute().set_index(get_option("column.customer_id"))
         return self._df
+
+    @property
+    def ibis_table(self) -> ibis.Table:
+        """Returns the computed Ibis table with RFM segmentation."""
+        return self.table
