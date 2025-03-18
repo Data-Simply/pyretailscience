@@ -1,4 +1,5 @@
 """Tests for the haversine distance module."""
+
 import ibis
 import pandas as pd
 import pytest
@@ -6,7 +7,7 @@ import pytest
 from pyretailscience.analysis.haversine import haversine_distance
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_ibis_table():
     """Fixture to provide a sample Ibis table for testing."""
     data = {

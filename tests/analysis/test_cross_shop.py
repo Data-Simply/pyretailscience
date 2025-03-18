@@ -9,7 +9,7 @@ from pyretailscience.options import ColumnHelper
 cols = ColumnHelper()
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_data():
     """Sample data for testing."""
     return pd.DataFrame(

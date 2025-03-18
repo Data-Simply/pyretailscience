@@ -1,4 +1,5 @@
 """Tests for the plots.venn module."""
+
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
@@ -7,7 +8,7 @@ from pyretailscience.plots import venn
 from pyretailscience.style import graph_utils as gu
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_venn_dataframe():
     """A sample DataFrame for Venn diagram testing."""
     data = {
@@ -17,7 +18,7 @@ def sample_venn_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_gu_functions(mocker):
     mocker.patch(
         "pyretailscience.style.graph_utils.add_source_text",

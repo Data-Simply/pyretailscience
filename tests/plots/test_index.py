@@ -195,7 +195,7 @@ def test_get_indexes_with_ibis_table_input():
 class TestIndexPlot:
     """Tests for the index_plot function."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_data(self):
         """Return a sample dataframe for plotting."""
         rng = np.random.default_rng()
