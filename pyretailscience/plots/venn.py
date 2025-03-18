@@ -22,6 +22,7 @@ It is designed to visualize relationships between sets, highlighting intersectio
 - **Pre-Aggregated Data Required**: The module does not perform data aggregation; input data should already be structured correctly.
 
 """
+
 from collections.abc import Callable
 
 import pandas as pd

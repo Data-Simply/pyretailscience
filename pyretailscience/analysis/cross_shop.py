@@ -1,6 +1,5 @@
 """This module contains the CrossShop class that is used to create a cross-shop diagram."""
 
-
 import ibis
 import matplotlib.pyplot as plt
 import pandas as pd
