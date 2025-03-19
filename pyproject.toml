@@ -1,6 +1,6 @@
 [project]
 name = "pyretailscience"
-version = "0.10.0"
+version = "0.12.0"
 description = "Retail Data Science Tools"
 requires-python = ">=3.10,<3.13"
 readme = "README.md"
