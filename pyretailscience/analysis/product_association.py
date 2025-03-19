@@ -91,7 +91,6 @@ class ProductAssociation:
         min_support: float = 0.0,
         min_confidence: float = 0.0,
         min_uplift: float = 0.0,
-        show_progress: bool = False,
     ) -> None:
         """Initialize the ProductAssociation object.
 
@@ -112,7 +111,6 @@ class ProductAssociation:
                 to 0.0. Must be between 0 and 1.
             min_uplift (float, optional): The minimum uplift value required for the association rules. Defaults to 0.0.
                 Must be greater or equal to 0.
-            show_progress (bool, optional): Whether to show a progress bar during the calculation. Defaults to False.
 
         Raises:
             ValueError: If the number of combinations is not 2 or 3, or if any of the minimum values are invalid.
@@ -136,7 +134,6 @@ class ProductAssociation:
             min_support=min_support,
             min_confidence=min_confidence,
             min_uplift=min_uplift,
-            show_progress=show_progress,
         )
 
     @staticmethod
@@ -173,7 +170,6 @@ class ProductAssociation:
                 to 0.0. Must be between 0 and 1.
             min_uplift (float, optional): The minimum uplift value required for the association rules. Defaults to 0.0.
                 Must be greater or equal to 0.
-            show_progress (bool, optional): Whether to show a progress bar during the calculation. Defaults to False.
 
         Returns:
             pandas.DataFrame: A DataFrame containing the calculated association rules and their metrics.
