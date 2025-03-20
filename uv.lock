@@ -651,20 +651,20 @@ wheels = [
 
 [[package]]
 name = "ibis-framework"
-version = "9.5.0"
+version = "10.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "atpublic" },
     { name = "parsy" },
     { name = "python-dateutil" },
-    { name = "pytz" },
     { name = "sqlglot" },
     { name = "toolz" },
     { name = "typing-extensions" },
+    { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/32/86/31c9a61eb2c9c7ffe8959ff8c3e4a5d2e15d8e896e7562ba7796abeb5af9/ibis_framework-9.5.0.tar.gz", hash = "sha256:1c8a29277e63ee0dfc289bc8f550164b5e3bdaec1b76b62436c37d331bb4ef84", size = 1270088 }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/44/61a1a0283a9e4c06aab713c28f011f7f74872148484549a4b38b1a602423/ibis_framework-10.3.1.tar.gz", hash = "sha256:71919cdbe6eb4f6e916269b4d7a8582c67a20e0098364b3bb2347424a3a67ccf", size = 1215375 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/a9/899888a3b49ee07856a0bab673652a82ea89999451a51fba4d99e65868f7/ibis_framework-9.5.0-py3-none-any.whl", hash = "sha256:145fe30d94f111cff332580c275ce77725c5ff7086eede93af0b371649d009c0", size = 1964985 },
+    { url = "https://files.pythonhosted.org/packages/44/9e/3887676bfc2f9c8157e9a6ad6c5209d4fe68cc499a103050466320787a63/ibis_framework-10.3.1-py3-none-any.whl", hash = "sha256:8133be78feea2f8a3ecad76067e0164c45c91e058f4c06481277b719ddb0d6f4", size = 1919109 },
 ]
 
 [package.optional-dependencies]
@@ -1890,7 +1890,7 @@ examples = [
 requires-dist = [
     { name = "duckdb", specifier = ">=1.0.0,<2" },
     { name = "graphviz", specifier = ">=0.20.3,<0.21" },
-    { name = "ibis-framework", extras = ["duckdb"], specifier = ">=9.5.0,<10" },
+    { name = "ibis-framework", extras = ["duckdb"], specifier = ">=10.0.0,<11" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
     { name = "matplotlib", specifier = ">=3.9.1,<4" },
     { name = "matplotlib-set-diagrams", specifier = "~=0.0.2" },
