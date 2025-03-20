@@ -4,6 +4,7 @@ import ibis
 import numpy as np
 import pandas as pd
 import pytest
+from freezegun import freeze_time
 
 from pyretailscience.analysis.segmentation import (
     HMLSegmentation,
@@ -664,6 +665,7 @@ class TestRFMSegmentation:
         assert len(result_df) == expected_customer_count
         assert "rfm_segment" in result_df.columns
 
+    @freeze_time("2025-03-19")
     def test_rfm_segmentation_with_no_date(self, base_df, expected_df):
         """Test that the RFM segmentation correctly calculates the RFM scores and segments."""
         rfm_segmentation = RFMSegmentation(df=base_df)
