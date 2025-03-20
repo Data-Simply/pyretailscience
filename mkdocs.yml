@@ -103,5 +103,5 @@ extra:
       name: PyRetailScience on GitHub
 
 copyright: |
-  &copy; 2024 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
+  &copy; {{ now().year }} <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
   <a href="#__consent">Change cookie settings</a>
