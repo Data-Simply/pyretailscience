@@ -106,27 +106,27 @@ class TestProductAssociations:
 
     def test_calc_association_all_single_items(self, transactions_df, expected_results_single_items_df):
         """Test calculating association rules for a single item versus another of item for all items."""
-        associations_df = ProductAssociation._calc_association(
+        associations_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
         )
-
-        pd.testing.assert_frame_equal(associations_df, expected_results_single_items_df)
+        result = associations_df.df
+        pd.testing.assert_frame_equal(result, expected_results_single_items_df)
 
     def test_calc_association_target_single_items(self, transactions_df, expected_results_single_items_df):
         """Test calculating association rules for target single item versus another of item."""
         target_item = "bread"
 
-        calc_df = ProductAssociation._calc_association(
+        calc_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
             target_item=target_item,
         )
-
+        result = calc_df.df
         pd.testing.assert_frame_equal(
-            calc_df,
+            result,
             expected_results_single_items_df[expected_results_single_items_df["product_1"] == target_item].reset_index(
                 drop=True,
             ),
@@ -136,15 +136,16 @@ class TestProductAssociations:
         """Test calculating association rules with a min occurrences level."""
         min_occurrences = 2
 
-        calc_df = ProductAssociation._calc_association(
+        calc_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
             min_occurrences=min_occurrences,
         )
 
+        result = calc_df.df
         pd.testing.assert_frame_equal(
-            calc_df,
+            result,
             expected_results_single_items_df[
                 (expected_results_single_items_df["occurrences_1"] >= min_occurrences)
                 & (expected_results_single_items_df["occurrences_2"] >= min_occurrences)
@@ -155,15 +156,16 @@ class TestProductAssociations:
         """Test calculating association rules with a min occurrences level."""
         min_cooccurrences = 2
 
-        calc_df = ProductAssociation._calc_association(
+        calc_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
             min_cooccurrences=min_cooccurrences,
         )
 
+        result = calc_df.df
         pd.testing.assert_frame_equal(
-            calc_df,
+            result,
             expected_results_single_items_df[
                 (expected_results_single_items_df["cooccurrences"] >= min_cooccurrences)
             ].reset_index(drop=True),
@@ -173,15 +175,16 @@ class TestProductAssociations:
         """Test calculating association rules with a min occurrences level."""
         min_support = 0.25
 
-        calc_df = ProductAssociation._calc_association(
+        calc_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
             min_support=min_support,
         )
 
+        result = calc_df.df
         pd.testing.assert_frame_equal(
-            calc_df,
+            result,
             expected_results_single_items_df[(expected_results_single_items_df["support"] >= min_support)].reset_index(
                 drop=True,
             ),
@@ -191,15 +194,16 @@ class TestProductAssociations:
         """Test calculating association rules with a min occurrences level."""
         min_confidence = 0.25
 
-        calc_df = ProductAssociation._calc_association(
+        calc_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
             min_confidence=min_confidence,
         )
 
+        result = calc_df.df
         pd.testing.assert_frame_equal(
-            calc_df,
+            result,
             expected_results_single_items_df[
                 (expected_results_single_items_df["confidence"] >= min_confidence)
             ].reset_index(drop=True),
@@ -209,15 +213,16 @@ class TestProductAssociations:
         """Test calculating association rules with a min occurrences level."""
         min_uplift = 1
 
-        calc_df = ProductAssociation._calc_association(
+        calc_df = ProductAssociation(
             df=transactions_df,
             value_col="product",
             group_col=cols.transaction_id,
             min_uplift=min_uplift,
         )
 
+        result = calc_df.df
         pd.testing.assert_frame_equal(
-            calc_df,
+            result,
             expected_results_single_items_df[(expected_results_single_items_df["uplift"] >= min_uplift)].reset_index(
                 drop=True,
             ),

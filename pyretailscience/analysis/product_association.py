@@ -80,6 +80,8 @@ class ProductAssociation:
         - uplift: The ratio of the observed support to the expected support if the products were independent.
     """
 
+    _df: pd.DataFrame | None = None
+
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -124,7 +126,7 @@ class ProductAssociation:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        self.df = self._calc_association(
+        self.table = self._calc_association(
             df=df,
             value_col=value_col,
             group_col=group_col,
@@ -305,10 +307,13 @@ class ProductAssociation:
             result = result[col_order].union(inverse_pairs[col_order])
 
         result = result.filter(result.confidence >= min_confidence)
-
-        final_result = result.execute().sort_values(by=["item_1", "item_2"]).reset_index(drop=True)
-        final_result = final_result.rename(columns={"item_1": f"{value_col}_1", "item_2": f"{value_col}_2"})
-
+        final_result = result.order_by(["item_1", "item_2"])
+        final_result = final_result.rename(
+            {
+                f"{value_col}_1": "item_1",
+                f"{value_col}_2": "item_2",
+            },
+        )
         return final_result[
             [
                 f"{value_col}_1",
@@ -321,3 +326,10 @@ class ProductAssociation:
                 "uplift",
             ]
         ]
+
+    @property
+    def df(self) -> pd.DataFrame:
+        """Returns the executed DataFrame."""
+        if self._df is None:
+            self._df = self.table.execute().reset_index(drop=True)
+        return self._df
