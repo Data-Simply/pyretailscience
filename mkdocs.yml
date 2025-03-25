@@ -26,7 +26,12 @@ nav:
           - Haversine Distance: api/analysis/haversine.md
           - Product Association: api/analysis/product_association.md
           - Revenue Tree: api/analysis/revenue_tree.md
-          - Segmentation: api/analysis/segmentation.md
+      - Segmentation:
+          - Base Segmentation: api/segmentation/base.md
+          - HML Segmentation: api/segmentation/hml.md
+          - RFM Segmentation: api/segmentation/rfm.md
+          - SegTransactionStats Segmentation: api/segmentation/segstats.md
+          - Threshold Segmentation: api/segmentation/threshold.md
       - Plots:
           - Area Plot: api/plots/area.md
           - Bar Plot: api/plots/bar.md
