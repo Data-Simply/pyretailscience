@@ -194,6 +194,7 @@ class SegTransactionStats:
         self,
         data: pd.DataFrame | ibis.Table,
         segment_col: str | list[str] = "segment_name",
+        calc_total: bool = True,
         extra_aggs: dict[str, tuple[str, str]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
@@ -205,6 +206,7 @@ class SegTransactionStats:
                 units_per_transaction.
             segment_col (str | list[str], optional): The column or list of columns to use for the segmentation.
                 Defaults to "segment_name".
+            calc_total (bool, optional): Whether to include the total row. Defaults to True.
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function), where:
@@ -244,7 +246,7 @@ class SegTransactionStats:
         self.segment_col = segment_col
         self.extra_aggs = {} if extra_aggs is None else extra_aggs
 
-        self.table = self._calc_seg_stats(data, segment_col, self.extra_aggs)
+        self.table = self._calc_seg_stats(data, segment_col, calc_total, self.extra_aggs)
 
     @staticmethod
     def _get_col_order(include_quantity: bool) -> list[str]:
@@ -279,6 +281,7 @@ class SegTransactionStats:
     def _calc_seg_stats(
         data: pd.DataFrame | ibis.Table,
         segment_col: list[str],
+        calc_total: bool = True,
         extra_aggs: dict[str, tuple[str, str]] | None = None,
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
@@ -287,6 +290,7 @@ class SegTransactionStats:
             data (pd.DataFrame | ibis.Table): The transaction data.
             segment_col (list[str]): The columns to use for the segmentation.
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
+            calc_total (bool, optional): Whether to include the total row. Defaults to True.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function).
 
@@ -298,7 +302,7 @@ class SegTransactionStats:
             data = ibis.memtable(data)
 
         elif not isinstance(data, ibis.Table):
-            raise TypeError("data must be either a pandas DataFrame or a ibis Table")
+            raise TypeError("data must be either a pandas DataFrame or an ibis Table")
 
         cols = ColumnHelper()
 
@@ -317,13 +321,18 @@ class SegTransactionStats:
                 col, func = col_tuple
                 aggs[agg_name] = getattr(data[col], func)()
 
-        # Calculate metrics for segments and total
+        # Calculate metrics for segments
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
-        total_metrics = data.aggregate(**aggs).mutate({col: ibis.literal("Total") for col in segment_col})
+        final_metrics = segment_metrics
+
+        if calc_total:
+            total_metrics = data.aggregate(**aggs).mutate({col: ibis.literal("Total") for col in segment_col})
+            final_metrics = ibis.union(segment_metrics, total_metrics)
+
         total_customers = data[cols.customer_id].nunique()
 
         # Cross join with total_customers to make it available for percentage calculation
-        final_metrics = ibis.union(segment_metrics, total_metrics).mutate(
+        final_metrics = final_metrics.mutate(
             **{
                 cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
                 cols.calc_spend_per_trans: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_transaction_id],
