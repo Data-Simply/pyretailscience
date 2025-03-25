@@ -429,6 +429,52 @@ time.plot(
 
 ## Analysis Modules
 
+### Cohort Analysis Plot
+
+<div class="clear" markdown>
+
+![Cohort Plot](assets/images/analysis_modules/cohort.svg){ align=right loading=lazy width="50%"}
+
+Cohort analysis is a powerful method for tracking user retention and behavior over time. By grouping customers based on their first purchase date and analyzing their subsequent activities, businesses can gain valuable insights into customer loyalty and lifecycle trends. This visualization helps in:
+
+- Measuring customer retention across different cohorts
+- Understanding the impact of marketing campaigns on user engagement
+- Identifying trends in repeat purchases and customer longevity
+- Comparing cohort performance across different timeframes
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.analysis.cohort import  CohortPlot
+
+df =pd.DataFrame({
+    "min_period_shopped": ["2023-01-01", "2023-02-01", "2023-05-01",
+                            "2023-01-01", "2023-02-01", "2023-05-01",
+                            "2023-01-01", "2023-02-01", "2023-05-01",
+                            "2023-01-01", "2023-02-01", "2023-05-01"],
+    "period_since": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
+    "retention": [2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 0.0, 1.0, 0.0, 0.0]
+})
+
+df["min_period_shopped"] = pd.to_datetime(df["min_period_shopped"]).dt.date
+
+# Plot cohort analysis
+CohortPlot.plot(
+    df=cohort_long,
+    x_col="period_since",
+    group_col="min_period_shopped",
+    value_col = "retention",
+    x_label="Months Since Initial Purchase",
+    y_label="Cohort Start Date",
+    title="Customer Retention Cohort Analysis",
+    source_text="Source: PyRetailScience - 2024",
+    cbarlabel="Number of Retained Customers",
+)
+```
+
 ### Product Association Rules
 
 The product association module implements functionality for generating product association rules, a powerful technique

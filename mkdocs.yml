@@ -27,6 +27,7 @@ nav:
           - Product Association: api/analysis/product_association.md
           - Revenue Tree: api/analysis/revenue_tree.md
           - Segmentation: api/analysis/segmentation.md
+          - Cohort Analysis: api/analysis/cohort.md
       - Plots:
           - Area Plot: api/plots/area.md
           - Bar Plot: api/plots/bar.md
