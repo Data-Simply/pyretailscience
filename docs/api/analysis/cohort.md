@@ -1,3 +1,3 @@
-# Cross Shop Analysis
+# Cohort Analysis
 
 ::: pyretailscience.analysis.cohort
