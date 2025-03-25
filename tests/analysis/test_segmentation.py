@@ -130,6 +130,32 @@ class TestCalcSegStats:
 
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
+    def test_excludes_total_row_when_calc_total_false(self, base_df):
+        """Test that the method excludes the total row when calc_total=False."""
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B"],
+                cols.agg_unit_spend: [500.0, 500.0],
+                cols.agg_transaction_id: [3, 2],
+                cols.agg_customer_id: [3, 2],
+                cols.agg_unit_qty: [50, 50],
+                cols.calc_spend_per_cust: [166.666667, 250.0],
+                cols.calc_spend_per_trans: [166.666667, 250.0],
+                cols.calc_trans_per_cust: [1.0, 1.0],
+                cols.calc_price_per_unit: [10.0, 10.0],
+                cols.calc_units_per_trans: [16.666667, 25.0],
+                cols.customers_pct: [1.0, 1.0],
+            },
+        )
+
+        segment_stats = (
+            SegTransactionStats(base_df, "segment_name", calc_total=False)
+            .df.sort_values("segment_name")
+            .reset_index(drop=True)
+        )
+
+        pd.testing.assert_frame_equal(segment_stats, expected_output)
+
 
 class TestThresholdSegmentation:
     """Tests for the ThresholdSegmentation class."""
@@ -407,7 +433,11 @@ class TestSegTransactionStats:
         )
 
         # Test with a single extra aggregation
-        seg_stats = SegTransactionStats(df, "segment_name", extra_aggs={"distinct_stores": ("store_id", "nunique")})
+        seg_stats = SegTransactionStats(
+            df,
+            "segment_name",
+            extra_aggs={"distinct_stores": ("store_id", "nunique")},
+        )
 
         # Verify the extra column exists and has correct values
         assert "distinct_stores" in seg_stats.df.columns
