@@ -136,8 +136,13 @@ class CohortPlot:
 
         Returns:
             pd.DataFrame: Cohort analysis table.
+
+        Raises:
+            ValueError: start_date must be specified.
         """
         ibis_table = ibis.memtable(df) if isinstance(df, pd.DataFrame) else df
+        if start_date is None:
+            raise ValueError("start_date must be specified.")
         if end_date is None:
             end_date = ibis_table[date_col].max()
 

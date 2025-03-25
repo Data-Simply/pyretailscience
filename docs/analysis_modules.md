@@ -463,7 +463,7 @@ df["min_period_shopped"] = pd.to_datetime(df["min_period_shopped"]).dt.date
 
 # Plot cohort analysis
 CohortPlot.plot(
-    df=cohort_long,
+    df=df,
     x_col="period_since",
     group_col="min_period_shopped",
     value_col = "retention",
