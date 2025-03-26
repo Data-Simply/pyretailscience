@@ -681,7 +681,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.analysis.segmentation import HMLSegmentation
+from pyretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -724,7 +724,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.analysis.segmentation import ThresholdSegmentation
+from pyretailscience.segmentation.threshold import ThresholdSegmentation
 
 # Create custom segmentation with quartiles
 # Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
@@ -766,7 +766,8 @@ segmentation.
 Example:
 
 ```python
-from pyretailscience.analysis.segmentation import HMLSegmentation, SegTransactionStats
+from pyretailscience.segmentation.segstats import SegTransactionStats
+from pyretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -818,7 +819,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.analysis.segmentation import RFMSegmentation
+from pyretailscience.segmentation.rfm import RFMSegmentation
 
 data = pd.DataFrame({
     "customer_id": [1, 1, 2, 2, 3, 3, 3],
