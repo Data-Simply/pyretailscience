@@ -43,10 +43,16 @@ class TestCohortAnalysis:
     def expected_results_df(self) -> pd.DataFrame:
         """Expected cohort result DataFrame for comparison."""
         expected_df = pd.DataFrame(
-            {"min_period_shopped": pd.to_datetime(["2023-01-01", "2023-02-01", "2023-05-01"])},
-        ).set_index("min_period_shopped")
+            {
+                0: [2.0, 1.0, 0.0, 0.0, 2.0],
+                1: [1.0, 1.0, 0.0, 0.0, 1.0],
+                2: [2.0, 1.0, 0.0, 0.0, 0.0],
+                3: [1.0, 0.0, 0.0, 0.0, 0.0],
+            },
+            index=pd.to_datetime(["2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01", "2023-05-01"]),
+        )
 
-        expected_df[[0, 1, 2, 3]] = [[2.0, 1.0, 2.0, 1.0], [1.0, 1.0, 1.0, 0.0], [2.0, 1.0, 0.0, 0.0]]
+        expected_df.index.name = "min_period_shopped"
         expected_df.columns.name = "period_since"
 
         return expected_df
@@ -59,29 +65,37 @@ class TestCohortAnalysis:
             date_col="transaction_date",
             aggregation_func="nunique",
             start_date=datetime.date(2023, 1, 1),
-            x_period="month",
-            y_period="month",
+            period="month",
             percentage=False,
         )
         result = cohort.table
-        expected_results_df.index = result.index.astype("datetime64[s]")
+        expected_results_df.index = result.index.astype("datetime64[ns]")
         pdt.assert_frame_equal(result, expected_results_df)
 
     def test_missing_columns(self):
         """Test if missing columns raise an error."""
         df = pd.DataFrame({"customer_id": [1, 2, 3], "unit_spend": [10, 20, 30]})
         with pytest.raises(ValueError, match="Missing required columns"):
-            CohortPlot(df=df, customer_col="customer_id", date_col="transaction_date")
+            CohortPlot(
+                df=df,
+                start_date=datetime.date(2023, 1, 1),
+                customer_col="customer_id",
+                date_col="transaction_date",
+            )
 
     def test_invalid_period(self, transactions_df):
         """Test if an invalid period raises an error."""
-        with pytest.raises(ValueError, match="x_period .* must be equal to y_period"):
+        invalid_period = "m"
+        with pytest.raises(
+            ValueError,
+            match=f"Invalid period '{invalid_period}'. Allowed values: {CohortPlot.VALID_PERIODS}",
+        ):
             CohortPlot(
                 df=transactions_df,
+                start_date=datetime.date(2023, 1, 1),
                 customer_col="customer_id",
                 date_col="transaction_date",
-                x_period="year",
-                y_period="month",
+                period=invalid_period,
             )
 
     def test_cohort_date_filtering(self, transactions_df):
@@ -96,18 +110,12 @@ class TestCohortAnalysis:
             aggregation_func="nunique",
             start_date=start_date,
             end_date=end_date,
-            x_period="month",
-            y_period="month",
+            period="month",
             percentage=True,
         )
         result = cohort.table
         assert result.index.min().date() >= start_date
         assert result.index.max().date() <= end_date
-
-    def test_missing_start_date(self, transactions_df):
-        """Test if missing start date column raises an error."""
-        with pytest.raises(ValueError, match="start_date must be specified."):
-            CohortPlot(df=transactions_df, customer_col="customer_id", date_col="transaction_date")
 
     @pytest.fixture
     def cohort_plot(self, transactions_df):
@@ -118,8 +126,7 @@ class TestCohortAnalysis:
             date_col="transaction_date",
             aggregation_func="nunique",
             start_date=datetime.date(2023, 1, 1),
-            x_period="month",
-            y_period="month",
+            period="month",
             percentage=False,
         )
 

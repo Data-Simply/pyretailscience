@@ -35,6 +35,7 @@ marketing strategies, and drive long-term growth.
 """
 
 from datetime import date
+from typing import ClassVar
 
 import ibis
 import matplotlib.pyplot as plt
@@ -51,40 +52,37 @@ from pyretailscience.style.tailwind import get_listed_cmap
 class CohortPlot:
     """Class for performing cohort analysis and visualization."""
 
+    VALID_PERIODS: ClassVar[set[str]] = {"year", "quarter", "month", "week", "day"}
+
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
+        start_date: date,
+        end_date: date | None = None,
         customer_col: str = get_option("column.customer_id"),
         date_col: str = get_option("column.transaction_date"),
         aggregation_func: str = "nunique",
-        x_period: str = "month",
-        y_period: str = "month",
-        start_date: date | None = None,
-        end_date: date | None = None,
+        period: str = "month",
         percentage: bool = False,
     ) -> None:
         """Initializes the CohortPlot object.
 
         Args:
             df (pd.DataFrame | ibis.Table): The dataset containing transaction data.
-            customer_col (str, optional): Column name representing customer IDs. Defaults
-                to option column.customer_id.
-            date_col (str, optional): Column name representing transaction dates. Defaults
-                to option column.transaction_date.
-            aggregation_func (str, optional): The aggregation function to apply (e.g., "nunique", "sum", "mean"). Defaults
-                to option nunique.
-            x_period (str): Period for cohort acquisition (e.g., "month").
-            y_period (str): Period for cohort retention (e.g., "month").
-            start_date (Optional[date]): Start date filter for transactions.
+            start_date (date): Start date filter for transactions.
             end_date (Optional[date]): End date filter for transactions.
+            customer_col (str, optional): Column name representing customer IDs.
+            date_col (str, optional): Column name representing transaction dates.
+            aggregation_func (str, optional): Aggregation function (e.g., "nunique", "sum", "mean"). Defaults to "nunique".
+            period (str): Period for cohort analysis (must be "year", "quarter", "month", "week", or "day").
             percentage (bool): If True, converts cohort values into retention percentages relative to the first period.
 
         Raises:
-            ValueError: If `x_period` is not equal to `y_period`.
+            ValueError: If `period` is not one of the allowed values.
             ValueError: If `df` is missing required columns (`customer_col` or `date_col`).
         """
-        if x_period != y_period:
-            error_message = f"x_period ('{x_period}') must be equal to y_period ('{y_period}')."
+        if period not in self.VALID_PERIODS:
+            error_message = f"Invalid period '{period}'. Allowed values: {self.VALID_PERIODS}."
             raise ValueError(error_message)
 
         required_cols = [customer_col, date_col]
@@ -99,56 +97,79 @@ class CohortPlot:
             customer_col=customer_col,
             date_col=date_col,
             aggregation_func=aggregation_func,
-            x_period=x_period,
-            y_period=y_period,
+            period=period,
             start_date=start_date,
             end_date=end_date,
             percentage=percentage,
         )
 
+    def _fill_cohort_gaps(
+        self,
+        cohort_analysis_table: pd.DataFrame,
+        period: str,
+    ) -> pd.DataFrame:
+        """Fill gaps in the cohort analysis table for missing periods.
+
+        Args:
+            cohort_analysis_table (pd.DataFrame): The cohort analysis table to fill gaps in.
+            period (str): The period of analysis (year, quarter, month, week, or day).
+
+        Returns:
+            pd.DataFrame: Cohort table with gaps filled
+        """
+        cohort_analysis_table.index = pd.to_datetime(cohort_analysis_table.index)
+
+        min_period = cohort_analysis_table.index.min()
+        max_period = cohort_analysis_table.index.max()
+
+        if period == "year":
+            full_range = pd.date_range(start=min_period, end=max_period, freq="YS")
+        elif period == "quarter":
+            full_range = pd.date_range(start=min_period, end=max_period, freq="QS")
+        elif period == "month":
+            full_range = pd.date_range(start=min_period, end=max_period, freq="MS")
+        elif period == "week":
+            full_range = pd.date_range(start=min_period, end=max_period, freq="W")
+        elif period == "day":
+            full_range = pd.date_range(start=min_period, end=max_period, freq="D")
+
+        return cohort_analysis_table.reindex(full_range, fill_value=0)
+
     def _calculate_cohorts(
         self,
         df: pd.DataFrame | ibis.Table,
-        customer_col: str = get_option("column.customer_id"),
-        date_col: str = get_option("column.transaction_date"),
-        aggregation_func: str = "nunique",
-        x_period: str = "month",
-        y_period: str = "month",
-        start_date: date | None = None,
-        end_date: date | None = None,
-        percentage: bool = False,
+        customer_col: str,
+        date_col: str,
+        aggregation_func: str,
+        period: str,
+        start_date: date | None,
+        end_date: date | None,
+        percentage: bool,
     ) -> pd.DataFrame:
         """Computes a cohort analysis table based on transaction data.
 
         Args:
             df (pd.DataFrame | ibis.Table): The dataset containing transaction data.
-            customer_col (str, optional): Column name representing customer IDs. Defaults
-                to option column.customer_id.
-            date_col (str, optional): Column name representing transaction dates. Defaults
-                to option column.transaction_date.
-            aggregation_func (str, optional): The aggregation function to apply (e.g., "nunique", "sum", "mean"). Defaults
-                to option nunique.
-            x_period (str): Period for cohort acquisition (e.g., "month").
-            y_period (str): Period for cohort retention (e.g., "month").
-            start_date (Optional[date]): Start date filter for transactions.
+            start_date (date): Start date filter for transactions.
             end_date (Optional[date]): End date filter for transactions.
+            customer_col (str): Column name representing customer IDs.
+            date_col (str): Column name representing transaction dates.
+            aggregation_func (str): The aggregation function to apply (e.g., "nunique", "sum", "mean").
+            period (str): Period for cohort analysis (must be "year", "quarter", "month", "week", or "day").
             percentage (bool): If True, converts cohort values into retention percentages relative to the first period.
 
         Returns:
             pd.DataFrame: Cohort analysis table.
 
-        Raises:
-            ValueError: start_date must be specified.
         """
-        ibis_table = ibis.memtable(df) if isinstance(df, pd.DataFrame) else df
-        if start_date is None:
-            raise ValueError("start_date must be specified.")
         if end_date is None:
-            end_date = ibis_table[date_col].max()
+            end_date = df[date_col].max()
+
+        ibis_table = ibis.memtable(df) if isinstance(df, pd.DataFrame) else df
 
         filtered_table = ibis_table.filter((ibis_table[date_col] >= start_date) & (ibis_table[date_col] <= end_date))
         filtered_table = filtered_table.mutate(
-            period_shopped=filtered_table[date_col].truncate(x_period),
+            period_shopped=filtered_table[date_col].truncate(period),
             period_value=filtered_table[customer_col],
         )
 
@@ -163,7 +184,7 @@ class CohortPlot:
         )
 
         cohort_table = cohort_table.mutate(
-            period_since=cohort_table.period_shopped.delta(cohort_table.min_period_shopped, unit=y_period),
+            period_since=cohort_table.period_shopped.delta(cohort_table.min_period_shopped, unit=period),
         )
 
         cohort_df = cohort_table.execute().drop_duplicates(subset=["min_period_shopped", "period_since"])
@@ -177,7 +198,11 @@ class CohortPlot:
         if percentage:
             cohort_analysis_table = cohort_analysis_table.div(cohort_analysis_table.iloc[:, 0], axis=0).round(2)
 
-        return cohort_analysis_table.fillna(0)
+        cohort_analysis_table = cohort_analysis_table.fillna(0)
+        cohort_analysis_table = self._fill_cohort_gaps(cohort_analysis_table, period)
+        cohort_analysis_table.index.name = "min_period_shopped"
+
+        return cohort_analysis_table
 
     def plot(
         self,

@@ -448,18 +448,27 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.analysis.cohort import  CohortPlot
++import numpy as np
+from pyretailscience.analysis.cohort import CohortPlot
 
-df =pd.DataFrame({
-    "min_period_shopped": ["2023-01-01", "2023-02-01", "2023-05-01",
-                            "2023-01-01", "2023-02-01", "2023-05-01",
-                            "2023-01-01", "2023-02-01", "2023-05-01",
-                            "2023-01-01", "2023-02-01", "2023-05-01"],
-    "period_since": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
-    "retention": [2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 0.0, 1.0, 0.0, 0.0]
-})
+cohort_start_dates = [
+    "2022-12", "2023-01", "2023-02", "2023-03", "2023-04",
+    "2023-05", "2023-06", "2023-07", "2023-08", "2023-09",
+    "2023-10", "2023-11", "2023-12"
+]
+def generate_retention():
+    values = [100]
+    for _ in range(11):
+        values.append(max(values[-1] - np.random.randint(5, 12), np.random.randint(10, 25)))
+    return values
 
-df["min_period_shopped"] = pd.to_datetime(df["min_period_shopped"]).dt.date
+cohort_data = {"min_period_shopped": cohort_start_dates}
+for i in range(12):
+    cohort_data[i] = [generate_retention()[i] for _ in cohort_start_dates]
+
+df = pd.DataFrame(cohort_data)
+df = df.set_index("min_period_shopped").reset_index()
+df = df.melt(id_vars=["min_period_shopped"], var_name="period_since", value_name="retention")
 
 # Plot cohort analysis
 CohortPlot.plot(
@@ -727,7 +736,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.analysis.segmentation import HMLSegmentation
+from pyretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -770,7 +779,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.analysis.segmentation import ThresholdSegmentation
+from pyretailscience.segmentation.threshold import ThresholdSegmentation
 
 # Create custom segmentation with quartiles
 # Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
@@ -812,7 +821,8 @@ segmentation.
 Example:
 
 ```python
-from pyretailscience.analysis.segmentation import HMLSegmentation, SegTransactionStats
+from pyretailscience.segmentation.segstats import SegTransactionStats
+from pyretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -864,7 +874,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.analysis.segmentation import RFMSegmentation
+from pyretailscience.segmentation.rfm import RFMSegmentation
 
 data = pd.DataFrame({
     "customer_id": [1, 1, 2, 2, 3, 3, 3],
