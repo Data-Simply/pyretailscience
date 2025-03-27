@@ -373,6 +373,62 @@ index.plot(
 )
 ```
 
+### Cohort Plot
+
+<div class="clear" markdown>
+
+![Cohort Plot](assets/images/analysis_modules/plots/cohort.svg){ align=right loading=lazy width="50%"}
+
+Cohort plots are essential for understanding customer retention and behavior over time. These visualizations help
+identify trends in customer engagement, repeat purchases, and churn rates by grouping customers based on their initial
+interaction or purchase period. They are particularly useful for:
+
+- Analyzing customer retention patterns over time
+- Understanding the effectiveness of marketing campaigns in retaining customers
+- Identifying the impact of seasonality on repeat purchases
+- Evaluating long-term customer engagement with products or services
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import cohort
+
+cohort_start_dates = [
+    "2022-12", "2023-01", "2023-02", "2023-03", "2023-04",
+    "2023-05", "2023-06", "2023-07", "2023-08", "2023-09",
+    "2023-10", "2023-11", "2023-12"
+]
+
+def generate_retention():
+    values = [1.0]
+    for _ in range(11):
+        values.append(max(values[-1] - np.random.uniform(0.05, 0.12), np.random.uniform(0.10, 0.25)))
+    return values
+
+cohort_data = {"min_period_shopped": cohort_start_dates}
+for i in range(12):
+    cohort_data[i] = [generate_retention()[i] for _ in cohort_start_dates]
+
+df = pd.DataFrame(cohort_data)
+df = df.set_index("min_period_shopped").reset_index()
+df = df.melt(id_vars=["min_period_shopped"], var_name="period_since", value_name="retention")
+df_pivot = df.pivot(index="min_period_shopped", columns="period_since", values="retention")
+
+cohort.plot(
+    df=df_pivot,
+    x_label="Months Since Initial Purchase",
+    y_label="Cohort Start Date",
+    title="Customer Retention Cohort Analysis",
+    source_text="Source: PyRetailScience - 2024",
+    cbarlabel="Number of Retained Customers",
+    percentage=True
+)
+```
+
 ### Timeline Plot
 
 <div class="clear" markdown>
@@ -429,60 +485,73 @@ time.plot(
 
 ## Analysis Modules
 
-### Cohort Analysis Plot
+### Cohort Analysis
 
-<div class="clear" markdown>
+The cohort analysis module provides functionality for analyzing customer retention patterns over time. It helps businesses understand customer behavior by tracking groups of users (cohorts) based on their first interaction and observing their activity over subsequent periods.
 
-![Cohort Plot](assets/images/analysis_modules/cohort.svg){ align=right loading=lazy width="50%"}
+Cohort analysis is useful in multiple business applications:
 
-Cohort analysis is a powerful method for tracking user retention and behavior over time. By grouping customers based on their first purchase date and analyzing their subsequent activities, businesses can gain valuable insights into customer loyalty and lifecycle trends. This visualization helps in:
+1. **Customer Retention Analysis**: Identifies how long users stay engaged with a product or service.
+2. **Churn Rate Measurement**: Helps determine at which stage customers tend to drop off.
+3. **Marketing Performance Evaluation**: Measures the long-term impact of marketing campaigns.
+4. **Revenue Analysis**: Tracks spending behavior over time to optimize pricing strategies.
+5. **User Engagement Trends**: Understands how different user segments behave based on their joining time.
 
-- Measuring customer retention across different cohorts
-- Understanding the impact of marketing campaigns on user engagement
-- Identifying trends in repeat purchases and customer longevity
-- Comparing cohort performance across different timeframes
+This module calculates cohort tables using various aggregation functions such as `nunique`, `sum`, and `mean`, allowing flexible analysis of customer data.
 
-</div>
+The following key metrics are used in the analysis:
+
+- **Aggregation Column**: Defines the metric to track (e.g., unique customers, total spend).
+- **Aggregation Function**: Determines how values are aggregated (e.g., sum, mean, count).
+- **Cohort Period**: Defines the period granularity (year, quarter, month, week, or day).
+- **Retention Percentage**: Calculates retention rates as a percentage of the first-period cohort.
+
 
 Example:
 
 ```python
 import pandas as pd
-+import numpy as np
-from pyretailscience.analysis.cohort import CohortPlot
+import datetime
+from pyretailscience.analysis.cohort import CohortAnalysis
 
-cohort_start_dates = [
-    "2022-12", "2023-01", "2023-02", "2023-03", "2023-04",
-    "2023-05", "2023-06", "2023-07", "2023-08", "2023-09",
-    "2023-10", "2023-11", "2023-12"
-]
-def generate_retention():
-    values = [100]
-    for _ in range(11):
-        values.append(max(values[-1] - np.random.randint(5, 12), np.random.randint(10, 25)))
-    return values
+data = {
+    "transaction_id": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "customer_id": [1, 2, 3, 1, 2, 3, 1, 2, 3, 4, 5, 4],
+    "transaction_date": [
+        datetime.date(2023, 1, 15),
+        datetime.date(2023, 1, 20),
+        datetime.date(2023, 2, 5),
+        datetime.date(2023, 2, 10),
+        datetime.date(2023, 3, 1),
+        datetime.date(2023, 3, 15),
+        datetime.date(2023, 3, 20),
+        datetime.date(2023, 4, 10),
+        datetime.date(2023, 4, 25),
+        datetime.date(2023, 5, 5),
+        datetime.date(2023, 5, 20),
+        datetime.date(2023, 6, 10),
+    ],
+    "unit_spend": [100, 150, 200, 120, 160, 210, 130, 170, 220, 140, 180, 230]
+}
+df = pd.DataFrame(data)
 
-cohort_data = {"min_period_shopped": cohort_start_dates}
-for i in range(12):
-    cohort_data[i] = [generate_retention()[i] for _ in cohort_start_dates]
-
-df = pd.DataFrame(cohort_data)
-df = df.set_index("min_period_shopped").reset_index()
-df = df.melt(id_vars=["min_period_shopped"], var_name="period_since", value_name="retention")
-
-# Plot cohort analysis
-CohortPlot.plot(
+cohort = CohortAnalysis(
     df=df,
-    x_col="period_since",
-    group_col="min_period_shopped",
-    value_col = "retention",
-    x_label="Months Since Initial Purchase",
-    y_label="Cohort Start Date",
-    title="Customer Retention Cohort Analysis",
-    source_text="Source: PyRetailScience - 2024",
-    cbarlabel="Number of Retained Customers",
+    aggregation_column="unit_spend",
+    agg_func="sum",
+    period="month",
+    percentage=True,
 )
+cohort.table.head()
 ```
+| min_period_shopped |    0 |    1 |    2 |    3 |
+|--------------------|------|------|------|------|
+| 2023-01-01        | 1.00 | 1.00 | 1.00 | 1.00 |
+| 2023-02-01        | 0.80 | 1.75 | 0.76 | 0.00 |
+| 2023-03-01        | 0.00 | 0.00 | 0.00 | 0.00 |
+| 2023-04-01        | 0.00 | 0.00 | 0.00 | 0.00 |
+| 2023-05-01        | 1.28 | 1.92 | 0.00 | 0.00 |
+
 
 ### Product Association Rules
 

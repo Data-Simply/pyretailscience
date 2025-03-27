@@ -2,13 +2,11 @@
 
 import datetime
 
-import ibis
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from matplotlib import pyplot as plt
 
-from pyretailscience.analysis.cohort import CohortPlot
+from pyretailscience.analysis.cohort import CohortAnalysis
 
 
 class TestCohortAnalysis:
@@ -59,12 +57,10 @@ class TestCohortAnalysis:
 
     def test_cohort_computation(self, transactions_df, expected_results_df):
         """Tests cohort computation logic and compares output with expected DataFrame."""
-        cohort = CohortPlot(
+        cohort = CohortAnalysis(
             df=transactions_df,
-            customer_col="customer_id",
-            date_col="transaction_date",
-            aggregation_func="nunique",
-            start_date=datetime.date(2023, 1, 1),
+            aggregation_column="unit_spend",
+            agg_func="nunique",
             period="month",
             percentage=False,
         )
@@ -76,11 +72,9 @@ class TestCohortAnalysis:
         """Test if missing columns raise an error."""
         df = pd.DataFrame({"customer_id": [1, 2, 3], "unit_spend": [10, 20, 30]})
         with pytest.raises(ValueError, match="Missing required columns"):
-            CohortPlot(
+            CohortAnalysis(
                 df=df,
-                start_date=datetime.date(2023, 1, 1),
-                customer_col="customer_id",
-                date_col="transaction_date",
+                aggregation_column="unit_spend",
             )
 
     def test_invalid_period(self, transactions_df):
@@ -88,70 +82,22 @@ class TestCohortAnalysis:
         invalid_period = "m"
         with pytest.raises(
             ValueError,
-            match=f"Invalid period '{invalid_period}'. Allowed values: {CohortPlot.VALID_PERIODS}",
+            match=f"Invalid period '{invalid_period}'. Allowed values: {CohortAnalysis.VALID_PERIODS}",
         ):
-            CohortPlot(
+            CohortAnalysis(
                 df=transactions_df,
-                start_date=datetime.date(2023, 1, 1),
-                customer_col="customer_id",
-                date_col="transaction_date",
+                aggregation_column="unit_spend",
                 period=invalid_period,
             )
 
-    def test_cohort_date_filtering(self, transactions_df):
-        """Test if the cohort correctly filters data based on start and end dates."""
-        start_date = datetime.date(2023, 2, 1)
-        end_date = datetime.date(2023, 4, 30)
-
-        cohort = CohortPlot(
-            df=ibis.memtable(transactions_df),
-            customer_col="customer_id",
-            date_col="transaction_date",
-            aggregation_func="nunique",
-            start_date=start_date,
-            end_date=end_date,
+    def test_cohort_percentage(self, transactions_df):
+        """Tests cohort analysis with percentage=True."""
+        cohort = CohortAnalysis(
+            df=transactions_df,
+            aggregation_column="unit_spend",
+            agg_func="sum",
             period="month",
             percentage=True,
         )
         result = cohort.table
-        assert result.index.min().date() >= start_date
-        assert result.index.max().date() <= end_date
-
-    @pytest.fixture
-    def cohort_plot(self, transactions_df):
-        """Returns a CohortPlot instance initialized with sample transaction data."""
-        return CohortPlot(
-            df=transactions_df,
-            customer_col="customer_id",
-            date_col="transaction_date",
-            aggregation_func="nunique",
-            start_date=datetime.date(2023, 1, 1),
-            period="month",
-            percentage=False,
-        )
-
-    def test_plot_basic(self, cohort_plot, transactions_df):
-        """Tests basic plotting functionality using CohortPlot with default settings."""
-        fig, ax = plt.subplots()
-        cohort_plot.plot(
-            df=transactions_df,
-            x_col="transaction_date",
-            group_col="customer_id",
-            value_col="unit_spend",
-            source_text="Source: Test Data",
-            ax=ax,
-        )
-        assert ax is not None
-
-    def test_plot_with_custom_ax(self, cohort_plot, transactions_df):
-        """Tests if a custom title is correctly applied in the CohortPlot visualization."""
-        fig, ax = plt.subplots()
-        cohort_plot.plot(
-            df=transactions_df,
-            x_col="transaction_date",
-            group_col="customer_id",
-            value_col="unit_spend",
-            title="Custom Cohort Plot",
-            ax=ax,
-        )
-        assert ax.title.get_text() == "Custom Cohort Plot"
+        assert (result.iloc[0] <= 1).all(), "Percentage values should be between 0 and 1"

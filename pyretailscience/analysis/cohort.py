@@ -34,22 +34,15 @@ By leveraging cohort analysis, businesses can make data-driven decisions to enha
 marketing strategies, and drive long-term growth.
 """
 
-from datetime import date
 from typing import ClassVar
 
 import ibis
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-from matplotlib import ticker
-from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
-from pyretailscience.options import get_option
-from pyretailscience.style.tailwind import get_listed_cmap
+from pyretailscience.options import ColumnHelper
 
 
-class CohortPlot:
+class CohortAnalysis:
     """Class for performing cohort analysis and visualization."""
 
     VALID_PERIODS: ClassVar[set[str]] = {"year", "quarter", "month", "week", "day"}
@@ -57,35 +50,35 @@ class CohortPlot:
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
-        start_date: date,
-        end_date: date | None = None,
-        customer_col: str = get_option("column.customer_id"),
-        date_col: str = get_option("column.transaction_date"),
-        aggregation_func: str = "nunique",
+        aggregation_column: str,
+        agg_func: str = "nunique",
         period: str = "month",
         percentage: bool = False,
     ) -> None:
-        """Initializes the CohortPlot object.
+        """Initializes the Cohort Analysis object.
 
         Args:
             df (pd.DataFrame | ibis.Table): The dataset containing transaction data.
-            start_date (date): Start date filter for transactions.
-            end_date (Optional[date]): End date filter for transactions.
-            customer_col (str, optional): Column name representing customer IDs.
-            date_col (str, optional): Column name representing transaction dates.
-            aggregation_func (str, optional): Aggregation function (e.g., "nunique", "sum", "mean"). Defaults to "nunique".
+            aggregation_column (str): The column to apply the aggregation function on (e.g., 'unit_spend').
+            agg_func (str, optional): Aggregation function (e.g., "nunique", "sum", "mean"). Defaults to "nunique".
             period (str): Period for cohort analysis (must be "year", "quarter", "month", "week", or "day").
             percentage (bool): If True, converts cohort values into retention percentages relative to the first period.
 
         Raises:
             ValueError: If `period` is not one of the allowed values.
-            ValueError: If `df` is missing required columns (`customer_col` or `date_col`).
+            ValueError: If `df` is missing required columns (`customer_id`, `transaction_date`, or `aggregation_column`).
         """
+        cols = ColumnHelper()
+
         if period not in self.VALID_PERIODS:
             error_message = f"Invalid period '{period}'. Allowed values: {self.VALID_PERIODS}."
             raise ValueError(error_message)
 
-        required_cols = [customer_col, date_col]
+        required_cols = [
+            cols.customer_id,
+            cols.transaction_date,
+            aggregation_column,
+        ]
         missing_cols = [col for col in required_cols if col not in df.columns]
 
         if missing_cols:
@@ -94,12 +87,9 @@ class CohortPlot:
 
         self.table = self._calculate_cohorts(
             df=df,
-            customer_col=customer_col,
-            date_col=date_col,
-            aggregation_func=aggregation_func,
+            agg_func=agg_func,
             period=period,
-            start_date=start_date,
-            end_date=end_date,
+            aggregation_column=aggregation_column,
             percentage=percentage,
         )
 
@@ -108,79 +98,66 @@ class CohortPlot:
         cohort_analysis_table: pd.DataFrame,
         period: str,
     ) -> pd.DataFrame:
-        """Fill gaps in the cohort analysis table for missing periods.
+        """Fills gaps in the cohort analysis table for missing periods.
 
         Args:
             cohort_analysis_table (pd.DataFrame): The cohort analysis table to fill gaps in.
             period (str): The period of analysis (year, quarter, month, week, or day).
 
         Returns:
-            pd.DataFrame: Cohort table with gaps filled
+            pd.DataFrame: Cohort table with missing periods filled.
         """
         cohort_analysis_table.index = pd.to_datetime(cohort_analysis_table.index)
 
         min_period = cohort_analysis_table.index.min()
         max_period = cohort_analysis_table.index.max()
 
-        if period == "year":
-            full_range = pd.date_range(start=min_period, end=max_period, freq="YS")
-        elif period == "quarter":
-            full_range = pd.date_range(start=min_period, end=max_period, freq="QS")
-        elif period == "month":
-            full_range = pd.date_range(start=min_period, end=max_period, freq="MS")
-        elif period == "week":
-            full_range = pd.date_range(start=min_period, end=max_period, freq="W")
-        elif period == "day":
-            full_range = pd.date_range(start=min_period, end=max_period, freq="D")
-
-        return cohort_analysis_table.reindex(full_range, fill_value=0)
+        period_lookup = {"year": "YS", "quarter": "QS", "month": "MS", "week": "W", "day": "D"}
+        full_range = pd.date_range(start=min_period, end=max_period, freq=period_lookup[period])
+        cohort_analysis_table = cohort_analysis_table.reindex(full_range, fill_value=0)
+        if cohort_analysis_table.shape[1] > 0:
+            max_period_since = cohort_analysis_table.columns.max()
+            all_periods = range(max_period_since + 1)
+            cohort_analysis_table = cohort_analysis_table.reindex(columns=all_periods, fill_value=0)
+        return cohort_analysis_table
 
     def _calculate_cohorts(
         self,
         df: pd.DataFrame | ibis.Table,
-        customer_col: str,
-        date_col: str,
-        aggregation_func: str,
-        period: str,
-        start_date: date | None,
-        end_date: date | None,
-        percentage: bool,
+        aggregation_column: str,
+        agg_func: str = "nunique",
+        period: str = "month",
+        percentage: bool = False,
     ) -> pd.DataFrame:
         """Computes a cohort analysis table based on transaction data.
 
         Args:
             df (pd.DataFrame | ibis.Table): The dataset containing transaction data.
-            start_date (date): Start date filter for transactions.
-            end_date (Optional[date]): End date filter for transactions.
-            customer_col (str): Column name representing customer IDs.
-            date_col (str): Column name representing transaction dates.
-            aggregation_func (str): The aggregation function to apply (e.g., "nunique", "sum", "mean").
+            aggregation_column (str): The column to apply the aggregation function on (e.g., 'unit_spend').
+            agg_func (str, optional): Aggregation function (e.g., "nunique", "sum", "mean"). Defaults to "nunique".
             period (str): Period for cohort analysis (must be "year", "quarter", "month", "week", or "day").
             percentage (bool): If True, converts cohort values into retention percentages relative to the first period.
 
         Returns:
-            pd.DataFrame: Cohort analysis table.
-
+            pd.DataFrame: Cohort analysis table with user retention values.
         """
-        if end_date is None:
-            end_date = df[date_col].max()
+        cols = ColumnHelper()
 
         ibis_table = ibis.memtable(df) if isinstance(df, pd.DataFrame) else df
 
-        filtered_table = ibis_table.filter((ibis_table[date_col] >= start_date) & (ibis_table[date_col] <= end_date))
-        filtered_table = filtered_table.mutate(
-            period_shopped=filtered_table[date_col].truncate(period),
-            period_value=filtered_table[customer_col],
+        filtered_table = ibis_table.mutate(
+            period_shopped=ibis_table[cols.transaction_date].truncate(period),
+            period_value=ibis_table[aggregation_column],
         )
 
-        customer_cohort = filtered_table.group_by(customer_col).aggregate(
+        customer_cohort = filtered_table.group_by(cols.customer_id).aggregate(
             min_period_shopped=filtered_table.period_shopped.min(),
         )
 
         cohort_table = (
-            filtered_table.join(customer_cohort, [customer_col])
+            filtered_table.join(customer_cohort, [cols.customer_id])
             .group_by("min_period_shopped", "period_shopped")
-            .aggregate(period_value=getattr(filtered_table.period_value, aggregation_func)())
+            .aggregate(period_value=getattr(filtered_table.period_value, agg_func)())
         )
 
         cohort_table = cohort_table.mutate(
@@ -196,83 +173,10 @@ class CohortPlot:
         )
 
         if percentage:
-            cohort_analysis_table = cohort_analysis_table.div(cohort_analysis_table.iloc[:, 0], axis=0).round(2)
+            cohort_analysis_table = cohort_analysis_table.div(cohort_analysis_table.iloc[0], axis=1).round(2)
 
         cohort_analysis_table = cohort_analysis_table.fillna(0)
         cohort_analysis_table = self._fill_cohort_gaps(cohort_analysis_table, period)
         cohort_analysis_table.index.name = "min_period_shopped"
 
         return cohort_analysis_table
-
-    def plot(
-        self,
-        df: pd.DataFrame,
-        x_col: str,
-        group_col: str,
-        value_col: str,
-        x_label: str | None = None,
-        y_label: str | None = None,
-        title: str | None = None,
-        ax: Axes | None = None,
-        source_text: str | None = None,
-        cbarlabel: str = "Revenue",
-        **kwargs: dict,
-    ) -> SubplotBase:
-        """Plots a cohort map for the given DataFrame.
-
-        Args:
-            df (pd.DataFrame): Dataframe containing cohort analysis data.
-            x_col (str): Column name for x-axis labels.
-            group_col (str): Column name for y-axis labels.
-            value_col (str): Column representing cohort values.
-            x_label (str, optional): Label for x-axis.
-            y_label (str, optional): Label for y-axis.
-            title (str, optional): Title of the plot.
-            ax (Axes, optional): Matplotlib axes object to plot on.
-            source_text (str, optional): Additional source text annotation.
-            cbarlabel (str, optional): Label for the colorbar. Defaults to "Revenue".
-            **kwargs: Additional keyword arguments for cohort styling.
-
-        Returns:
-            SubplotBase: The matplotlib axes object.
-        """
-        ax = ax or plt.gca()
-        df = df.pivot(index=group_col, columns=x_col, values=value_col)
-        cmap = get_listed_cmap("green")
-        im = ax.imshow(df, cmap=cmap, **kwargs)
-        cbar = ax.figure.colorbar(im, ax=ax)
-        cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize="x-large")
-
-        ax.set_xticks(np.arange(df.shape[1]))
-        ax.set_yticks(np.arange(df.shape[0]))
-        ax.set_xticklabels(df.columns, rotation=-30, ha="right", rotation_mode="anchor")
-        ax.set_yticklabels(df.index)
-
-        ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
-        ax.set_xticks(np.arange(df.shape[1] + 1) - 0.5, minor=True)
-        ax.set_yticks(np.arange(df.shape[0] + 1) - 0.5, minor=True)
-        ax.grid(which="minor", color="w", linestyle="-", linewidth=3)
-        ax.tick_params(which="minor", bottom=False, left=False)
-
-        threshold = im.norm(df.to_numpy().max()) / 2.0
-        valfmt = ticker.StrMethodFormatter("{x:,.0f}")
-        textcolors = ("black", "white")
-
-        for i in range(df.shape[0]):
-            for j in range(df.shape[1]):
-                color = textcolors[int(im.norm(df.iloc[i, j]) > threshold)]
-                ax.text(j, i, valfmt(df.iloc[i, j], None), ha="center", va="center", color=color)
-
-        ax = gu.standard_graph_styles(
-            ax=ax,
-            title=title,
-            x_label=x_label or x_col,
-            y_label=y_label or group_col,
-        )
-        ax.grid(False)
-        ax.hlines(y=3 - 0.5, xmin=-0.5, xmax=df.shape[1] - 0.5, color="white", linewidth=4)
-
-        if source_text:
-            gu.add_source_text(ax=ax, source_text=source_text, is_venn_diagram=True)
-
-        return gu.standard_tick_styles(ax)
