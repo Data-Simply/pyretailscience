@@ -89,7 +89,7 @@ class Options:
                 "ie, single unit cost * units",
             ),
             "column.promo_unit_spend": (
-                "The name of the column containing the total spend on promotion of the products in the transaction."
+                "The name of the column containing the total spend on promotion of the products in the transaction. "
                 "ie, promotional unit price * units",
             ),
             "column.promo_unit_quantity": ("The name of the column containing the number of units sold on promotion."),
