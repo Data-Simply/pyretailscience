@@ -41,6 +41,9 @@ class Options:
             "column.unit_quantity": "unit_quantity",
             "column.unit_price": "unit_price",
             "column.unit_spend": "unit_spend",
+            "column.unit_cost": "unit_cost",
+            "column.promo_unit_spend": "promo_unit_spend",
+            "column.promo_unit_quantity": "promo_unit_quantity",
             "column.store_id": "store_id",
             # Aggregation columns
             "column.agg.customer_id": "customers",
@@ -49,6 +52,9 @@ class Options:
             "column.agg.unit_quantity": "units",
             "column.agg.unit_price": "prices",
             "column.agg.unit_spend": "spend",
+            "column.agg.unit_cost": "costs",
+            "column.agg.promo_unit_spend": "promo_spend",
+            "column.agg.promo_unit_quantity": "promo_quantity",
             "column.agg.store_id": "stores",
             # Calculated columns
             "column.calc.price_per_unit": "price_per_unit",
@@ -78,15 +84,31 @@ class Options:
                 "The name of the column containing the total spend of the products in the transaction."
                 "ie, unit_price * units",
             ),
+            "column.unit_cost": (
+                "The name of the column containing the total cost of the products in the transaction."
+                "ie, single unit cost * units",
+            ),
+            "column.promo_unit_spend": (
+                "The name of the column containing the total spend on promotion of the products in the transaction."
+                "ie, promotional unit price * units",
+            ),
+            "column.promo_unit_quantity": ("The name of the column containing the number of units sold on promotion."),
             "column.store_id": "The name of the column containing store IDs of the transaction.",
             # Aggregation columns
             "column.agg.customer_id": "The name of the column containing the number of unique customers.",
             "column.agg.transaction_id": "The name of the column containing the number of transactions.",
             "column.agg.product_id": "The name of the column containing the number of unique products.",
             "column.agg.unit_quantity": "The name of the column containing the total number of units sold.",
-            "column.agg.unit_price": "The name of the column containing the average unit price of products.",
+            "column.agg.unit_price": "The name of the column containing the total unit price of products.",
             "column.agg.unit_spend": (
                 "The name of the column containing the total spend of the units in the transaction."
+            ),
+            "column.agg.unit_cost": "The name of the column containing the total unit cost of products.",
+            "column.agg.promo_unit_spend": (
+                "The name of the column containing the total promotional spend of the units in the transaction."
+            ),
+            "column.agg.promo_unit_quantity": (
+                "The name of the column containing the total number of units sold on promotion."
             ),
             "column.agg.store_id": "The name of the column containing the number of unique stores.",
             # Calculated columns
@@ -497,6 +519,33 @@ class ColumnHelper:
             "column.suffix.percent_difference",
         )
         self.calc_price_per_unit_contrib = self.join_options("column.calc.price_per_unit", "column.suffix.contribution")
+        # Cost
+        self.unit_cost = get_option("column.unit_cost")
+        self.agg_unit_cost = get_option("column.agg.unit_cost")
+        self.agg_unit_cost_p1 = self.join_options("column.agg.unit_cost", "column.suffix.period_1")
+        self.agg_unit_cost_p2 = self.join_options("column.agg.unit_cost", "column.suffix.period_2")
+        self.agg_unit_cost_diff = self.join_options("column.agg.unit_cost", "column.suffix.difference")
+        self.agg_unit_cost_pct_diff = self.join_options("column.agg.unit_cost", "column.suffix.percent_difference")
+        # Promo Unit Spend
+        self.promo_unit_spend = get_option("column.promo_unit_spend")
+        self.agg_promo_unit_spend = get_option("column.agg.promo_unit_spend")
+        self.agg_promo_unit_spend_p1 = self.join_options("column.agg.promo_unit_spend", "column.suffix.period_1")
+        self.agg_promo_unit_spend_p2 = self.join_options("column.agg.promo_unit_spend", "column.suffix.period_2")
+        self.agg_promo_unit_spend_diff = self.join_options("column.agg.promo_unit_spend", "column.suffix.difference")
+        self.agg_promo_unit_spend_pct_diff = self.join_options(
+            "column.agg.promo_unit_spend",
+            "column.suffix.percent_difference",
+        )
+        # Promo Unit Quantity
+        self.promo_unit_qty = get_option("column.promo_unit_quantity")
+        self.agg_promo_unit_qty = get_option("column.agg.promo_unit_quantity")
+        self.agg_promo_unit_qty_p1 = self.join_options("column.agg.promo_unit_quantity", "column.suffix.period_1")
+        self.agg_promo_unit_qty_p2 = self.join_options("column.agg.promo_unit_quantity", "column.suffix.period_2")
+        self.agg_promo_unit_qty_diff = self.join_options("column.agg.promo_unit_quantity", "column.suffix.difference")
+        self.agg_promo_unit_qty_pct_diff = self.join_options(
+            "column.agg.promo_unit_quantity",
+            "column.suffix.percent_difference",
+        )
 
     @staticmethod
     def join_options(*args: str, sep: str = "_") -> str:
