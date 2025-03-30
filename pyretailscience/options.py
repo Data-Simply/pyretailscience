@@ -85,7 +85,7 @@ class Options:
                 "ie, unit_price * units",
             ),
             "column.unit_cost": (
-                "The name of the column containing the total cost of the products in the transaction."
+                "The name of the column containing the total cost of the products in the transaction. "
                 "ie, single unit cost * units",
             ),
             "column.promo_unit_spend": (
