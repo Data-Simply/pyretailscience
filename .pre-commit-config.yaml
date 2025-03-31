@@ -1,4 +1,10 @@
 repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.2.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.11.0"
     hooks:
@@ -30,9 +36,3 @@ repos:
       - id: nbstripout
         files: \.(ipynb)$
         args: [--keep-output, --strip-empty-cells]
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.2.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        args: []

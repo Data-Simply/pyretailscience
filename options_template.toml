@@ -7,6 +7,9 @@ product_id = "product_id"
 unit_quantity = "unit_quantity"
 unit_price = "unit_price"
 unit_spend = "unit_spend"
+unit_cost = "unit_cost"
+promo_unit_spend = "promo_unit_spend"
+promo_unit_quantity = "promo_unit_quantity"
 store_id = "store_id"
 
 [column.agg]
@@ -16,6 +19,9 @@ product_id = "products"
 unit_quantity = "units"
 unit_price = "prices"
 unit_spend = "spend"
+unit_cost = "costs"
+promo_unit_spend = "promo_spend"
+promo_unit_quantity = "promo_units"
 store_id = "stores"
 
 [column.calc]
