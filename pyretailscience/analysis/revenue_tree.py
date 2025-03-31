@@ -105,30 +105,12 @@ def calc_tree_kpis(
 
     # Calculate price elasticity
     if cols.agg_unit_qty in df_cols:
-        df["calc_price_elasticity"] = (
-            (
-                df[cols.agg_unit_spend + "_" + get_option("column.suffix.period_2")]
-                - df[cols.agg_unit_spend + "_" + get_option("column.suffix.period_1")]
-            )
-            / (
-                (
-                    df[cols.agg_unit_spend + "_" + get_option("column.suffix.period_2")]
-                    + df[cols.agg_unit_spend + "_" + get_option("column.suffix.period_1")]
-                )
-                / 2
-            )
+        df[cols.calc_price_elasticity] = (
+            (df[cols.agg_unit_qty_p2] - df[cols.agg_unit_qty_p1])
+            / ((df[cols.agg_unit_qty_p2] + df[cols.agg_unit_qty_p1]) / 2)
         ) / (
-            (
-                df[cols.calc_price_per_unit + "_" + get_option("column.suffix.period_2")]
-                - df[cols.calc_price_per_unit + "_" + get_option("column.suffix.period_1")]
-            )
-            / (
-                (
-                    df[cols.calc_price_per_unit + "_" + get_option("column.suffix.period_2")]
-                    + df[cols.calc_price_per_unit + "_" + get_option("column.suffix.period_1")]
-                )
-                / 2
-            )
+            (df[cols.calc_price_per_unit_p2] - df[cols.calc_price_per_unit_p1])
+            / ((df[cols.calc_price_per_unit_p2] + df[cols.calc_price_per_unit_p1]) / 2)
         )
 
     # Contribution calculations
@@ -363,6 +345,8 @@ class RevenueTree:
                     cols.calc_price_per_unit_diff,
                     cols.calc_price_per_unit_pct_diff,
                     cols.calc_price_per_unit_contrib,
+                    # Price Elasticity
+                    cols.calc_price_elasticity,
                 ],
             )
 

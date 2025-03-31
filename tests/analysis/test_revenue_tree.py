@@ -357,13 +357,13 @@ class TestRevenueTree:
             {
                 cols.agg_customer_id: [3, 3],
                 cols.agg_transaction_id: [3, 3],
-                cols.agg_unit_spend: [900.0, 1200.0],
+                cols.agg_unit_spend: [900.0, 1100.0],
             },
             index=["p1", "p2"],
         )
 
         if include_quantity:
-            df[cols.agg_unit_qty] = [9, 12]
+            df[cols.agg_unit_qty] = [10, 12]
 
         p1_index = [True, False]
         p2_index = [False, True]
@@ -388,3 +388,10 @@ class TestRevenueTree:
         ]
         for col in expected_columns:
             assert col in result.columns
+
+        if include_quantity:
+            q1, q2 = 10, 12
+            p1, p2 = 900.0 / q1, 1100.0 / q2
+            expected_elasticity = ((q2 - q1) / ((q2 + q1) / 2)) / ((p2 - p1) / ((p2 + p1) / 2))
+
+            assert round(result["price_elasticity"].iloc[0], 6) == round(expected_elasticity, 6)

@@ -217,8 +217,8 @@ class TestOptions:
         mock_is_file.side_effect = [False]  # No pyretailscience.toml file
         assert opt.find_project_root() == Path("/home/user/project")
 
-    def test_load_walmart_toml(self):
-        """Test loading the walmart.toml file updates the options correctly."""
+    def test_load_option_toml(self):
+        """Test loading the test_options.toml file updates the options correctly."""
         test_file_path = Path("tests/toml_files/test_options.toml").resolve()
         options = opt.Options.load_from_toml(test_file_path)
 
@@ -230,6 +230,9 @@ class TestOptions:
         assert options.get_option("column.unit_quantity") == "new_unit_quantity"
         assert options.get_option("column.unit_price") == "new_unit_price"
         assert options.get_option("column.unit_spend") == "new_unit_spend"
+        assert options.get_option("column.unit_cost") == "new_unit_cost"
+        assert options.get_option("column.promo_unit_spend") == "new_promo_unit_spend"
+        assert options.get_option("column.promo_unit_quantity") == "new_promo_unit_quantity"
         assert options.get_option("column.store_id") == "new_store_id"
 
         assert options.get_option("column.agg.customer_id") == "new_customers"
@@ -238,6 +241,9 @@ class TestOptions:
         assert options.get_option("column.agg.unit_quantity") == "new_units"
         assert options.get_option("column.agg.unit_price") == "new_prices"
         assert options.get_option("column.agg.unit_spend") == "new_spend"
+        assert options.get_option("column.agg.unit_cost") == "new_costs"
+        assert options.get_option("column.agg.promo_unit_spend") == "new_promo_spend"
+        assert options.get_option("column.agg.promo_unit_quantity") == "new_promo_units"
         assert options.get_option("column.agg.store_id") == "new_stores"
 
         assert options.get_option("column.calc.price_per_unit") == "new_price_per_unit"
@@ -245,6 +251,7 @@ class TestOptions:
         assert options.get_option("column.calc.spend_per_customer") == "new_spend_per_customer"
         assert options.get_option("column.calc.spend_per_transaction") == "new_spend_per_transaction"
         assert options.get_option("column.calc.transactions_per_customer") == "new_transactions_per_customer"
+        assert options.get_option("column.calc.price_elasticity") == "new_price_elasticity"
 
         assert options.get_option("column.suffix.count") == "new_cnt"
         assert options.get_option("column.suffix.percent") == "new_pct"

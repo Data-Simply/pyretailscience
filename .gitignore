@@ -135,6 +135,7 @@ cython_debug/
 
 # Visual Studio Code
 .vscode
+.history/
 
 # Data files
 *.csv
