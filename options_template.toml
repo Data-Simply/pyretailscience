@@ -30,6 +30,7 @@ units_per_transaction = "units_per_transaction"
 spend_per_customer = "spend_per_customer"
 spend_per_transaction = "spend_per_transaction"
 transactions_per_customer = "transactions_per_customer"
+price_elasticity = "price_elasticity"
 
 [column.suffix]
 count = "cnt"
