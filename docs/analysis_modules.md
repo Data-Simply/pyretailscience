@@ -607,7 +607,7 @@ choices, enabling more effective category management and merchandising decisions
 Example:
 
 ```python
-from pyretailscience.range_planning import CustomerDecisionHierarchy
+from pyretailscience.analysis.range_planning import CustomerDecisionHierarchy
 
 cdh = CustomerDecisionHierarchy(df)
 ax = cdh.plot(

@@ -18,13 +18,13 @@ nav:
       - Revenue Tree: examples/revenue_tree.ipynb
   - Reference:
       - Options: api/options.md
-      - Range Planning: api/range_planning.md
       - Analysis:
           - Cross Shop Analysis: api/analysis/cross_shop.md
           - Customer Retention: api/analysis/customer.md
           - Gain Loss: api/analysis/gain_loss.md
           - Haversine Distance: api/analysis/haversine.md
           - Product Association: api/analysis/product_association.md
+          - Range Planning: api/analysis/range_planning.md
           - Revenue Tree: api/analysis/revenue_tree.md
       - Segmentation:
           - Base Segmentation: api/segmentation/base.md

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import pyretailscience.range_planning as rp
+import pyretailscience.analysis.range_planning as rp
 from pyretailscience.options import ColumnHelper
 
 cols = ColumnHelper()
