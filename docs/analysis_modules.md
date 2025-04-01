@@ -425,7 +425,8 @@ cohort.plot(
     title="Customer Retention Cohort Analysis",
     source_text="Source: PyRetailScience - 2024",
     cbarlabel="Number of Retained Customers",
-    percentage=True
+    percentage=False,
+    number_format="{x:,.2f}"
 )
 ```
 

@@ -5,7 +5,7 @@ import math
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.revenue_tree import RevenueTree
+from pyretailscience.analysis.revenue_tree import RevenueTree, calc_tree_kpis
 from pyretailscience.options import ColumnHelper
 
 
@@ -349,3 +349,49 @@ class TestRevenueTree:
         else:
             assert cols.calc_units_per_trans_contrib not in tree_data
             assert cols.calc_price_per_unit_contrib not in tree_data
+
+    @pytest.mark.parametrize("include_quantity", [True, False])
+    def test_calc_tree_kpis_basic(self, cols: ColumnHelper, include_quantity: bool):
+        """Test basic KPI calculations."""
+        df = pd.DataFrame(
+            {
+                cols.agg_customer_id: [3, 3],
+                cols.agg_transaction_id: [3, 3],
+                cols.agg_unit_spend: [900.0, 1100.0],
+            },
+            index=["p1", "p2"],
+        )
+
+        if include_quantity:
+            df[cols.agg_unit_qty] = [10, 12]
+
+        p1_index = [True, False]
+        p2_index = [False, True]
+
+        result = calc_tree_kpis(df, p1_index, p2_index)
+
+        assert isinstance(result, pd.DataFrame)
+
+        expected_columns = [
+            "customers_diff",
+            "customers_pct_diff",
+            "transactions_diff",
+            "transactions_pct_diff",
+            "spend_diff",
+            "spend_pct_diff",
+            "spend_per_transaction_diff",
+            "spend_per_transaction_pct_diff",
+            "transactions_per_customer_diff",
+            "transactions_per_customer_pct_diff",
+            "spend_per_customer_diff",
+            "spend_per_customer_pct_diff",
+        ]
+        for col in expected_columns:
+            assert col in result.columns
+
+        if include_quantity:
+            q1, q2 = 10, 12
+            p1, p2 = 900.0 / q1, 1100.0 / q2
+            expected_elasticity = ((q2 - q1) / ((q2 + q1) / 2)) / ((p2 - p1) / ((p2 + p1) / 2))
+
+            assert round(result["price_elasticity"].iloc[0], 6) == round(expected_elasticity, 6)

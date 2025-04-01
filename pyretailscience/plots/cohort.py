@@ -39,6 +39,7 @@ def plot(
     ax: Axes | None = None,
     source_text: str | None = None,
     percentage: bool = False,
+    number_format: str | None = None,
     **kwargs: dict,
 ) -> SubplotBase:
     """Plots a cohort plot for the given DataFrame.
@@ -52,6 +53,7 @@ def plot(
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): Additional source text annotation.
         percentage (bool, optional): If True, displays cohort values as percentages. Defaults to False.
+        number_format (str, optional): Custom format for the values (e.g., "{x:,.2f}").
         **kwargs: Additional keyword arguments for cohort styling.
 
     Returns:
@@ -65,7 +67,7 @@ def plot(
 
     ax.set_xticks(np.arange(df.shape[1]))
     ax.set_yticks(np.arange(df.shape[0]))
-    ax.set_xticklabels(df.columns, rotation=-30, ha="right", rotation_mode="anchor")
+    ax.set_xticklabels(df.columns, rotation_mode="anchor")
     ax.set_yticklabels(df.index.astype(str))
 
     ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
@@ -74,12 +76,16 @@ def plot(
     ax.grid(which="minor", color="w", linestyle="-", linewidth=3)
     ax.tick_params(which="minor", bottom=False, left=False)
     threshold = im.norm(1.0) / 2.0 if percentage else im.norm(df.to_numpy().max()) / 2.0
-    valfmt = ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}")
+    if number_format is None:
+        valfmt = ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}")
+    else:
+        valfmt = ticker.StrMethodFormatter(number_format)
+
     textcolors = ("black", "white")
     for i in range(df.shape[0]):
         for j in range(df.shape[1]):
             color = textcolors[int(im.norm(df.iloc[i, j]) > threshold)]
-            ax.text(j, i, valfmt(df.iloc[i, j], None), ha="center", va="center", color=color, fontsize=8)
+            ax.text(j, i, valfmt(df.iloc[i, j], None), ha="center", va="center", color=color, fontsize=7)
 
     ax = gu.standard_graph_styles(
         ax=ax,
@@ -91,6 +97,6 @@ def plot(
     ax.hlines(y=3 - 0.5, xmin=-0.5, xmax=df.shape[1] - 0.5, color="white", linewidth=4)
 
     if source_text:
-        gu.add_source_text(ax=ax, source_text=source_text, is_venn_diagram=True)
+        gu.add_source_text(ax=ax, source_text=source_text)
 
     return gu.standard_tick_styles(ax)

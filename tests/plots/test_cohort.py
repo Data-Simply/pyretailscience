@@ -25,7 +25,7 @@ def _mock_gu_functions(mocker):
     mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
     mocker.patch(
         "pyretailscience.style.graph_utils.add_source_text",
-        side_effect=lambda ax, source_text, is_venn_diagram: ax,
+        side_effect=lambda ax, source_text: ax,
     )
 
 
@@ -55,7 +55,7 @@ def test_plot_cohort_with_source_text(sample_cohort_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text, is_venn_diagram=True)
+    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
 
 
 @pytest.mark.usefixtures("_mock_gu_functions")
@@ -65,6 +65,20 @@ def test_plot_cohort_with_percentage(sample_cohort_dataframe):
         df=sample_cohort_dataframe,
         cbarlabel="Retention Rate",
         percentage=True,
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert len(result_ax.get_children()) > 0
+
+
+def test_plot_cohort_with_number_format(sample_cohort_dataframe):
+    """Test cohort plot with a custom number format."""
+    number_format = "{x:,.2f}"
+
+    result_ax = cohort.plot(
+        df=sample_cohort_dataframe,
+        cbarlabel="Retention Rate",
+        number_format=number_format,
     )
 
     assert isinstance(result_ax, Axes)
