@@ -792,7 +792,6 @@ segment_stats.df
 | Total          | 4604.28  |            150 |          50 |              92.0856 |                30.6952  |                           3 |             1   |
 <!-- markdownlint-enable MD013 -->
 
-
 ### RFM Segmentation
 
 <div class="clear" markdown>
@@ -927,3 +926,66 @@ tc.plot(
     source_text="Source: PyRetailScience",
 )
 ```
+
+## Utils
+
+### Filter and Label by Periods
+
+<div class="clear" markdown>
+
+The Filter and Label by Periods module allows you to:
+
+- Filter transaction data to specific time periods (e.g., quarters, months, promotional periods)
+- Add period labels to your data for easy segmentation and comparison
+- Analyze before-and-after performance for events or promotions
+- Compare metrics across different time frames consistently
+
+This functionality is particularly useful for:
+
+- Comparing KPIs across fiscal quarters or years
+- Analyzing seasonal performance patterns
+- Measuring the impact of promotions or events
+- Creating period-based visualizations with consistent data preparation
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.date import filter_and_label_by_periods
+
+# Create a sample transactions table
+data = pd.DataFrame({
+    "transaction_id": range(1, 101),
+    "transaction_date": pd.date_range(start="2023-01-01", periods=100, freq="D"),
+    "customer_id": [f"C{i % 20 + 1}" for i in range(100)],
+    "amount": [float(i % 5 * 25 + 50) for i in range(100)]
+})
+
+transactions = ibis.memtable(data)
+
+# Define period ranges for analysis
+period_ranges = {
+    "Pre-Promotion": ("2023-01-01", "2023-01-31"),
+    "Promotion": ("2023-02-01", "2023-02-28"),
+    "Post-Promotion": ("2023-03-01", "2023-03-31")
+}
+
+# Filter transactions to the defined periods and add period labels
+result_df = filter_and_label_by_periods(transactions, period_ranges).execute()
+
+# Calculate KPIs by period
+result_df.groupby("period_name").agg(
+    transaction_count=("transaction_id", "count"),
+    total_sales=("amount", "sum"),
+    avg_transaction_value=("amount", "mean")
+)
+```
+
+| period_name    | transaction_count | total_sales | avg_transaction_value |
+|:---------------|------------------:|------------:|----------------------:|
+| Pre-Promotion  |                31 |      1937.5 |                 62.50 |
+| Promotion      |                28 |      1750.0 |                 62.50 |
+| Post-Promotion |                31 |      1937.5 |                 62.50 |
