@@ -1,7 +1,6 @@
 """Tests for the time_utils module."""
 
 import datetime
-from datetime import timezone
 
 import ibis
 import pandas as pd
@@ -40,12 +39,12 @@ def test_filter_and_label_by_periods_with_datetime_objects(sample_transactions_t
 
     period_ranges = {
         "Q1": (
-            datetime.datetime(2023, 1, 1, tzinfo=timezone.utc),
-            datetime.datetime(2023, 3, 31, tzinfo=timezone.utc),
+            datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 3, 31, tzinfo=datetime.UTC),
         ),
         "Q2": (
-            datetime.datetime(2023, 4, 1, tzinfo=timezone.utc),
-            datetime.datetime(2023, 6, 30, tzinfo=timezone.utc),
+            datetime.datetime(2023, 4, 1, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 6, 30, tzinfo=datetime.UTC),
         ),
     }
 
