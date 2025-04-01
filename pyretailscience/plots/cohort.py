@@ -32,38 +32,39 @@ from pyretailscience.style.tailwind import get_listed_cmap
 
 def plot(
     df: pd.DataFrame,
-    cbarlabel: str,
+    cbar_label: str,
     x_label: str | None = None,
     y_label: str | None = None,
     title: str | None = None,
     ax: Axes | None = None,
     source_text: str | None = None,
-    percentage: bool = False,
-    number_format: str | None = None,
+    percentage: bool = True,
+    figsize: tuple[int, int] | None = None,
     **kwargs: dict,
 ) -> SubplotBase:
     """Plots a cohort plot for the given DataFrame.
 
     Args:
         df (pd.DataFrame): Dataframe containing cohort analysis data.
-        cbarlabel (str): Label for the colorbar.
+        cbar_label (str): Label for the colorbar.
         x_label (str, optional): Label for x-axis.
         y_label (str, optional): Label for y-axis.
         title (str, optional): Title of the plot.
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): Additional source text annotation.
         percentage (bool, optional): If True, displays cohort values as percentages. Defaults to False.
-        number_format (str, optional): Custom format for the values (e.g., "{x:,.2f}").
+        figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
         **kwargs: Additional keyword arguments for cohort styling.
 
     Returns:
         SubplotBase: The matplotlib axes object.
     """
-    ax = ax or plt.gca()
+    if ax is None:
+        _, ax = plt.subplots(figsize=figsize)
     cmap = get_listed_cmap("green")
     im = ax.imshow(df, cmap=cmap, **kwargs)
-    cbar = ax.figure.colorbar(im, ax=ax)
-    cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize="x-large")
+    cbar = ax.figure.colorbar(im, ax=ax, format=ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}"))
+    cbar.ax.set_ylabel(cbar_label, rotation=-90, va="bottom", fontsize="x-large")
 
     ax.set_xticks(np.arange(df.shape[1]))
     ax.set_yticks(np.arange(df.shape[0]))
@@ -76,11 +77,7 @@ def plot(
     ax.grid(which="minor", color="w", linestyle="-", linewidth=3)
     ax.tick_params(which="minor", bottom=False, left=False)
     threshold = im.norm(1.0) / 2.0 if percentage else im.norm(df.to_numpy().max()) / 2.0
-    if number_format is None:
-        valfmt = ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}")
-    else:
-        valfmt = ticker.StrMethodFormatter(number_format)
-
+    valfmt = ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}")
     textcolors = ("black", "white")
     for i in range(df.shape[0]):
         for j in range(df.shape[1]):

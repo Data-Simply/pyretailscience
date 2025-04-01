@@ -424,9 +424,9 @@ cohort.plot(
     y_label="Cohort Start Date",
     title="Customer Retention Cohort Analysis",
     source_text="Source: PyRetailScience - 2024",
-    cbarlabel="Number of Retained Customers",
-    percentage=False,
-    number_format="{x:,.2f}"
+    cbar_label="Number of Retained Customers",
+    percentage=True,
+    figsize=(8,8),
 )
 ```
 
@@ -732,7 +732,7 @@ choices, enabling more effective category management and merchandising decisions
 Example:
 
 ```python
-from pyretailscience.range_planning import CustomerDecisionHierarchy
+from pyretailscience.analysis.range_planning import CustomerDecisionHierarchy
 
 cdh = CustomerDecisionHierarchy(df)
 ax = cdh.plot(

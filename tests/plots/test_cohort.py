@@ -34,7 +34,7 @@ def test_plot_cohort(sample_cohort_dataframe):
     """Test cohort plot with a standard DataFrame."""
     result_ax = cohort.plot(
         df=sample_cohort_dataframe,
-        cbarlabel="Retention Rate",
+        cbar_label="Retention Rate",
         x_label="Months",
         y_label="Cohorts",
         title="Cohort Retention Heatmap",
@@ -51,7 +51,7 @@ def test_plot_cohort_with_source_text(sample_cohort_dataframe):
 
     result_ax = cohort.plot(
         df=sample_cohort_dataframe,
-        cbarlabel="Retention Rate",
+        cbar_label="Retention Rate",
         source_text=source_text,
     )
 
@@ -63,7 +63,7 @@ def test_plot_cohort_with_percentage(sample_cohort_dataframe):
     """Test cohort plot with percentage formatting enabled."""
     result_ax = cohort.plot(
         df=sample_cohort_dataframe,
-        cbarlabel="Retention Rate",
+        cbar_label="Retention Rate",
         percentage=True,
     )
 
@@ -71,15 +71,31 @@ def test_plot_cohort_with_percentage(sample_cohort_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-def test_plot_cohort_with_number_format(sample_cohort_dataframe):
-    """Test cohort plot with a custom number format."""
-    number_format = "{x:,.2f}"
-
+@pytest.mark.usefixtures("_mock_gu_functions")
+def test_plot_cohort_with_ax_none(sample_cohort_dataframe):
+    """Test cohort plot when ax is None (should create a new figure)."""
     result_ax = cohort.plot(
         df=sample_cohort_dataframe,
-        cbarlabel="Retention Rate",
-        number_format=number_format,
+        cbar_label="Retention Rate",
+        ax=None,
     )
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.get_children()) > 0
+    assert result_ax.figure is not None
+
+
+@pytest.mark.usefixtures("_mock_gu_functions")
+def test_plot_cohort_with_figsize(sample_cohort_dataframe):
+    """Test cohort plot with a specified figsize."""
+    width = 14
+    height = 10
+    result_ax = cohort.plot(
+        df=sample_cohort_dataframe,
+        cbar_label="Retention Rate",
+        figsize=(width, height),
+    )
+
+    assert isinstance(result_ax, Axes)
+    assert result_ax.figure.get_size_inches()[0] == width
+    assert result_ax.figure.get_size_inches()[1] == height
