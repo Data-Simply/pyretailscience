@@ -4,6 +4,8 @@ from datetime import datetime
 
 import ibis
 
+from pyretailscience.options import get_option
+
 
 def filter_and_label_by_periods(
     transactions: ibis.Table,
@@ -42,7 +44,7 @@ def filter_and_label_by_periods(
             msg = f"Period '{period_name}' must have a (start_date, end_date) tuple"
             raise ValueError(msg)
 
-        period_condition = transactions.transaction_date.between(date_range[0], date_range[1])
+        period_condition = transactions[get_option("column.transaction_date")].between(date_range[0], date_range[1])
         branches.append((period_condition, ibis.literal(period_name)))
 
     conditions = ibis.or_(*[condition[0] for condition in branches])
