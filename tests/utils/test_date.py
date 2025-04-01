@@ -7,7 +7,7 @@ import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.time_utils import filter_and_label_by_periods
+from pyretailscience.utils.date import filter_and_label_by_periods
 
 
 @pytest.fixture
