@@ -19,6 +19,7 @@ nav:
   - Reference:
       - Options: api/options.md
       - Analysis:
+          - Cohort Analysis: api/analysis/cohort.md
           - Cross Shop Analysis: api/analysis/cross_shop.md
           - Customer Retention: api/analysis/customer.md
           - Gain Loss: api/analysis/gain_loss.md
@@ -35,6 +36,7 @@ nav:
       - Plots:
           - Area Plot: api/plots/area.md
           - Bar Plot: api/plots/bar.md
+          - Cohort Plot: api/plots/cohort.md
           - Histogram Plot: api/plots/histogram.md
           - Index Plot: api/plots/index.md
           - Line Plot: api/plots/line.md
@@ -47,7 +49,6 @@ nav:
               - Tailwind Colors: api/plots/style/tailwind.md
       - Utils:
           - Date Utils: api/utils/date.md
-          - Period Utils: api/utils/period.md
 
 theme:
   name: material
