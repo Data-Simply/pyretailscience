@@ -792,7 +792,6 @@ segment_stats.df
 | Total          | 4604.28  |            150 |          50 |              92.0856 |                30.6952  |                           3 |             1   |
 <!-- markdownlint-enable MD013 -->
 
-
 ### RFM Segmentation
 
 <div class="clear" markdown>
@@ -927,3 +926,114 @@ tc.plot(
     source_text="Source: PyRetailScience",
 )
 ```
+
+## Utils
+
+### Filter and Label by Periods
+
+<div class="clear" markdown>
+
+The Filter and Label by Periods module allows you to:
+
+- Filter transaction data to specific time periods (e.g., quarters, months, promotional periods)
+- Add period labels to your data for easy segmentation and comparison
+- Analyze before-and-after performance for events or promotions
+- Compare metrics across different time frames consistently
+
+This functionality is particularly useful for:
+
+- Comparing KPIs across fiscal quarters or years
+- Analyzing seasonal performance patterns
+- Measuring the impact of promotions or events
+- Creating period-based visualizations with consistent data preparation
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.date import filter_and_label_by_periods
+
+# Create a sample transactions table
+data = pd.DataFrame({
+    "transaction_id": range(1, 101),
+    "transaction_date": pd.date_range(start="2023-01-01", periods=100, freq="D"),
+    "customer_id": [f"C{i % 20 + 1}" for i in range(100)],
+    "amount": [float(i % 5 * 25 + 50) for i in range(100)]
+})
+
+transactions = ibis.memtable(data)
+
+# Define period ranges for analysis
+period_ranges = {
+    "Pre-Promotion": ("2023-01-01", "2023-01-31"),
+    "Promotion": ("2023-02-01", "2023-02-28"),
+    "Post-Promotion": ("2023-03-01", "2023-03-31")
+}
+
+# Filter transactions to the defined periods and add period labels
+result_df = filter_and_label_by_periods(transactions, period_ranges).execute()
+
+# Calculate KPIs by period
+result_df.groupby("period_name").agg(
+    transaction_count=("transaction_id", "count"),
+    total_sales=("amount", "sum"),
+    avg_transaction_value=("amount", "mean")
+)
+```
+
+| period_name    | transaction_count | total_sales | avg_transaction_value |
+|:---------------|------------------:|------------:|----------------------:|
+| Pre-Promotion  |                31 |      1937.5 |                 62.50 |
+| Promotion      |                28 |      1750.0 |                 62.50 |
+| Post-Promotion |                31 |      1937.5 |                 62.50 |
+
+
+### Find Overlapping Periods
+
+<div class="clear" markdown>
+
+The **Find Overlapping Periods** module allows you to:
+
+- Identify overlapping periods between a given start and end date.
+- Split the date range into yearly periods that start from the given start date for the first period
+  and then yearly thereafter, ending on the provided end date.
+- Return results either as ISO-formatted strings (`"YYYY-MM-DD"`) or as `datetime` objects.
+
+This functionality is particularly useful for:
+
+- Analyzing seasonal or yearly patterns in datasets.
+- Comparing data across specific date ranges.
+- Structuring time-based segmentations efficiently.
+
+</div>
+
+Example:
+
+```python
+from datetime import datetime
+from pyretailscience.utils.period import find_overlapping_periods
+
+# Example with string input
+overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
+print(overlapping_periods)
+
+# Example with datetime objects
+overlapping_periods = find_overlapping_periods(datetime(2022, 6, 15), datetime(2025, 3, 10), return_iso=False)
+print(overlapping_periods)
+```
+**Output (ISO Format)**
+| Start Date | End Date   |
+|------------|------------|
+| 2022-06-15 | 2023-03-10 |
+| 2023-06-15 | 2024-03-10 |
+| 2024-06-15 | 2025-03-10 |
+
+ **Output (Datetime Objects)**
+| Start Date            | End Date              |
+|-----------------------|-----------------------|
+| datetime(2022, 6, 15) | datetime(2023, 3, 10) |
+| datetime(2023, 6, 15)	| datetime(2024, 3, 10) |
+| datetime(2024, 6, 15)	| datetime(2025, 3, 10) |

@@ -45,6 +45,9 @@ nav:
           - Style:
               - Graph Utils: api/plots/style/graph_utils.md
               - Tailwind Colors: api/plots/style/tailwind.md
+      - Utils:
+          - Date Utils: api/utils/date.md
+          - Period Utils: api/utils/period.md
 
 theme:
   name: material
