@@ -91,7 +91,7 @@ class CompositeRank:
 
         column_refs = [df[col] for col in rank_mutates]
         agg_expr = {
-            "mean": sum(column_refs) / len(rank_cols),
+            "mean": sum(column_refs) / len(column_refs),
             "sum": sum(column_refs),
             "min": ibis.least(*column_refs),
             "max": ibis.greatest(*column_refs),
