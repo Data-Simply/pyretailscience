@@ -27,6 +27,7 @@ nav:
           - Product Association: api/analysis/product_association.md
           - Range Planning: api/analysis/range_planning.md
           - Revenue Tree: api/analysis/revenue_tree.md
+          - Composite Rank: api/analysis/composite_rank.md
       - Segmentation:
           - Base Segmentation: api/segmentation/base.md
           - HML Segmentation: api/segmentation/hml.md
