@@ -66,7 +66,8 @@ Area plots are useful for visualizing **cumulative** trends, showing **relative 
 - Comparing **cumulative** sales or revenue
 - Showing **growth trends** across multiple categories
 
-Similar to line plots, **area plots** can display time-series data, but they emphasize the **area under the curve**, making them ideal for tracking proportions and cumulative metrics.
+Similar to line plots, **area plots** can display time-series data, but they emphasize the **area under the curve**,
+making them ideal for tracking proportions and cumulative metrics.
 
 </div>
 
@@ -106,13 +107,15 @@ area.plot(
 
 ![Scatter Plot](assets/images/analysis_modules/plots/scatter.svg){ align=right loading=lazy width="50%"}
 
-Scatter plots are useful for visualizing **relationships** between two numerical variables, detecting **patterns**, and identifying **outliers**. They are often used for:
+Scatter plots are useful for visualizing **relationships** between two numerical variables, detecting **patterns**, and
+identifying **outliers**. They are often used for:
 
 - Exploring **correlations** between variables
 - Identifying **clusters** in data
 - Spotting **trends** and **outliers**
 
-Scatter plots are particularly useful when analyzing **distributions** and understanding how one variable influences another. They can also be enhanced with **colors** and **sizes** to represent additional dimensions in the data.
+Scatter plots are particularly useful when analyzing **distributions** and understanding how one variable influences
+another. They can also be enhanced with **colors** and **sizes** to represent additional dimensions in the data.
 
 </div>
 
@@ -158,13 +161,15 @@ scatter.plot(
 
 ![Venn Diagram](assets/images/analysis_modules/plots/venn.svg){ align=right loading=lazy width="50%"}
 
-Venn diagrams are useful for visualizing **overlaps** and **relationships** between multiple categorical sets. They help in:
+Venn diagrams are useful for visualizing **overlaps** and **relationships** between multiple categorical sets. They
+help in:
 
 - Identifying **commonalities** and **differences** between groups
 - Understanding **intersections** between two or three sets
 - Highlighting **exclusive and shared** elements
 
-Venn diagrams provide a clear way to analyze how different groups relate to each other. They are often used in market segmentation, user behavior analysis, and set comparisons.
+Venn diagrams provide a clear way to analyze how different groups relate to each other. They are often used in market
+segmentation, user behavior analysis, and set comparisons.
 
 </div>
 
@@ -488,7 +493,9 @@ time.plot(
 
 ### Cohort Analysis
 
-The cohort analysis module provides functionality for analyzing customer retention patterns over time. It helps businesses understand customer behavior by tracking groups of users (cohorts) based on their first interaction and observing their activity over subsequent periods.
+The cohort analysis module provides functionality for analyzing customer retention patterns over time. It helps
+businesses understand customer behavior by tracking groups of users (cohorts) based on their first interaction and
+observing their activity over subsequent periods.
 
 Cohort analysis is useful in multiple business applications:
 
@@ -498,7 +505,8 @@ Cohort analysis is useful in multiple business applications:
 4. **Revenue Analysis**: Tracks spending behavior over time to optimize pricing strategies.
 5. **User Engagement Trends**: Understands how different user segments behave based on their joining time.
 
-This module calculates cohort tables using various aggregation functions such as `nunique`, `sum`, and `mean`, allowing flexible analysis of customer data.
+This module calculates cohort tables using various aggregation functions such as `nunique`, `sum`, and `mean`, allowing
+flexible analysis of customer data.
 
 The following key metrics are used in the analysis:
 
@@ -506,7 +514,6 @@ The following key metrics are used in the analysis:
 - **Aggregation Function**: Determines how values are aggregated (e.g., sum, mean, count).
 - **Cohort Period**: Defines the period granularity (year, quarter, month, week, or day).
 - **Retention Percentage**: Calculates retention rates as a percentage of the first-period cohort.
-
 
 Example:
 
@@ -545,6 +552,7 @@ cohort = CohortAnalysis(
 )
 cohort.table.head()
 ```
+
 | min_period_shopped |    0 |    1 |    2 |    3 |
 |:-------------------|-----:|-----:|-----:|-----:|
 | 2023-01-01         | 1.00 | 1.00 | 1.00 | 1.00 |
@@ -552,7 +560,6 @@ cohort.table.head()
 | 2023-03-01         | 0.00 | 0.00 | 0.00 | 0.00 |
 | 2023-04-01         | 0.00 | 0.00 | 0.00 | 0.00 |
 | 2023-05-01         | 1.28 | 1.92 | 0.00 | 0.00 |
-
 
 ### Product Association Rules
 
@@ -929,7 +936,8 @@ segment_stats.df
 - **Frequency (F)**: How often a customer makes purchases
 - **Monetary (M)**: How much a customer spends
 
-Each metric is typically scored on a scale, and the combined RFM score helps businesses identify **loyal customers, at-risk customers, and high-value buyers**.
+Each metric is typically scored on a scale, and the combined RFM score helps businesses identify **loyal customers,
+at-risk customers, and high-value buyers**.
 
 RFM segmentation helps answer questions such as:
 
@@ -1051,6 +1059,68 @@ tc.plot(
     source_text="Source: PyRetailScience",
 )
 ```
+
+### Composite Rank
+
+<div class="clear" markdown>
+
+The Composite Rank module creates a composite ranking of several columns by giving each column an individual rank and
+then combining those ranks together. Composite rankings are particularly useful for:
+
+- Product range reviews when multiple factors need to be considered together
+- Prioritizing actions based on multiple performance metrics
+- Creating balanced scorecards that consider multiple dimensions
+- Identifying outliers across multiple metrics
+
+This module allows you to specify different sort orders for each column (ascending or descending) and supports various
+aggregation functions to combine the ranks, such as mean, sum, min, or max.
+
+Key features:
+
+- Supports both ascending and descending sort orders
+- Handles ties in rankings with configurable options
+- Combines multiple individual ranks into a single composite rank
+- Works with both pandas DataFrames and ibis Tables
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.analysis.composite_rank import CompositeRank
+
+# Create sample data for products
+df = pd.DataFrame({
+    "product_id": [1, 2, 3, 4, 5],
+    "spend": [100, 150, 75, 200, 125],
+    "customers": [20, 30, 15, 40, 25],
+    "spend_per_customer": [5.0, 5.0, 5.0, 5.0, 5.0],
+})
+
+# Create CompositeRank with multiple columns
+cr = CompositeRank(
+    df=df,
+    rank_cols=[
+        ("spend", "desc"),           # Higher spend is better
+        ("customers", "desc"),       # Higher customer count is better
+        ("spend_per_customer", "desc") # Higher spend per customer is better
+    ],
+    agg_func="mean",     # Use mean to aggregate ranks
+    ignore_ties=False    # Keep ties (rows with same values get same rank)
+)
+
+result_df.sort_values("composite_rank")
+```
+<!-- markdownlint-disable MD013 -->
+| product_id | spend | customers | spend_per_customer | spend_rank | customers_rank | spend_per_customer_rank | composite_rank |
+|:-----------|------:|----------:|-------------------:|----------:|--------------:|-----------------------:|---------------:|
+| 4          | 200   | 40        | 5.0                | 1         | 1             | 1                      | 1.0            |
+| 2          | 150   | 30        | 5.0                | 2         | 2             | 1                      | 1.67           |
+| 5          | 125   | 25        | 5.0                | 3         | 3             | 1                      | 2.33           |
+| 1          | 100   | 20        | 5.0                | 4         | 4             | 1                      | 3.0            |
+| 3          | 75    | 15        | 5.0                | 5         | 5             | 1                      | 3.67           |
+<!-- markdownlint-enable MD013 -->
 
 ## Utils
 
