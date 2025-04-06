@@ -1110,7 +1110,7 @@ cr = CompositeRank(
     ignore_ties=False    # Keep ties (rows with same values get same rank)
 )
 
-result_df.sort_values("composite_rank")
+cr.df.sort_values("composite_rank")
 ```
 <!-- markdownlint-disable MD013 -->
 | product_id | spend | customers | spend_per_customer | spend_rank | customers_rank | spend_per_customer_rank | composite_rank |

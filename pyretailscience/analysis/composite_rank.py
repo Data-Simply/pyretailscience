@@ -62,7 +62,7 @@ class CompositeRank:
                 col_name = col_spec
                 sort_order = "asc"
             else:
-                if len(col_spec) != 2:  # noqa: PLR2004 - Error message below explains the vlaue
+                if len(col_spec) != 2:  # noqa: PLR2004 - Error message below explains the value
                     msg = (
                         f"Column specification must be a string or a tuple of (column_name, sort_order). Got {col_spec}"
                     )
