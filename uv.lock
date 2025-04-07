@@ -1197,6 +1197,22 @@ wheels = [
 ]
 
 [[package]]
+name = "mkdocs-macros-plugin"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "mkdocs" },
+    { name = "python-dateutil" },
+    { name = "pyyaml" },
+    { name = "termcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/43/c199e0bdb4c56bb392c3559e9023122b0be2d457763c48b9774f5fca500d/mkdocs-macros-plugin-0.7.0.tar.gz", hash = "sha256:9e64e1cabcf6925359de29fe54f62d5847fb455c2528c440b87f8f1240650608", size = 551811 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d8/79/1cb714fd860d2e231d72d3c5e7f7edc91d380d90c694da5deddc8c345a25/mkdocs_macros_plugin-0.7.0-py3-none-any.whl", hash = "sha256:96bdabeb98b96139544f0048ea2f5cb80c7befde6b21e94c6d4596c22774cbcf", size = 20421 },
+]
+
+[[package]]
 name = "mkdocs-material"
 version = "9.5.31"
 source = { registry = "https://pypi.org/simple" }
@@ -1715,6 +1731,7 @@ dev = [
 docs = [
     { name = "mkdocs" },
     { name = "mkdocs-jupyter" },
+    { name = "mkdocs-macros-plugin" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
 ]
@@ -1753,6 +1770,7 @@ dev = [
 docs = [
     { name = "mkdocs", specifier = ">=1.5.3,<2" },
     { name = "mkdocs-jupyter", specifier = ">=0.24.6,<0.25" },
+    { name = "mkdocs-macros-plugin", specifier = ">=0.7.0,<1" },
     { name = "mkdocs-material", specifier = ">=9.5.4,<10" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.24.0,<0.25" },
 ]
@@ -2226,6 +2244,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/e3/55dcc2cfbc3ca9c29519eb6884dd1415ecb53b0e934862d3559ddcb7e20b/stack_data-0.6.3.tar.gz", hash = "sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9", size = 44707 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/7b/ce1eafaf1a76852e2ec9b22edecf1daa58175c090266e9f6c64afcd81d91/stack_data-0.6.3-py3-none-any.whl", hash = "sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695", size = 24521 },
+]
+
+[[package]]
+name = "termcolor"
+version = "3.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b6/8e2aaa8aeb570b5cc955cd913b083d96c5447bbe27eaf330dfd7cc8e3329/termcolor-3.0.1.tar.gz", hash = "sha256:a6abd5c6e1284cea2934443ba806e70e5ec8fd2449021be55c280f8a3731b611", size = 12935 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/7e/a574ccd49ad07e8b117407bac361f1e096b01f1b620365daf60ff702c936/termcolor-3.0.1-py3-none-any.whl", hash = "sha256:da1ed4ec8a5dc5b2e17476d859febdb3cccb612be1c36e64511a6f2485c10c69", size = 7157 },
 ]
 
 [[package]]

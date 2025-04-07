@@ -81,6 +81,7 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
+  - macros
 
 markdown_extensions:
   - attr_list
@@ -113,5 +114,5 @@ extra:
       name: PyRetailScience on GitHub
 
 copyright: |
-  &copy; {{ now().year }} <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
+  &copy; {{ macros.now().year }} <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
   <a href="#__consent">Change cookie settings</a>
