@@ -70,7 +70,7 @@ jobs:
 
           print(f"New Version: {new_version}")
           EOF
-          )
+
 
           echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile(\"pyproject.toml\").read()[\"project\"][\"version\"])')" >> $GITHUB_ENV
       - name: Build package
