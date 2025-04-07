@@ -1184,3 +1184,40 @@ result_df.groupby("period_name").agg(
 | Pre-Promotion  |                31 |      1937.5 |                 62.50 |
 | Promotion      |                28 |      1750.0 |                 62.50 |
 | Post-Promotion |                31 |      1937.5 |                 62.50 |
+
+
+### Find Overlapping Periods
+
+<div class="clear" markdown>
+
+The **Find Overlapping Periods** module allows you to:
+
+- Identify overlapping periods between a given start and end date.
+- Split the date range into yearly periods that start from the given start date for the first period
+  and then yearly thereafter, ending on the provided end date.
+- Return results either as ISO-formatted strings (`"YYYY-MM-DD"`) or as `datetime` objects.
+
+This functionality is particularly useful for:
+
+- Analyzing seasonal or yearly patterns in datasets.
+- Comparing data across specific date ranges.
+- Structuring time-based segmentations efficiently.
+
+</div>
+
+Example:
+
+```python
+from datetime import datetime
+from pyretailscience.utils.date import find_overlapping_periods
+
+# Example with string input
+overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
+print(overlapping_periods)
+```
+**Output (ISO Format)**
+| Start Date | End Date   |
+|:-----------|-----------:|
+| 2022-06-15 | 2023-03-10 |
+| 2023-06-15 | 2024-03-10 |
+| 2024-06-15 | 2025-03-10 |
