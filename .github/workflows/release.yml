@@ -46,14 +46,13 @@ jobs:
         run: uv run pip install tomlkit
       - name: Bump Version
         run: |
-          uv run python - <<EOF
-          from tomlkit import parse, dumps
-          from tomlkit.toml_file import TOMLFile
+          new_version=$(python - <<EOF
+          import tomlkit
 
-          file = TOMLFile("pyproject.toml")
-          doc = file.read()
+          with open('pyproject.toml', 'r') as f:
+              config = tomlkit.load(f)
 
-          version = doc["project"]["version"]
+          version = config['project']['version']
           release = "${{ inputs.release }}"
 
           major, minor, patch = map(int, version.split('.'))
@@ -65,14 +64,18 @@ jobs:
           elif release == "patch":
               new_version = f"{major}.{minor}.{patch + 1}"
 
-          doc["project"]["version"] = new_version
-          file.write(doc)
+          config['project']['version'] = new_version
 
-          print(f"New Version: {new_version}")
+          with open('pyproject.toml', 'w') as f:
+              f.write(tomlkit.dumps(config))
+
+          print(new_version)
           EOF
+          )
 
-
-          echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile(\"pyproject.toml\").read()[\"project\"][\"version\"])')" >> $GITHUB_ENV
+          VERSION=$(python -c "import tomlkit; print(tomlkit.load('pyproject.toml')['project']['version'])")
+          echo "New Version: ${VERSION}"
+          echo "RELEASE_TAG=${VERSION}" >> $GITHUB_ENV
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
