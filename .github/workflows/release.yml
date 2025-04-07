@@ -49,11 +49,15 @@ jobs:
           uv run python - <<EOF
           from tomlkit import parse, dumps
           from tomlkit.toml_file import TOMLFile
+
           file = TOMLFile("pyproject.toml")
           doc = file.read()
+
           version = doc["project"]["version"]
           release = "${{ inputs.release }}"
+
           major, minor, patch = map(int, version.split('.'))
+
           if release == "major":
               new_version = f"{major + 1}.0.0"
           elif release == "minor":
@@ -62,9 +66,11 @@ jobs:
               new_version = f"{major}.{minor}.{patch + 1}"
           doc["project"]["version"] = new_version
           file.write(doc)
+
           print(f"New Version: {new_version}")
           EOF
-          echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile(\"pyproject.toml\").read()[\"project\"][\"version\"])')" >> $GITHUB_ENV
+
+          echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile("pyproject.toml").read()["project"]["version"])')" >> $GITHUB_ENV
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
