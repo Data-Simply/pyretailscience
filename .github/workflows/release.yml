@@ -73,7 +73,7 @@ jobs:
           EOF
           )
 
-          VERSION=$(python -c "import tomlkit; print(tomlkit.load('pyproject.toml')['project']['version'])")
+          VERSION=$(python -c "import tomlkit; with open('pyproject.toml', 'r') as f: print(tomlkit.load(f)['project']['version'])")
           echo "New Version: ${VERSION}"
           echo "RELEASE_TAG=${VERSION}" >> $GITHUB_ENV
       - name: Build package
