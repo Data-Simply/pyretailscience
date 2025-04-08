@@ -63,6 +63,7 @@ class Options:
             "column.calc.spend_per_transaction": "spend_per_transaction",
             "column.calc.transactions_per_customer": "transactions_per_customer",
             "column.calc.price_elasticity": "price_elasticity",
+            "column.calc.frequency_elasticity": "frequency_elasticity",
             # Abbreviation suffix
             "column.suffix.count": "cnt",
             "column.suffix.percent": "pct",
@@ -119,6 +120,7 @@ class Options:
             "column.calc.spend_per_transaction": "The name of the column containing the spend per transaction.",
             "column.calc.transactions_per_customer": "The name of the column containing the transactions per customer.",
             "column.calc.price_elasticity": "The name of the column containing the price elasticity calculation.",
+            "column.calc.frequency_elasticity": "The name of the column containing the price frequency calculation.",
             # Abbreviation suffixes
             "column.suffix.count": "The suffix to use for count columns.",
             "column.suffix.percent": "The suffix to use for percentage columns.",
@@ -550,6 +552,7 @@ class ColumnHelper:
         )
         # Elasticity
         self.calc_price_elasticity = get_option("column.calc.price_elasticity")
+        self.calc_frequency_elasticity = get_option("column.calc.frequency_elasticity")
 
     @staticmethod
     def join_options(*args: str, sep: str = "_") -> str:
