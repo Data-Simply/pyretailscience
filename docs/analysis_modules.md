@@ -739,7 +739,7 @@ choices, enabling more effective category management and merchandising decisions
 Example:
 
 ```python
-from pyretailscience.analysis.range_planning import CustomerDecisionHierarchy
+from pyretailscience.analysis.customer_decision_hierarchy import CustomerDecisionHierarchy
 
 cdh = CustomerDecisionHierarchy(df)
 ax = cdh.plot(
