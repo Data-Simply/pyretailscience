@@ -1,4 +1,4 @@
-"""This module contains the RangePlanning class for performing range planning analysis."""
+"""This module contains the RangePlanning class for performing customer decision hierarchy analysis."""
 
 from typing import Literal
 
@@ -14,7 +14,7 @@ from pyretailscience.style.graph_utils import GraphStyles
 
 
 class CustomerDecisionHierarchy:
-    """A class to perform range planning analysis using the Customer Decision Hierarchy method."""
+    """A class to perform customer decision hierarchy analysis using the Customer Decision Hierarchy method."""
 
     def __init__(
         self,
@@ -231,7 +231,7 @@ class CustomerDecisionHierarchy:
         source_text: str | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
-        """Plots the range planning dendrogram.
+        """Plots the customer decision hierarchy dendrogram.
 
         Args:
             title (str, optional): The title of the plot. Defaults to None.
