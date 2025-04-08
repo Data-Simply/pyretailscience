@@ -113,6 +113,15 @@ def calc_tree_kpis(
             / ((df[cols.calc_price_per_unit_p2] + df[cols.calc_price_per_unit_p1]) / 2)
         )
 
+    # Calculate frequency elasticity
+    df[cols.calc_frequency_elasticity] = (
+        (df[cols.calc_trans_per_cust_p2] - df[cols.calc_trans_per_cust_p1])
+        / ((df[cols.calc_trans_per_cust_p2] + df[cols.calc_trans_per_cust_p1]) / 2)
+    ) / (
+        (df[cols.calc_spend_per_cust_p2] - df[cols.calc_spend_per_cust_p1])
+        / ((df[cols.calc_spend_per_cust_p2] + df[cols.calc_spend_per_cust_p1]) / 2)
+    )
+
     # Contribution calculations
     df[cols.agg_customer_id_contrib] = (
         df[cols.agg_unit_spend_p2]
@@ -323,6 +332,8 @@ class RevenueTree:
             cols.calc_spend_per_trans_diff,
             cols.calc_spend_per_trans_pct_diff,
             cols.calc_spend_per_trans_contrib,
+            # Elasticity
+            cols.calc_frequency_elasticity,
         ]
 
         if include_quantity:

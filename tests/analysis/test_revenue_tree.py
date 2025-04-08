@@ -385,6 +385,7 @@ class TestRevenueTree:
             "transactions_per_customer_pct_diff",
             "spend_per_customer_diff",
             "spend_per_customer_pct_diff",
+            "frequency_elasticity",
         ]
         for col in expected_columns:
             assert col in result.columns
