@@ -1,15 +1,14 @@
 """This module contains the CrossShop class that is used to create a cross-shop diagram."""
 
+from collections.abc import Callable
+
 import ibis
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
-from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.style import graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles
-from pyretailscience.style.tailwind import COLORS
+from pyretailscience.plots import venn
 
 
 class CrossShop:
@@ -195,6 +194,7 @@ class CrossShop:
         vary_size: bool = False,
         figsize: tuple[int, int] | None = None,
         ax: Axes | None = None,
+        subset_label_formatter: Callable | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
         """Plot the cross-shop diagram.
@@ -206,71 +206,24 @@ class CrossShop:
                 False.
             figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
             ax (Axes, optional): The axes to plot on. Defaults to None.
+            subset_label_formatter (callable, optional): Function to format the subset labels.
             **kwargs (dict[str, any]): Additional keyword arguments to pass to the diagram.
 
         Returns:
             SubplotBase: The axes of the plot.
         """
-        three_circles = 3
+        labels_to_use = self.labels
+        if labels_to_use is None:
+            labels_to_use = [chr(65 + i) for i in range(self.group_count)]
 
-        zero_group = (0, 0)
-        colors = [COLORS["green"][500], COLORS["green"][800]]
-        if self.group_count == three_circles:
-            zero_group = (0, 0, 0)
-            colors += [COLORS["green"][200]]
-
-        zero_row_idx = self.cross_shop_table_df["groups"] == zero_group
-        percent_s = self.cross_shop_table_df[~zero_row_idx].set_index("groups")["percent"]
-
-        subset_labels = percent_s.apply(lambda x: f"{x:.1%}").to_dict()
-        subset_sizes = percent_s.to_dict()
-
-        if ax is None:
-            _, ax = plt.subplots(figsize=figsize)
-
-        if vary_size:
-            diagram = EulerDiagram(
-                set_labels=self.labels,
-                subset_sizes=subset_sizes,
-                subset_labels=subset_labels,
-                set_colors=colors,
-                ax=ax,
-                **kwargs,
-            )
-        else:
-            diagram = VennDiagram(
-                set_labels=self.labels,
-                subset_sizes=subset_sizes,
-                subset_labels=subset_labels,
-                set_colors=colors,
-                ax=ax,
-                **kwargs,
-            )
-
-        for text in diagram.set_label_artists:
-            text.set_fontproperties(GraphStyles.POPPINS_REG)
-            text.set_fontsize(GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE)
-            if self.group_count == three_circles and not vary_size:
-                # Increase the spacing between text and the diagram to avoid overlap
-                self.translate_text_outward(text)
-
-        for subset_id in subset_sizes:
-            if subset_id not in diagram.subset_label_artists:
-                continue
-            text = diagram.subset_label_artists[subset_id]
-            text.set_fontproperties(GraphStyles.POPPINS_REG)
-
-        if title is not None:
-            ax.set_title(
-                title,
-                fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
-                fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-                pad=GraphStyles.DEFAULT_TITLE_PAD + 20,
-            )
-
-        if source_text is not None:
-            # Hide the xticks to remove space between the diagram and source text
-            ax.set_xticklabels([], visible=False)
-            gu.add_source_text(ax=ax, source_text=source_text)
-
-        return ax
+        return venn.plot(
+            df=self.cross_shop_table_df,
+            labels=labels_to_use,
+            title=title,
+            source_text=source_text,
+            vary_size=vary_size,
+            figsize=figsize,
+            ax=ax,
+            subset_label_formatter=subset_label_formatter,
+            **kwargs,
+        )
