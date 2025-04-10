@@ -21,6 +21,7 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.plots import bar
 from pyretailscience.style.tailwind import COLORS
 
 
@@ -253,7 +254,7 @@ class GainLoss:
         move_legend_outside: bool = False,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
-        """Plot the gain loss table.
+        """Plot the gain loss table using the bar.plot wrapper.
 
         Args:
             title (str | None, optional): The title of the plot. Defaults to None.
@@ -273,51 +274,75 @@ class GainLoss:
         increase_cols = ["new", "increased_focus", "switch_from_comparison"]
         decrease_cols = ["lost", "decreased_focus", "switch_to_comparison"]
 
-        if self.group_col is None:
-            ax = self.gain_loss_table_df[increase_cols].plot.barh(stacked=True, color=green_colors, ax=ax, **kwargs)
-            self.gain_loss_table_df[decrease_cols].plot.barh(stacked=True, ax=ax, color=red_colors)
-            default_y_label = self.focus_group_name
+        plot_df = self.gain_loss_table_df.copy()
 
-        else:
-            ax = self.gain_loss_table_df[increase_cols].plot.barh(stacked=True, color=green_colors, **kwargs)
-            self.gain_loss_table_df[decrease_cols].plot.barh(stacked=True, ax=ax, color=red_colors)
-            default_y_label = self.group_col
+        default_y_label = self.focus_group_name if self.group_col is None else self.group_col
 
-        legend_bbox_to_anchor = None
-        if move_legend_outside:
-            legend_bbox_to_anchor = (1.05, 1)
+        increase_df = plot_df[increase_cols].copy()
 
-        # TODO: Ensure that each label actually has data before adding to the legend
-        legend = ax.legend(
-            [
-                "New",
-                f"Increased {self.focus_group_name}",
-                f"Switch From {self.comparison_group_name}",
-                "Lost",
-                f"Decreased {self.focus_group_name}",
-                f"Switch To {self.comparison_group_name}",
-            ],
-            frameon=True,
-            bbox_to_anchor=legend_bbox_to_anchor,
-        )
-        legend.get_frame().set_facecolor("white")
-        legend.get_frame().set_edgecolor("white")
+        decrease_df = plot_df[decrease_cols].copy() * -1
+        combined_df = pd.concat([increase_df, decrease_df], axis=1)
 
-        ax = gu.standard_graph_styles(
-            ax,
+        color_dict = {}
+        for i, col in enumerate(increase_cols):
+            color_dict[col] = green_colors[i]
+        for i, col in enumerate(decrease_cols):
+            color_dict[col] = red_colors[i]
+
+        plot_kwargs = kwargs.copy()
+
+        ax = bar.plot(
+            df=combined_df,
+            value_col=increase_cols + decrease_cols,
             title=gu.not_none(title, f"Gain Loss from {self.focus_group_name} to {self.comparison_group_name}"),
             y_label=gu.not_none(y_label, default_y_label),
             x_label=gu.not_none(x_label, self.value_col),
-            move_legend_outside=move_legend_outside,
+            orientation="horizontal",
+            ax=ax,
+            source_text=source_text,
+            move_legend_outside=False,
+            **plot_kwargs,
         )
+
+        for i, container in enumerate(ax.containers):
+            col_name = (increase_cols + decrease_cols)[i]
+            for patch in container:
+                patch.set_color(color_dict[col_name])
+
+        legend_labels = [
+            "New",
+            f"Increased {self.focus_group_name}",
+            f"Switch From {self.comparison_group_name}",
+            "Lost",
+            f"Decreased {self.focus_group_name}",
+            f"Switch To {self.comparison_group_name}",
+        ]
+
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+        if move_legend_outside:
+            legend = ax.legend(
+                legend_labels,
+                frameon=True,
+                bbox_to_anchor=(1.05, 1),
+                loc="upper left",
+            )
+        else:
+            legend = ax.legend(
+                legend_labels,
+                frameon=True,
+            )
+
+        legend.get_frame().set_facecolor("white")
+        legend.get_frame().set_edgecolor("white")
 
         decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
         ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
+        ax.set_xlim(combined_df.values.min() * 1.1, combined_df.values.max() * 1.1)
+        ax.grid(axis="x", linestyle="--", alpha=0.7)
 
         ax.axvline(0, color="black", linewidth=0.5)
-
-        if source_text is not None:
-            gu.add_source_text(ax=ax, source_text=source_text)
 
         gu.standard_tick_styles(ax)
 
