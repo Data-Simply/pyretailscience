@@ -684,12 +684,15 @@ This module is particularly valuable for:
 Example:
 
 ```python
+import datetime
 from pyretailscience.analysis.gain_loss import GainLoss
 
+df["brand"]: ["Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B",
+                  "Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B"]]
 gl = GainLoss(
     df=df,
-    p1_index=df["transaction_date"] < "2023-05-01",
-    p2_index=df["transaction_date"] >= "2023-05-01",
+    p1_index=df["transaction_date"] < datetime.date(2023, 5, 1),
+    p2_index=df["transaction_date"] >= datetime.date(2023, 5, 1),
     focus_group_index=df["brand"] == "Brand A",
     focus_group_name="Brand A",
     comparison_group_index=df["brand"] == "Brand B",
