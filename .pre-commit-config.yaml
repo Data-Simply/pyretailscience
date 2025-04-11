@@ -36,3 +36,14 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: []
+  - repo: https://github.com/nikaro/taplo-pre-commit
+    rev: 0.1.1
+    hooks:
+      - id: taplo-format
+        name: Format TOML files
+        args: ["--config", "taplo.toml"]
+        exclude: ^tests/toml_files/corrupt.toml$
+      - id: taplo-lint
+        name: Lint TOML files
+        args: ["--config", "taplo.toml"]
+        exclude: ^tests/toml_files/corrupt.toml$

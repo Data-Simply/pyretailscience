@@ -23,10 +23,9 @@ num_desired_tests = 2
 
 # A multiline string, delimited with triple-quotes (""") serving as an example test that represents
 # what you would like the generated tests to look like in terms of style, setup, etc.
-reference_test =
-"""
+reference_test = """
 def test_handles_dataframe_with_one_segment(self, test_data):
-    """Test that the method correctly handles a DataFrame with only one segment."""
+    \"\"\"Test that the method correctly handles a DataFrame with only one segment. \"\"\"
     df = base_df.copy()
     df["segment_id"] = "A"
 

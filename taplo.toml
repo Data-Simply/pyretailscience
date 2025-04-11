@@ -1,0 +1,31 @@
+[formatting]
+# Enable alignment of values in tables Align entries vertically
+align_entries = true
+
+# Align comments
+align_comments = true
+
+# Add trailing commas in arrays/tables
+array_trailing_comma = true
+table_trailing_comma = true
+
+# Indentation (spaces)
+indent_string = "  "
+indent_tables = false
+
+column_width = 120
+
+# Keep newlines in arrays
+compact_arrays = false
+
+# Compact inline tables
+compact_inline_tables = false
+
+# Controls reordering of keys in tables
+reorder_keys = false
+
+# Reformat TOML standard document (reduces custom formatting)
+reformat_arrays = true
+
+# Always use CRLF for line endings
+crlf = false
