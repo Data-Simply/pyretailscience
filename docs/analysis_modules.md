@@ -66,7 +66,8 @@ Area plots are useful for visualizing **cumulative** trends, showing **relative 
 - Comparing **cumulative** sales or revenue
 - Showing **growth trends** across multiple categories
 
-Similar to line plots, **area plots** can display time-series data, but they emphasize the **area under the curve**, making them ideal for tracking proportions and cumulative metrics.
+Similar to line plots, **area plots** can display time-series data, but they emphasize the **area under the curve**,
+making them ideal for tracking proportions and cumulative metrics.
 
 </div>
 
@@ -106,13 +107,15 @@ area.plot(
 
 ![Scatter Plot](assets/images/analysis_modules/plots/scatter.svg){ align=right loading=lazy width="50%"}
 
-Scatter plots are useful for visualizing **relationships** between two numerical variables, detecting **patterns**, and identifying **outliers**. They are often used for:
+Scatter plots are useful for visualizing **relationships** between two numerical variables, detecting **patterns**, and
+identifying **outliers**. They are often used for:
 
 - Exploring **correlations** between variables
 - Identifying **clusters** in data
 - Spotting **trends** and **outliers**
 
-Scatter plots are particularly useful when analyzing **distributions** and understanding how one variable influences another. They can also be enhanced with **colors** and **sizes** to represent additional dimensions in the data.
+Scatter plots are particularly useful when analyzing **distributions** and understanding how one variable influences
+another. They can also be enhanced with **colors** and **sizes** to represent additional dimensions in the data.
 
 </div>
 
@@ -158,13 +161,15 @@ scatter.plot(
 
 ![Venn Diagram](assets/images/analysis_modules/plots/venn.svg){ align=right loading=lazy width="50%"}
 
-Venn diagrams are useful for visualizing **overlaps** and **relationships** between multiple categorical sets. They help in:
+Venn diagrams are useful for visualizing **overlaps** and **relationships** between multiple categorical sets. They
+help in:
 
 - Identifying **commonalities** and **differences** between groups
 - Understanding **intersections** between two or three sets
 - Highlighting **exclusive and shared** elements
 
-Venn diagrams provide a clear way to analyze how different groups relate to each other. They are often used in market segmentation, user behavior analysis, and set comparisons.
+Venn diagrams provide a clear way to analyze how different groups relate to each other. They are often used in market
+segmentation, user behavior analysis, and set comparisons.
 
 </div>
 
@@ -373,6 +378,63 @@ index.plot(
 )
 ```
 
+### Cohort Plot
+
+<div class="clear" markdown>
+
+![Cohort Plot](assets/images/analysis_modules/plots/cohort.svg){ align=right loading=lazy width="50%"}
+
+Cohort plots are essential for understanding customer retention and behavior over time. These visualizations help
+identify trends in customer engagement, repeat purchases, and churn rates by grouping customers based on their initial
+interaction or purchase period. They are particularly useful for:
+
+- Analyzing customer retention patterns over time
+- Understanding the effectiveness of marketing campaigns in retaining customers
+- Identifying the impact of seasonality on repeat purchases
+- Evaluating long-term customer engagement with products or services
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import cohort
+
+cohort_start_dates = [
+    "2022-12", "2023-01", "2023-02", "2023-03", "2023-04",
+    "2023-05", "2023-06", "2023-07", "2023-08", "2023-09",
+    "2023-10", "2023-11", "2023-12"
+]
+
+def generate_retention():
+    values = [1.0]
+    for _ in range(11):
+        values.append(max(values[-1] - np.random.uniform(0.05, 0.12), np.random.uniform(0.10, 0.25)))
+    return values
+
+cohort_data = {"min_period_shopped": cohort_start_dates}
+for i in range(12):
+    cohort_data[i] = [generate_retention()[i] for _ in cohort_start_dates]
+
+df = pd.DataFrame(cohort_data)
+df = df.set_index("min_period_shopped").reset_index()
+df = df.melt(id_vars=["min_period_shopped"], var_name="period_since", value_name="retention")
+df_pivot = df.pivot(index="min_period_shopped", columns="period_since", values="retention")
+
+cohort.plot(
+    df=df_pivot,
+    x_label="Months Since Initial Purchase",
+    y_label="Cohort Start Date",
+    title="Customer Retention Cohort Analysis",
+    source_text="Source: PyRetailScience - 2024",
+    cbar_label="Number of Retained Customers",
+    percentage=True,
+    figsize=(8,8),
+)
+```
+
 ### Timeline Plot
 
 <div class="clear" markdown>
@@ -428,6 +490,76 @@ time.plot(
 ```
 
 ## Analysis Modules
+
+### Cohort Analysis
+
+The cohort analysis module provides functionality for analyzing customer retention patterns over time. It helps
+businesses understand customer behavior by tracking groups of users (cohorts) based on their first interaction and
+observing their activity over subsequent periods.
+
+Cohort analysis is useful in multiple business applications:
+
+1. **Customer Retention Analysis**: Identifies how long users stay engaged with a product or service.
+2. **Churn Rate Measurement**: Helps determine at which stage customers tend to drop off.
+3. **Marketing Performance Evaluation**: Measures the long-term impact of marketing campaigns.
+4. **Revenue Analysis**: Tracks spending behavior over time to optimize pricing strategies.
+5. **User Engagement Trends**: Understands how different user segments behave based on their joining time.
+
+This module calculates cohort tables using various aggregation functions such as `nunique`, `sum`, and `mean`, allowing
+flexible analysis of customer data.
+
+The following key metrics are used in the analysis:
+
+- **Aggregation Column**: Defines the metric to track (e.g., unique customers, total spend).
+- **Aggregation Function**: Determines how values are aggregated (e.g., sum, mean, count).
+- **Cohort Period**: Defines the period granularity (year, quarter, month, week, or day).
+- **Retention Percentage**: Calculates retention rates as a percentage of the first-period cohort.
+
+Example:
+
+```python
+import pandas as pd
+import datetime
+from pyretailscience.analysis.cohort import CohortAnalysis
+
+data = {
+    "transaction_id": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "customer_id": [1, 2, 3, 1, 2, 3, 1, 2, 3, 4, 5, 4],
+    "transaction_date": [
+        datetime.date(2023, 1, 15),
+        datetime.date(2023, 1, 20),
+        datetime.date(2023, 2, 5),
+        datetime.date(2023, 2, 10),
+        datetime.date(2023, 3, 1),
+        datetime.date(2023, 3, 15),
+        datetime.date(2023, 3, 20),
+        datetime.date(2023, 4, 10),
+        datetime.date(2023, 4, 25),
+        datetime.date(2023, 5, 5),
+        datetime.date(2023, 5, 20),
+        datetime.date(2023, 6, 10),
+    ],
+    "unit_spend": [100, 150, 200, 120, 160, 210, 130, 170, 220, 140, 180, 230]
+}
+df = pd.DataFrame(data)
+
+cohort = CohortAnalysis(
+    df=df,
+    aggregation_column="unit_spend",
+    agg_func="sum",
+    period="month",
+    percentage=True,
+)
+cohort.table.head()
+```
+
+| min_period_shopped |    0 |    1 |    2 |    3 |
+|:-------------------|-----:|-----:|-----:|-----:|
+| 2023-01-01         | 1.00 | 1.00 | 1.00 | 1.00 |
+| 2023-02-01         | 0.80 | 1.75 | 0.76 | 0.00 |
+| 2023-03-01         | 0.00 | 0.00 | 0.00 | 0.00 |
+| 2023-04-01         | 0.00 | 0.00 | 0.00 | 0.00 |
+| 2023-05-01         | 1.28 | 1.92 | 0.00 | 0.00 |
 
 ### Product Association Rules
 
@@ -607,7 +739,7 @@ choices, enabling more effective category management and merchandising decisions
 Example:
 
 ```python
-from pyretailscience.range_planning import CustomerDecisionHierarchy
+from pyretailscience.analysis.customer_decision_hierarchy import CustomerDecisionHierarchy
 
 cdh = CustomerDecisionHierarchy(df)
 ax = cdh.plot(
@@ -681,7 +813,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.analysis.segmentation import HMLSegmentation
+from pyretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -724,7 +856,7 @@ Example:
 
 ```python
 from pyretailscience.plots import bar
-from pyretailscience.analysis.segmentation import ThresholdSegmentation
+from pyretailscience.segmentation.threshold import ThresholdSegmentation
 
 # Create custom segmentation with quartiles
 # Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
@@ -766,7 +898,8 @@ segmentation.
 Example:
 
 ```python
-from pyretailscience.analysis.segmentation import HMLSegmentation, SegTransactionStats
+from pyretailscience.segmentation.segstats import SegTransactionStats
+from pyretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
@@ -790,6 +923,55 @@ segment_stats.df
 | Light          |  662.107 |             75 |          25 |              26.4843 |                 8.82809 |                           3 |             0.5 |
 | Total          | 4604.28  |            150 |          50 |              92.0856 |                30.6952  |                           3 |             1   |
 <!-- markdownlint-enable MD013 -->
+
+### RFM Segmentation
+
+<div class="clear" markdown>
+
+![RFM Segmentation Distribution](assets/images/analysis_modules/rfm_segmentation.svg){ align=right loading=lazy width="50%"}
+
+**Recency, Frequency, Monetary (RFM) segmentation** categorizes customers based on their purchasing behavior:
+
+- **Recency (R)**: How recently a customer made a purchase
+- **Frequency (F)**: How often a customer makes purchases
+- **Monetary (M)**: How much a customer spends
+
+Each metric is typically scored on a scale, and the combined RFM score helps businesses identify **loyal customers,
+at-risk customers, and high-value buyers**.
+
+RFM segmentation helps answer questions such as:
+
+- Who are your most valuable customers?
+- Which customers are at risk of churn?
+- Which customers should be targeted for re-engagement?
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.segmentation.rfm import RFMSegmentation
+
+data = pd.DataFrame({
+    "customer_id": [1, 1, 2, 2, 3, 3, 3],
+    "transaction_id": [101, 102, 201, 202, 301, 302, 303],
+    "transaction_date": ["2024-03-01", "2024-03-10", "2024-02-20", "2024-02-25", "2024-01-15", "2024-01-20", "2024-02-05"],
+    "unit_spend": [50, 75, 100, 150, 200, 250, 300]
+})
+
+data["transaction_date"] = pd.to_datetime(data["transaction_date"])
+current_date = "2024-07-01"
+
+rfm_segmenter = RFMSegmentation(df=data, current_date=current_date)
+rfm_results = rfm_segmenter.df
+```
+
+| customer_id | recency_days | frequency | monetary | r_score | f_score | m_score | rfm_segment | fm_segment |
+|-------------|--------------|-----------|----------|---------|---------|---------|-------------|------------|
+| 1           | 113          | 2         | 125      | 0       | 0       | 0       | 0           | 0          |
+| 2           | 127          | 2         | 250      | 1       | 1       | 1       | 111         | 11         |
+| 3           | 147          | 3         | 750      | 2       | 2       | 2       | 222         | 22         |
 
 ### Purchases Per Customer
 
@@ -877,3 +1059,165 @@ tc.plot(
     source_text="Source: PyRetailScience",
 )
 ```
+
+### Composite Rank
+
+<div class="clear" markdown>
+
+The Composite Rank module creates a composite ranking of several columns by giving each column an individual rank and
+then combining those ranks together. Composite rankings are particularly useful for:
+
+- Product range reviews when multiple factors need to be considered together
+- Prioritizing actions based on multiple performance metrics
+- Creating balanced scorecards that consider multiple dimensions
+- Identifying outliers across multiple metrics
+
+This module allows you to specify different sort orders for each column (ascending or descending) and supports various
+aggregation functions to combine the ranks, such as mean, sum, min, or max.
+
+Key features:
+
+- Supports both ascending and descending sort orders
+- Handles ties in rankings with configurable options
+- Combines multiple individual ranks into a single composite rank
+- Works with both pandas DataFrames and ibis Tables
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.analysis.composite_rank import CompositeRank
+
+# Create sample data for products
+df = pd.DataFrame({
+    "product_id": [1, 2, 3, 4, 5],
+    "spend": [100, 150, 75, 200, 125],
+    "customers": [20, 30, 15, 40, 25],
+    "spend_per_customer": [5.0, 5.0, 5.0, 5.0, 5.0],
+})
+
+# Create CompositeRank with multiple columns
+cr = CompositeRank(
+    df=df,
+    rank_cols=[
+        ("spend", "desc"),           # Higher spend is better
+        ("customers", "desc"),       # Higher customer count is better
+        ("spend_per_customer", "desc") # Higher spend per customer is better
+    ],
+    agg_func="mean",     # Use mean to aggregate ranks
+    ignore_ties=False    # Keep ties (rows with same values get same rank)
+)
+
+cr.df.sort_values("composite_rank")
+```
+<!-- markdownlint-disable MD013 -->
+| product_id | spend | customers | spend_per_customer | spend_rank | customers_rank | spend_per_customer_rank | composite_rank |
+|:-----------|------:|----------:|-------------------:|----------:|--------------:|-----------------------:|---------------:|
+| 4          | 200   | 40        | 5.0                | 1         | 1             | 1                      | 1.0            |
+| 2          | 150   | 30        | 5.0                | 2         | 2             | 1                      | 1.67           |
+| 5          | 125   | 25        | 5.0                | 3         | 3             | 1                      | 2.33           |
+| 1          | 100   | 20        | 5.0                | 4         | 4             | 1                      | 3.0            |
+| 3          | 75    | 15        | 5.0                | 5         | 5             | 1                      | 3.67           |
+<!-- markdownlint-enable MD013 -->
+
+## Utils
+
+### Filter and Label by Periods
+
+<div class="clear" markdown>
+
+The Filter and Label by Periods module allows you to:
+
+- Filter transaction data to specific time periods (e.g., quarters, months, promotional periods)
+- Add period labels to your data for easy segmentation and comparison
+- Analyze before-and-after performance for events or promotions
+- Compare metrics across different time frames consistently
+
+This functionality is particularly useful for:
+
+- Comparing KPIs across fiscal quarters or years
+- Analyzing seasonal performance patterns
+- Measuring the impact of promotions or events
+- Creating period-based visualizations with consistent data preparation
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.date import filter_and_label_by_periods
+
+# Create a sample transactions table
+data = pd.DataFrame({
+    "transaction_id": range(1, 101),
+    "transaction_date": pd.date_range(start="2023-01-01", periods=100, freq="D"),
+    "customer_id": [f"C{i % 20 + 1}" for i in range(100)],
+    "amount": [float(i % 5 * 25 + 50) for i in range(100)]
+})
+
+transactions = ibis.memtable(data)
+
+# Define period ranges for analysis
+period_ranges = {
+    "Pre-Promotion": ("2023-01-01", "2023-01-31"),
+    "Promotion": ("2023-02-01", "2023-02-28"),
+    "Post-Promotion": ("2023-03-01", "2023-03-31")
+}
+
+# Filter transactions to the defined periods and add period labels
+result_df = filter_and_label_by_periods(transactions, period_ranges).execute()
+
+# Calculate KPIs by period
+result_df.groupby("period_name").agg(
+    transaction_count=("transaction_id", "count"),
+    total_sales=("amount", "sum"),
+    avg_transaction_value=("amount", "mean")
+)
+```
+
+| period_name    | transaction_count | total_sales | avg_transaction_value |
+|:---------------|------------------:|------------:|----------------------:|
+| Pre-Promotion  |                31 |      1937.5 |                 62.50 |
+| Promotion      |                28 |      1750.0 |                 62.50 |
+| Post-Promotion |                31 |      1937.5 |                 62.50 |
+
+
+### Find Overlapping Periods
+
+<div class="clear" markdown>
+
+The **Find Overlapping Periods** module allows you to:
+
+- Identify overlapping periods between a given start and end date.
+- Split the date range into yearly periods that start from the given start date for the first period
+  and then yearly thereafter, ending on the provided end date.
+- Return results either as ISO-formatted strings (`"YYYY-MM-DD"`) or as `datetime` objects.
+
+This functionality is particularly useful for:
+
+- Analyzing seasonal or yearly patterns in datasets.
+- Comparing data across specific date ranges.
+- Structuring time-based segmentations efficiently.
+
+</div>
+
+Example:
+
+```python
+from datetime import datetime
+from pyretailscience.utils.date import find_overlapping_periods
+
+# Example with string input
+overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
+print(overlapping_periods)
+```
+**Output (ISO Format)**
+| Start Date | End Date   |
+|:-----------|-----------:|
+| 2022-06-15 | 2023-03-10 |
+| 2023-06-15 | 2024-03-10 |
+| 2024-06-15 | 2025-03-10 |

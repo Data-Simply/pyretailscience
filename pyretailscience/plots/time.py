@@ -33,7 +33,6 @@ retail analysis, sales tracking, and customer behavior insights.
 - **Helper functions**: Utilizes utility functions from the `pyretailscience` package to handle styling, formatting, and other plot adjustments.
 """
 
-
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
@@ -42,10 +41,6 @@ from pandas.tseries.offsets import BaseOffset
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.options import get_option
 from pyretailscience.style.tailwind import COLORS, get_linear_cmap
-
-# TODO: Consider simplifying this by reducing the color range in the get_linear_cmap function.
-COLORMAP_MIN = 0.25
-COLORMAP_MAX = 0.75
 
 
 def plot(
@@ -107,7 +102,7 @@ def plot(
         show_legend = False
     else:
         colors = get_linear_cmap("green")(
-            np.linspace(COLORMAP_MIN, COLORMAP_MAX, df[group_col].nunique()),
+            np.linspace(0, 1, df[group_col].nunique()),
         )
         df = (
             df.groupby([group_col, "transaction_period"])[value_col]

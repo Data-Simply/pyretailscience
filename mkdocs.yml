@@ -17,17 +17,39 @@ nav:
       - Product Association: examples/product_association.ipynb
       - Revenue Tree: examples/revenue_tree.ipynb
   - Reference:
-      - Gain Loss: api/gain_loss.md
-      - Range Planning: api/range_planning.md
-      - Segmentation: api/segmentation.md
-      - Customer Retention: api/customer.md
-      - Standard Graphs: api/standard_graphs.md
-      - Cross Shop Analysis: api/cross_shop.md
-      - Product Association: api/product_association.md
-      - Line Plot: api/plots/line.md
-      - Histogram Plot: api/plots/histogram.md
-      - Bar Plot: api/plots/bar.md
-
+      - Options: api/options.md
+      - Analysis:
+          - Cohort Analysis: api/analysis/cohort.md
+          - Cross Shop Analysis: api/analysis/cross_shop.md
+          - Customer Retention: api/analysis/customer.md
+          - Gain Loss: api/analysis/gain_loss.md
+          - Haversine Distance: api/analysis/haversine.md
+          - Product Association: api/analysis/product_association.md
+          - Customer Decision Hierarchy: api/analysis/customer_decision_hierarchy.md
+          - Revenue Tree: api/analysis/revenue_tree.md
+          - Composite Rank: api/analysis/composite_rank.md
+      - Segmentation:
+          - Base Segmentation: api/segmentation/base.md
+          - HML Segmentation: api/segmentation/hml.md
+          - RFM Segmentation: api/segmentation/rfm.md
+          - SegTransactionStats Segmentation: api/segmentation/segstats.md
+          - Threshold Segmentation: api/segmentation/threshold.md
+      - Plots:
+          - Area Plot: api/plots/area.md
+          - Bar Plot: api/plots/bar.md
+          - Cohort Plot: api/plots/cohort.md
+          - Histogram Plot: api/plots/histogram.md
+          - Index Plot: api/plots/index.md
+          - Line Plot: api/plots/line.md
+          - Scatter Plot: api/plots/scatter.md
+          - Time Plot: api/plots/time.md
+          - Venn Diagram: api/plots/venn.md
+          - Waterfall Plot: api/plots/waterfall.md
+          - Style:
+              - Graph Utils: api/plots/style/graph_utils.md
+              - Tailwind Colors: api/plots/style/tailwind.md
+      - Utils:
+          - Date Utils: api/utils/date.md
 
 theme:
   name: material
@@ -59,6 +81,7 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
+  - macros
 
 markdown_extensions:
   - attr_list
@@ -91,5 +114,5 @@ extra:
       name: PyRetailScience on GitHub
 
 copyright: |
-  &copy; 2024 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
+  &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
   <a href="#__consent">Change cookie settings</a>

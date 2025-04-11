@@ -42,17 +42,18 @@ jobs:
           uv sync
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
-      - name: Install toml in uv environment
-        run: uv run pip install toml
+      - name: Install tomlkit in uv environment
+        run: uv run pip install tomlkit
       - name: Bump Version
         run: |
-          new_version=$(python - <<EOF
-          import toml
+          uv run python - <<EOF
+          from tomlkit import parse, dumps
+          from tomlkit.toml_file import TOMLFile
 
-          with open('pyproject.toml', 'r') as f:
-              config = toml.load(f)
+          file = TOMLFile("pyproject.toml")
+          doc = file.read()
 
-          version = config['project']['version']
+          version = doc["project"]["version"]
           release = "${{ inputs.release }}"
 
           major, minor, patch = map(int, version.split('.'))
@@ -63,19 +64,13 @@ jobs:
               new_version = f"{major}.{minor + 1}.0"
           elif release == "patch":
               new_version = f"{major}.{minor}.{patch + 1}"
+          doc["project"]["version"] = new_version
+          file.write(doc)
 
-          config['project']['version'] = new_version
-
-          with open('pyproject.toml', 'w') as f:
-              toml.dump(config, f)
-
-          print(new_version)
+          print(f"New Version: {new_version}")
           EOF
-          )
 
-          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
-          echo "New Version: ${VERSION}"
-          echo "RELEASE_TAG=${VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile("pyproject.toml").read()["project"]["version"])')" >> $GITHUB_ENV
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4

@@ -38,6 +38,171 @@ from pyretailscience.style import graph_utils as gu
 from pyretailscience.style.tailwind import COLORS
 
 
+def calc_tree_kpis(
+    df: pd.DataFrame,
+    p1_index: list[bool] | pd.Series,
+    p2_index: list[bool] | pd.Series,
+) -> pd.DataFrame:
+    """Calculate various key performance indicators (KPIs) for tree analysis.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing relevant data.
+        p1_index (list[bool] | pd.Series): Boolean index for period 1.
+        p2_index (list[bool] | pd.Series): Boolean index for period 2.
+
+    Returns:
+        pd.DataFrame: A DataFrame with calculated KPI values, including differences
+        and percentage differences between periods.
+    """
+    cols = ColumnHelper()
+    required_cols = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend]
+
+    if cols.agg_unit_qty in df.columns:
+        required_cols.append(cols.agg_unit_qty)
+
+    df = df[required_cols].copy()
+    df_cols = df.columns
+
+    if cols.agg_unit_qty in df_cols:
+        df[cols.calc_units_per_trans] = df[cols.agg_unit_qty] / df[cols.agg_transaction_id]
+        df[cols.calc_price_per_unit] = df[cols.agg_unit_spend] / df[cols.agg_unit_qty]
+
+    df[cols.calc_spend_per_cust] = df[cols.agg_unit_spend] / df[cols.agg_customer_id]
+    df[cols.calc_spend_per_trans] = df[cols.agg_unit_spend] / df[cols.agg_transaction_id]
+    df[cols.calc_trans_per_cust] = df[cols.agg_transaction_id] / df[cols.agg_customer_id]
+
+    p1_df = df[p1_index]
+    p1_df.columns = [col + "_" + get_option("column.suffix.period_1") for col in p1_df.columns]
+    p2_df = df[p2_index]
+    p2_df.columns = [col + "_" + get_option("column.suffix.period_2") for col in p2_df.columns]
+
+    # When df only contains two periods than the indexes should be dropped for proper concatenation
+    if len(df.index) == 2:  # noqa: PLR2004
+        p1_df = p1_df.reset_index(drop=True)
+        p2_df = p2_df.reset_index(drop=True)
+
+    # fillna with 0 to handle cases when one time period isn't present
+    df = pd.concat([p1_df, p2_df], axis=1).fillna(0)
+
+    for col in [
+        cols.agg_customer_id,
+        cols.agg_transaction_id,
+        cols.agg_unit_spend,
+        cols.calc_spend_per_trans,
+        cols.calc_trans_per_cust,
+        cols.calc_spend_per_cust,
+    ]:
+        # Difference calculations
+        df[col + "_" + get_option("column.suffix.difference")] = (
+            df[col + "_" + get_option("column.suffix.period_2")] - df[col + "_" + get_option("column.suffix.period_1")]
+        )
+
+        # Percentage change calculations
+        df[col + "_" + get_option("column.suffix.percent_difference")] = (
+            df[col + "_" + get_option("column.suffix.difference")]
+            / df[col + "_" + get_option("column.suffix.period_1")]
+        )
+
+    # Calculate price elasticity
+    if cols.agg_unit_qty in df_cols:
+        df[cols.calc_price_elasticity] = (
+            (df[cols.agg_unit_qty_p2] - df[cols.agg_unit_qty_p1])
+            / ((df[cols.agg_unit_qty_p2] + df[cols.agg_unit_qty_p1]) / 2)
+        ) / (
+            (df[cols.calc_price_per_unit_p2] - df[cols.calc_price_per_unit_p1])
+            / ((df[cols.calc_price_per_unit_p2] + df[cols.calc_price_per_unit_p1]) / 2)
+        )
+
+    # Calculate frequency elasticity
+    df[cols.calc_frequency_elasticity] = (
+        (df[cols.calc_trans_per_cust_p2] - df[cols.calc_trans_per_cust_p1])
+        / ((df[cols.calc_trans_per_cust_p2] + df[cols.calc_trans_per_cust_p1]) / 2)
+    ) / (
+        (df[cols.calc_spend_per_cust_p2] - df[cols.calc_spend_per_cust_p1])
+        / ((df[cols.calc_spend_per_cust_p2] + df[cols.calc_spend_per_cust_p1]) / 2)
+    )
+
+    # Contribution calculations
+    df[cols.agg_customer_id_contrib] = (
+        df[cols.agg_unit_spend_p2]
+        - (df[cols.agg_customer_id_p1] * df[cols.calc_spend_per_cust_p2])
+        - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 2)
+    )
+    df[cols.calc_spend_per_cust_contrib] = (
+        df[cols.agg_unit_spend_p2]
+        - (df[cols.calc_spend_per_cust_p1] * df[cols.agg_customer_id_p2])
+        - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 2)
+    )
+
+    df[cols.calc_trans_per_cust_contrib] = (
+        (
+            df[cols.calc_spend_per_cust_p2]
+            - (df[cols.calc_trans_per_cust_p1] * df[cols.calc_spend_per_trans_p2])
+            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 2)
+        )
+        * df[cols.agg_customer_id_p2]
+    ) - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 4)
+
+    df[cols.calc_spend_per_trans_contrib] = (
+        (
+            df[cols.calc_spend_per_cust_p2]
+            - (df[cols.calc_spend_per_trans_p1] * df[cols.calc_trans_per_cust_p2])
+            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 2)
+        )
+        * df[cols.agg_customer_id_p2]
+    ) - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 4)
+
+    if cols.agg_unit_qty in df_cols:
+        # Difference calculations
+        for col in [
+            cols.agg_unit_qty,
+            cols.calc_units_per_trans,
+            cols.calc_price_per_unit,
+        ]:
+            df[col + "_" + get_option("column.suffix.difference")] = (
+                df[col + "_" + get_option("column.suffix.period_2")]
+                - df[col + "_" + get_option("column.suffix.period_1")]
+            )
+
+        for col in [
+            cols.agg_unit_qty,
+            cols.calc_units_per_trans,
+            cols.calc_price_per_unit,
+        ]:
+            df[col + "_" + get_option("column.suffix.percent_difference")] = (
+                df[col + "_" + get_option("column.suffix.difference")]
+                / df[col + "_" + get_option("column.suffix.period_1")]
+            )
+
+        df[cols.calc_price_per_unit_contrib] = (
+            (
+                (
+                    df[cols.calc_spend_per_trans_p2]
+                    - (df[cols.calc_price_per_unit_p1] * df[cols.calc_units_per_trans_p2])
+                    - ((df[cols.calc_units_per_trans_diff] * df[cols.calc_price_per_unit_diff]) / 2)
+                )
+                * df[cols.calc_trans_per_cust_p2]
+            )
+            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 4)
+        ) * df[cols.agg_customer_id_p2] - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 8)
+
+        df[cols.calc_units_per_trans_contrib] = (
+            (
+                (
+                    df[cols.calc_spend_per_trans_p2]
+                    - (df[cols.calc_units_per_trans_p1] * df[cols.calc_price_per_unit_p2])
+                    - ((df[cols.calc_units_per_trans_diff] * df[cols.calc_price_per_unit_diff]) / 2)
+                )
+                * df[cols.calc_trans_per_cust_p2]
+            )
+            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 4)
+        ) * df[cols.agg_customer_id_p2] - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 8)
+
+    cols = RevenueTree._get_final_col_order(include_quantity=cols.agg_unit_qty in df_cols)
+
+    return df[cols]
+
+
 class RevenueTree:
     """Revenue Tree Analysis Class."""
 
@@ -81,7 +246,7 @@ class RevenueTree:
 
         df, p1_index, p2_index = self._agg_data(df, period_col, p1_value, p2_value, group_col)
 
-        self.df = self._calc_tree_kpis(
+        self.df = calc_tree_kpis(
             df=df,
             p1_index=p1_index,
             p2_index=p2_index,
@@ -130,142 +295,6 @@ class RevenueTree:
         return result_df, new_p1_index, new_p2_index
 
     @staticmethod
-    def _calc_tree_kpis(
-        df: pd.DataFrame,
-        p1_index: list[bool] | pd.Series,
-        p2_index: list[bool] | pd.Series,
-    ) -> pd.DataFrame:
-        cols = ColumnHelper()
-        required_cols = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend]
-
-        if cols.agg_unit_qty in df.columns:
-            required_cols.append(cols.agg_unit_qty)
-
-        df = df[required_cols].copy()
-        df_cols = df.columns
-
-        if cols.agg_unit_qty in df_cols:
-            df[cols.calc_units_per_trans] = df[cols.agg_unit_qty] / df[cols.agg_transaction_id]
-            df[cols.calc_price_per_unit] = df[cols.agg_unit_spend] / df[cols.agg_unit_qty]
-
-        df[cols.calc_spend_per_cust] = df[cols.agg_unit_spend] / df[cols.agg_customer_id]
-        df[cols.calc_spend_per_trans] = df[cols.agg_unit_spend] / df[cols.agg_transaction_id]
-        df[cols.calc_trans_per_cust] = df[cols.agg_transaction_id] / df[cols.agg_customer_id]
-
-        p1_df = df[p1_index]
-        p1_df.columns = [col + "_" + get_option("column.suffix.period_1") for col in p1_df.columns]
-        p2_df = df[p2_index]
-        p2_df.columns = [col + "_" + get_option("column.suffix.period_2") for col in p2_df.columns]
-
-        # When df only contains two periods than the indexes should be dropped for proper concatenation
-        if len(df.index) == 2:  # noqa: PLR2004
-            p1_df = p1_df.reset_index(drop=True)
-            p2_df = p2_df.reset_index(drop=True)
-
-        # fillna with 0 to handle cases when one time period isn't present
-        df = pd.concat([p1_df, p2_df], axis=1).fillna(0)
-
-        for col in [
-            cols.agg_customer_id,
-            cols.agg_transaction_id,
-            cols.agg_unit_spend,
-            cols.calc_spend_per_trans,
-            cols.calc_trans_per_cust,
-            cols.calc_spend_per_cust,
-        ]:
-            # Difference calculations
-            df[col + "_" + get_option("column.suffix.difference")] = (
-                df[col + "_" + get_option("column.suffix.period_2")]
-                - df[col + "_" + get_option("column.suffix.period_1")]
-            )
-
-            # Percentage change calculations
-            df[col + "_" + get_option("column.suffix.percent_difference")] = (
-                df[col + "_" + get_option("column.suffix.difference")]
-                / df[col + "_" + get_option("column.suffix.period_1")]
-            )
-
-        # Contribution calculations
-        df[cols.agg_customer_id_contrib] = (
-            df[cols.agg_unit_spend_p2]
-            - (df[cols.agg_customer_id_p1] * df[cols.calc_spend_per_cust_p2])
-            - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 2)
-        )
-        df[cols.calc_spend_per_cust_contrib] = (
-            df[cols.agg_unit_spend_p2]
-            - (df[cols.calc_spend_per_cust_p1] * df[cols.agg_customer_id_p2])
-            - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 2)
-        )
-
-        df[cols.calc_trans_per_cust_contrib] = (
-            (
-                df[cols.calc_spend_per_cust_p2]
-                - (df[cols.calc_trans_per_cust_p1] * df[cols.calc_spend_per_trans_p2])
-                - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 2)
-            )
-            * df[cols.agg_customer_id_p2]
-        ) - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 4)
-
-        df[cols.calc_spend_per_trans_contrib] = (
-            (
-                df[cols.calc_spend_per_cust_p2]
-                - (df[cols.calc_spend_per_trans_p1] * df[cols.calc_trans_per_cust_p2])
-                - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 2)
-            )
-            * df[cols.agg_customer_id_p2]
-        ) - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 4)
-
-        if cols.agg_unit_qty in df_cols:
-            # Difference calculations
-            for col in [
-                cols.agg_unit_qty,
-                cols.calc_units_per_trans,
-                cols.calc_price_per_unit,
-            ]:
-                df[col + "_" + get_option("column.suffix.difference")] = (
-                    df[col + "_" + get_option("column.suffix.period_2")]
-                    - df[col + "_" + get_option("column.suffix.period_1")]
-                )
-
-            for col in [
-                cols.agg_unit_qty,
-                cols.calc_units_per_trans,
-                cols.calc_price_per_unit,
-            ]:
-                df[col + "_" + get_option("column.suffix.percent_difference")] = (
-                    df[col + "_" + get_option("column.suffix.difference")]
-                    / df[col + "_" + get_option("column.suffix.period_1")]
-                )
-
-            df[cols.calc_price_per_unit_contrib] = (
-                (
-                    (
-                        df[cols.calc_spend_per_trans_p2]
-                        - (df[cols.calc_price_per_unit_p1] * df[cols.calc_units_per_trans_p2])
-                        - ((df[cols.calc_units_per_trans_diff] * df[cols.calc_price_per_unit_diff]) / 2)
-                    )
-                    * df[cols.calc_trans_per_cust_p2]
-                )
-                - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 4)
-            ) * df[cols.agg_customer_id_p2] - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 8)
-
-            df[cols.calc_units_per_trans_contrib] = (
-                (
-                    (
-                        df[cols.calc_spend_per_trans_p2]
-                        - (df[cols.calc_units_per_trans_p1] * df[cols.calc_price_per_unit_p2])
-                        - ((df[cols.calc_units_per_trans_diff] * df[cols.calc_price_per_unit_diff]) / 2)
-                    )
-                    * df[cols.calc_trans_per_cust_p2]
-                )
-                - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 4)
-            ) * df[cols.agg_customer_id_p2] - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 8)
-
-        cols = RevenueTree._get_final_col_order(include_quantity=cols.agg_unit_qty in df_cols)
-
-        return df[cols]
-
-    @staticmethod
     def _get_final_col_order(include_quantity: bool) -> str:
         cols = ColumnHelper()
         col_order = [
@@ -303,6 +332,8 @@ class RevenueTree:
             cols.calc_spend_per_trans_diff,
             cols.calc_spend_per_trans_pct_diff,
             cols.calc_spend_per_trans_contrib,
+            # Elasticity
+            cols.calc_frequency_elasticity,
         ]
 
         if include_quantity:
@@ -325,6 +356,8 @@ class RevenueTree:
                     cols.calc_price_per_unit_diff,
                     cols.calc_price_per_unit_pct_diff,
                     cols.calc_price_per_unit_contrib,
+                    # Price Elasticity
+                    cols.calc_price_elasticity,
                 ],
             )
 

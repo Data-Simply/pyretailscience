@@ -1,10 +1,10 @@
-"""Tests for the range_planning module."""
+"""Tests for the customer_decision_hierarchy module."""
 
 import numpy as np
 import pandas as pd
 import pytest
 
-import pyretailscience.range_planning as rp
+import pyretailscience.analysis.customer_decision_hierarchy as rp
 from pyretailscience.options import ColumnHelper
 
 cols = ColumnHelper()

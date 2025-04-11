@@ -244,10 +244,10 @@ class TestRegressionLine:
         """Test regression line with datetime x-axis data."""
         _, ax = plt.subplots()
         dates = [
-            datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2023, 2, 1, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2023, 3, 1, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2023, 4, 1, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 2, 1, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 3, 1, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 4, 1, tzinfo=datetime.UTC),
         ]
         values = [10, 15, 14, 25]
         ax.plot(dates, values)
