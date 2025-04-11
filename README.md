@@ -4,7 +4,9 @@
 
 ⚡ Rapid bespoke and deep dive retail analytics ⚡
 
-PyRetailScience equips you with a wide array of retail analytical capabilities, from segmentations to gain-loss analysis. Leave the mundane to us and elevate your role from data janitor to insights virtuoso.
+PyRetailScience equips you with a wide array of retail analytical capabilities,
+from segmentations to gain-loss analysis. Leave the mundane to us and elevate your role
+from data janitor to insights virtuoso.
 
 ## Installation
 
@@ -22,17 +24,25 @@ pip install git+https://github.com/Data-Simply/pyretailscience.git
 
 ## Features
 
-- **Tailored for Retail**: Leverage pre-built functions designed specifically for retail analytics. From customer segmentations to gains loss analysis, PyRetailScience provides over a dozen building blocks you need to tackle retail-specific challenges efficiently and effectively.
+- **Tailored for Retail**: Leverage pre-built functions designed specifically for retail analytics. From customer
+  segmentations to gains loss analysis, PyRetailScience provides over a dozen building blocks you need to tackle
+  retail-specific challenges efficiently and effectively.
 
 ![New Store Cannibalization Analysis](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/new_store_cannibalization.png)
 
-- **Reliable Results**: Built with extensive unit testing and best practices, PyRetailScience ensures the accuracy and reliability of your analyses. Confidently present your findings, knowing they're backed by a robust, well-tested framework.
+- **Reliable Results**: Built with extensive unit testing and best practices, PyRetailScience ensures the accuracy
+  and reliability of your analyses. Confidently present your findings, knowing they're backed by a robust,
+  well-tested framework.
 
-- **Professional Charts**: Say goodbye to hours of tweaking chart styles. PyRetailScience delivers beautifully standardized visualizations that are presentation-ready with just a few lines of code. Impress stakeholders and save time with our pre-built, customizable chart templates.
+- **Professional Charts**: Say goodbye to hours of tweaking chart styles. PyRetailScience delivers beautifully
+  standardized visualizations that are presentation-ready with just a few lines of code. Impress stakeholders and
+  save time with our pre-built, customizable chart templates.
 
 ![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/cross_shop_chart.png)
 
-- **Workflow Automation**: PyRetailScience streamlines your workflow by automating common retail analytics tasks. Easily loop analyses over different dimensions like product categories or countries, and seamlessly use the output of one analysis as input for another. Spend less time on data manipulation and more on generating valuable insights.
+- **Workflow Automation**: PyRetailScience streamlines your workflow by automating common retail analytics tasks.
+  Easily loop analyses over different dimensions like product categories or countries, and seamlessly use the output
+  of one analysis as input for another. Spend less time on data manipulation and more on generating valuable insights.
 
 ## Examples
 
@@ -136,9 +146,12 @@ plt.show()
 
 Please see [here](https://pyretailscience.datasimply.co/) for full documentation, which includes:
 
-- [Analysis Modules](https://pyretailscience.datasimply.co/analysis_modules/): Overview of the framework and the structure of the docs.
-- [Examples](https://pyretailscience.datasimply.co/examples/retention/): If you're looking to build something specific or are more of a hands-on learner, check out our examples. This is the best place to get started.
-- [API Reference](https://pyretailscience.datasimply.co/api/gain_loss/): Thorough documentation of every class and method.
+- [Analysis Modules](https://pyretailscience.datasimply.co/analysis_modules/): Overview of the framework and the
+  structure of the docs.
+- [Examples](https://pyretailscience.datasimply.co/examples/retention/): If you're looking to build something
+  specific or are more of a hands-on learner, check out our examples. This is the best place to get started.
+- [API Reference](https://pyretailscience.datasimply.co/api/gain_loss/): Thorough documentation of every class
+  and method.
 
 ## Contributing
 
@@ -156,14 +169,14 @@ Please make sure to follow the existing coding style and provide unit tests for 
 
 This repository is supported by Data simply.
 
-If you are interested in seeing what Data Simply can do for you, then please email [email us](mailto:murray@datasimply.co).
-We work with companies at a variety of scales and with varying levels of data and retail analytics sophistication, to
-help them build, scale or streamline their analysis capabilities.
+If you are interested in seeing what Data Simply can do for you, then please email
+[email us](mailto:murray@datasimply.co). We work with companies at a variety of scales and with varying levels of
+data and retail analytics sophistication, to help them build, scale or streamline their analysis capabilities.
 
 ## Contributors
 
 <a href="https://github.com/Data-Simply/pyretailscience/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Data-Simply/pyretailscience" />
+    <img src="https://contrib.rocks/image?repo=Data-Simply/pyretailscience" alt="Contributors" />
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
