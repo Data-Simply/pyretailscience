@@ -39,7 +39,7 @@ class TestTimePlot:
         result_ax = plot(df, value_col="sales")
 
         assert isinstance(result_ax, plt.Axes)
-        assert len(result_ax.lines) == EXPECTED_LINES_COUNT
+        assert len(result_ax.lines) == 1
 
     def test_generates_time_plot_with_group_col(self, test_data):
         """Test that the function generates a time plot with a group column."""
