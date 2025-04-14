@@ -10,12 +10,15 @@ but aligned to a common starting point.
 Example use case: Comparing sales data across multiple promotional weeks or seasonal periods.
 """
 
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 from matplotlib.axes import Axes
 
 import pyretailscience.style.graph_utils as gu
-from pyretailscience.plots.line import plot
+from pyretailscience.plots.line import plot as line_plot
 
 LINE_STYLES = [
     "-",  # solid
@@ -29,11 +32,11 @@ LINE_STYLES = [
 ]
 
 
-def overlapping_periods(
+def plot(
     df: pd.DataFrame,
     x_col: str,
-    y_col: str,
-    periods: list[tuple[str, str]],
+    value_col: str,
+    periods: list[tuple[str | datetime, str | datetime]],
     x_label: str | None = None,
     y_label: str | None = None,
     title: str | None = None,
@@ -49,12 +52,19 @@ def overlapping_periods(
     dataset to facilitate visual comparison. Each period is realigned to the reference
     start date and plotted as a separate line using a distinct linestyle.
 
+    Note:
+        The `periods` argument accepts a list of (start_date, end_date) tuples,
+        which define the time windows to overlay. Each element in the tuple can be either
+        a string (e.g., "2022-01-01") or a `datetime` object. You can use
+        `find_overlapping_periods` from `pyretailscience.utils.date` to generate
+        the `periods` input automatically.
+
     Args:
         df (pd.DataFrame): Input DataFrame containing the time series data.
         x_col (str): Name of the column representing datetime values.
-        y_col (str): Name of the column representing the y-axis values (e.g. sales, counts).
-        periods (List[Tuple[str, str]]): A list of (start_date, end_date) tuples
-            representing the periods to plot.
+        value_col (str): Name of the column representing the y-axis values (e.g. sales, counts).
+        periods (List[Tuple[Union[str, datetime], Union[str, datetime]]]):
+            A list of (start_date, end_date) tuples representing the periods to plot.
         x_label (Optional[str]): Custom label for the x-axis.
         y_label (Optional[str]): Custom label for the y-axis.
         title (Optional[str]): Title for the plot.
@@ -73,12 +83,23 @@ def overlapping_periods(
     if not periods:
         raise ValueError("The 'periods' list must contain at least one (start, end) tuple.")
 
+    periods = [(pd.to_datetime(start), pd.to_datetime(end)) for start, end in periods]
+    start_ref = periods[0][0]
+
+    sorted_periods = sorted(periods, reverse=True, key=lambda x: pd.to_datetime(x[0]))
+
     ax = ax or plt.gca()
-    start_ref = pd.to_datetime(periods[0][0])
+
+    period_styles = {}
+    for idx, period in enumerate(sorted_periods):
+        period_styles[period] = LINE_STYLES[idx % len(LINE_STYLES)]
 
     df[x_col] = pd.to_datetime(df[x_col])
-    for idx, (start_str, end_str) in enumerate(periods):
-        style = LINE_STYLES[idx % len(LINE_STYLES)]
+
+    start_ref_year = start_ref.year
+
+    for start_str, end_str in periods:
+        style = period_styles[(start_str, end_str)]
         start = pd.to_datetime(start_str)
         end = pd.to_datetime(end_str)
         period_df = df[(df[x_col] >= start) & (df[x_col] <= end)].copy()
@@ -86,14 +107,17 @@ def overlapping_periods(
         if period_df.empty:
             continue
 
-        time_offset = period_df[x_col].iloc[0] - start_ref
-        period_df["realigned_date"] = period_df[x_col] - time_offset
+        year_diff = start.year - start_ref_year
 
-        label = f"{start.strftime('%Y-%m-%d')} to {end.strftime('%Y-%m-%d')}"
-        plot(
+        period_df["realigned_date"] = period_df[x_col].apply(
+            lambda d, year_diff=year_diff: d - relativedelta(years=year_diff),
+        )
+
+        label = f"{start_str.date()} to {end_str.date()}"
+        line_plot(
             df=period_df,
             x_col="realigned_date",
-            value_col=y_col,
+            value_col=value_col,
             ax=ax,
             linestyle=style,
             x_label=x_label,
@@ -108,7 +132,7 @@ def overlapping_periods(
         ax=ax,
         title=title,
         x_label=x_label or x_col,
-        y_label=y_label or y_col,
+        y_label=y_label or value_col,
         legend_title=legend_title,
         move_legend_outside=move_legend_outside,
     )

@@ -57,8 +57,8 @@ line.plot(
 
 ![Period-on-Period Plot](assets/images/analysis_modules/plots/period_on_period.svg)
 
-Period-on-period plots help compare the same metric across multiple time intervals, all aligned to a common
-starting point. This is useful when you want to:
+Period-on-period plots help compare the same metric across two or more time intervals,
+all aligned to a common starting point. This is useful when you want to:
 
 - Compare different promotional weeks
 - Analyze performance across multiple holiday seasons
@@ -66,18 +66,18 @@ starting point. This is useful when you want to:
 
 Each period is overlaid on the same plot, allowing for easy visual comparison of trends across intervals.
 
-> **Note:** Dates are automatically realigned to a reference start date, so all lines start at the same x=0 point, regardless of calendar time.
+> **Note:** Dates are automatically realigned to a reference start date,
+so all lines start at the same x=0 point, regardless of calendar time.
 
 #### Example
 
 ```python
 import pandas as pd
-from pyretailscience.plots.period_on_period import overlapping_periods
+from pyretailscience.plots.period_on_period import plot
 
 periods = [
     ("2022-01-01", "2022-04-01"),
     ("2023-01-01", "2023-04-01"),
-    ("2024-01-01", "2024-04-01"),
 ]
 data = {
     'date': [
@@ -87,26 +87,21 @@ data = {
         '2023-01-03', '2023-01-08', '2023-01-15', '2023-01-22', '2023-01-29',
         '2023-02-05', '2023-02-12', '2023-02-19', '2023-02-26', '2023-03-05',
         '2023-03-12', '2023-03-19', '2023-03-26',
-        '2024-01-07', '2024-01-14', '2024-01-21', '2024-01-28', '2024-02-04',
-        '2024-02-11', '2024-02-18', '2024-02-25', '2024-03-03', '2024-03-10',
-        '2024-03-17', '2024-03-24', '2024-03-31'
     ],
     'sales': [
         1024, 1199, 1214, 1295, 1249, 1194, 988, 973, 1029, 910, 952, 976, 1099,
         1195, 1316, 1317, 1361, 1403, 1240, 1164, 1053, 984, 1051, 1079, 1141, 1169,
-        1337, 1323, 1497, 1349, 1485, 1288, 1229, 1267, 1103, 1048, 1049, 1230, 1282
     ]
 }
 
 df = pd.DataFrame(data)
 
-overlapping_periods(
+plot(
     df=df,
     x_col="date",
-    y_col="sales",
+    value_col="sales",
     periods=periods,
-    x_label="date",
-    y_label="sales",
+    y_label="Sales",
     title="Period on Period Comparison",
     legend_title="Periods",
     source_text="Source: PyRetailScience - Sales FY2024",
@@ -1246,7 +1241,6 @@ result_df.groupby("period_name").agg(
 | Promotion      |                28 |      1750.0 |                 62.50 |
 | Post-Promotion |                31 |      1937.5 |                 62.50 |
 
-
 ### Find Overlapping Periods
 
 <div class="clear" markdown>
@@ -1276,7 +1270,7 @@ from pyretailscience.utils.date import find_overlapping_periods
 overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
 print(overlapping_periods)
 ```
-**Output (ISO Format)**
+
 | Start Date | End Date   |
 |:-----------|-----------:|
 | 2022-06-15 | 2023-03-10 |
