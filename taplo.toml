@@ -10,7 +10,7 @@ array_trailing_comma = true
 table_trailing_comma = true
 
 # Indentation (spaces)
-indent_string = "  "
+indent_string = "    "
 indent_tables = false
 
 column_width = 120
@@ -22,10 +22,12 @@ compact_arrays = false
 compact_inline_tables = false
 
 # Controls reordering of keys in tables
-reorder_keys = false
+reorder_arrays        = true
+reorder_inline_tables = true
+reorder_keys          = true
 
 # Reformat TOML standard document (reduces custom formatting)
 reformat_arrays = true
 
-# Always use CRLF for line endings
+# Don't use CRLF for line endings
 crlf = false

@@ -1,114 +1,114 @@
 [project]
-name = "pyretailscience"
-version = "0.14.0"
-description = "Retail Data Science Tools"
-requires-python = ">=3.11,<3.13"
-readme = "README.md"
-license = "Elastic-2.0"
 dependencies = [
-  "pandas>=2.2.2,<3",
-  "pyarrow>=16.0.0,<17",
-  "matplotlib>=3.9.1,<4",
-  "numpy>=1.26.3,<=2",
-  "loguru>=0.7.2,<0.8",
-  "tqdm>=4.66.1,<5",
-  "scipy>=1.13.0,<2",
-  "scikit-learn>=1.4.2,<2",
-  "matplotlib-set-diagrams~=0.0.2",
-  "toml>=0.10.2,<0.11",
-  "duckdb>=1.0.0,<2",
-  "graphviz>=0.20.3,<0.21",
-  "ibis-framework[duckdb]>=10.0.0,<11",
+    "duckdb>=1.0.0,<2",
+    "graphviz>=0.20.3,<0.21",
+    "ibis-framework[duckdb]>=10.0.0,<11",
+    "loguru>=0.7.2,<0.8",
+    "matplotlib-set-diagrams~=0.0.2",
+    "matplotlib>=3.9.1,<4",
+    "numpy>=1.26.3,<=2",
+    "pandas>=2.2.2,<3",
+    "pyarrow>=16.0.0,<17",
+    "scikit-learn>=1.4.2,<2",
+    "scipy>=1.13.0,<2",
+    "toml>=0.10.2,<0.11",
+    "tqdm>=4.66.1,<5",
 ]
+description = "Retail Data Science Tools"
+license = "Elastic-2.0"
+name = "pyretailscience"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+version = "0.14.0"
 [[project.authors]]
-name  = "Murray Vanwyk"
 email = "2493311+mvanwyk@users.noreply.github.com"
+name  = "Murray Vanwyk"
 
 [dependency-groups]
 dev = [
-  "pytest>=8.0.0,<9",
-  "pytest-cov>=4.1.0,<5",
-  "nbstripout>=0.7.1,<0.8",
-  "ruff>=0.9,<0.10",
-  "pre-commit>=3.6.2,<4",
-  "pytest-mock>=3.14.0,<4",
-  "freezegun>=1.5.1,<2",
-  "tomlkit>=0.12,<1",
+    "freezegun>=1.5.1,<2",
+    "nbstripout>=0.7.1,<0.8",
+    "pre-commit>=3.6.2,<4",
+    "pytest-cov>=4.1.0,<5",
+    "pytest-mock>=3.14.0,<4",
+    "pytest>=8.0.0,<9",
+    "ruff>=0.9,<0.10",
+    "tomlkit>=0.12,<1",
+]
+docs = [
+    "mkdocs-jupyter>=0.24.6,<0.25",
+    "mkdocs-material>=9.5.4,<10",
+    "mkdocs>=1.5.3,<2",
+    "mkdocstrings[python]>=0.24.0,<0.25",
 ]
 examples = [ "jupyterlab>=4.2.5,<5", "tqdm>=4.66.1,<5" ]
-docs = [
-  "mkdocs-material>=9.5.4,<10",
-  "mkdocstrings[python]>=0.24.0,<0.25",
-  "mkdocs>=1.5.3,<2",
-  "mkdocs-jupyter>=0.24.6,<0.25",
-]
 
 [build-system]
-requires      = [ "hatchling" ]
 build-backend = "hatchling.build"
+requires      = [ "hatchling" ]
 
 [tool.uv]
-default-groups = [ "dev", "examples", "docs" ]
+default-groups = [ "dev", "docs", "examples" ]
 
 [tool.ruff]
-target-version = "py311"
 line-length    = 120
 show-fixes     = true
+target-version = "py311"
 
 [tool.ruff.lint]
-ignore = [ "ANN101", "ANN102", "EM101", "TRY003", "PT011", "PTH123", "SLF001" ]
+ignore = [ "ANN101", "ANN102", "EM101", "PT011", "PTH123", "SLF001", "TRY003" ]
 select = [
-  "A",
-  "ANN",
-  "ARG",
-  "B",
-  "BLE",
-  "C4",
-  "C90",
-  "COM",
-  "D",
-  "D1",
-  "D2",
-  "D3",
-  "D4",
-  "DTZ",
-  "EM",
-  "ERA",
-  "EXE",
-  "F",
-  "FA",
-  "FLY",
-  "G",
-  "I",
-  "ICN",
-  "INP",
-  "INT",
-  "ISC",
-  "N",
-  "NPY",
-  "PERF",
-  "PGH",
-  "PIE",
-  "PL",
-  "PT",
-  "PTH",
-  "PYI",
-  "Q",
-  "RET",
-  "RUF",
-  "RSE",
-  "S",
-  "SIM",
-  "SLF",
-  "SLOT",
-  "T10",
-  "T20",
-  "TCH",
-  "TID",
-  "TRY",
-  "UP",
-  "W",
-  "YTT",
+    "A",
+    "ANN",
+    "ARG",
+    "B",
+    "BLE",
+    "C4",
+    "C90",
+    "COM",
+    "D",
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "DTZ",
+    "EM",
+    "ERA",
+    "EXE",
+    "F",
+    "FA",
+    "FLY",
+    "G",
+    "I",
+    "ICN",
+    "INP",
+    "INT",
+    "ISC",
+    "N",
+    "NPY",
+    "PERF",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "Q",
+    "RET",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "SLF",
+    "SLOT",
+    "T10",
+    "T20",
+    "TCH",
+    "TID",
+    "TRY",
+    "UP",
+    "W",
+    "YTT",
 ]
 
 [tool.pytest.ini_options]
@@ -123,9 +123,9 @@ show_missing = true
 skip_covered = true
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = [ "F401", "F403", "F405", "D104" ]
-"tests/*"     = [ "ANN", "ARG", "INP001", "S101", "SLF001" ]
 "*.ipynb"     = [ "T201" ]
+"__init__.py" = [ "D104", "F401", "F403", "F405" ]
+"tests/*"     = [ "ANN", "ARG", "INP001", "S101", "SLF001" ]
 
 [tool.ruff.lint.pylint]
 max-args       = 15
