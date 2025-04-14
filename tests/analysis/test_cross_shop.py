@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from matplotlib import pyplot as plt
 
 from pyretailscience.analysis.cross_shop import CrossShop
 from pyretailscience.options import ColumnHelper
@@ -262,16 +261,6 @@ def test_group_3_only_one_side_provided(sample_data):
             group_2_val="Shoes",
             group_3_col="category_1_name",
         )
-
-
-def test_translate_text_outward_moves_text():
-    """Test that translate_text_outward modifies text position."""
-    fig, ax = plt.subplots()
-    text = ax.text(0.6, 0.6, "Test")
-    original_position = text.get_position()
-    CrossShop.translate_text_outward(text)
-    new_position = text.get_position()
-    assert new_position != original_position
 
 
 @patch("pyretailscience.plots.venn.plot")

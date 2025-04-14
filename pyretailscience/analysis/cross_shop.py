@@ -3,7 +3,6 @@
 from collections.abc import Callable
 
 import ibis
-import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
@@ -162,30 +161,6 @@ class CrossShop:
         df = df.groupby(["groups"], dropna=False)[value_col].sum().reset_index().copy()
         df["percent"] = df[value_col] / df[value_col].sum()
         return df
-
-    @staticmethod
-    def translate_text_outward(
-        text: plt.Text,
-        center_x: float = 0.5,
-        center_y: float = 0.5,
-        displacement: float = 0.1,
-    ) -> None:
-        """A helper method that translates the text away from the center of the plot.
-
-        Args:
-            text (plt.Text): The text to translate.
-            center_x (float, optional): The x-coordinate of the center of the plot. Defaults to 0.5.
-            center_y (float, optional): The y-coordinate of the center of the plot. Defaults to 0.5.
-            displacement (float, optional): The amount to translate the text by. Defaults to 0.1.
-
-        Returns:
-            None
-        """
-        x, y = text.get_position()
-        direction_x, direction_y = x - center_x, y - center_y
-        scale = displacement / (direction_x**2 + direction_y**2) ** 0.5
-        new_x, new_y = x + scale * direction_x, y + scale * direction_y
-        text.set_position((new_x, new_y))
 
     def plot(
         self,
