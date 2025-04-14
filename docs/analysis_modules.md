@@ -685,14 +685,18 @@ Example:
 
 ```python
 import datetime
+import pandas as pd
 from pyretailscience.analysis.gain_loss import GainLoss
 
 df["brand"]: ["Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B",
-                  "Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B"]]
+                  "Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B"]
+
+df["transaction_date"] = pd.to_datetime(df["transaction_date"])
+
 gl = GainLoss(
     df=df,
-    p1_index=df["transaction_date"] < datetime.date(2023, 5, 1),
-    p2_index=df["transaction_date"] >= datetime.date(2023, 5, 1),
+    p1_index=df["transaction_date"] < "2023-05-01",
+    p2_index=df["transaction_date"] >= "2023-05-01",
     focus_group_index=df["brand"] == "Brand A",
     focus_group_name="Brand A",
     comparison_group_index=df["brand"] == "Brand B",
@@ -1188,7 +1192,6 @@ result_df.groupby("period_name").agg(
 | Promotion      |                28 |      1750.0 |                 62.50 |
 | Post-Promotion |                31 |      1937.5 |                 62.50 |
 
-
 ### Find Overlapping Periods
 
 <div class="clear" markdown>
@@ -1218,7 +1221,7 @@ from pyretailscience.utils.date import find_overlapping_periods
 overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
 print(overlapping_periods)
 ```
-**Output (ISO Format)**
+
 | Start Date | End Date   |
 |:-----------|-----------:|
 | 2022-06-15 | 2023-03-10 |

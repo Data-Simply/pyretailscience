@@ -278,10 +278,7 @@ class GainLoss:
 
         default_y_label = self.focus_group_name if self.group_col is None else self.group_col
 
-        increase_df = plot_df[increase_cols].copy()
-
-        decrease_df = plot_df[decrease_cols].copy() * -1
-        combined_df = pd.concat([increase_df, decrease_df], axis=1)
+        plot_data = plot_df.copy()
 
         color_dict = {}
         for i, col in enumerate(increase_cols):
@@ -290,9 +287,10 @@ class GainLoss:
             color_dict[col] = red_colors[i]
 
         plot_kwargs = kwargs.copy()
+        plot_kwargs["stacked"] = True
 
         ax = bar.plot(
-            df=combined_df,
+            df=plot_data,
             value_col=increase_cols + decrease_cols,
             title=gu.not_none(title, f"Gain Loss from {self.focus_group_name} to {self.comparison_group_name}"),
             y_label=gu.not_none(y_label, default_y_label),
@@ -300,7 +298,7 @@ class GainLoss:
             orientation="horizontal",
             ax=ax,
             source_text=source_text,
-            move_legend_outside=False,
+            move_legend_outside=move_legend_outside,
             **plot_kwargs,
         )
 
@@ -337,12 +335,21 @@ class GainLoss:
         legend.get_frame().set_facecolor("white")
         legend.get_frame().set_edgecolor("white")
 
-        decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
-        ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
-        ax.set_xlim(combined_df.values.min() * 1.1, combined_df.values.max() * 1.1)
-        ax.grid(axis="x", linestyle="--", alpha=0.7)
+        max_abs_value = (
+            max(
+                abs(plot_data[increase_cols].values.sum()),
+                abs(plot_data[decrease_cols].values.sum()),
+            )
+            * 1.1
+        )
+        ax.set_xlim(-max_abs_value, max_abs_value)
 
         ax.axvline(0, color="black", linewidth=0.5)
+
+        decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
+        ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
+
+        ax.grid(axis="x", linestyle="--", alpha=0.7)
 
         gu.standard_tick_styles(ax)
 
