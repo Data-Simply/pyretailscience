@@ -1185,7 +1185,6 @@ result_df.groupby("period_name").agg(
 | Promotion      |                28 |      1750.0 |                 62.50 |
 | Post-Promotion |                31 |      1937.5 |                 62.50 |
 
-
 ### Find Overlapping Periods
 
 <div class="clear" markdown>
@@ -1215,13 +1214,12 @@ from pyretailscience.utils.date import find_overlapping_periods
 overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
 print(overlapping_periods)
 ```
-**Output (ISO Format)**
+
 | Start Date    | End Date    |
 |:--------------|------------:|
 | 2022-06-15    | 2023-03-10  |
 | 2023-06-15    | 2024-03-10  |
 | 2024-06-15    | 2025-03-10  |
-
 
 ### Filter and Label by Condition
 
@@ -1269,11 +1267,12 @@ conditions = {
 # Apply filtering and labeling
 labeled_data = filter_and_label_by_condition(products, conditions).order_by("product_id").execute().set_index("product_id")
 ```
-| product_id    | category    | price    | label               |
-|:--------------|------------:|---------:|--------------------:|
-| 1             | toys        | 15	     | Toys                |
-| 2             | shoes       | 55	     | Shoes               |
-| 3             | toys 	      | 25       | Toys                |
-| 5	            | electronics | 200      | Premium Electronics |
-| 6             | toys        | 35	     | Toys                |
-| 7	            | shoes	      | 60	     | Shoes               |
+
+| product_id | category    | price | label               |
+|:-----------|------------:|------:|--------------------:|
+| 1          | toys        | 15    | Toys                |
+| 2          | shoes       | 55    | Shoes               |
+| 3          | toys        | 25    | Toys                |
+| 5          | electronics | 200   | Premium Electronics |
+| 6          | toys        | 35    | Toys                |
+| 7          | shoes       | 60    | Shoes               |
