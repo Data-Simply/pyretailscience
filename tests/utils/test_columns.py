@@ -34,6 +34,7 @@ def test_filter_and_label_by_condition():
 
     assert (
         result.execute()
+        .sort_values("product_id")
         .reset_index(drop=True)
         .equals(
             expected_df.sort_values("product_id").reset_index(drop=True),
