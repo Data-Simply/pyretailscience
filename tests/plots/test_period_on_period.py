@@ -4,7 +4,6 @@ from itertools import cycle
 
 import pandas as pd
 import pytest
-from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from pyretailscience.plots.period_on_period import plot
@@ -54,7 +53,7 @@ def test_overlapping_periods_basic(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_with_labels_and_title(sample_dataframe):
     """Test overlapping periods with axis labels and title."""
-    periods = [("2023-01-01", "2023-01-05")]
+    periods = [("2023-01-01", "2023-01-05"), ("2023-01-06", "2023-01-10")]
     title = "Overlapping Periods Test"
     ax = plot(
         df=sample_dataframe,
@@ -80,7 +79,7 @@ def test_overlapping_periods_with_labels_and_title(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_with_source_text(sample_dataframe):
     """Test overlapping periods with source text added."""
-    periods = [("2023-01-01", "2023-01-05")]
+    periods = [("2023-01-01", "2023-01-05"), ("2023-01-06", "2023-01-10")]
     source_text = "Source: Sales Data"
 
     ax = plot(
@@ -124,34 +123,13 @@ def test_overlapping_periods_with_legend_title_and_outside(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_raises_on_empty_periods(sample_dataframe):
     """Test overlapping periods with a ValueError is raised if an empty list of periods is passed."""
-    with pytest.raises(ValueError, match="The 'periods' list must contain at least one"):
+    with pytest.raises(
+        ValueError,
+        match=r"The 'periods' list must contain at least two \(start, end\) tuples for comparison\.",
+    ):
         plot(
             df=sample_dataframe,
             x_col="date",
             value_col="value",
             periods=[],
         )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_overlapping_periods_skips_empty_period_df(sample_dataframe):
-    """Test that periods with no matching data do not add any lines to the plot."""
-    fig, ax = plt.subplots()
-    initial_lines = len(ax.lines)
-
-    periods = [("1900-01-01", "1900-01-05")]
-
-    returned_ax = plot(
-        df=sample_dataframe,
-        x_col="date",
-        value_col="value",
-        periods=periods,
-        title="Empty Period Test",
-        ax=ax,
-    )
-
-    assert isinstance(returned_ax, plt.Axes)
-    assert len(returned_ax.lines) == initial_lines, (
-        f"Expected {initial_lines} lines, but got {len(returned_ax.lines)}. "
-        "New lines were added even though the period had no matching data."
-    )

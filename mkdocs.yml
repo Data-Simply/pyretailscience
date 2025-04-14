@@ -51,6 +51,7 @@ nav:
               - Tailwind Colors: api/plots/style/tailwind.md
       - Utils:
           - Date Utils: api/utils/date.md
+          - Columns Utils: api/utils/columns.md
 
 theme:
   name: material

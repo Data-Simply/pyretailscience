@@ -66,7 +66,7 @@ all aligned to a common starting point. This is useful when you want to:
 
 Each period is overlaid on the same plot, allowing for easy visual comparison of trends across intervals.
 
-> **Note:** Dates are automatically realigned to a reference start date,
+> **Note:** Dates are automatically realigned to a reference start year,
 so all lines start at the same x=0 point, regardless of calendar time.
 
 #### Example
@@ -101,6 +101,7 @@ plot(
     x_col="date",
     value_col="sales",
     periods=periods,
+    x_label=" ",
     y_label="Sales",
     title="Period on Period Comparison",
     legend_title="Periods",
@@ -1271,8 +1272,64 @@ overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
 print(overlapping_periods)
 ```
 
-| Start Date | End Date   |
-|:-----------|-----------:|
-| 2022-06-15 | 2023-03-10 |
-| 2023-06-15 | 2024-03-10 |
-| 2024-06-15 | 2025-03-10 |
+| Start Date    | End Date    |
+|:--------------|------------:|
+| 2022-06-15    | 2023-03-10  |
+| 2023-06-15    | 2024-03-10  |
+| 2024-06-15    | 2025-03-10  |
+
+### Filter and Label by Condition
+
+<div class="clear" markdown>
+
+The Filter and Label by Condition module allows you to:
+
+- Filter data based on arbitrary conditions (e.g., category, region, price range)
+- Add descriptive labels to filtered rows for easier segmentation
+- Prepare labeled subsets for downstream analysis or visualization
+- Combine multiple Boolean conditions into a single, labeled dataset
+
+This functionality is particularly useful for:
+
+- Segmenting customers or products by custom-defined rules
+- Categorizing transactions based on business logic
+- Creating labeled training data for machine learning
+- Analyzing metrics across different business segments
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.columns import filter_and_label_by_condition
+
+# Sample product table
+df = pd.DataFrame({
+    "product_id": range(1, 9),
+    "category": ["toys", "shoes", "toys", "books", "electronics", "toys", "shoes", "books"],
+    "price": [15, 55, 25, 10, 200, 35, 60, 20]
+})
+
+products = ibis.memtable(df)
+
+# Define filter conditions
+conditions = {
+    "Toys": products["category"] == "toys",
+    "Shoes": products["category"] == "shoes",
+    "Premium Electronics": (products["category"] == "electronics") & (products["price"] > 100)
+}
+
+# Apply filtering and labeling
+labeled_data = filter_and_label_by_condition(products, conditions).execute()
+```
+
+| product_id | category    | price | label               |
+|:-----------|------------:|------:|--------------------:|
+| 1          | toys        | 15    | Toys                |
+| 2          | shoes       | 55    | Shoes               |
+| 3          | toys        | 25    | Toys                |
+| 5          | electronics | 200   | Premium Electronics |
+| 6          | toys        | 35    | Toys                |
+| 7          | shoes       | 60    | Shoes               |
