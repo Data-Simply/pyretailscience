@@ -684,26 +684,31 @@ This module is particularly valuable for:
 Example:
 
 ```python
-import datetime
 import pandas as pd
+import numpy as np
 from pyretailscience.analysis.gain_loss import GainLoss
 
-df["brand"]: ["Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B",
-                  "Brand A", "Brand B", "Brand A", "Brand B", "Brand A", "Brand B"]
+np.random.seed(42)
+n_customers = 30
 
-df["transaction_date"] = pd.to_datetime(df["transaction_date"])
+df = pd.DataFrame({
+    "customer_id": [f"C{i:03d}" for i in range(n_customers)] * 2,
+    "unit_spend": np.random.randint(10, 100, size=n_customers * 2),
+    "brand": np.random.choice(["Brand A", "Brand B"], size=n_customers * 2),
+    "period": ["p1"] * n_customers + ["p2"] * n_customers,
+})
 
-gl = GainLoss(
+gain_loss = GainLoss(
     df=df,
-    p1_index=df["transaction_date"] < "2023-05-01",
-    p2_index=df["transaction_date"] >= "2023-05-01",
+    p1_index= df["period"] == "p1",
+    p2_index= df["period"] == "p2",
     focus_group_index=df["brand"] == "Brand A",
     focus_group_name="Brand A",
     comparison_group_index=df["brand"] == "Brand B",
     comparison_group_name="Brand B",
 )
 
-gl.plot(
+gain_loss.plot(
     title="Brand A vs Brand B: Customer Movement Analysis",
     x_label="Revenue Change",
     source_text="Source: PyRetailScience",
@@ -1222,8 +1227,64 @@ overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
 print(overlapping_periods)
 ```
 
-| Start Date | End Date   |
-|:-----------|-----------:|
-| 2022-06-15 | 2023-03-10 |
-| 2023-06-15 | 2024-03-10 |
-| 2024-06-15 | 2025-03-10 |
+| Start Date    | End Date    |
+|:--------------|------------:|
+| 2022-06-15    | 2023-03-10  |
+| 2023-06-15    | 2024-03-10  |
+| 2024-06-15    | 2025-03-10  |
+
+### Filter and Label by Condition
+
+<div class="clear" markdown>
+
+The Filter and Label by Condition module allows you to:
+
+- Filter data based on arbitrary conditions (e.g., category, region, price range)
+- Add descriptive labels to filtered rows for easier segmentation
+- Prepare labeled subsets for downstream analysis or visualization
+- Combine multiple Boolean conditions into a single, labeled dataset
+
+This functionality is particularly useful for:
+
+- Segmenting customers or products by custom-defined rules
+- Categorizing transactions based on business logic
+- Creating labeled training data for machine learning
+- Analyzing metrics across different business segments
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.columns import filter_and_label_by_condition
+
+# Sample product table
+df = pd.DataFrame({
+    "product_id": range(1, 9),
+    "category": ["toys", "shoes", "toys", "books", "electronics", "toys", "shoes", "books"],
+    "price": [15, 55, 25, 10, 200, 35, 60, 20]
+})
+
+products = ibis.memtable(df)
+
+# Define filter conditions
+conditions = {
+    "Toys": products["category"] == "toys",
+    "Shoes": products["category"] == "shoes",
+    "Premium Electronics": (products["category"] == "electronics") & (products["price"] > 100)
+}
+
+# Apply filtering and labeling
+labeled_data = filter_and_label_by_condition(products, conditions).execute()
+```
+
+| product_id | category    | price | label               |
+|:-----------|------------:|------:|--------------------:|
+| 1          | toys        | 15    | Toys                |
+| 2          | shoes       | 55    | Shoes               |
+| 3          | toys        | 25    | Toys                |
+| 5          | electronics | 200   | Premium Electronics |
+| 6          | toys        | 35    | Toys                |
+| 7          | shoes       | 60    | Shoes               |
