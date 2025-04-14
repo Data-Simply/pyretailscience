@@ -59,7 +59,7 @@ class CrossShop:
         if (labels is not None) and (len(labels) != self.group_count):
             raise ValueError("The number of labels must be equal to the number of group indexes given")
 
-        self.labels = labels
+        self.labels = labels if labels is not None else [chr(65 + i) for i in range(self.group_count)]
 
         self.cross_shop_df = self._calc_cross_shop(
             df=df,
@@ -212,13 +212,9 @@ class CrossShop:
         Returns:
             SubplotBase: The axes of the plot.
         """
-        labels_to_use = self.labels
-        if labels_to_use is None:
-            labels_to_use = [chr(65 + i) for i in range(self.group_count)]
-
         return venn.plot(
             df=self.cross_shop_table_df,
-            labels=labels_to_use,
+            labels=self.labels,
             title=title,
             source_text=source_text,
             vary_size=vary_size,
