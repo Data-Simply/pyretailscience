@@ -10,7 +10,7 @@ def test_filter_and_label_by_condition():
     """Test cases for filtering and labeling by condition."""
     df = pd.DataFrame(
         {
-            "id": [1, 2, 3, 4],
+            "product_id": [1, 2, 3, 4],
             "category": ["toys", "shoes", "toys", "books"],
         },
     )
@@ -26,7 +26,7 @@ def test_filter_and_label_by_condition():
 
     expected_df = pd.DataFrame(
         {
-            "id": [1, 2, 3],
+            "product_id": [1, 2, 3],
             "category": ["toys", "shoes", "toys"],
             "label": ["toys", "shoes", "toys"],
         },
@@ -34,9 +34,8 @@ def test_filter_and_label_by_condition():
 
     assert (
         result.execute()
-        .sort_values("id")
         .reset_index(drop=True)
         .equals(
-            expected_df.sort_values("id").reset_index(drop=True),
+            expected_df.sort_values("product_id").reset_index(drop=True),
         )
     )

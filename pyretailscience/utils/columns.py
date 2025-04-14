@@ -13,6 +13,8 @@ Example use cases:
 
 import ibis
 
+from pyretailscience.options import get_option
+
 
 def filter_and_label_by_condition(
     table: ibis.Table,
@@ -47,4 +49,6 @@ def filter_and_label_by_condition(
     branches = [(condition, ibis.literal(label)) for label, condition in conditions.items()]
     combined_condition = ibis.or_(*[condition for condition, _ in branches])
 
-    return table.filter(combined_condition).mutate(label=ibis.cases(*branches))
+    return (
+        table.filter(combined_condition).mutate(label=ibis.cases(*branches)).order_by(get_option("column.product_id"))
+    )

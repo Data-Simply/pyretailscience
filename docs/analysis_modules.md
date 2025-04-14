@@ -1265,7 +1265,7 @@ conditions = {
 }
 
 # Apply filtering and labeling
-labeled_data = filter_and_label_by_condition(products, conditions).order_by("product_id").execute().set_index("product_id")
+labeled_data = filter_and_label_by_condition(products, conditions).execute()
 ```
 
 | product_id | category    | price | label               |
