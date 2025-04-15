@@ -41,6 +41,7 @@ nav:
           - Histogram Plot: api/plots/histogram.md
           - Index Plot: api/plots/index.md
           - Line Plot: api/plots/line.md
+          - Period On Period Plot: api/plots/period_on_period.md
           - Scatter Plot: api/plots/scatter.md
           - Time Plot: api/plots/time.md
           - Venn Diagram: api/plots/venn.md

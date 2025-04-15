@@ -53,6 +53,63 @@ line.plot(
 )
 ```
 
+### Period-on-Period Plot
+
+![Period-on-Period Plot](assets/images/analysis_modules/plots/period_on_period.svg)
+
+Period-on-period plots help compare the same metric across two or more time intervals,
+all aligned to a common starting point. This is useful when you want to:
+
+- Compare different promotional weeks
+- Analyze performance across multiple holiday seasons
+- Benchmark key metrics across repeated events (e.g., monthly product launches)
+
+Each period is overlaid on the same plot, allowing for easy visual comparison of trends across intervals.
+
+> **Note:** Dates are automatically realigned to a reference start year,
+so all lines start at the same x=0 point, regardless of calendar time.
+
+#### Example
+
+```python
+import pandas as pd
+from pyretailscience.plots.period_on_period import plot
+
+periods = [
+    ("2022-01-01", "2022-04-01"),
+    ("2023-01-01", "2023-04-01"),
+]
+data = {
+    'date': [
+        '2022-01-02', '2022-01-09', '2022-01-16', '2022-01-23', '2022-01-30',
+        '2022-02-06', '2022-02-13', '2022-02-20', '2022-02-27', '2022-03-06',
+        '2022-03-13', '2022-03-20', '2022-03-27',
+        '2023-01-03', '2023-01-08', '2023-01-15', '2023-01-22', '2023-01-29',
+        '2023-02-05', '2023-02-12', '2023-02-19', '2023-02-26', '2023-03-05',
+        '2023-03-12', '2023-03-19', '2023-03-26',
+    ],
+    'sales': [
+        1024, 1199, 1214, 1295, 1249, 1194, 988, 973, 1029, 910, 952, 976, 1099,
+        1195, 1316, 1317, 1361, 1403, 1240, 1164, 1053, 984, 1051, 1079, 1141, 1169,
+    ]
+}
+
+df = pd.DataFrame(data)
+
+plot(
+    df=df,
+    x_col="date",
+    value_col="sales",
+    periods=periods,
+    x_label=" ",
+    y_label="Sales",
+    title="Period on Period Comparison",
+    legend_title="Periods",
+    source_text="Source: PyRetailScience - Sales FY2024",
+    move_legend_outside=True,
+)
+```
+
 ### Area Plot
 
 <div class="clear" markdown>
