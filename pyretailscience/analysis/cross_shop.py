@@ -195,6 +195,6 @@ class CrossShop:
             vary_size=vary_size,
             figsize=figsize,
             ax=ax,
-            subset_label_formatter=subset_label_formatter,
+            subset_label_formatter=subset_label_formatter if subset_label_formatter else lambda x: f"{x:.1%}",
             **kwargs,
         )
