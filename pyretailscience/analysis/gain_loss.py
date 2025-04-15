@@ -273,25 +273,20 @@ class GainLoss:
 
         increase_cols = ["new", "increased_focus", "switch_from_comparison"]
         decrease_cols = ["lost", "decreased_focus", "switch_to_comparison"]
+        all_cols = increase_cols + decrease_cols
 
         plot_df = self.gain_loss_table_df.copy()
-
         default_y_label = self.focus_group_name if self.group_col is None else self.group_col
-
         plot_data = plot_df.copy()
 
-        color_dict = {}
-        for i, col in enumerate(increase_cols):
-            color_dict[col] = green_colors[i]
-        for i, col in enumerate(decrease_cols):
-            color_dict[col] = red_colors[i]
+        color_dict = {col: green_colors[i] for i, col in enumerate(increase_cols)}
+        color_dict.update({col: red_colors[i] for i, col in enumerate(decrease_cols)})
 
-        plot_kwargs = kwargs.copy()
-        plot_kwargs["stacked"] = True
+        kwargs.pop("stacked", None)
 
         ax = bar.plot(
             df=plot_data,
-            value_col=increase_cols + decrease_cols,
+            value_col=all_cols,
             title=gu.not_none(title, f"Gain Loss from {self.focus_group_name} to {self.comparison_group_name}"),
             y_label=gu.not_none(y_label, default_y_label),
             x_label=gu.not_none(x_label, self.value_col),
@@ -299,11 +294,12 @@ class GainLoss:
             ax=ax,
             source_text=source_text,
             move_legend_outside=move_legend_outside,
-            **plot_kwargs,
+            stacked=True,
+            **kwargs,
         )
 
         for i, container in enumerate(ax.containers):
-            col_name = (increase_cols + decrease_cols)[i]
+            col_name = all_cols[i]
             for patch in container:
                 patch.set_color(color_dict[col_name])
 
@@ -316,39 +312,22 @@ class GainLoss:
             f"Switch To {self.comparison_group_name}",
         ]
 
-        if ax.get_legend() is not None:
+        if ax.get_legend():
             ax.get_legend().remove()
 
-        if move_legend_outside:
-            legend = ax.legend(
-                legend_labels,
-                frameon=True,
-                bbox_to_anchor=(1.05, 1),
-                loc="upper left",
-            )
-        else:
-            legend = ax.legend(
-                legend_labels,
-                frameon=True,
-            )
-
+        legend = ax.legend(
+            legend_labels,
+            frameon=True,
+            bbox_to_anchor=(1.05, 1) if move_legend_outside else None,
+            loc="upper left" if move_legend_outside else "best",
+        )
         legend.get_frame().set_facecolor("white")
         legend.get_frame().set_edgecolor("white")
-
-        max_abs_value = (
-            max(
-                abs(plot_data[increase_cols].values.sum()),
-                abs(plot_data[decrease_cols].values.sum()),
-            )
-            * 1.1
-        )
-        ax.set_xlim(-max_abs_value, max_abs_value)
 
         ax.axvline(0, color="black", linewidth=0.5)
 
         decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
         ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
-
         ax.grid(axis="x", linestyle="--", alpha=0.7)
 
         gu.standard_tick_styles(ax)
