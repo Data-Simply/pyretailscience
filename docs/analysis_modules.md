@@ -741,19 +741,31 @@ This module is particularly valuable for:
 Example:
 
 ```python
+import pandas as pd
+import numpy as np
 from pyretailscience.analysis.gain_loss import GainLoss
 
-gl = GainLoss(
+np.random.seed(42)
+n_customers = 30
+
+df = pd.DataFrame({
+    "customer_id": [f"C{i:03d}" for i in range(n_customers)] * 2,
+    "unit_spend": np.random.randint(10, 100, size=n_customers * 2),
+    "brand": np.random.choice(["Brand A", "Brand B"], size=n_customers * 2),
+    "period": ["p1"] * n_customers + ["p2"] * n_customers,
+})
+
+gain_loss = GainLoss(
     df=df,
-    p1_index=df["transaction_date"] < "2023-05-01",
-    p2_index=df["transaction_date"] >= "2023-05-01",
+    p1_index= df["period"] == "p1",
+    p2_index= df["period"] == "p2",
     focus_group_index=df["brand"] == "Brand A",
     focus_group_name="Brand A",
     comparison_group_index=df["brand"] == "Brand B",
     comparison_group_name="Brand B",
 )
 
-gl.plot(
+gain_loss.plot(
     title="Brand A vs Brand B: Customer Movement Analysis",
     x_label="Revenue Change",
     source_text="Source: PyRetailScience",
