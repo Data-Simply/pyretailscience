@@ -50,7 +50,7 @@ nav:
               - Tailwind Colors: api/plots/style/tailwind.md
       - Utils:
           - Date Utils: api/utils/date.md
-          - Columns Utils: api/utils/columns.md
+          - Filter & Label Utils: api/utils/filter_and_label.md
 
 theme:
   name: material
