@@ -1315,7 +1315,7 @@ Example:
 ```python
 import pandas as pd
 import ibis
-from pyretailscience.utils.columns import filter_and_label_by_condition
+from pyretailscience.utils.filter_and_label import filter_and_label_by_condition
 
 # Sample product table
 df = pd.DataFrame({

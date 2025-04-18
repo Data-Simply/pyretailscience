@@ -1,4 +1,4 @@
-"""Column Utilities - Filtering and Labeling by Condition.
+"""filter_and_label Utilities - Filtering and Labeling by Condition.
 
 This module provides utilities to filter an Ibis table based on arbitrary logical conditions
 and attach descriptive labels to matched rows. It is useful for segmenting and analyzing data
