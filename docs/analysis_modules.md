@@ -138,7 +138,7 @@ from pyretailscience.plots import area
 periods = 6
 rng = np.random.default_rng(42)
 data = {
-    "transaction_date": np.repeat(pd.date_range("2023-01-01", periods=periods, freq="M"), 3),
+    "transaction_date": np.repeat(pd.date_range("2023-01-01", periods=periods, freq="ME"), 3),
     "unit_spend": rng.integers(1, 6, size=3 * periods),
     "category": ["Jeans", "Shoes", "Dresses"] * periods,
 }
@@ -233,6 +233,7 @@ segmentation, user behavior analysis, and set comparisons.
 Example:
 
 ```python
+import pandas as pd
 from pyretailscience.plots import venn
 
 df =  pd.DataFrame({
@@ -393,7 +394,7 @@ waterfall.plot(
 
 <div class="clear" markdown>
 
-![Index Plot](assets/images/analysis_modules/index_plot.svg){ align=right loading=lazy width="50%"}
+![Index Plot](assets/images/analysis_modules/plots/index_plot.svg){ align=right loading=lazy width="50%"}
 
 Index plots are visual tools used in retail analytics to compare different categories or segments against a baseline or
 average value, typically set at 100. Index plots allow analysts to:
@@ -419,12 +420,35 @@ Example:
 
 ```python
 from pyretailscience.plots import index
+import pandas as pd
+import numpy as np
+
+np.random.seed(42)
+
+categories = ["Music", "Electronics", "Books", "Clothing", "Food", "Home", "Sports", "Beauty"]
+segments = ["Light", "Medium", "Heavy"]
+
+data = []
+for segment in segments:
+    for category in categories:
+        base_price = np.random.uniform(10, 100)
+        for quarter in ["Q1", "Q2", "Q3", "Q4"]:
+            data.append({
+                "segment_name": segment,
+                "category_0_name": category,
+                "unit_price": base_price * (1 + np.random.uniform(-0.2, 0.3)),
+                "quarter": quarter
+            })
+
+df = pd.DataFrame(data)
 
 index.plot(
     df,
-    df_index_filter=df["segment_name"] == "Light",
     value_col="unit_price",
     group_col="category_0_name",
+    index_col= "segment_name",
+    value_to_index="Light",
+    agg_func="mean",
     title="Music an opportunity category for Light?",
     y_label="Categories",
     x_label="Indexed Spend",
@@ -432,6 +456,7 @@ index.plot(
     sort_by="value",
     sort_order="descending",
     legend_title="Quarter",
+    highlight_range=None
 )
 ```
 
@@ -699,13 +724,28 @@ it easy to identify significant patterns in customer shopping behavior.
 Example:
 
 ```python
+import pandas as pd
 from pyretailscience.analysis import cross_shop
+
+data = {
+    "customer_id": [1, 2, 3, 4, 5, 5, 6, 9, 7, 7, 8, 9, 5, 8],
+    "category_name" = [
+        "Electronics", "Clothing", "Home", "Sports", "Clothing", "Electronics", "Electronics"
+        "Clothing", "Home", "Electronics", "Clothing", "Electronics", "Home", "Home"
+        ]
+    "unit_spend": [100, 200, 300, 400, 200, 500, 100, 200, 300, 350, 400, 500, 250, 360]
+}
+
+df = pd.DataFrame(data)
 
 cs_customers = cross_shop.CrossShop(
     df,
-    group_1_idx=df["category_name"] == "Electronics",
-    group_2_idx=df["category_name"] == "Clothing",
-    group_3_idx=df["category_name"] == "Home",
+    group_1_col="category_name",
+    group_1_val="Electronics",
+    group_2_col="category_name",
+    group_2_val="Clothing",
+    group_3_col="category_name",
+    group_3_val="Home",
     labels=["Electronics", "Clothing", "Home"],
 )
 
@@ -848,12 +888,32 @@ Key Components of the Revenue Tree:
 Example:
 
 ```python
+import pandas as pd
+import numpy as np
 from pyretailscience.analysis import revenue_tree
 
+np.random.seed(42)
+
+# Generate 100 records
+num_records = 100
+df = pd.DataFrame({
+    "group_id": np.random.choice([1, 2], size=num_records),
+    "customer_id": np.random.randint(1, 31, size=num_records),
+    "transaction_id": np.arange(1, num_records + 1),
+    "unit_spend": np.random.uniform(50, 500, size=num_records).round(2),
+    "unit_quantity": np.random.randint(1, 6, size=num_records),
+    "transaction_date": pd.to_datetime(
+        np.random.choice(pd.date_range("2023-01-01", "2023-01-10"), size=num_records)
+    )
+})
+
+df["period"] = df["transaction_date"].apply(lambda x: "P1" if x < pd.Timestamp("2023-01-04") else "P2")
+
 rev_tree = revenue_tree.RevenueTree(
-    df=df,
-    p1_index=df["transaction_date"] < "2023-06-01",
-    p2_index=df["transaction_date"] >= "2023-06-01",
+    df,
+    period_col="period",
+    p1_value = "P1",
+    p2_value = "P2",
 )
 ```
 
