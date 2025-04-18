@@ -153,6 +153,8 @@ Please see [here](https://pyretailscience.datasimply.co/) for full documentation
 - [API Reference](https://pyretailscience.datasimply.co/api/gain_loss/): Thorough documentation of every class
   and method.
 
+Documentation for specific versions is available at `https://pyretailscience.datasimply.co/<version>/` (e.g., `https://pyretailscience.datasimply.co/1.0.0/`).
+
 ## Contributing
 
 We welcome contributions from the community to enhance and improve PyRetailScience. To contribute, please follow these steps:

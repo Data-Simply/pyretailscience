@@ -52,6 +52,8 @@ nav:
       - Utils:
           - Date Utils: api/utils/date.md
           - Columns Utils: api/utils/columns.md
+  - Versions:
+      - versions.md
 
 theme:
   name: material
@@ -84,6 +86,13 @@ plugins:
   - autorefs
   - mkdocs-jupyter
   - macros
+  - mike:
+      alias_type: symlink
+      canonical_version: latest
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+
 
 markdown_extensions:
   - attr_list
@@ -114,6 +123,9 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/Data-Simply/pyretailscience
       name: PyRetailScience on GitHub
+  version:
+    provider: mike
+    default: latest
 
 copyright: |
   &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -

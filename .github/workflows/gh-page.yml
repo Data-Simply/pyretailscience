@@ -6,10 +6,18 @@ on:
     paths:
       - "**.md"
       - "mkdocs.yml"
+      - "docs/**"
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (default: "dev" for main branch)'
+        required: false
+        default: 'dev'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -26,6 +34,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -36,16 +46,37 @@ jobs:
           pip install uv==0.5.30
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
+      - name: Install Mike for versioning
+        run: uv run pip install mike
       - name: Install Dependencies
         run: uv sync
-      - name: Build docs
-        run: uv run mkdocs build
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "site/"
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Setup Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Set version variables
+        id: set-version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            # Strip refs/tags/ from the beginning if present
+            REF_NAME="${GITHUB_REF#refs/tags/}"
+            echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=latest" >> $GITHUB_ENV
+            echo "Building docs for release: ${REF_NAME}"
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+            echo "Building docs for specified version: ${{ github.event.inputs.version }}"
+          else
+            echo "VERSION=dev" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
+            echo "Building docs for dev branch"
+          fi
+      - name: Deploy with Mike
+        run: |
+          uv run mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+
+          # If this is a release, set default to latest
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            uv run mike set-default --push latest
+          fi
