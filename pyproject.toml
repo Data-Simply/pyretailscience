@@ -36,6 +36,7 @@ dev = [
     "tomlkit>=0.12,<1",
 ]
 docs = [
+    "mike>=1.1.2,<2",
     "mkdocs-jupyter>=0.24.6,<0.25",
     "mkdocs-material>=9.5.4,<10",
     "mkdocs>=1.5.3,<2",
