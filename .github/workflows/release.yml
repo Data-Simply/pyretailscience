@@ -43,11 +43,8 @@ jobs:
           pip install --upgrade pip
           pip install build
           pip install uv==0.5.30
-          uv sync
-      - name: Install Pre-commit in uv environment
-        run: uv run pip install pre-commit
-      - name: Install tomlkit in uv environment
-        run: uv run pip install tomlkit
+      - name: Install Dependencies
+        run: uv sync -G dev
       - name: Bump Version
         id: set_version
         run: |
@@ -158,9 +155,7 @@ jobs:
           pip install --upgrade pip
           pip install uv==0.5.30
       - name: Install Dependencies
-        run: |
-          uv sync
-          uv run pip install mike
+        run: uv sync -G docs
       - name: Setup Git User
         run: |
           git config --global user.name "github-actions[bot]"

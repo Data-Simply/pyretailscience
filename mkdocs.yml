@@ -52,6 +52,7 @@ nav:
       - Utils:
           - Date Utils: api/utils/date.md
           - Columns Utils: api/utils/columns.md
+          - Filter & Label Utils: api/utils/filter_and_label.md
   - Versions:
       - versions.md
 
@@ -85,7 +86,6 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
-  - macros
   - mike:
       alias_type: symlink
       canonical_version: latest

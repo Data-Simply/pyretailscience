@@ -46,10 +46,8 @@ jobs:
           pip install uv==0.5.30
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
-      - name: Install Mike for versioning
-        run: uv run pip install mike
       - name: Install Dependencies
-        run: uv sync
+        run: uv sync -G docs
       - name: Setup Git User
         run: |
           git config --global user.name "github-actions[bot]"

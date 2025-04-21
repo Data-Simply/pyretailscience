@@ -16,7 +16,6 @@ dependencies = [
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e6/e3/c4c8d473d6780ef1853d630d581f70d655b4f8d7553c6997958c283039a2/anyio-4.4.0.tar.gz", hash = "sha256:5aadc6a1bbb7cdb0bede386cac5e2940f5e2ff3aa20277e991cf028e0585ce94", size = 163930 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/a2/10639a79341f6c019dedc95bd48a4928eed9f1d1197f4c04f546fc7ae0ff/anyio-4.4.0-py3-none-any.whl", hash = "sha256:c1b2d8f46a8a812513012e1107cb0e68c17159a7a594208005a57dc776e1bdc7", size = 86780 },
 ]
 
 [[package]]
@@ -1699,7 +1698,7 @@ wheels = [
 
 [[package]]
 name = "pyretailscience"
-version = "0.14.0"
+version = "0.15.0"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
