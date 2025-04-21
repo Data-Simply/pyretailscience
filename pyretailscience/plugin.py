@@ -1,28 +1,31 @@
-"""Manages plugins for pyretailscience package."""
+"""Plugin management module for pyretailscience."""
 
-# flake8: noqa: ERA001 ANN001 ANN002 ANN003 ANN204 BLE001 ARG001 ANN201 ANN202 UP008
 import functools
+import inspect
+import traceback
 import types
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from importlib.metadata import entry_points
+from typing import Optional, Union
 
 
 class PluginManager:
     """Manages plugins for pyretailscience package."""
 
-    _instance = None
+    _instance: Optional["PluginManager"] = None
 
-    def __new__(cls):
+    def __new__(cls: type["PluginManager"]) -> "PluginManager":
         """Singleton pattern for plugin manager."""
-        # print(f"==>> cls: {cls}")
         if cls._instance is None:
-            cls._instance = super(PluginManager, cls).__new__(cls)
-            cls._instance._classes = {}  # Store methods by class
-            cls._instance._registered_classes = set()  # Track registered classes
-            cls._instance._plugin_loaded = False  # Track if plugins are loaded
+            cls._instance = super().__new__(cls)
+            cls._instance._classes = {}
+            cls._instance._functions = {}
+            cls._instance._registered_classes = set()
+            cls._instance._registered_functions = set()
+            cls._instance._plugin_loaded = False
         return cls._instance
 
-    def register_method(self, target_class, name: str, method: Callable) -> None:
+    def register_method(self, target_class: type, name: str, method: Callable) -> None:
         """Register a method with the plugin manager for a specific class.
 
         Args:
@@ -31,78 +34,185 @@ class PluginManager:
             method: Method to register
         """
         class_name = target_class.__name__
-        if class_name not in self._classes:
-            self._classes[class_name] = {}
-        self._classes[class_name][name] = method
+        self._classes.setdefault(class_name, {})[name] = method
 
-    def extensible(self, cls):
-        """Class decorator to make a class extensible via plugins."""
+    def register_function_extension(self, target_function: Callable, name: str, method: Callable) -> None:
+        """Register an extension method for a standalone function.
+
+        Args:
+            target_function: Function to extend
+            name: Extension method name
+            method: Method to register
+        """
+        function_name = target_function.__name__
+        self._functions.setdefault(function_name, {})[name] = method
+
+    def extensible(self, cls_or_func: type | Callable) -> type | Callable:
+        """Decorator to make a class or function extensible via plugins."""
+        if inspect.isclass(cls_or_func):
+            return self._make_class_extensible(cls_or_func)
+        return self._make_function_extensible(cls_or_func)
+
+    def _make_class_extensible(self, cls: type) -> type:
+        """Make a class extensible via plugins."""
         original_init = cls.__init__
 
         @functools.wraps(original_init)
-        def wrapped_init(self, *args, **kwargs):
+        def wrapped_init(self, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN202
             original_init(self, *args, **kwargs)
-            # Load plugins on first initialization if not loaded yet
-            plugin_mgr = plugin_manager  # Get the singleton instance
+            plugin_mgr = plugin_manager
             if not plugin_mgr._plugin_loaded:
                 plugin_mgr._load_all_plugins()
-            # Apply plugins to this instance
             plugin_mgr.apply_methods_to_instance(self)
 
         cls.__init__ = wrapped_init
         self._registered_classes.add(cls.__name__)
         return cls
 
-    def _load_all_plugins(self):
+    def _make_function_extensible(self, func: Callable) -> Callable:
+        """Make a function extensible via plugins."""
+
+        @functools.wraps(func)
+        def wrapped_func(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+            if not plugin_manager._plugin_loaded:
+                plugin_manager._load_all_plugins()
+
+            result = func(*args, **kwargs)
+
+            function_name = func.__name__
+            if function_name in self._functions:
+                return ExtensibleFunctionResult(result, function_name)
+            return result
+
+        self._registered_functions.add(func.__name__)
+        return wrapped_func
+
+    def _load_all_plugins(self) -> None:
         """Load all plugins from entry points once."""
         try:
             for entry_point in entry_points(group="pyretailscience.plugins"):
                 plugin_register_fn = entry_point.load()
                 plugin_register_fn(self)
             self._plugin_loaded = True
-        except Exception:
-            # print(f"Error loading plugins: {e}")
-            import traceback
-
+        except Exception as e:  # noqa: BLE001
+            print(f"Error loading plugins: {e}")  # noqa: T201
             traceback.print_exc()
 
-    def apply_methods_to_instance(self, instance):
+    def apply_methods_to_instance(self, instance: object) -> None:
         """Apply all registered methods to an instance."""
         class_name = instance.__class__.__name__
-        if class_name in self._classes:
-            for name, method in self._classes[class_name].items():
-                # Create a bound method and attach it directly to the instance
-                # We need to capture the method in a closure
-                def create_method(method_func):
-                    def bound_method(self, *args, **kwargs):
-                        return method_func(*args, **kwargs)
+        methods = self._classes.get(class_name, {})
+        for name, method in methods.items():
+            bound = types.MethodType(method, instance)
+            setattr(instance, name, bound)
 
-                    return bound_method
+    def apply_extensions_to_function_result(self, wrapper: object, function_name: str) -> None:
+        """Apply registered extensions to a function result wrapper."""
+        for name, method in self._functions.get(function_name, {}).items():
 
-                bound = types.MethodType(create_method(method), instance)
-                setattr(instance, name, bound)
+            def create_extension(wrap: object, extension_method: Callable[..., None], method_name: str) -> None:
+                def extension_wrapper(*args: tuple, **kwargs: dict) -> object:
+                    return extension_method(wrap._result, *args, **kwargs)
 
-    def discover_plugins(self, instance) -> None:
-        """Discover and load plugins from entry points.
+                extension_wrapper.__name__ = method_name
+                return extension_wrapper
 
-        Args:
-            instance: Instance to extend with plugin methods
-        """
-        # print("in discover_plugins")
-        # print(f"==>> instance: {instance}")
-        try:
-            for entry_point in entry_points(group="pyretailscience.plugins"):
-                plugin_register_fn = entry_point.load()
-                plugin_register_fn(self, instance)
+            extension = create_extension(wrapper, method, name)
+            setattr(wrapper, name, extension)
 
-            # Apply all registered methods for this class to the instance
-            self.apply_methods_to_instance(instance)
-        except Exception:
-            # print(f"Error loading plugins: {e}")
-            import traceback
-
-            traceback.print_exc()
+    def discover_plugins(self) -> None:
+        """Discover and load plugins from entry points."""
+        self._load_all_plugins()
 
 
-# Global plugin manager instance
+class ExtensibleFunctionResult:
+    """Wrapper for function results that can have extension methods."""
+
+    def __init__(self, result: object, function_name: str) -> None:
+        """Initialize a FunctionResultWrapper."""
+        self._result = result
+        self._function_name = function_name
+        plugin_manager.apply_extensions_to_function_result(self, function_name)
+
+    def __getattr__(self, name: str) -> object:
+        """Delegate attribute access to the wrapped result."""
+        if hasattr(self._result, name):
+            return getattr(self._result, name)
+        type_name = type(self._result).__name__
+        message = f"'{type_name}' object has no attribute '{name}'"
+        raise AttributeError(message)
+
+    def __repr__(self) -> str:
+        """Represent the wrapper as the wrapped result."""
+        return repr(self._result)
+
+    def __str__(self) -> str:
+        """Convert the wrapper to string as the wrapped result."""
+        return str(self._result)
+
+    def __iter__(self) -> Union[None, "Iterator"]:
+        """Return an iterator if the result supports iteration."""
+        if hasattr(self._result, "__iter__"):
+            return iter(self._result)
+        type_name = type(self._result).__name__
+        message = f"'{type_name}' object is not iterable"
+        raise TypeError(message)
+
+    def __getitem__(self, key: object) -> object:
+        """Support indexing if the wrapped result supports it."""
+        return self._result[key]
+
+    def __len__(self) -> int:
+        """Return the length of the wrapped result if it has one."""
+        return len(self._result)
+
+    def __add__(self, other: object) -> object:
+        """Support addition if the wrapped result supports it."""
+        if isinstance(other, ExtensibleFunctionResult):
+            return self._result + other._result
+        return self._result + other
+
+    def __radd__(self, other: object) -> object:
+        """Support right addition if the wrapped result supports it."""
+        return other + self._result
+
+    def __mul__(self, other: object) -> object:
+        """Support multiplication if the wrapped result supports it."""
+        return self._result * other
+
+    def __rmul__(self, other: object) -> object:
+        """Support right multiplication if the wrapped result supports it."""
+        return other * self._result
+
+    def __eq__(self, other: object) -> bool:
+        """Support equality comparison."""
+        if isinstance(other, ExtensibleFunctionResult):
+            return self._result == other._result
+        return self._result == other
+
+    def __lt__(self, other: object) -> bool:
+        """Support less than comparison."""
+        if isinstance(other, ExtensibleFunctionResult):
+            return self._result < other._result
+        return self._result < other
+
+    def __gt__(self, other: object) -> bool:
+        """Support greater than comparison."""
+        if isinstance(other, ExtensibleFunctionResult):
+            return self._result > other._result
+        return self._result > other
+
+    def __le__(self, other: object) -> bool:
+        """Support less than or equal comparison."""
+        if isinstance(other, ExtensibleFunctionResult):
+            return self._result <= other._result
+        return self._result <= other
+
+    def __ge__(self, other: object) -> bool:
+        """Support greater than or equal comparison."""
+        if isinstance(other, ExtensibleFunctionResult):
+            return self._result >= other._result
+        return self._result >= other
+
+
 plugin_manager = PluginManager()

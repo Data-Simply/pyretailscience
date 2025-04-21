@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from pyretailscience.options import get_option
+from pyretailscience.plugin import plugin_manager
 
 
 def filter_and_label_by_periods(
@@ -53,6 +54,7 @@ def filter_and_label_by_periods(
     return transactions.filter(conditions).mutate(period_name=ibis.cases(*branches))
 
 
+@plugin_manager.extensible
 def find_overlapping_periods(
     start_date: datetime | str,
     end_date: datetime | str,
