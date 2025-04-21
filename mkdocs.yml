@@ -83,7 +83,6 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
-  - macros
 
 markdown_extensions:
   - attr_list
