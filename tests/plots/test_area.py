@@ -18,7 +18,7 @@ RNG = np.random.default_rng(42)
 def sample_dataframe():
     """A sample dataframe for Jeans sales data."""
     data = {
-        "transaction_date": np.repeat(pd.date_range("2023-01-01", periods=PERIODS, freq="M"), 3),
+        "transaction_date": np.repeat(pd.date_range("2023-01-01", periods=PERIODS, freq="ME"), 3),
         "unit_spend": RNG.integers(1, 6, size=3 * PERIODS),
         "category": ["Jeans", "Shoes", "Dresses"] * PERIODS,
     }

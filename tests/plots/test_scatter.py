@@ -18,7 +18,7 @@ RNG = np.random.default_rng(42)
 def sample_sales_dataframe():
     """A sample dataframe for Sales, Profit, and Expenses data."""
     data = {
-        "date": pd.date_range("2023-01-01", periods=PERIODS, freq="M"),
+        "date": pd.date_range("2023-01-01", periods=PERIODS, freq="ME"),
         "sales": RNG.integers(1000, 5000, size=PERIODS),
         "profit": RNG.integers(200, 1000, size=PERIODS),
         "expenses": RNG.integers(500, 3000, size=PERIODS),
