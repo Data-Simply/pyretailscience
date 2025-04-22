@@ -89,11 +89,18 @@ class PluginManager:
 
     def _load_all_plugins(self) -> None:
         """Load all plugins from entry points once."""
+        failed_plugins = []
         try:
             for entry_point in entry_points(group="pyretailscience.plugins"):
-                plugin_register_fn = entry_point.load()
-                plugin_register_fn(self)
+                try:
+                    plugin_register_fn = entry_point.load()
+                    plugin_register_fn(self)
+                except Exception as plugin_error:  # noqa: BLE001
+                    failed_plugins.append((entry_point.name, str(plugin_error)))
+                    traceback.print_exc()
             self._plugin_loaded = True
+            if failed_plugins:
+                print(f"Warning: {len(failed_plugins)} plugins failed to load: {failed_plugins}")  # noqa: T201
         except Exception as e:  # noqa: BLE001
             print(f"Error loading plugins: {e}")  # noqa: T201
             traceback.print_exc()
@@ -119,10 +126,6 @@ class PluginManager:
 
             extension = create_extension(wrapper, method, name)
             setattr(wrapper, name, extension)
-
-    def discover_plugins(self) -> None:
-        """Discover and load plugins from entry points."""
-        self._load_all_plugins()
 
 
 class ExtensibleFunctionResult:
@@ -160,10 +163,18 @@ class ExtensibleFunctionResult:
 
     def __getitem__(self, key: object) -> object:
         """Support indexing if the wrapped result supports it."""
+        if not hasattr(self._result, "__getitem__"):
+            type_name = type(self._result).__name__
+            message = f"'{type_name}' object does not support indexing"
+            raise TypeError(message)
         return self._result[key]
 
     def __len__(self) -> int:
         """Return the length of the wrapped result if it has one."""
+        if not hasattr(self._result, "__len__"):
+            type_name = type(self._result).__name__
+            message = f"'{type_name}' object has no len()"
+            raise TypeError(message)
         return len(self._result)
 
     def __add__(self, other: object) -> object:
