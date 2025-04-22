@@ -48,7 +48,7 @@ pip install git+https://github.com/Data-Simply/pyretailscience.git
 
 ### Gains Loss Analysis
 
-Here is an excerpt from the gain loss analysis example [notebook](https://pyretailscience.datasimply.co/examples/gain_loss/)
+Here is an excerpt from the gain loss analysis example [notebook](https://pyretailscience.datasimply.co/latest/examples/gain_loss/)
 
 ```python
 from pyretailscience.analysis.gain_loss import GainLoss
@@ -84,16 +84,19 @@ plt.show()
 
 ### Cross Shop Analysis
 
-Here is an excerpt from the cross shop analysis example [notebook](https://pyretailscience.datasimply.co/examples/cross_shop/)
+Here is an excerpt from the cross shop analysis example [notebook](https://pyretailscience.datasimply.co/latest/examples/cross_shop/)
 
 ```python
 from pyretailscience.analysis import cross_shop
 
 cs = cross_shop.CrossShop(
     df,
-    group_1_idx=df["category_1_name"] == "Jeans",
-    group_2_idx=df["category_1_name"] == "Shoes",
-    group_3_idx=df["category_1_name"] == "Dresses",
+    group_1_col="category_name",
+    group_1_val="Jeans",
+    group_2_col="category_name",
+    group_2_val="Shoes",
+    group_3_col="category_name",
+    group_3_val="Dresses",
     labels=["Jeans", "Shoes", "Dresses"],
 )
 cs.plot(
@@ -112,7 +115,7 @@ display(cs.cross_shop_table_df)
 
 ### Customer Retention Analysis
 
-Here is an excerpt from the customer retention analysis example [notebook](https://pyretailscience.datasimply.co/examples/retention/)
+Here is an excerpt from the customer retention analysis example [notebook](https://pyretailscience.datasimply.co/latest/examples/retention/)
 
 ```python
 ax = dbp.plot(
@@ -144,14 +147,16 @@ plt.show()
 
 ## Documentation
 
-Please see [here](https://pyretailscience.datasimply.co/) for full documentation, which includes:
+Please see [here](https://pyretailscience.datasimply.co/latest/) for full documentation, which includes:
 
-- [Analysis Modules](https://pyretailscience.datasimply.co/analysis_modules/): Overview of the framework and the
+- [Analysis Modules](https://pyretailscience.datasimply.co/latest/analysis_modules/): Overview of the framework and the
   structure of the docs.
-- [Examples](https://pyretailscience.datasimply.co/examples/retention/): If you're looking to build something
+- [Examples](https://pyretailscience.datasimply.co/latest/examples/retention/): If you're looking to build something
   specific or are more of a hands-on learner, check out our examples. This is the best place to get started.
-- [API Reference](https://pyretailscience.datasimply.co/api/gain_loss/): Thorough documentation of every class
+- [API Reference](https://pyretailscience.datasimply.co/latest/api/gain_loss/): Thorough documentation of every class
   and method.
+
+Documentation for specific versions is available at `https://pyretailscience.datasimply.co/<version>/` (e.g., `https://pyretailscience.datasimply.co/1.0.0/`).
 
 ## Contributing
 

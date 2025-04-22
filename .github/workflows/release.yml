@@ -27,9 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI_COMMIT_MESSAGE: Continuous Integration Version Bump ${{ inputs.release }}
+    outputs:
+      RELEASE_TAG: ${{ steps.set_version.outputs.RELEASE_TAG }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -39,12 +43,10 @@ jobs:
           pip install --upgrade pip
           pip install build
           pip install uv==0.5.30
-          uv sync
-      - name: Install Pre-commit in uv environment
-        run: uv run pip install pre-commit
-      - name: Install tomlkit in uv environment
-        run: uv run pip install tomlkit
+      - name: Install Dependencies
+        run: uv sync -G dev
       - name: Bump Version
+        id: set_version
         run: |
           uv run python - <<EOF
           from tomlkit import parse, dumps
@@ -70,7 +72,9 @@ jobs:
           print(f"New Version: {new_version}")
           EOF
 
-          echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile("pyproject.toml").read()["project"]["version"])')" >> $GITHUB_ENV
+          NEW_VERSION=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile("pyproject.toml").read()["project"]["version"])')
+          echo "RELEASE_TAG=$NEW_VERSION" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$NEW_VERSION" >> $GITHUB_OUTPUT  # Set output variable
       - name: Build package
         run: python -m build
       - uses: actions/upload-artifact@v4
@@ -95,7 +99,7 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           script: |
             if (!process.env.RELEASE_TAG) {
-              core.setFailed("The environment variable RELEASE_TAG is not defined.")
+              core.setFailed("The environment variable RELEASE_TAG is not defined.");
 
               return;
             }
@@ -132,3 +136,32 @@ jobs:
           path: dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  deploy-docs:
+    name: Deploy versioned documentation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv Package
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+      - name: Install Dependencies
+        run: uv sync -G docs
+      - name: Setup Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Deploy Documentation
+        run: |
+          echo "Deploying documentation for version ${{ needs.build.outputs.RELEASE_TAG }}"
+          uv run mike deploy --push --update-aliases ${{ needs.build.outputs.RELEASE_TAG }} latest
+          uv run mike set-default --push latest
