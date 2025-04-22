@@ -34,10 +34,12 @@ import ibis
 import pandas as pd
 
 from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.plugin import plugin_manager
 from pyretailscience.style import graph_utils as gu
 from pyretailscience.style.tailwind import COLORS
 
 
+@plugin_manager.extensible
 def calc_tree_kpis(
     df: pd.DataFrame,
     p1_index: list[bool] | pd.Series,
@@ -203,6 +205,7 @@ def calc_tree_kpis(
     return df[cols]
 
 
+@plugin_manager.extensible
 class RevenueTree:
     """Revenue Tree Analysis Class."""
 
