@@ -72,7 +72,7 @@ jobs:
           fi
       - name: Deploy with Mike
         run: |
-          uv run mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+          uv run mike deploy --push ${{ env.VERSION }}
 
           # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
