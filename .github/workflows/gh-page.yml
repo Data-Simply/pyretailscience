@@ -76,18 +76,15 @@ jobs:
         run: |
           uv run mkdocs build -d site
 
-      - name: Deploy with Mike (Release)
-        if: github.event_name == 'release'
+      - name: Deploy Documentation
         run: |
-          echo "Deploying release version ${{ env.VERSION }}"
-          # For releases, deploy with version and create latest alias
-          uv run mike deploy --push ${{ env.VERSION }}
-          uv run mike alias --push ${{ env.VERSION }} latest
-          uv run mike set-default --push latest
-
-      - name: Deploy with Mike (Non-Release)
-        if: github.event_name != 'release'
-        run: |
-          echo "Deploying with Mike using VERSION=${{ env.VERSION }} only"
-          # For non-releases, just deploy the version
-          uv run mike deploy --push ${{ env.VERSION }}
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            # For releases, use a different title and create a latest alias
+            echo "Deploying release version ${{ env.VERSION }}"
+            uv run mike deploy --update-aliases --push ${{ env.VERSION }} latest
+            uv run mike set-default --push latest
+          else
+            # For non-releases, just deploy with a commit message
+            echo "Deploying development version ${{ env.VERSION }}"
+            uv run mike deploy --title "Development version" --push ${{ env.VERSION }}
+          fi
