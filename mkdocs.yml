@@ -85,7 +85,11 @@ plugins:
   - search
   - mkdocstrings
   - autorefs
-  - mkdocs-jupyter
+  - mkdocs-jupyter:
+      include_source: True
+      ignore_h1_titles: True
+      execute: False
+      allow_errors: False
   - mike:
       alias_type: symlink
       canonical_version: latest

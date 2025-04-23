@@ -15,13 +15,16 @@ on:
         description: 'Version to deploy (default: "dev" for main branch)'
         required: false
         default: 'dev'
+
 permissions:
   contents: write
   pages: write
   id-token: write
+
 concurrency:
   group: "pages"
   cancel-in-progress: false
+
 jobs:
   docs:
     environment:
@@ -67,10 +70,16 @@ jobs:
             echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
-      - name: Deploy with Mike
+      - name: Build docs with Mike
         run: |
-          uv run mike deploy --push ${{ env.VERSION }}
+          # First build the site
+          uv run mike deploy --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+
           # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
             uv run mike set-default --push latest
           fi
+
+      - name: Debug - List site directory
+        run: |
+          find site -type f | sort
