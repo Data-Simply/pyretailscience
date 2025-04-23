@@ -80,19 +80,24 @@ jobs:
           EXISTING=$(uv run mike list || echo "")
           echo "$EXISTING"
 
-          echo "== Deploying/updating version: ${{ env.VERSION }} =="
-          uv run mike deploy --update --push ${{ env.VERSION }}
+          if echo "$EXISTING" | grep -q "^${VERSION} "; then
+            echo "== Updating existing version: ${VERSION} =="
+            uv run mike deploy --update --push "${VERSION}"
+          else
+            echo "== Deploying new version: ${VERSION} =="
+            uv run mike deploy --push "${VERSION}"
+          fi
 
           if [[ "${{ github.event_name }}" == "release" ]]; then
             CURRENT_ALIAS=$(echo "$EXISTING" | grep -E '\slatest$' | awk '{print $1}')
             echo "Current version with alias 'latest': $CURRENT_ALIAS"
 
-            if [[ "$CURRENT_ALIAS" != "${{ env.VERSION }}" ]]; then
-              echo "== Updating alias: latest → ${{ env.VERSION }} =="
-              uv run mike alias --push ${{ env.VERSION }} latest
+            if [[ "$CURRENT_ALIAS" != "${VERSION}" ]]; then
+              echo "== Updating alias: latest → ${VERSION} =="
+              uv run mike alias --push "${VERSION}" latest
               uv run mike set-default --push latest
             else
-              echo "== Alias 'latest' already set to ${{ env.VERSION }}, skipping re-aliasing =="
+              echo "== Alias 'latest' already set to ${VERSION}, skipping re-aliasing =="
             fi
           fi
 
