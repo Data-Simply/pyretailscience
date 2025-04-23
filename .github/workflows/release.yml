@@ -163,16 +163,25 @@ jobs:
       - name: Deploy Documentation
         run: |
           echo "Deploying documentation for version ${{ needs.build.outputs.RELEASE_TAG }}"
-          # First, deploy the new version
+          # Check if the version exists and delete it
+          if uv run mike list | grep -q "${{ needs.build.outputs.RELEASE_TAG }}"; then
+            echo "Version ${{ needs.build.outputs.RELEASE_TAG }} already exists, deleting it"
+            uv run mike delete --push ${{ needs.build.outputs.RELEASE_TAG }}
+          fi
+
+          # Check if latest alias exists and delete it
+          if uv run mike list | grep -q "latest"; then
+            echo "Latest alias already exists, deleting it"
+            uv run mike delete --push latest
+          fi
+
+          # Deploy the new version
           uv run mike deploy --push ${{ needs.build.outputs.RELEASE_TAG }}
 
-          # Then update the 'latest' alias (only if it's different from the version tag)
+          # Create latest alias if different from version tag
           if [[ "${{ needs.build.outputs.RELEASE_TAG }}" != "latest" ]]; then
-            # Remove existing latest alias if it exists
-            uv run mike list | grep -q "latest" && uv run mike delete --push latest || echo "No latest alias to delete"
-            # Create the latest alias
             uv run mike alias --push ${{ needs.build.outputs.RELEASE_TAG }} latest
           fi
 
-          # Set the default
+          # Set default
           uv run mike set-default --push latest
