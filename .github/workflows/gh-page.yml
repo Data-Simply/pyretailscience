@@ -52,40 +52,24 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
       - name: Set version variables
         id: set-version
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            # Strip refs/tags/ from the beginning if present
             REF_NAME="${GITHUB_REF#refs/tags/}"
             echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
-            echo "Building docs for release: ${REF_NAME}"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-            echo "Building docs for specified version: ${{ github.event.inputs.version }}"
           else
             echo "VERSION=dev" >> $GITHUB_ENV
-            echo "Building docs for dev branch"
           fi
-
-      - name: Debug Variables
-        run: |
-          echo "VERSION = ${{ env.VERSION }}"
 
       - name: Build docs with MkDocs
         run: |
           uv run mkdocs build -d site
 
-      - name: Deploy Documentation
+      - name: Deploy with Mike (Version Only)
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            # For releases, use a different title and create a latest alias
-            echo "Deploying release version ${{ env.VERSION }}"
-            uv run mike deploy --update-aliases --push ${{ env.VERSION }} latest
-            uv run mike set-default --push latest
-          else
-            # For non-releases, just deploy with a commit message
-            echo "Deploying development version ${{ env.VERSION }}"
-            uv run mike deploy --title "Development version" --push ${{ env.VERSION }}
-          fi
+          echo "Deploying version ${{ env.VERSION }}"
+          # Use the --title flag instead of a second positional argument
+          uv run mike deploy ${{ env.VERSION }} --title "${{ env.VERSION }}" --push
