@@ -63,11 +63,9 @@ jobs:
             echo "Building docs for release: ${REF_NAME}"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-            echo "VERSION_ALIAS=${{ github.event.inputs.version }}" >> $GITHUB_ENV
             echo "Building docs for specified version: ${{ github.event.inputs.version }}"
           else
             echo "VERSION=dev" >> $GITHUB_ENV
-            echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
 
@@ -82,17 +80,13 @@ jobs:
 
       - name: Deploy with Mike
         run: |
-          echo "Deploying with Mike using VERSION=${{ env.VERSION }} and VERSION_ALIAS=${{ env.VERSION_ALIAS }}"
-          uv run mike deploy --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
-
-          # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "Deploying with Mike using VERSION=${{ env.VERSION }} and VERSION_ALIAS=${{ env.VERSION_ALIAS }}"
+            uv run mike deploy --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+
             echo "Setting default to latest"
             uv run mike set-default --push latest
+          else
+            echo "Deploying with Mike using VERSION=${{ env.VERSION }} only"
+            uv run mike deploy --push ${{ env.VERSION }}
           fi
-
-      - name: Create latest alias if needed
-        if: ${{ env.VERSION_ALIAS != 'latest' && github.event_name != 'release' }}
-        run: |
-          echo "Creating latest alias for version ${{ env.VERSION }}"
-          uv run mike alias ${{ env.VERSION }} latest --push
