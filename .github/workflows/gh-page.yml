@@ -72,9 +72,27 @@ jobs:
           fi
       - name: Deploy with Mike
         run: |
-          uv run mike deploy --push ${{ env.VERSION }}
+          echo "Deploying with Mike using VERSION=${{ env.VERSION }} and VERSION_ALIAS=${{ env.VERSION_ALIAS }}"
+          uv run mike deploy --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
 
           # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
             uv run mike set-default --push latest
           fi
+
+          echo "Ensuring latest alias exists"
+          uv run mike alias ${{ env.VERSION }} latest --push
+      # Setup Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      # Upload artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: './site'
+
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
