@@ -91,5 +91,8 @@ jobs:
             uv run mike set-default --push latest
           fi
 
-          echo "Ensuring latest alias exists"
+      - name: Create latest alias if needed
+        if: ${{ env.VERSION_ALIAS != 'latest' && github.event_name != 'release' }}
+        run: |
+          echo "Creating latest alias for version ${{ env.VERSION }}"
           uv run mike alias ${{ env.VERSION }} latest --push
