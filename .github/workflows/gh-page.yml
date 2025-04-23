@@ -86,17 +86,17 @@ jobs:
             uv run mike delete --push ${{ env.VERSION }}
           fi
 
-          # Check if the alias we want to use already exists
-          if [[ "${{ env.VERSION }}" != "${{ env.VERSION_ALIAS }}" ]] && uv run mike list | grep -q "${{ env.VERSION_ALIAS }}"; then
-            echo "Alias ${{ env.VERSION_ALIAS }} already exists, removing it first"
-            uv run mike delete --push ${{ env.VERSION_ALIAS }}
-          fi
-
-          # Deploy the version first
+          # Deploy the version
           uv run mike deploy --push ${{ env.VERSION }}
 
-          # Then create/update the alias if needed
+          # Only create alias if it's different from the version
           if [[ "${{ env.VERSION }}" != "${{ env.VERSION_ALIAS }}" ]]; then
+            # Check if the alias exists before trying to create it
+            if uv run mike list | grep -q "${{ env.VERSION_ALIAS }}"; then
+              echo "Alias ${{ env.VERSION_ALIAS }} already exists, removing it first"
+              uv run mike delete --push ${{ env.VERSION_ALIAS }}
+            fi
+            # Now create the alias
             uv run mike alias --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
           fi
 
