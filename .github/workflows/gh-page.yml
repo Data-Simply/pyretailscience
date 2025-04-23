@@ -15,16 +15,13 @@ on:
         description: 'Version to deploy (default: "dev" for main branch)'
         required: false
         default: 'dev'
-
 permissions:
   contents: write
   pages: write
   id-token: write
-
 concurrency:
   group: "pages"
   cancel-in-progress: false
-
 jobs:
   docs:
     environment:
@@ -56,20 +53,24 @@ jobs:
         id: set-version
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
+            # Strip refs/tags/ from the beginning if present
             REF_NAME="${GITHUB_REF#refs/tags/}"
             echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=latest" >> $GITHUB_ENV
+            echo "Building docs for release: ${REF_NAME}"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+            echo "Building docs for specified version: ${{ github.event.inputs.version }}"
           else
             echo "VERSION=dev" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
+            echo "Building docs for dev branch"
           fi
-
-      - name: Build docs with MkDocs
+      - name: Deploy with Mike
         run: |
-          uv run mkdocs build -d site
-
-      - name: Deploy with Mike (Version Only)
-        run: |
-          echo "Deploying version ${{ env.VERSION }}"
-          # Use the --title flag instead of a second positional argument
-          uv run mike deploy ${{ env.VERSION }} --title "${{ env.VERSION }}" --push
+          uv run mike deploy --push ${{ env.VERSION }}
+          # If this is a release, set default to latest
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            uv run mike set-default --push latest
+          fi
