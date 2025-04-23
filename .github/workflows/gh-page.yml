@@ -63,7 +63,6 @@ jobs:
         id: set-version
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            # Strip refs/tags/ from the beginning if present
             REF_NAME="${GITHUB_REF#refs/tags/}"
             echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
             echo "Building docs for release: ${REF_NAME}"
@@ -78,13 +77,14 @@ jobs:
       - name: Build docs with Mike
         run: |
           echo "== Existing Versions and Aliases =="
-          uv run mike list
+          EXISTING=$(uv run mike list || echo "")
+          echo "$EXISTING"
 
           echo "== Deploying/updating version: ${{ env.VERSION }} =="
           uv run mike deploy --update --push ${{ env.VERSION }}
 
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            CURRENT_ALIAS=$(uv run mike list | grep -E '\slatest$' | awk '{print $1}')
+            CURRENT_ALIAS=$(echo "$EXISTING" | grep -E '\slatest$' | awk '{print $1}')
             echo "Current version with alias 'latest': $CURRENT_ALIAS"
 
             if [[ "$CURRENT_ALIAS" != "${{ env.VERSION }}" ]]; then
