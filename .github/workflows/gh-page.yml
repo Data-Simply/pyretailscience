@@ -70,7 +70,7 @@ jobs:
       - name: Build docs with Mike
         run: |
           # First build the site - just deploy version
-          uv run mike deploy --push ${{ env.VERSION }}
+          uv run mike deploy --update --push ${{ env.VERSION }}
 
           # If this is a release, add the latest alias and set as default
           if [[ "${{ github.event_name }}" == "release" ]]; then
