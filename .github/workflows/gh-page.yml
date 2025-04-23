@@ -70,6 +70,16 @@ jobs:
             echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
+
+      - name: Debug Variables
+        run: |
+          echo "VERSION = ${{ env.VERSION }}"
+          echo "VERSION_ALIAS = ${{ env.VERSION_ALIAS }}"
+
+      - name: Build docs with MkDocs
+        run: |
+          uv run mkdocs build -d site
+
       - name: Deploy with Mike
         run: |
           echo "Deploying with Mike using VERSION=${{ env.VERSION }} and VERSION_ALIAS=${{ env.VERSION_ALIAS }}"
@@ -77,22 +87,9 @@ jobs:
 
           # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "Setting default to latest"
             uv run mike set-default --push latest
           fi
 
           echo "Ensuring latest alias exists"
           uv run mike alias ${{ env.VERSION }} latest --push
-      # Setup Pages
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      # Upload artifact
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: './site'
-
-      # Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2
