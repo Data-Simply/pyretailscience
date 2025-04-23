@@ -77,10 +77,30 @@ jobs:
             echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
+
       - name: Deploy with Mike
         run: |
-          uv run mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+          # Check if the version we're trying to deploy already exists
+          if uv run mike list | grep -q "${{ env.VERSION }}"; then
+            echo "Version ${{ env.VERSION }} already exists, updating it"
+            uv run mike delete --push ${{ env.VERSION }}
+          fi
+
+          # Check if the alias we want to use already exists
+          if [[ "${{ env.VERSION }}" != "${{ env.VERSION_ALIAS }}" ]] && uv run mike list | grep -q "${{ env.VERSION_ALIAS }}"; then
+            echo "Alias ${{ env.VERSION_ALIAS }} already exists, removing it first"
+            uv run mike delete --push ${{ env.VERSION_ALIAS }}
+          fi
+
+          # Deploy the version first
+          uv run mike deploy --push ${{ env.VERSION }}
+
+          # Then create/update the alias if needed
+          if [[ "${{ env.VERSION }}" != "${{ env.VERSION_ALIAS }}" ]]; then
+            uv run mike alias --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+          fi
+
           # If this is a release, set default to latest
-          if [[ "${{ github.event_name }}" == "release" ]]; then
+          if [[ "${{ github.event_name }}" == "release" || "${{ env.VERSION_ALIAS }}" == "latest" ]]; then
             uv run mike set-default --push latest
           fi

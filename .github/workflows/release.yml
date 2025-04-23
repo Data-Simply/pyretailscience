@@ -163,5 +163,9 @@ jobs:
       - name: Deploy Documentation
         run: |
           echo "Deploying documentation for version ${{ needs.build.outputs.RELEASE_TAG }}"
-          uv run mike deploy --push --update-aliases ${{ needs.build.outputs.RELEASE_TAG }} latest
+          # First, remove any existing alias if it exists to avoid duplicate errors
+          uv run mike list | grep -q "latest" && uv run mike delete --push latest || echo "No latest alias to delete"
+          # Deploy the new version and update the 'latest' alias
+          uv run mike deploy --push ${{ needs.build.outputs.RELEASE_TAG }}
+          uv run mike alias --push ${{ needs.build.outputs.RELEASE_TAG }} latest
           uv run mike set-default --push latest
