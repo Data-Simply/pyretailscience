@@ -63,44 +63,24 @@ jobs:
         id: set-version
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
+            # Strip refs/tags/ from the beginning if present
             REF_NAME="${GITHUB_REF#refs/tags/}"
             echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=latest" >> $GITHUB_ENV
             echo "Building docs for release: ${REF_NAME}"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=${{ github.event.inputs.version }}" >> $GITHUB_ENV
             echo "Building docs for specified version: ${{ github.event.inputs.version }}"
           else
             echo "VERSION=dev" >> $GITHUB_ENV
+            echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
-
-      - name: Build docs with Mike
+      - name: Deploy with Mike
         run: |
-          echo "== Existing Versions and Aliases =="
-          EXISTING=$(uv run mike list || echo "")
-          echo "$EXISTING"
-
-          if echo "$EXISTING" | grep -q "^${VERSION} "; then
-            echo "== Updating existing version: ${VERSION} =="
-            uv run mike deploy --update --push "${VERSION}"
-          else
-            echo "== Deploying new version: ${VERSION} =="
-            uv run mike deploy --push "${VERSION}"
-          fi
-
+          uv run mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+          # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            CURRENT_ALIAS=$(echo "$EXISTING" | grep -E '\slatest$' | awk '{print $1}')
-            echo "Current version with alias 'latest': $CURRENT_ALIAS"
-
-            if [[ "$CURRENT_ALIAS" != "${VERSION}" ]]; then
-              echo "== Updating alias: latest → ${VERSION} =="
-              uv run mike alias --push "${VERSION}" latest
-              uv run mike set-default --push latest
-            else
-              echo "== Alias 'latest' already set to ${VERSION}, skipping re-aliasing =="
-            fi
+            uv run mike set-default --push latest
           fi
-
-      - name: Debug - List site directory
-        run: |
-          find site -type f | sort

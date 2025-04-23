@@ -85,12 +85,9 @@ plugins:
   - search
   - mkdocstrings
   - autorefs
-  - mkdocs-jupyter:
-      include_source: True
-      ignore_h1_titles: True
-      execute: False
-      allow_errors: False
+  - mkdocs-jupyter
   - mike:
+      alias_type: symlink
       canonical_version: latest
       version_selector: true
       css_dir: css
