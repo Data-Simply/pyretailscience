@@ -59,24 +59,22 @@ jobs:
             # Strip refs/tags/ from the beginning if present
             REF_NAME="${GITHUB_REF#refs/tags/}"
             echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
-            echo "VERSION_ALIAS=latest" >> $GITHUB_ENV
             echo "Building docs for release: ${REF_NAME}"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-            echo "VERSION_ALIAS=${{ github.event.inputs.version }}" >> $GITHUB_ENV
             echo "Building docs for specified version: ${{ github.event.inputs.version }}"
           else
             echo "VERSION=dev" >> $GITHUB_ENV
-            echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
       - name: Build docs with Mike
         run: |
-          # First build the site
-          uv run mike deploy --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+          # First build the site - just deploy version
+          uv run mike deploy --push ${{ env.VERSION }}
 
-          # If this is a release, set default to latest
+          # If this is a release, add the latest alias and set as default
           if [[ "${{ github.event_name }}" == "release" ]]; then
+            uv run mike alias --push ${{ env.VERSION }} latest
             uv run mike set-default --push latest
           fi
 

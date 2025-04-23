@@ -91,7 +91,6 @@ plugins:
       execute: False
       allow_errors: False
   - mike:
-      alias_type: symlink
       canonical_version: latest
       version_selector: true
       css_dir: css
