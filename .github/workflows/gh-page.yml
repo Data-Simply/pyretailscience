@@ -59,7 +59,6 @@ jobs:
             # Strip refs/tags/ from the beginning if present
             REF_NAME="${GITHUB_REF#refs/tags/}"
             echo "VERSION=${REF_NAME}" >> $GITHUB_ENV
-            echo "VERSION_ALIAS=latest" >> $GITHUB_ENV
             echo "Building docs for release: ${REF_NAME}"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
@@ -72,21 +71,23 @@ jobs:
       - name: Debug Variables
         run: |
           echo "VERSION = ${{ env.VERSION }}"
-          echo "VERSION_ALIAS = ${{ env.VERSION_ALIAS }}"
 
       - name: Build docs with MkDocs
         run: |
           uv run mkdocs build -d site
 
-      - name: Deploy with Mike
+      - name: Deploy with Mike (Release)
+        if: github.event_name == 'release'
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "Deploying with Mike using VERSION=${{ env.VERSION }} and VERSION_ALIAS=${{ env.VERSION_ALIAS }}"
-            uv run mike deploy --push ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
+          echo "Deploying release version ${{ env.VERSION }}"
+          # For releases, deploy with version and create latest alias
+          uv run mike deploy --push ${{ env.VERSION }}
+          uv run mike alias --push ${{ env.VERSION }} latest
+          uv run mike set-default --push latest
 
-            echo "Setting default to latest"
-            uv run mike set-default --push latest
-          else
-            echo "Deploying with Mike using VERSION=${{ env.VERSION }} only"
-            uv run mike deploy --push ${{ env.VERSION }}
-          fi
+      - name: Deploy with Mike (Non-Release)
+        if: github.event_name != 'release'
+        run: |
+          echo "Deploying with Mike using VERSION=${{ env.VERSION }} only"
+          # For non-releases, just deploy the version
+          uv run mike deploy --push ${{ env.VERSION }}
