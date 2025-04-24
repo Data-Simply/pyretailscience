@@ -5,9 +5,9 @@ on:
     branches:
       - "main"
     paths:
-      - "**.md"
+      - ".md"
       - "mkdocs.yml"
-      - "docs/**"
+      - "docs/"
   release:
     types: [published]
   workflow_dispatch:
