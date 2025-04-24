@@ -19,7 +19,7 @@ license = "Elastic-2.0"
 name = "pyretailscience"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
-version = "0.19.0"
+version = "0.20.0"
 [[project.authors]]
 email = "2493311+mvanwyk@users.noreply.github.com"
 name  = "Murray Vanwyk"
