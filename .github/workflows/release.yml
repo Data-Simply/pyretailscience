@@ -1,5 +1,4 @@
 name: PyPi Package Deploy
-
 on:
   workflow_dispatch:
     inputs:
@@ -11,16 +10,13 @@ on:
           - major
           - minor
           - patch
-
 permissions:
   contents: write
   deployments: write
   packages: write
-
 concurrency:
   group: "release"
   cancel-in-progress: false
-
 jobs:
   build:
     name: Build
@@ -44,22 +40,18 @@ jobs:
           pip install build
           pip install uv==0.5.30
       - name: Install Dependencies
-        run: uv sync --group dev
+        run: uv sync -G dev
       - name: Bump Version
         id: set_version
         run: |
           uv run python - <<EOF
           from tomlkit import parse, dumps
           from tomlkit.toml_file import TOMLFile
-
           file = TOMLFile("pyproject.toml")
           doc = file.read()
-
           version = doc["project"]["version"]
           release = "${{ inputs.release }}"
-
           major, minor, patch = map(int, version.split('.'))
-
           if release == "major":
               new_version = f"{major + 1}.0.0"
           elif release == "minor":
@@ -68,10 +60,8 @@ jobs:
               new_version = f"{major}.{minor}.{patch + 1}"
           doc["project"]["version"] = new_version
           file.write(doc)
-
           print(f"New Version: {new_version}")
           EOF
-
           NEW_VERSION=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile("pyproject.toml").read()["project"]["version"])')
           echo "RELEASE_TAG=$NEW_VERSION" >> $GITHUB_ENV
           echo "RELEASE_TAG=$NEW_VERSION" >> $GITHUB_OUTPUT  # Set output variable
@@ -92,7 +82,6 @@ jobs:
           echo "Tagging new version: $RELEASE_TAG"
           git tag -a "$RELEASE_TAG" -m "Auto-generated tag"
           git push origin "$RELEASE_TAG"
-
       - name: "Create release"
         uses: actions/github-script@v7
         with:
@@ -100,7 +89,6 @@ jobs:
           script: |
             if (!process.env.RELEASE_TAG) {
               core.setFailed("The environment variable RELEASE_TAG is not defined.");
-
               return;
             }
             try {
@@ -113,13 +101,11 @@ jobs:
                 repo: context.repo.repo,
                 tag_name: process.env.RELEASE_TAG,
               });
-
               core.exportVariable('RELEASE_ID', response.data.id);
               core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
             } catch (error) {
               core.setFailed(error.message);
             }
-
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
@@ -155,7 +141,7 @@ jobs:
           pip install --upgrade pip
           pip install uv==0.5.30
       - name: Install Dependencies
-        run: uv sync --group docs
+        run: uv sync -G docs
       - name: Setup Git User
         run: |
           git config --global user.name "github-actions[bot]"
@@ -163,25 +149,5 @@ jobs:
       - name: Deploy Documentation
         run: |
           echo "Deploying documentation for version ${{ needs.build.outputs.RELEASE_TAG }}"
-          # Check if the version exists and delete it
-          if uv run mike list | grep -q "${{ needs.build.outputs.RELEASE_TAG }}"; then
-            echo "Version ${{ needs.build.outputs.RELEASE_TAG }} already exists, deleting it"
-            uv run mike delete --push ${{ needs.build.outputs.RELEASE_TAG }}
-          fi
-
-          # Check if latest alias exists and delete it
-          if uv run mike list | grep -q "latest"; then
-            echo "Latest alias already exists, deleting it"
-            uv run mike delete --push latest
-          fi
-
-          # Deploy the new version
-          uv run mike deploy --push ${{ needs.build.outputs.RELEASE_TAG }}
-
-          # Create latest alias if different from version tag
-          if [[ "${{ needs.build.outputs.RELEASE_TAG }}" != "latest" ]]; then
-            uv run mike alias --push ${{ needs.build.outputs.RELEASE_TAG }} latest
-          fi
-
-          # Set default
+          uv run mike deploy --push --update-aliases ${{ needs.build.outputs.RELEASE_TAG }} latest
           uv run mike set-default --push latest
