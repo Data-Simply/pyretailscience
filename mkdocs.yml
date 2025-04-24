@@ -86,7 +86,9 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
-  - mike
+  - mike:
+      version_selector: true
+      canonical_version: latest
 
 markdown_extensions:
   - attr_list
