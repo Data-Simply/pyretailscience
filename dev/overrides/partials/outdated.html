@@ -1,16 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Redirecting</title>
-  <noscript>
-    <meta http-equiv="refresh" content="1; url=outdated.html" />
-  </noscript>
-  <script>
-    window.location.replace("outdated.html" + window.location.hash);
-  </script>
-</head>
-<body>
-  Redirecting to <a href="outdated.html">outdated.html</a>...
-</body>
-</html>
+<div class="md-banner md-banner--warning">
+  <div class="md-banner__inner md-typeset">
+    <strong>You're viewing an older version of the PyRetailScience documentation.</strong>
+    <a href="{{ 'latest/' | url }}">
+      <strong>Click here to go to the latest stable version.</strong>
+    </a>
+  </div>
+</div>
