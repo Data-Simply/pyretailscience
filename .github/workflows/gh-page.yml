@@ -80,12 +80,15 @@ jobs:
 
       - name: Deploy with Mike
         run: |
-          # Clean up any existing versions first to avoid conflicts
-          if uv run mike list | grep -q "dev"; then
-            echo "Version dev exists, removing it"
-            uv run mike delete --push dev
+          if [[ "${{ env.VERSION }}" == "dev" ]]; then
+            # For dev, don't use aliases to prevent circular reference
+            uv run mike deploy --push dev
+          else
+            # For regular versions, use the alias if provided
+            uv run mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
           fi
 
-          # Use a simpler mike deploy command without update-aliases
-          # Just deploy the version directly with no aliases
-          uv run mike deploy dev --push
+          # If this is a release, set default to latest
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            uv run mike set-default --push latest
+          fi
