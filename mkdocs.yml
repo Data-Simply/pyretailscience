@@ -2,6 +2,7 @@ site_name: PyRetailScience
 site_url: https://pyretailscience.datasimply.co
 repo_url: https://github.com/Data-Simply/pyretailscience
 repo_name: Data-Simply/pyretailscience
+use_directory_urls: true
 
 nav:
   - Home: index.md
@@ -70,6 +71,10 @@ theme:
     - search.highlight
     - search.suggest
     - toc.integrate
+    - navigation.tabs.sticky
+    - navigation.tracking
+    - header.autohide
+
   language: en
   palette:
     primary: custom
