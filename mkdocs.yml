@@ -74,6 +74,8 @@ theme:
     - navigation.tabs.sticky
     - navigation.tracking
     - header.autohide
+    - versioning
+    - navigation.instant
 
   language: en
   palette:
