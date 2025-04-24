@@ -40,7 +40,7 @@ jobs:
           pip install build
           pip install uv==0.5.30
       - name: Install Dependencies
-        run: uv sync -G dev
+        run: uv sync --group dev
       - name: Bump Version
         id: set_version
         run: |
