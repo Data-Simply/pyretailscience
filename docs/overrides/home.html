@@ -1,4 +1,12 @@
-{% extends "main.html" %} {% block tabs %} {{ super() }} {% include "partials/outdated.html" %}
+{% extends "main.html" %}
+{% block tabs %}
+{{ super() }}
+{% if config.extra.version.provider == 'mike' and page and not '$' in page.url and not ('latest' in page.url or 'dev' in page.url) %}
+  {% include "partials/outdated.html" %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
