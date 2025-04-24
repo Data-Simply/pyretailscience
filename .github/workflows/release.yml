@@ -141,7 +141,7 @@ jobs:
           pip install --upgrade pip
           pip install uv==0.5.30
       - name: Install Dependencies
-        run: uv sync -G docs
+        run: uv sync --group docs
       - name: Setup Git User
         run: |
           git config --global user.name "github-actions[bot]"
