@@ -1,34 +1,4 @@
-{% extends "main.html" %}
-
-{% block extrahead %}
-  <style>
-    /* Hide version selector on homepage */
-    body.homepage .md-version,
-    body.homepage .md-version-select,
-    body.homepage .md-header__button.md-icon--version {
-      display: none !important;
-    }
-
-    /* Make sure this also works with different color schemes */
-    body[data-md-color-scheme].homepage .md-version,
-    body[data-md-color-scheme].homepage .md-version-select,
-    body[data-md-color-scheme].homepage .md-header__button.md-icon--version {
-      display: none !important;
-    }
-
-    /* Hide version selector using more specific selectors */
-    .md-header__topic + .md-header__version {
-      display: none !important;
-    }
-  </style>
-  {{ super() }}
-{% endblock %}
-
-{% block tabs %}
-  {{ super() }}
-  {% include "partials/outdated.html" %}
-{% endblock %}
-
+{% extends "main.html" %} {% block tabs %} {{ super() }} {% include "partials/outdated.html" %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
