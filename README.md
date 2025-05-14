@@ -220,18 +220,7 @@ code paths function correctly when connected to BigQuery.
 
 ## Test Coverage
 
-The integration tests cover the following analysis modules:
-
-- **Cohort Analysis** - Tests customer cohort retention metrics
-- **Cross Shop Analysis** - Tests product/category cross-shopping patterns
-- **Customer Analysis** - Tests customer lifetime value and purchase frequency metrics
-- **Gain Loss Analysis** - Tests comparative performance analysis
-- **Haversine Analysis** - Tests geographic distance calculations
-- **Product Association Analysis** - Tests market basket analysis
-- **Customer Decision Hierarchy** - Tests customer purchase decision patterns
-- **Revenue Tree Analysis** - Tests hierarchical revenue breakdowns
-- **Composite Rank Analysis** - Tests weighted ranking of entities
-- **Segmentation Analysis** - Tests RFM and value-frequency customer segmentation
+The integration tests cover the analysis modules.
 
 ## Prerequisites
 
@@ -256,8 +245,7 @@ export GCP_PROJECT_ID=your-project-id
 - Install dependencies:
 
 ```bash
-uv pip install -e .
-uv pip install "ibis-framework[bigquery]>=10.0.0,<11"
+uv sync
 ```
 
 - Run the tests:
@@ -286,24 +274,3 @@ To run the workflow in GitHub Actions, add these secrets to your repository:
 
 - `GCP_SA_KEY`: The entire JSON content of your GCP service account key file
 - `GCP_PROJECT_ID`: Your GCP project ID
-
-## Test Data
-
-The tests expect a BigQuery dataset named `test_data` with a table named `transactions` containing the following columns:
-
-- `transaction_id`
-- `transaction_date`
-- `transaction_time`
-- `customer_id`
-- `product_id`
-- `product_name`
-- `category_0_name`
-- `category_0_id`
-- `category_1_name`
-- `category_1_id`
-- `brand_name`
-- `brand_id`
-- `unit_quantity`
-- `unit_cost`
-- `unit_spend`
-- `store_id`

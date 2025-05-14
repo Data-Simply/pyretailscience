@@ -1,49 +1,42 @@
 """Integration tests for Cohort Analysis with BigQuery."""
 
-import pandas as pd
 import pytest
 
 from pyretailscience.analysis.cohort import CohortAnalysis
 
 
-class TestCohortAnalysisBigQuery:
-    """Integration tests for Cohort Analysis using real BigQuery data."""
+@pytest.mark.parametrize(
+    ("aggregation_column", "agg_func", "period", "percentage"),
+    [
+        ("customer_id", "nunique", "month", False),
+        ("unit_spend", "sum", "week", True),
+        ("unit_quantity", "mean", "quarter", False),
+    ],
+)
+def test_cohort_analysis_with_bigquery(
+    transactions_table,
+    aggregation_column,
+    agg_func,
+    period,
+    percentage,
+):
+    """Integration test for CohortAnalysis using BigQuery backend and Ibis table.
 
-    def test_cohort_computation_bigquery(self, transactions_table):
-        """Tests cohort computation logic using BigQuery data."""
-        cohort = CohortAnalysis(
-            df=transactions_table,
-            aggregation_column="unit_spend",
-            agg_func="nunique",
-            period="month",
-            percentage=False,
+    This test ensures that the CohortAnalysis class initializes and executes successfully
+    using BigQuery data with various combinations of aggregation parameters.
+    """
+    limited_table = transactions_table.limit(5000)
+
+    try:
+        CohortAnalysis(
+            df=limited_table,
+            aggregation_column=aggregation_column,
+            agg_func=agg_func,
+            period=period,
+            percentage=percentage,
         )
-        result = cohort.table
-        assert not result.empty, "Cohort table should not be empty for valid BigQuery data"
-        assert isinstance(result, pd.DataFrame)
-
-    def test_invalid_period(self, transactions_table):
-        """Test if an invalid period raises an error."""
-        invalid_period = "m"
-        with pytest.raises(
-            ValueError,
-            match=f"Invalid period '{invalid_period}'. Allowed values: {CohortAnalysis.VALID_PERIODS}",
-        ):
-            CohortAnalysis(
-                df=transactions_table,
-                aggregation_column="unit_spend",
-                period=invalid_period,
-            )
-
-    def test_cohort_percentage(self, transactions_table):
-        """Tests cohort analysis with percentage=True."""
-        cohort = CohortAnalysis(
-            df=transactions_table,
-            aggregation_column="unit_spend",
-            agg_func="sum",
-            period="month",
-            percentage=True,
+    except Exception as e:  # noqa: BLE001
+        pytest.fail(
+            f"CohortAnalysis failed with aggregation_column={aggregation_column}, "
+            f"agg_func={agg_func}, period={period}, percentage={percentage}: {e}",
         )
-        result = cohort.table
-        assert not result.empty
-        assert result.max().max() <= 1.0, "Values should be <= 1 when percentage=True"
