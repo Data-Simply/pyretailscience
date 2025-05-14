@@ -1,3 +1,4 @@
+<!-- README.md -->
 ![PyRetailScience Logo](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/logo.png)
 
 # PyRetailScience
@@ -208,3 +209,101 @@ Built with expertise doing analytics and data science for scale-ups to multi-nat
 ## License
 
 This project is licensed under the Elastic License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+# BigQuery Integration Tests
+
+## Overview
+
+This directory contains integration tests that verify all PyRetailScience analysis modules
+work correctly with Google BigQuery as a backend. These tests confirm that the Ibis-based
+code paths function correctly when connected to BigQuery.
+
+## Test Coverage
+
+The integration tests cover the following analysis modules:
+
+- **Cohort Analysis** - Tests customer cohort retention metrics
+- **Cross Shop Analysis** - Tests product/category cross-shopping patterns
+- **Customer Analysis** - Tests customer lifetime value and purchase frequency metrics
+- **Gain Loss Analysis** - Tests comparative performance analysis
+- **Haversine Analysis** - Tests geographic distance calculations
+- **Product Association Analysis** - Tests market basket analysis
+- **Customer Decision Hierarchy** - Tests customer purchase decision patterns
+- **Revenue Tree Analysis** - Tests hierarchical revenue breakdowns
+- **Composite Rank Analysis** - Tests weighted ranking of entities
+- **Segmentation Analysis** - Tests RFM and value-frequency customer segmentation
+
+## Prerequisites
+
+To run these tests, you need:
+
+1. Access to a Google Cloud Platform account
+2. A service account with BigQuery permissions
+3. The service account key JSON file
+4. The test dataset must be loaded in BigQuery (dataset: `test_data`, table: `transactions`)
+
+## Running the Tests
+
+### Manual Setup
+
+- Set up authentication:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
+export GCP_PROJECT_ID=your-project-id
+```
+
+- Install dependencies:
+
+```bash
+uv pip install -e .
+uv pip install "ibis-framework[bigquery]>=10.0.0,<11"
+```
+
+- Run the tests:
+
+```bash
+# Run all tests
+uv run pytest tests/integration/bigquery -v
+
+# Run specific test module
+uv run pytest tests/integration/bigquery/test_cohort_analysis.py -v
+```
+
+## Using GitHub Actions
+
+These tests can be run manually in GitHub Actions via the "BigQuery Integration Tests" workflow. To run:
+
+1. Go to the "Actions" tab in the GitHub repository
+2. Select the "BigQuery Integration Tests" workflow
+3. Click "Run workflow"
+4. Optionally enter a test filter pattern (e.g., "test_cohort_analysis")
+5. Click "Run workflow"
+
+### Required Secrets
+
+To run the workflow in GitHub Actions, add these secrets to your repository:
+
+- `GCP_SA_KEY`: The entire JSON content of your GCP service account key file
+- `GCP_PROJECT_ID`: Your GCP project ID
+
+## Test Data
+
+The tests expect a BigQuery dataset named `test_data` with a table named `transactions` containing the following columns:
+
+- `transaction_id`
+- `transaction_date`
+- `transaction_time`
+- `customer_id`
+- `product_id`
+- `product_name`
+- `category_0_name`
+- `category_0_id`
+- `category_1_name`
+- `category_1_id`
+- `brand_name`
+- `brand_id`
+- `unit_quantity`
+- `unit_cost`
+- `unit_spend`
+- `store_id`
