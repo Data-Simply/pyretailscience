@@ -82,9 +82,20 @@ jobs:
           fi
       - name: Copy robots.txt to root
         run: |
-          # Copy the robots.txt from repo to the root of the gh-pages site
+          # Create robots.txt directly in the gh-pages branch
           git checkout gh-pages
-          cp ../robots.txt ./robots.txt
+          cat > robots.txt << 'EOL'
+          User-agent: GPTBot
+          Disallow: /examples
+
+          User-agent: Google-Extended
+          Disallow: /examples
+
+          User-agent: *
+          Allow: /
+
+          Sitemap: https://pyretailscience.datasimply.co/latest/sitemap.xml
+          EOL
           git add robots.txt
           git commit -m "Add robots.txt to root directory" || echo "No changes to commit"
           git push origin gh-pages
