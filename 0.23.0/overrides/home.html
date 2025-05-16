@@ -1,0 +1,237 @@
+{% extends "main.html" %} {% block tabs %} {{ super() }} {% include "partials/outdated.html" %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyRetailScience</title>
+    <link
+      href="{{ 'stylesheets/home.css' | url }}"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Hero Section -->
+    <section class="hero">
+      <img
+        src="{{ 'assets/images/hero-background.svg'}}"
+        alt="Hero Background"
+        class="hero-background"
+      />
+      <div class="hero-content">
+        <h1>From Data Drudgery to Analytics Artistry</h1>
+        <p>
+          Leave the mundane to us and elevate your role from data janitor to
+          insights virtuoso. From segmentations to gain-loss analysis,
+          PyRetailScience equips you with a wide array of retail analytical
+          capabilities.
+        </p>
+        <a href="{{ 'getting_started/installation/' | url }}" class="btn"
+          >Get Started</a
+        >
+      </div>
+    </section>
+
+    <!-- Logo Section -->
+    <section class="logo-section">
+      <div class="container">
+        <h1>You're in good company</h2>
+        <p>
+          Built with expertise doing analytics and data science for scale-ups to
+          multi-nationals
+        </p>
+        <div class="logo-grid">
+          <img
+            src="{{ 'assets/images/logos/loblaws.png' | url }}"
+            alt="Loblaws logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/iki.png' | url }}"
+            alt="IKI logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/dominos.png' | url }}"
+            alt="Dominos Pizza logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/migros.png' | url }}"
+            alt="Migros logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/sephora.png' | url }}"
+            alt="Sephora logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/sainsburys.png' | url }}"
+            alt="Sainsburys logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/nectar.png' | url }}"
+            alt="Nectar logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/metro.png' | url }}"
+            alt="Metro logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/coles.png' | url }}"
+            alt="Coles logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/ganni.png' | url }}"
+            alt="GANNI logo"
+          />
+          <img
+            src="{{ 'assets/images/logos/mindful-chef.png' | url }}"
+            alt="Mindful Chef"
+          />
+          <img
+            src="{{ 'assets/images/logos/auchan.png' | url }}"
+            alt="Auchan logo"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Section -->
+    <section class="features">
+      <div class="container">
+        <h1>Analyze, Automate, Amaze</h2>
+        <!-- Feature 1 -->
+        <div class="feature">
+          <div class="feature-content">
+            <h3>Tailored for Retail, Powered by You</h3>
+            <p>
+              Leverage pre-built functions designed specifically for retail
+              analytics. From customer segmentations to gains loss analysis,
+              PyRetailScience provides the over a dozen building blocks you need
+              to tackle retail-specific challenges efficiently and effectively.
+            </p>
+            <p>
+              <a href="{{ 'getting_started/installation/' | url }}"
+                >Get Started</a
+              >
+            </p>
+          </div>
+          <div class="feature-image">
+            <img
+              src="{{ 'assets/images/features/cross_shop.png' | url }}"
+              alt="Tailored for Retail, Powered by You"
+            />
+          </div>
+        </div>
+        <!-- Feature 2 -->
+        <div class="feature">
+          <div class="feature-content">
+            <h3>Trust Your Results, Every Time</h3>
+            <p>
+              Built with extensive unit testing and best practices,
+              PyRetailScience ensures the accuracy and reliability of your
+              analyses. Confidently present your findings, knowing they're
+              backed by a robust, well-tested framework.
+            </p>
+            <p>
+              <a href="{{ 'getting_started/installation/' | url }}"
+                >Get Started</a
+              >
+            </p>
+          </div>
+          <div class="feature-image">
+            <img
+              src="{{ 'assets/images/features/unit_tests.png' | url }}"
+              alt="Trust Your Results, Every Time"
+            />
+          </div>
+        </div>
+        <!-- Feature 3 -->
+        <div class="feature">
+          <div class="feature-content">
+            <h3>Consistent, Professional Charts in Seconds</h3>
+            <p>
+              Say goodbye to hours of tweaking chart styles. PyRetailScience
+              delivers beautifully standardized visualizations that are
+              presentation-ready with just a few lines of code. Impress
+              stakeholders and save time with our pre-built, customizable chart
+              templates.
+            </p>
+            <p>
+              <a href="{{ 'getting_started/installation/' | url }}"
+                >Get Started</a
+              >
+            </p>
+          </div>
+          <div class="feature-image">
+            <img
+              src="{{ 'assets/images/features/charts.png' | url }}"
+              alt="Consistent, Professional Charts in Seconds"
+            />
+          </div>
+        </div>
+        <!-- Feature 4 -->
+        <div class="feature">
+          <div class="feature-content">
+            <h3>Automate Repetitive Tasks, Focus on Insights</h3>
+            <p>
+              PyRetailScience streamlines your workflow by automating common
+              retail analytics tasks. Easily loop analyses over different
+              dimensions like product categories or countries, and seamlessly
+              use the output of one analysis as input for another. Spend less
+              time on data manipulation and more on generating valuable
+              insights.
+            </p>
+            <p>
+              <a href="{{ 'getting_started/installation/' | url }}"
+                >Get Started</a
+              >
+            </p>
+          </div>
+          <div class="feature-image">
+            <img
+              src="{{ 'assets/images/features/chain_analysis.png' | url }}"
+              alt="Automate Repetitive Tasks, Focus on Insights"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonial Section -->
+    <!-- <section class="testimonials">
+            <div class="container">
+                <h1>What Our Users Say</h2>
+                <p>&nbsp;</p>
+                <div class="testimonial-grid">
+                    <div class="testimonial">
+                        <p>"PyRetailScience has completely transformed our retail analytics process. It's a game-changer!"</p>
+                        <p><strong>- Jane Doe, Head of Analytics at Retail Corp</strong></p>
+                    </div>
+                    <div class="testimonial-grid">
+                        <div class="testimonial">
+                            <p>"PyRetailScience has completely transformed our retail analytics process. It's a game-changer!"</p>
+                            <p><strong>- Jane Doe, Head of Analytics at Retail Corp</strong></p>
+                        </div>
+                </div>
+            </div>
+        </section> -->
+
+    <!-- CTA Section -->
+    <section class="cta">
+      <div class="container">
+        <h1>Ready to Supercharge Your Retail Operations?</h2>
+        <p>
+          Get started with PyRetailScience in minutes and see the difference for
+          yourself.
+        </p>
+        <a href="{{ 'getting_started/installation/' | url }}" class="btn"
+          >Get Started</a
+        >
+      </div>
+    </section>
+  </body>
+</html>
+{% endblock %} {% block content %}{% endblock %} {% block footer %} {{ super()
+}} {% endblock %}
