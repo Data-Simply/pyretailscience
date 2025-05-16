@@ -1,16 +1,25 @@
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var versionSelector = document.querySelector('.md-header__topic .md-ellipsis');
+{% extends "base.html" %}
 
-    if (versionSelector) {
-      var currentPath = window.location.pathname;
-      var isLatestVersion = currentPath.includes('/latest/') ||
-                            (window.location.href.includes('latest') && !window.location.href.match(/\/\d+\.\d+\.\d+\//));
+{% block header %}
+  {{ super() }}
 
-      if (isLatestVersion) {
-        var originalText = versionSelector.textContent;
-        versionSelector.textContent = originalText.replace(/\d+\.\d+\.\d+/, 'latest');
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get the version selector button
+      var versionSelector = document.querySelector('.md-header__topic .md-ellipsis');
+
+      if (versionSelector) {
+        // Get current version from the URL
+        var currentPath = window.location.pathname;
+        var isLatestVersion = currentPath.includes('/latest/') ||
+                              (window.location.href.includes('latest') && !window.location.href.match(/\/\d+\.\d+\.\d+\//));
+
+        // If this is the latest version or has the latest alias, change the displayed text
+        if (isLatestVersion) {
+          var originalText = versionSelector.textContent;
+          versionSelector.textContent = originalText.replace(/\d+\.\d+\.\d+/, 'latest');
+        }
       }
-    }
-  });
-</script>
+    });
+  </script>
+{% endblock %}
