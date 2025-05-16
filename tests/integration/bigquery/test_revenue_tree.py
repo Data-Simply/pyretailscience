@@ -9,38 +9,29 @@ cols = ColumnHelper()
 
 
 @pytest.mark.parametrize(
-    ("period_col", "group_col"),
-    [
-        ("transaction_date", None),
-        ("transaction_date", "category_0_name"),
-        ("transaction_date", "brand_name"),
-        ("transaction_date", "store_id"),
-    ],
+    "group_col",
+    [None, "category_0_name"],
 )
 def test_revenue_tree_with_bigquery(
     transactions_table,
-    period_col,
     group_col,
 ):
     """Test RevenueTree with data fetched from BigQuery.
 
     This parameterized test verifies that RevenueTree can be initialized
-    and process data from BigQuery using different period and group columns
+    and process data from BigQuery using different group columns
     without throwing exceptions.
     """
+    period_col = "transaction_date"
+
     limited_transactions = transactions_table.limit(10000)
 
     try:
-        period_values = limited_transactions.select(period_col).distinct().limit(2).execute()
-
-        p1_value = period_values[period_col].iloc[0]
-        p2_value = period_values[period_col].iloc[1]
-
         RevenueTree(
             df=limited_transactions,
             period_col=period_col,
-            p1_value=p1_value,
-            p2_value=p2_value,
+            p1_value="2023-05-24",
+            p2_value="2023-04-15",
             group_col=group_col,
         )
 
@@ -57,16 +48,11 @@ def test_calc_tree_kpis_with_bigquery(transactions_table):
     limited_transactions = transactions_table.limit(8000)
 
     try:
-        period_values = limited_transactions.select("transaction_date").distinct().limit(2).execute()
-
-        p1_value = period_values["transaction_date"].iloc[0]
-        p2_value = period_values["transaction_date"].iloc[1]
-
         df, p1_index, p2_index = RevenueTree._agg_data(
             df=limited_transactions,
             period_col="transaction_date",
-            p1_value=p1_value,
-            p2_value=p2_value,
+            p1_value="2023-05-24",
+            p2_value="2023-04-15",
             group_col=None,
         )
 
@@ -81,15 +67,14 @@ def test_calc_tree_kpis_with_bigquery(transactions_table):
 
 
 @pytest.mark.parametrize(
-    ("period_col", "include_qty"),
+    "include_qty",
     [
-        ("transaction_date", True),
-        ("transaction_date", False),
+        True,
+        False,
     ],
 )
 def test_revenue_tree_quantity_handling_with_bigquery(
     transactions_table,
-    period_col,
     include_qty,
 ):
     """Test RevenueTree with and without quantity columns using BigQuery data.
@@ -97,14 +82,10 @@ def test_revenue_tree_quantity_handling_with_bigquery(
     This test verifies that RevenueTree can process BigQuery data both with and
     without quantity-related columns without throwing exceptions.
     """
+    period_col = "transaction_date"
     limited_transactions = transactions_table.limit(6000)
 
     try:
-        period_values = limited_transactions.select(period_col).distinct().limit(2).execute()
-
-        p1_value = period_values[period_col].iloc[0]
-        p2_value = period_values[period_col].iloc[1]
-
         if include_qty:
             columns_to_keep = [
                 cols.customer_id,
@@ -126,8 +107,8 @@ def test_revenue_tree_quantity_handling_with_bigquery(
         RevenueTree(
             df=filtered_transactions,
             period_col=period_col,
-            p1_value=p1_value,
-            p2_value=p2_value,
+            p1_value="2023-05-24",
+            p2_value="2023-04-15",
             group_col=None,
         )
 

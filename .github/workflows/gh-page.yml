@@ -1,5 +1,4 @@
 name: Page Deploy
-
 on:
   push:
     branches:
@@ -16,16 +15,13 @@ on:
         description: 'Version to deploy (default: "dev" for main branch)'
         required: false
         default: 'dev'
-
 permissions:
   contents: write
   pages: write
   id-token: write
-
 concurrency:
   group: "pages"
   cancel-in-progress: false
-
 jobs:
   docs:
     environment:
@@ -37,28 +33,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install uv Package
         run: |
           pip install --upgrade pip
           pip install uv==0.5.30
-
       - name: Install Pre-commit in uv environment
         run: uv run pip install pre-commit
-
       - name: Install Dependencies
         run: uv sync --group docs
-
       - name: Setup Git User
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
       - name: Set version variables
         id: set-version
         run: |
@@ -77,7 +67,6 @@ jobs:
             echo "VERSION_ALIAS=dev" >> $GITHUB_ENV
             echo "Building docs for dev branch"
           fi
-
       - name: Deploy with Mike
         run: |
           if [[ "${{ env.VERSION }}" == "dev" ]]; then
@@ -87,7 +76,6 @@ jobs:
             # For regular versions, use the alias if provided
             uv run mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.VERSION_ALIAS }}
           fi
-
           # If this is a release, set default to latest
           if [[ "${{ github.event_name }}" == "release" ]]; then
             uv run mike set-default --push latest

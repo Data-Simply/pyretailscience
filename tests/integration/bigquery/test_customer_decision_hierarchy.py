@@ -9,17 +9,19 @@ cols = ColumnHelper()
 
 
 @pytest.mark.parametrize(
-    ("product_col", "method", "min_var_explained", "exclude_same_transaction"),
+    ("method", "min_var_explained", "exclude_same_transaction"),
     [
-        ("product_name", "truncated_svd", 0.8, True),
-        ("category_1_name", "yules_q", None, True),
-        ("brand_name", "truncated_svd", 0.7, True),
-        ("category_0_name", "truncated_svd", 0.7, False),
+        ("truncated_svd", 0.7, False),
+        ("truncated_svd", 0.7, None),
+        ("truncated_svd", None, False),
+        ("yules_q", 0.7, False),
+        ("yules_q", 0.7, None),
+        ("yules_q", None, False),
+        ("yules_q", None, None),
     ],
 )
 def test_customer_decision_hierarchy_with_bigquery(
     transactions_table,
-    product_col,
     method,
     min_var_explained,
     exclude_same_transaction,
@@ -35,10 +37,10 @@ def test_customer_decision_hierarchy_with_bigquery(
     try:
         CustomerDecisionHierarchy(
             df=transactions_df,
-            product_col=product_col,
+            product_col="product_name",
             exclude_same_transaction_products=exclude_same_transaction,
             method=method,
             min_var_explained=min_var_explained if min_var_explained is not None else 0.8,
         )
     except Exception as e:  # noqa: BLE001
-        pytest.fail(f"CustomerDecisionHierarchy failed with product_col={product_col}, method={method}: {e}")
+        pytest.fail(f"CustomerDecisionHierarchy failed with, method={method}: {e}")

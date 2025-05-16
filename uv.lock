@@ -2008,7 +2008,7 @@ wheels = [
 
 [[package]]
 name = "pyretailscience"
-version = "0.22.0"
+version = "0.24.0"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },

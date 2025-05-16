@@ -122,6 +122,7 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+    scope: "/latest/"
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Data-Simply/pyretailscience
@@ -129,6 +130,8 @@ extra:
   version:
     provider: mike
     default: latest
+  sitemap:
+    enabled: true
 
 copyright: |
   &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
