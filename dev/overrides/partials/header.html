@@ -1,0 +1,16 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var versionSelector = document.querySelector('.md-header__topic .md-ellipsis');
+
+    if (versionSelector) {
+      var currentPath = window.location.pathname;
+      var isLatestVersion = currentPath.includes('/latest/') ||
+                            (window.location.href.includes('latest') && !window.location.href.match(/\/\d+\.\d+\.\d+\//));
+
+      if (isLatestVersion) {
+        var originalText = versionSelector.textContent;
+        versionSelector.textContent = originalText.replace(/\d+\.\d+\.\d+/, 'latest');
+      }
+    }
+  });
+</script>
