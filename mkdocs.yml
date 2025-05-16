@@ -96,8 +96,6 @@ plugins:
   - mike:
       version_selector: true
       canonical_version: latest
-  - sitemap:
-      site_url: https://pyretailscience.datasimply.co/
 
 markdown_extensions:
   - attr_list
