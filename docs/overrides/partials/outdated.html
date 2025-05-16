@@ -1,10 +1,12 @@
 <div class="md-banner md-banner--warning">
-  {% if mike.version.aliases | length == 0 or "latest" not in mike.version.aliases %}
-  <div class="md-banner__inner md-typeset">
-    <strong>You're viewing an older version of the PyRetailScience documentation.</strong>
-    <a href="{{ '/' | url }}../latest/">
-      <strong>Click here to go to the latest stable version.</strong>
-    </a>
-  </div>
+  {% if config.extra.version and config.extra.version.provider == 'mike' %}
+    {% if mike and (mike.version.aliases | length == 0 or "latest" not in mike.version.aliases) %}
+    <div class="md-banner__inner md-typeset">
+      <strong>You're viewing an older version of the PyRetailScience documentation.</strong>
+      <a href="{{ '/' | url }}../latest/">
+        <strong>Click here to go to the latest stable version.</strong>
+      </a>
+    </div>
+    {% endif %}
   {% endif %}
 </div>
