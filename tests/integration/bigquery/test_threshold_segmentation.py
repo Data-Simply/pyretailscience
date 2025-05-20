@@ -21,19 +21,17 @@ def test_threshold_segmentation_with_bigquery(
     This test verifies that ThresholdSegmentation can process data directly from
     a BigQuery connection using Ibis without throwing exceptions.
     """
-    try:
-        limited_table = transactions_table.limit(1000)
+    limited_table = transactions_table.limit(1000)
 
-        ThresholdSegmentation(
-            df=limited_table,
-            thresholds=[0.33, 0.66],
-            segments=["Low", "High"],
-            value_col=cols.unit_spend,
-            agg_func="mean",
-            zero_value_customers=zero_value_handling,
-        )
+    result = ThresholdSegmentation(
+        df=limited_table,
+        thresholds=[0.33, 0.66],
+        segments=["Low", "High"],
+        value_col=cols.unit_spend,
+        agg_func="mean",
+        zero_value_customers=zero_value_handling,
+    )
+    assert result is not None
 
-    except Exception as e:  # noqa: BLE001
-        pytest.fail(
-            f"ThresholdSegmentation failed with zero_value_handling={zero_value_handling}: {e}",
-        )
+    df = result.df
+    assert df is not None

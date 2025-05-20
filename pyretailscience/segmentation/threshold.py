@@ -83,9 +83,7 @@ class ThresholdSegmentation(BaseSegmentation):
         window = ibis.window(order_by=ibis.asc(df[value_col]))
         df = df.mutate(ptile=ibis.percent_rank().over(window))
 
-        case_args = []
-        for quantile, segment in zip(thresholds, segments, strict=True):
-            case_args.append((df["ptile"] <= quantile, segment))
+        case_args = [(df["ptile"] <= quantile, segment) for quantile, segment in zip(thresholds, segments, strict=True)]
 
         df = df.mutate(segment_name=ibis.cases(*case_args)).drop(["ptile"])
 

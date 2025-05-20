@@ -1,7 +1,5 @@
 """Integration tests for Cohort Analysis with BigQuery."""
 
-import pytest
-
 from pyretailscience.analysis.cohort import CohortAnalysis
 
 
@@ -13,15 +11,10 @@ def test_cohort_analysis_with_bigquery(transactions_table):
     """
     limited_table = transactions_table.limit(5000)
 
-    try:
-        CohortAnalysis(
-            df=limited_table,
-            aggregation_column="unit_spend",
-            agg_func="sum",
-            period="week",
-            percentage=True,
-        )
-    except Exception as e:  # noqa: BLE001
-        pytest.fail(
-            f"CohortAnalysis failed: {e}",
-        )
+    CohortAnalysis(
+        df=limited_table,
+        aggregation_column="unit_spend",
+        agg_func="sum",
+        period="week",
+        percentage=True,
+    )

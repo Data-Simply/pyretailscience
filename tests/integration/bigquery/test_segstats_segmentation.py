@@ -9,6 +9,8 @@ from pyretailscience.segmentation.segstats import SegTransactionStats
     ("calc_total", "extra_aggs"),
     [
         (True, None),
+        (True, {"unique_products": ("product_id", "nunique")}),
+        (False, None),
         (False, {"unique_products": ("product_id", "nunique")}),
     ],
 )
@@ -22,17 +24,15 @@ def test_seg_transaction_stats_with_bigquery(
     This test verifies that SegTransactionStats can process data directly from
     a BigQuery connection using Ibis without throwing exceptions.
     """
-    try:
-        limited_table = transactions_table.limit(10000)
+    limited_table = transactions_table.limit(10000)
 
-        SegTransactionStats(
-            data=limited_table,
-            segment_col=["category_0_name", "category_1_name"],
-            calc_total=calc_total,
-            extra_aggs=extra_aggs,
-        )
+    result = SegTransactionStats(
+        data=limited_table,
+        segment_col=["category_0_name", "category_1_name"],
+        calc_total=calc_total,
+        extra_aggs=extra_aggs,
+    )
+    assert result is not None
 
-    except Exception as e:  # noqa: BLE001
-        pytest.fail(
-            f"SegTransactionStats failed with calc_total={calc_total}, extra_aggs={extra_aggs}: {e}",
-        )
+    df = result.df
+    assert df is not None

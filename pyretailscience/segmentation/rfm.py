@@ -104,7 +104,9 @@ class RFMSegmentation:
         current_date_expr = ibis.literal(current_date)
 
         customer_metrics = df.group_by(cols.customer_id).aggregate(
-            recency_days=(current_date_expr - df[cols.transaction_date].max().cast("date")).cast("int32"),
+            recency_days=current_date_expr.delta(df[cols.transaction_date].max().cast("date"), unit="day").cast(
+                "int32",
+            ),
             frequency=df[cols.transaction_id].nunique(),
             monetary=df[cols.unit_spend].sum(),
         )

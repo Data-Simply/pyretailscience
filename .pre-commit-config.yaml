@@ -25,8 +25,8 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration/bigquery
         language: system
+        entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration
         types: [python]
         pass_filenames: false
         always_run: true

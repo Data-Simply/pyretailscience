@@ -20,20 +20,14 @@ def test_product_association_with_bigquery(
     """
     limited_transactions = transactions_table.limit(5000)
 
-    try:
-        ProductAssociation(
-            df=limited_transactions,
-            value_col="brand_name",
-            group_col="transaction_id",
-            target_item=target_item,
-            min_occurrences=5,
-            min_cooccurrences=3,
-            min_support=0.01,
-            min_confidence=0.05,
-            min_uplift=1.0,
-        )
-
-    except Exception as e:  # noqa: BLE001
-        pytest.fail(
-            f"ProductAssociation failed with target_item={target_item}: {e}",
-        )
+    ProductAssociation(
+        df=limited_transactions,
+        value_col="brand_name",
+        group_col="transaction_id",
+        target_item=target_item,
+        min_occurrences=5,
+        min_cooccurrences=3,
+        min_support=0.01,
+        min_confidence=0.05,
+        min_uplift=1.0,
+    )

@@ -22,8 +22,8 @@ def test_rfm_segmentation_with_bigquery(
     """
     limited_table = transactions_table.limit(5000)
 
-    try:
-        RFMSegmentation(df=limited_table, current_date=current_date)
+    result = RFMSegmentation(df=limited_table, current_date=current_date)
+    assert result is not None
 
-    except Exception as e:  # noqa: BLE001
-        pytest.fail(f"RFMSegmentation failed with current_date={current_date}: {e}")
+    df = result.df
+    assert df is not None

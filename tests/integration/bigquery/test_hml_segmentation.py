@@ -20,13 +20,13 @@ def test_hml_segmentation_with_bigquery(
     """
     limited_transactions = transactions_table.limit(5000)
 
-    try:
-        HMLSegmentation(
-            df=limited_transactions,
-            value_col="unit_cost",
-            agg_func="mean",
-            zero_value_customers=zero_value_customers,
-        )
+    result = HMLSegmentation(
+        df=limited_transactions,
+        value_col="unit_cost",
+        agg_func="mean",
+        zero_value_customers=zero_value_customers,
+    )
+    assert result is not None
 
-    except Exception as e:  # noqa: BLE001
-        pytest.fail(f"HMLSegmentation failed: {e}")
+    df = result.df
+    assert df is not None

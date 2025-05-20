@@ -49,7 +49,6 @@ jobs:
       - name: Install Dependencies
         run: |
           uv sync
-          uv sync --group dev
 
       - name: Set up GCP Authentication
         uses: google-github-actions/auth@v2
