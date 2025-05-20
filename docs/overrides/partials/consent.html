@@ -1,5 +1,5 @@
 {% if config.extra.consent %}
-<div class="md-consent md-grid" data-md-component="consent" id="__consent">
+<div class="md-consent" data-md-component="consent" id="__consent">
     <div class="md-consent__inner md-typeset">
         <div class="md-consent__content">
             {% if config.extra.consent.title %}
@@ -39,7 +39,10 @@
         });
     }
 
-
+    // Check if consent is already given and hide the banner if it is
+    if (hasConsentCookie()) {
+        document.getElementById('__consent').style.display = 'none';
+    }
     </script>
 </div>
 {% endif %}
