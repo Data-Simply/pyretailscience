@@ -93,11 +93,6 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
-  - sitemap:
-      enabled: true
-      sitemap_glob:
-        - "*.html"
-        - "*.xml"
   - mike:
       version_selector: true
       canonical_version: latest
