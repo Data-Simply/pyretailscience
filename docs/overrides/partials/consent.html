@@ -1,0 +1,45 @@
+{% if config.extra.consent %}
+<div class="md-consent md-grid" data-md-component="consent" id="__consent">
+    <div class="md-consent__inner md-typeset">
+        <div class="md-consent__content">
+            {% if config.extra.consent.title %}
+            <h4>{{ config.extra.consent.title }}</h4>
+            {% endif %}
+            {% if config.extra.consent.description %}
+            <p>{{ config.extra.consent.description }}</p>
+            {% endif %}
+        </div>
+        <div class="md-consent__actions">
+            {% if "accept" in config.extra.consent.actions %}
+            <button type="button" class="md-button md-button--primary" data-md-consent-accept>
+                {{ lang.t("consent.accept") }}
+            </button>
+            {% endif %}
+            {% if "manage" in config.extra.consent.actions %}
+            <button type="button" class="md-button" data-md-consent-manage>
+                {{ lang.t("consent.manage") }}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+    // Function to check if consent cookie exists
+    function hasConsentCookie() {
+        return document.cookie.indexOf('__consent=1') !== -1;
+    }
+
+    // Set up event listener for accept button
+    const acceptBtn = document.querySelector('[data-md-consent-accept]');
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', function() {
+            // Keep using fixed path="/" to ensure cookie works across all versions
+            document.cookie = `__consent=1; path=/; max-age=31536000; SameSite=Lax; Secure`;
+            // Hide consent dialog immediately after accepting
+            document.getElementById('__consent').style.display = 'none';
+        });
+    }
+
+
+    </script>
+</div>
+{% endif %}
