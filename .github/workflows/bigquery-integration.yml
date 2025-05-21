@@ -1,0 +1,63 @@
+name: BigQuery Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        type: choice
+        description: Test Suite to Run
+        default: "all"
+        options:
+          - all
+          - cohort_analysis
+          - composite_rank
+          - cross_shop
+          - customer_decision_hierarchy
+          - haversine
+          - hml_segmentation
+          - product_association
+          - revenue_tree
+          - rfm_segmentation
+          - segstats_segmentation
+          - threshold_segmentation
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "bigquery-tests"
+  cancel-in-progress: true
+
+jobs:
+  integration-tests:
+    name: Run BigQuery Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv Package
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+
+      - name: Install Dependencies
+        run: |
+          uv sync
+
+      - name: Set up GCP Authentication
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run Integration Tests
+        env:
+          TEST_SUITE: ${{ inputs.test_suite }}
+        run: |
+          uv run pytest tests/integration/bigquery -v \
+            $(if [ "$TEST_SUITE" != "all" ]; then echo "-k $TEST_SUITE"; fi)
