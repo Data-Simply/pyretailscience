@@ -1,0 +1,10 @@
+User-agent: GPTBot
+Disallow: /examples
+
+User-agent: Google-Extended
+Disallow: /examples
+
+User-agent: *
+Allow: /
+
+Sitemap: https://pyretailscience.datasimply.co/sitemap.xml
