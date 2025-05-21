@@ -122,7 +122,11 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
-    scope: "/latest/"
+    cookies:
+      analytics:
+        name: Google Analytics
+        checked: true
+    cookies_path: /
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Data-Simply/pyretailscience
