@@ -2,7 +2,6 @@ site_name: PyRetailScience
 site_url: https://pyretailscience.datasimply.co
 repo_url: https://github.com/Data-Simply/pyretailscience
 repo_name: Data-Simply/pyretailscience
-use_directory_urls: true
 
 nav:
   - Home: index.md
@@ -54,8 +53,6 @@ nav:
           - Date Utils: api/utils/date.md
           - Columns Utils: api/utils/columns.md
           - Filter & Label Utils: api/utils/filter_and_label.md
-  - Versions:
-      - versions.md
 
 theme:
   name: material
@@ -71,12 +68,6 @@ theme:
     - search.highlight
     - search.suggest
     - toc.integrate
-    - navigation.tabs.sticky
-    - navigation.tracking
-    - header.autohide
-    - versioning
-    - navigation.instant
-
   language: en
   palette:
     primary: custom
@@ -93,10 +84,6 @@ plugins:
   - mkdocstrings
   - autorefs
   - mkdocs-jupyter
-  - mike:
-      version_selector: true
-      canonical_version: latest
-      alias_type: copy
 
 markdown_extensions:
   - attr_list
@@ -113,15 +100,21 @@ extra:
   analytics:
     provider: google
     property: G-7S7YSNJ82W
-  scope: "/"
+  consent:
+    actions:
+      - accept
+      - manage
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Data-Simply/pyretailscience
       name: PyRetailScience on GitHub
-  version:
-    provider: mike
-    default: latest
-  generator: true
 
 copyright: |
-  &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a>
+  &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
+  <a href="#__consent">Change cookie settings</a>
