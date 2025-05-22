@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#15803d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#052e16;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#15803d;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#86efac;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M0 0 H1600 V900 H0 Z"
+    fill="url(#gradient1)"
+    id="path1" />
+  <path
+    d="M 1600,0 -4.0856004,1.3618668 C 9.7067366,16.878246 -13.327723,446.08131 3.2447404,434.07928 280.63267,233.19073 476.30859,350.26804 729.18293,492.50985 995.84962,642.50986 1333.3333,825 1600,675 Z"
+    fill="url(#gradient2)"
+    id="path2" />
+  <path
+    d="M1600 0 H800 Q1000 225, 1200 450 Q1400 675, 1600 450 Z"
+    fill="url(#gradient3)"
+    id="path3" />
+</svg>
