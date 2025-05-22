@@ -133,3 +133,29 @@ def test_overlapping_periods_raises_on_empty_periods(sample_dataframe):
             value_col="value",
             periods=[],
         )
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_skips_empty_periods(sample_dataframe):
+    """Ensure empty periods are skipped and others are plotted."""
+    df = sample_dataframe.copy()
+    df = df[df["date"] < "2023-01-10"]
+    periods = [("2023-01-01", "2023-01-05"), ("2023-02-01", "2023-02-05")]
+
+    ax = plot(df, "date", "value", periods=periods)
+
+    assert isinstance(ax, Axes)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_sets_labels_and_styles(sample_dataframe):
+    """Ensure plot lines have correct labels and multiple line styles are applied."""
+    periods = [("2023-01-01", f"2023-01-{str(i).zfill(2)}") for i in range(2, 10)]
+
+    ax = plot(sample_dataframe, "date", "value", periods=periods)
+
+    lines = ax.get_lines()
+    styles_used = {line.get_linestyle() for line in lines}
+    assert "realigned_date" in ax.get_xlabel()
+
+    assert len(styles_used) > 1

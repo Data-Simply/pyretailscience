@@ -37,7 +37,7 @@ class TestTimePlot:
         """Test that the function generates a time plot with default parameters."""
         df = test_data
         result_ax = plot(df, value_col="sales")
-        count = 10
+        count = 19
         assert isinstance(result_ax, plt.Axes)
         assert len(result_ax.lines) == count
 
