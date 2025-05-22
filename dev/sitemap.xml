@@ -2,202 +2,202 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/analysis_modules/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/versions/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/options/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/cohort/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/composite_rank/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/cross_shop/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/customer/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/customer_decision_hierarchy/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/gain_loss/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/haversine/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/product_association/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/analysis/revenue_tree/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/area/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/bar/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/cohort/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/histogram/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/line/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/period_on_period/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/scatter/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/time/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/venn/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/waterfall/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/style/graph_utils/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/plots/style/tailwind/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/segmentation/base/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/segmentation/hml/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/segmentation/rfm/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/segmentation/segstats/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/segmentation/threshold/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/utils/date/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/api/utils/filter_and_label/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/examples/cross_shop/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/examples/gain_loss/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/examples/product_association/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/examples/retention/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/examples/revenue_tree/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/examples/segmentation/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://pyretailscience.datasimply.co/latest/getting_started/installation/</loc>
-         <lastmod>2025-05-21</lastmod>
+         <lastmod>2025-05-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
