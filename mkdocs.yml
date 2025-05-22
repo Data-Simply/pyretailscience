@@ -96,6 +96,7 @@ plugins:
   - mike:
       version_selector: true
       canonical_version: latest
+      alias_type: copy
 
 markdown_extensions:
   - attr_list
@@ -112,16 +113,6 @@ extra:
   analytics:
     provider: google
     property: G-7S7YSNJ82W
-  consent:
-    actions:
-      - accept
-      - manage
-    title: Cookie consent
-    description: >-
-      We use cookies to recognize your repeated visits and preferences, as well
-      as to measure the effectiveness of our documentation and whether users
-      find what they're searching for. With your consent, you're helping us to
-      make our documentation better.
   scope: "/"
   social:
     - icon: fontawesome/brands/github
@@ -133,5 +124,4 @@ extra:
   generator: true
 
 copyright: |
-  &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -
-  <a href="#__consent">Change cookie settings</a>
+  &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a>

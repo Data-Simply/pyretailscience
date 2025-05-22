@@ -1,4 +1,8 @@
-{% extends "main.html" %} {% block tabs %} {{ super() }} {% include "partials/outdated.html" %}
+{% extends "main.html" %}
+{% block tabs %}
+{{ super() }}
+{% include "partials/outdated.html" %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -233,5 +237,10 @@
     </section>
   </body>
 </html>
-{% endblock %} {% block content %}{% endblock %} {% block footer %} {{ super()
-}} {% endblock %}
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block footer %}
+{{ super() }}
+{% endblock %}
