@@ -1,8 +1,15 @@
-<div class="md-banner md-banner--warning">
-  <div class="md-banner__inner md-typeset">
-    <strong>You're viewing an older version of the PyRetailScience documentation.</strong>
-    <a href="https://pyretailscience.datasimply.co/latest/">
-      <strong>Click here to go to the latest stable version.</strong>
-    </a>
+{% if config.extra.version.provider == "mike" %}
+  {% set current_version = version.version %}
+  {% set has_latest_alias = "latest" in version.aliases %}
+  {% set is_latest = version.is_default or current_version == "latest" or has_latest_alias %}
+  {% if not is_latest %}
+  <div class="md-banner md-banner--warning">
+    <div class="md-banner__inner md-typeset">
+      <strong>You're viewing an older version of the PyRetailScience documentation.</strong>
+      <a href="https://pyretailscience.datasimply.co/latest/">
+        <strong>Click here to go to the latest stable version.</strong>
+      </a>
+    </div>
   </div>
-</div>
+  {% endif %}
+{% endif %}
