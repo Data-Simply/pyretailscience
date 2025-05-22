@@ -146,26 +146,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Clean existing latest alias
-        run: |
-          echo "Cleaning existing latest alias"
-          uv run mike delete latest || echo "No existing latest alias to delete"
-      - name: Deploy Documentation with Copy Alias
+      - name: Deploy Documentation
         run: |
           echo "Deploying documentation for version ${{ needs.build.outputs.RELEASE_TAG }}"
-          # Deploy the specific version first
-          uv run mike deploy --push ${{ needs.build.outputs.RELEASE_TAG }}
-          # Then create the latest alias using copy
-          uv run mike alias --push ${{ needs.build.outputs.RELEASE_TAG }} latest
-          # Set latest as default
+          uv run mike deploy --push --update-aliases ${{ needs.build.outputs.RELEASE_TAG }} latest
           uv run mike set-default --push latest
-      - name: Verify deployment
-        run: |
-          echo "Verifying deployment..."
-          uv run mike list
-          # Check if sitemap exists in both locations
-          git checkout gh-pages
-          echo "Checking ${{ needs.build.outputs.RELEASE_TAG }} sitemap:"
-          ls -la ${{ needs.build.outputs.RELEASE_TAG }}/sitemap.xml || echo "No sitemap in version directory"
-          echo "Checking latest sitemap:"
-          ls -la latest/sitemap.xml || echo "No sitemap in latest directory"
