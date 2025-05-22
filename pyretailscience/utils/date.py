@@ -40,13 +40,21 @@ def filter_and_label_by_periods(
         ValueError: If any value in period_ranges is not a tuple of length 2.
     """
     branches = []
+    date_column = transactions[get_option("column.transaction_date")]
 
     for period_name, date_range in period_ranges.items():
         if not (isinstance(date_range, tuple) and len(date_range) == 2):  # noqa: PLR2004 - Explained in the error below
             msg = f"Period '{period_name}' must have a (start_date, end_date) tuple"
             raise ValueError(msg)
 
-        period_condition = transactions[get_option("column.transaction_date")].between(date_range[0], date_range[1])
+        start_date, end_date = date_range
+
+        if isinstance(start_date, datetime):
+            start_date = start_date.date()
+        if isinstance(end_date, datetime):
+            end_date = end_date.date()
+
+        period_condition = date_column.between(start_date, end_date)
         branches.append((period_condition, ibis.literal(period_name)))
 
     conditions = ibis.or_(*[condition[0] for condition in branches])
