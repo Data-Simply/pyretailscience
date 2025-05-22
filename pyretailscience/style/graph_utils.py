@@ -250,12 +250,20 @@ def standard_tick_styles(ax: Axes) -> Axes:
     Returns:
         Axes: The graph with the styles applied.
     """
-    for tick in ax.get_xticklabels():
-        tick.set_fontproperties(GraphStyles.POPPINS_REG)
-        tick.set_fontsize(GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
-    for tick in ax.get_yticklabels():
-        tick.set_fontproperties(GraphStyles.POPPINS_REG)
-        tick.set_fontsize(GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
+    ax.tick_params(
+        axis="both",
+        which="both",
+        labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE,
+    )
+
+    for tick in [
+        *ax.xaxis.get_major_ticks(),
+        *ax.xaxis.get_minor_ticks(),
+        *ax.yaxis.get_major_ticks(),
+        *ax.yaxis.get_minor_ticks(),
+    ]:
+        tick.label1.set_fontproperties(GraphStyles.POPPINS_REG)
+        tick.label2.set_fontproperties(GraphStyles.POPPINS_REG)
 
     return ax
 
