@@ -136,6 +136,8 @@ def plot(
         move_legend_outside=move_legend_outside,
     )
 
+    ax = gu.standard_tick_styles(ax)
+
     if source_text:
         gu.add_source_text(ax=ax, source_text=source_text)
 
