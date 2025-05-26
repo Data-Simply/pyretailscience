@@ -1,12 +1,61 @@
 """Utility functions for time-related operations in retail analysis."""
 
-from datetime import datetime
+from collections.abc import Mapping
+from datetime import UTC, datetime
 
 import ibis
 import numpy as np
 import pandas as pd
 
 from pyretailscience.options import get_option
+
+
+def _normalize_datetime(date_val: datetime | str) -> datetime:
+    """Convert string or datetime to timezone-aware datetime object."""
+    if isinstance(date_val, str):
+        # Convert string to timezone-aware datetime
+        return datetime.strptime(date_val, "%Y-%m-%d").replace(tzinfo=UTC)
+    if isinstance(date_val, datetime):
+        # If datetime is timezone-naive, make it timezone-aware (UTC)
+        if date_val.tzinfo is None:
+            return date_val.replace(tzinfo=UTC)
+        return date_val
+    error_msg = f"Expected str or datetime, got {type(date_val)}"
+    raise TypeError(error_msg)
+
+
+def _validate_and_normalize_periods(
+    period_ranges: Mapping[str, tuple[datetime | str, datetime | str]],
+) -> dict[str, tuple[datetime, datetime]]:
+    """Validates and normalizes period ranges, returning timezone-aware datetime tuples."""
+    normalized = {}
+
+    for period_name, date_range in period_ranges.items():
+        date_range_length = 2
+        if not (isinstance(date_range, tuple) and len(date_range) == date_range_length):
+            msg = f"Period '{period_name}' must have a (start_date, end_date) tuple"
+            raise ValueError(msg)
+
+        start_date, end_date = date_range
+
+        start_dt = _normalize_datetime(start_date)
+        end_dt = _normalize_datetime(end_date)
+
+        if start_dt > end_dt:
+            msg = f"Period '{period_name}': start date ({start_date}) must be <= end date ({end_date})"
+            raise ValueError(msg)
+
+        normalized[period_name] = (start_dt, end_dt)
+
+    # Check for overlapping periods
+    period_list = list(normalized.items())
+    for i, (name1, (start1, end1)) in enumerate(period_list):
+        for name2, (start2, end2) in period_list[i + 1 :]:
+            if start1 <= end2 and start2 <= end1:
+                overlap_msg = f"Periods '{name1}' ({start1.date()}-{end1.date()}) and '{name2}' ({start2.date()}-{end2.date()}) overlap"
+                raise ValueError(overlap_msg)
+
+    return normalized
 
 
 def filter_and_label_by_periods(
@@ -38,23 +87,24 @@ def filter_and_label_by_periods(
 
     Raises:
         ValueError: If any value in period_ranges is not a tuple of length 2.
+        ValueError: If first date > second date for any period.
+        ValueError: If periods overlap with each other.
     """
+    # Validate periods first
+    _validate_and_normalize_periods(period_ranges)
+
     branches = []
     date_column = transactions[get_option("column.transaction_date")]
 
-    for period_name, date_range in period_ranges.items():
-        if not (isinstance(date_range, tuple) and len(date_range) == 2):  # noqa: PLR2004 - Explained in the error below
-            msg = f"Period '{period_name}' must have a (start_date, end_date) tuple"
-            raise ValueError(msg)
+    date_col_dtype = date_column.type()
 
+    for period_name, date_range in period_ranges.items():
         start_date, end_date = date_range
 
-        if isinstance(start_date, datetime):
-            start_date = start_date.date()
-        if isinstance(end_date, datetime):
-            end_date = end_date.date()
-
-        period_condition = date_column.between(start_date, end_date)
+        period_condition = date_column.between(
+            ibis.literal(start_date, type=date_col_dtype),
+            ibis.literal(end_date, type=date_col_dtype),
+        )
         branches.append((period_condition, ibis.literal(period_name)))
 
     conditions = ibis.or_(*[condition[0] for condition in branches])
