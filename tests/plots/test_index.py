@@ -195,6 +195,10 @@ def test_get_indexes_with_ibis_table_input():
 class TestIndexPlot:
     """Tests for the index_plot function."""
 
+    def teardown_method(self):
+        """Clean up after each test method."""
+        plt.close("all")
+
     @pytest.fixture
     def test_data(self):
         """Return a sample dataframe for plotting."""

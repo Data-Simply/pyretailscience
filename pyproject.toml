@@ -114,7 +114,7 @@ select = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov=pyretailscience --cov-report=term-missing  --cov-branch"
+addopts = "--cov=pyretailscience --cov-report=term-missing  --cov-branch --ignore=tests/integration"
 
 [tool.coverage.run]
 branch = true

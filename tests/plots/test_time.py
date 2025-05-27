@@ -14,13 +14,13 @@ import pytest
 
 from pyretailscience.plots.time import plot
 
-# Define constants for magic values
-EXPECTED_LINES_COUNT = 2
-EXPECTED_SOURCE_TEXT_COUNT = 4
-
 
 class TestTimePlot:
     """Tests for the time_plot function."""
+
+    def teardown_method(self):
+        """Clean up after each test method."""
+        plt.close("all")
 
     @pytest.fixture
     def test_data(self):
@@ -37,9 +37,8 @@ class TestTimePlot:
         """Test that the function generates a time plot with default parameters."""
         df = test_data
         result_ax = plot(df, value_col="sales")
-        count = 10
         assert isinstance(result_ax, plt.Axes)
-        assert len(result_ax.lines) == count
+        assert len(result_ax.lines) == 1  # Single time series line
 
     def test_generates_time_plot_with_group_col(self, test_data):
         """Test that the function generates a time plot with a group column."""
@@ -47,7 +46,8 @@ class TestTimePlot:
         result_ax = plot(df, value_col="sales", group_col="category")
 
         assert isinstance(result_ax, plt.Axes)
-        assert len(result_ax.lines) == EXPECTED_LINES_COUNT
+        expected_lines_count = 2
+        assert len(result_ax.lines) == expected_lines_count
 
     def test_generates_time_plot_with_custom_title(self, test_data):
         """Test that the function generates a time plot with a custom title."""
@@ -72,7 +72,7 @@ class TestTimePlot:
         result_ax = plot(df, value_col="sales", source_text=source_text)
 
         assert isinstance(result_ax, plt.Axes)
-        assert len(result_ax.lines) == EXPECTED_SOURCE_TEXT_COUNT
+        assert len(result_ax.lines) == 1  # Still just one line for the data
         source_texts = [text for text in result_ax.figure.texts if text.get_text() == source_text]
         assert len(source_texts) == 1
 

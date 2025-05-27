@@ -3,12 +3,20 @@
 import warnings
 from itertools import cycle
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.plots import line
 from pyretailscience.style import graph_utils as gu
+
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Clean up matplotlib figures after each test."""
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
