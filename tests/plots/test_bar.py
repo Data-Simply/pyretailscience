@@ -12,6 +12,13 @@ from pyretailscience.plots import bar
 from pyretailscience.style import graph_utils as gu
 
 
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Clean up matplotlib figures after each test."""
+    yield
+    plt.close("all")
+
+
 @pytest.fixture
 def sample_dataframe():
     """A sample dataframe for testing."""
@@ -497,7 +504,6 @@ def test_percentage_by_bar_group_with_negative_values():
             x_col="product",
             data_label_format="percentage_by_bar_group",
         )
-    plt.close("all")
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -515,4 +521,3 @@ def test_percentage_by_bar_group_with_zero_group_total():
 
     labels = [t.get_text() for t in result_ax.texts]
     assert all(label == "" for label in labels)  # Should all be empty due to division by zero
-    plt.close("all")

@@ -11,6 +11,10 @@ from pyretailscience.style.tailwind import COLORS
 class TestWaterfallPlot:
     """Tests for the waterfall_plot function."""
 
+    def teardown_method(self):
+        """Clean up after each test method."""
+        plt.close("all")
+
     @pytest.fixture
     def test_data(self):
         """Return a list of amounts."""

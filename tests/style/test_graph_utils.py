@@ -10,6 +10,13 @@ import pytest
 from pyretailscience.style import graph_utils as gu
 
 
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Clean up matplotlib figures after each test."""
+    yield
+    plt.close("all")
+
+
 def test_human_format_basic():
     """Test basic human_format functionality."""
     assert gu.human_format(500) == "500"  # No suffix
@@ -216,8 +223,6 @@ def test_set_axis_percent():
     assert formatter.decimals == test_decimals
     assert formatter._symbol == test_symbol
 
-    plt.close("all")  # Clean up
-
 
 class TestRegressionLine:
     """Test class for the add_regression_line function."""
@@ -238,8 +243,6 @@ class TestRegressionLine:
         # Check that a line was added (should now have 2 lines)
         assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
 
-        plt.close("all")
-
     def test_line_plot_with_datetime_data(self):
         """Test regression line with datetime x-axis data."""
         _, ax = plt.subplots()
@@ -257,8 +260,6 @@ class TestRegressionLine:
         # Check that a line was added
         assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
 
-        plt.close("all")
-
     def test_scatter_plot(self):
         """Test regression line with a scatter plot."""
         _, ax = plt.subplots()
@@ -270,8 +271,6 @@ class TestRegressionLine:
 
         # Check that a line was added to the scatter plot
         assert len(ax.get_lines()) == self.ORIGINAL_LINE_COUNT
-
-        plt.close("all")
 
     def test_large_numbers(self):
         """Test regression line with very large numbers (billions)."""
@@ -285,8 +284,6 @@ class TestRegressionLine:
         # Check that a line was added
         assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
 
-        plt.close("all")
-
     def test_single_data_point(self):
         """Test that regression line raises ValueError with a single data point."""
         _, ax = plt.subplots()
@@ -298,5 +295,3 @@ class TestRegressionLine:
 
         # Check for appropriate error message
         assert "regression" in str(excinfo.value).lower()
-
-        plt.close("all")
