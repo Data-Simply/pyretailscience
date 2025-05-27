@@ -42,7 +42,7 @@ class RFMSegmentation:
     Each metric is ranked into bins using either NTILE or custom cut points where,
     - The highest score represents the best score (top percentile of customers).
     - The lowest score represents the lowest score (bottom percentile of customers).
-    The RFM segment is calculated based on the scoring system used.
+    The RFM segment is a 3-digit number (R*100 + F*10 + M), representing customer value.
     """
 
     _df: pd.DataFrame | None = None
@@ -199,27 +199,15 @@ class RFMSegmentation:
         Returns:
             An Ibis expression representing the computed scores
         """
+        order_fn = ibis.asc if ascending else ibis.desc
+        window = ibis.window(
+            order_by=[order_fn(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
+        )
+
         if isinstance(segments, int):
-            if ascending:
-                window = ibis.window(
-                    order_by=[ibis.asc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
-                )
-            else:
-                window = ibis.window(
-                    order_by=[ibis.desc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
-                )
             return ibis.ntile(segments).over(window)
 
-        if ascending:
-            window_for_rank = ibis.window(
-                order_by=[ibis.asc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
-            )
-        else:
-            window_for_rank = ibis.window(
-                order_by=[ibis.desc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
-            )
-
-        percentile = table[column].percent_rank().over(window_for_rank)
+        percentile = table[column].percent_rank().over(window)
 
         sorted_segments = sorted(segments)
         case_expr = ibis.literal(0).cast("int32")
