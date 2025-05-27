@@ -180,7 +180,7 @@ class SegTransactionStats:
         segment_col = [segment_col] if isinstance(segment_col, str) else segment_col
 
         # Normalize rollup_value to always be a list matching segment_col length
-        rollup_value = [rollup_value] * len(segment_col) if isinstance(rollup_value, str) else rollup_value
+        rollup_value = [rollup_value] * len(segment_col) if not isinstance(rollup_value, list) else rollup_value
 
         # Validate rollup_value list length
         if len(rollup_value) != len(segment_col):
