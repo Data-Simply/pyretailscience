@@ -2,6 +2,7 @@
 
 from itertools import cycle
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +10,14 @@ from matplotlib.axes import Axes
 
 from pyretailscience.plots import area
 from pyretailscience.style import graph_utils as gu
+
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Automatically close all matplotlib figures after each test."""
+    yield
+    plt.close("all")
+
 
 PERIODS = 6
 RNG = np.random.default_rng(42)

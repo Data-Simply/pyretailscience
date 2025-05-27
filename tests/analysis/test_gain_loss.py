@@ -2,11 +2,19 @@
 
 import datetime
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.analysis.gain_loss import GainLoss
+
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Automatically close all matplotlib figures after each test."""
+    yield
+    plt.close("all")
 
 
 @pytest.mark.parametrize(

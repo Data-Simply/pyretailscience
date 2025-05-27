@@ -2,6 +2,7 @@
 
 from itertools import cycle
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
@@ -9,7 +10,12 @@ from matplotlib.axes import Axes
 from pyretailscience.plots.period_on_period import plot
 from pyretailscience.style import graph_utils as gu
 
-EXPECTED_LINES_COUNT = 3
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Automatically close all matplotlib figures after each test."""
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
@@ -47,7 +53,8 @@ def test_overlapping_periods_basic(sample_dataframe):
     )
 
     assert isinstance(ax, Axes)
-    assert len(ax.get_lines()) == EXPECTED_LINES_COUNT
+    expected_lines_count = 2
+    assert len(ax.get_lines()) == expected_lines_count
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
