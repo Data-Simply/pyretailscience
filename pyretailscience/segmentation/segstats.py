@@ -9,7 +9,7 @@ The module supports both Pandas DataFrames and Ibis Tables as input data formats
 offers visualization capabilities to generate plots of segment-based statistics.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 import ibis
 import pandas as pd
@@ -31,6 +31,8 @@ class SegTransactionStats:
         segment_col: str | list[str] = "segment_name",
         calc_total: bool = True,
         extra_aggs: dict[str, tuple[str, str]] | None = None,
+        calc_rollup: bool = False,
+        rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
     ) -> None:
         """Calculates transaction statistics by segment.
 
@@ -48,7 +50,17 @@ class SegTransactionStats:
                 - column_name is the name of the column to aggregate
                 - aggregation_function is a string name of an Ibis aggregation function (e.g., "nunique", "sum")
                 Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
+            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False.
+            rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
+                applied to all columns or a list of values matching the length of segment_col, with each value
+                cast to match the corresponding column type. Defaults to "Total".
         """
+        # Convert data to ibis.Table if it's a pandas DataFrame
+        if isinstance(data, pd.DataFrame):
+            data = ibis.memtable(data)
+        elif not isinstance(data, ibis.Table):
+            raise TypeError("data must be either a pandas DataFrame or an ibis Table")
+
         cols = ColumnHelper()
 
         if isinstance(segment_col, str):
@@ -80,8 +92,10 @@ class SegTransactionStats:
 
         self.segment_col = segment_col
         self.extra_aggs = {} if extra_aggs is None else extra_aggs
+        self.calc_rollup = calc_rollup
+        self.rollup_value = rollup_value
 
-        self.table = self._calc_seg_stats(data, segment_col, calc_total, self.extra_aggs)
+        self.table = self._calc_seg_stats(data, segment_col, calc_total, self.extra_aggs, calc_rollup, rollup_value)
 
     @staticmethod
     def _get_col_order(include_quantity: bool) -> list[str]:
@@ -103,7 +117,6 @@ class SegTransactionStats:
             cols.calc_spend_per_cust,
             cols.calc_spend_per_trans,
             cols.calc_trans_per_cust,
-            cols.customers_pct,
         ]
         if include_quantity:
             col_order.insert(3, "units")
@@ -113,33 +126,66 @@ class SegTransactionStats:
         return col_order
 
     @staticmethod
+    def _create_typed_literals(
+        data: ibis.Table,
+        columns: list[str],
+        values: list[Any],
+    ) -> dict[str, ibis.expr.types.generic.Scalar]:
+        """Create a dictionary of ibis literals with proper column types.
+
+        Args:
+            data (ibis.Table): The data table containing column type information
+            columns (list[str]): List of column names
+            values (list[Any]): List of values to convert to typed literals
+
+        Returns:
+            dict[str, ibis.expr.types.generic.Scalar]: Dictionary mapping column names to typed literals
+        """
+        mutations = {}
+        for i, col in enumerate(columns):
+            col_type = data[col].type()
+            mutations[col] = ibis.literal(values[i], type=col_type)
+        return mutations
+
+    @staticmethod
     def _calc_seg_stats(
-        data: pd.DataFrame | ibis.Table,
-        segment_col: list[str],
+        data: ibis.Table,
+        segment_col: str | list[str],
         calc_total: bool = True,
         extra_aggs: dict[str, tuple[str, str]] | None = None,
+        calc_rollup: bool = False,
+        rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
         Args:
-            data (pd.DataFrame | ibis.Table): The transaction data.
+            data (ibis.Table): The transaction data.
             segment_col (list[str]): The columns to use for the segmentation.
-            extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
             calc_total (bool, optional): Whether to include the total row. Defaults to True.
+            extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function).
+            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False.
+            rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
+                applied to all columns or a list of values matching the length of segment_col, with each value
+                cast to match the corresponding column type. Defaults to "Total".
 
         Returns:
             pd.DataFrame: The transaction statistics by segment.
 
         """
-        if isinstance(data, pd.DataFrame):
-            data = ibis.memtable(data)
-
-        elif not isinstance(data, ibis.Table):
-            raise TypeError("data must be either a pandas DataFrame or an ibis Table")
-
         cols = ColumnHelper()
+
+        # Ensure segment_col is a list
+        segment_col = [segment_col] if isinstance(segment_col, str) else segment_col
+
+        # Normalize rollup_value to always be a list matching segment_col length
+        rollup_value = [rollup_value] * len(segment_col) if isinstance(rollup_value, str) else rollup_value
+
+        # Validate rollup_value list length
+        if len(rollup_value) != len(segment_col):
+            msg = f"If rollup_value is a list, its length must match the number of segment columns. Expected {len(segment_col)}, got {len(rollup_value)}"
+            raise ValueError(msg)
 
         # Base aggregations for segments
         aggs = {
@@ -151,7 +197,7 @@ class SegTransactionStats:
             aggs[cols.agg_unit_qty] = data[cols.unit_qty].sum()
 
         # Add extra aggregations if provided
-        if extra_aggs:
+        if extra_aggs is not None:
             for agg_name, col_tuple in extra_aggs.items():
                 col, func = col_tuple
                 aggs[agg_name] = getattr(data[col], func)()
@@ -160,19 +206,46 @@ class SegTransactionStats:
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
         final_metrics = segment_metrics
 
+        # Calculate rollup totals if requested
+        if calc_rollup:
+            rollup_metrics = []
+
+            # Generate all prefixes of segment_col (except the empty prefix which is the grand total)
+            # and excluding the full segment_col list which is already calculated
+            for i in range(1, len(segment_col)):
+                prefix = segment_col[:i]
+
+                # Group by the prefix and aggregate
+                rollup_result = data.group_by(prefix).aggregate(**aggs)
+
+                # Add rollup values for the remaining columns with proper types
+                remaining_cols = segment_col[i:]
+                remaining_values = rollup_value[i:]
+                rollup_mutations = SegTransactionStats._create_typed_literals(data, remaining_cols, remaining_values)
+
+                # Apply all mutations at once
+                rollup_result = rollup_result.mutate(**rollup_mutations)
+                rollup_metrics.append(rollup_result)
+
+            # Union all rollup results
+            if rollup_metrics:
+                final_metrics = final_metrics.union(*rollup_metrics)
+
+        # Add grand total row if requested
         if calc_total:
-            total_metrics = data.aggregate(**aggs).mutate({col: ibis.literal("Total") for col in segment_col})
-            final_metrics = ibis.union(segment_metrics, total_metrics)
+            total_metrics = data.aggregate(**aggs)
 
-        total_customers = data[cols.customer_id].nunique()
+            # Create properly typed values for all segment columns
+            total_mutations = SegTransactionStats._create_typed_literals(data, segment_col, rollup_value)
+            total_metrics = total_metrics.mutate(**total_mutations)
+            final_metrics = final_metrics.union(total_metrics)
 
-        # Cross join with total_customers to make it available for percentage calculation
+        # Calculate derived metrics
         final_metrics = final_metrics.mutate(
             **{
                 cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
                 cols.calc_spend_per_trans: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_transaction_id],
                 cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id] / ibis._[cols.agg_customer_id].cast("float"),
-                cols.customers_pct: ibis._[cols.agg_customer_id].cast("float") / total_customers,
             },
         )
 
