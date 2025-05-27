@@ -39,15 +39,22 @@ class RFMSegmentation:
     - Frequency (F): Number of unique transactions (higher is better).
     - Monetary (M): Total amount spent (higher is better).
 
-    Each metric is ranked into 10 bins (0-9) using NTILE(10) where,
-    - 9 represents the best score (top 10% of customers).
-    - 0 represents the lowest score (bottom 10% of customers).
-    The RFM segment is a 3-digit number (R*100 + F*10 + M), representing customer value.
+    Each metric is ranked into bins using either NTILE or custom cut points where,
+    - The highest score represents the best score (top percentile of customers).
+    - The lowest score represents the lowest score (bottom percentile of customers).
+    The RFM segment is calculated based on the scoring system used.
     """
 
     _df: pd.DataFrame | None = None
 
-    def __init__(self, df: pd.DataFrame | ibis.Table, current_date: str | datetime.date | None = None) -> None:
+    def __init__(
+        self,
+        df: pd.DataFrame | ibis.Table,
+        current_date: str | datetime.date | None = None,
+        r_segments: int | list[float] = 10,
+        f_segments: int | list[float] = 10,
+        m_segments: int | list[float] = 10,
+    ) -> None:
         """Initializes the RFM segmentation process.
 
         Args:
@@ -59,9 +66,15 @@ class RFMSegmentation:
                 - transaction_id
             current_date (Optional[Union[str, datetime.date]]): The reference date for calculating recency.
                 Can be a string (format: "YYYY-MM-DD"), a date object, or None (defaults to the current system date).
+            r_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
+                Defaults to 10 bins.
+            f_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
+                Defaults to 10 bins.
+            m_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
+                Defaults to 10 bins.
 
         Raises:
-            ValueError: If the dataframe is missing required columns.
+            ValueError: If the dataframe is missing required columns or invalid segment parameters.
             TypeError: If the input data is not a pandas DataFrame or an Ibis Table.
         """
         cols = ColumnHelper()
@@ -88,7 +101,53 @@ class RFMSegmentation:
         elif not isinstance(current_date, datetime.date):
             raise TypeError("current_date must be a string in 'YYYY-MM-DD' format, a datetime.date object, or None")
 
+        self._validate_segments(r_segments, "r_segments")
+        self._validate_segments(f_segments, "f_segments")
+        self._validate_segments(m_segments, "m_segments")
+
+        self.r_segments = r_segments
+        self.f_segments = f_segments
+        self.m_segments = m_segments
+
         self.table = self._compute_rfm(df, current_date)
+
+    def _validate_segments(self, segments: int | list[float], param_name: str) -> None:
+        """Validates segment parameters.
+
+        Args:
+            segments: The segment parameter to validate
+            param_name: Name of the parameter for error messages
+
+        Raises:
+            ValueError: If segment parameters are invalid
+        """
+        max_segments_int = 10
+        max_segments_list = 9
+        max_segments = 1
+
+        if isinstance(segments, int):
+            if segments < max_segments or segments > max_segments_int:
+                msg = f"{param_name} must be between {max_segments} and {max_segments_int} when specified as an integer"
+                raise ValueError(msg)
+        elif isinstance(segments, list):
+            if len(segments) == 0 or len(segments) > max_segments_list:
+                msg = f"{param_name} must contain between {max_segments} and {max_segments_list} cut points when specified as a list"
+                raise ValueError(msg)
+            if not all(isinstance(x, int | float) for x in segments):  # UP038
+                msg = f"All cut points in {param_name} must be numeric"
+                raise ValueError(msg)
+            if not all(0 <= x <= 1 for x in segments):
+                msg = f"All cut points in {param_name} must be between 0 and 1"
+                raise ValueError(msg)
+            if len(segments) != len(set(segments)):
+                msg = f"Cut points in {param_name} must be unique"
+                raise ValueError(msg)
+            if segments != sorted(segments):
+                msg = f"Cut points in {param_name} must be in ascending order"
+                raise ValueError(msg)
+        else:
+            msg = f"{param_name} must be an integer or a list of floats"
+            raise TypeError(msg)
 
     def _compute_rfm(self, df: ibis.Table, current_date: datetime.date) -> ibis.Table:
         """Computes the RFM metrics and segments customers accordingly.
@@ -111,26 +170,68 @@ class RFMSegmentation:
             monetary=df[cols.unit_spend].sum(),
         )
 
-        window_recency = ibis.window(
-            order_by=[ibis.asc(customer_metrics.recency_days), ibis.asc(customer_metrics.customer_id)],
-        )
-        window_frequency = ibis.window(
-            order_by=[ibis.asc(customer_metrics.frequency), ibis.asc(customer_metrics.customer_id)],
-        )
-        window_monetary = ibis.window(
-            order_by=[ibis.asc(customer_metrics.monetary), ibis.asc(customer_metrics.customer_id)],
-        )
-
         rfm_scores = customer_metrics.mutate(
-            r_score=(ibis.ntile(10).over(window_recency)),
-            f_score=(ibis.ntile(10).over(window_frequency)),
-            m_score=(ibis.ntile(10).over(window_monetary)),
+            r_score=self._compute_score(customer_metrics, "recency_days", self.r_segments, ascending=False),
+            f_score=self._compute_score(customer_metrics, "frequency", self.f_segments, ascending=True),
+            m_score=self._compute_score(customer_metrics, "monetary", self.m_segments, ascending=True),
         )
 
         return rfm_scores.mutate(
             rfm_segment=(rfm_scores.r_score * 100 + rfm_scores.f_score * 10 + rfm_scores.m_score),
             fm_segment=(rfm_scores.f_score * 10 + rfm_scores.m_score),
         )
+
+    def _compute_score(
+        self,
+        table: ibis.Table,
+        column: str,
+        segments: int | list[float],
+        ascending: bool = True,
+    ) -> ibis.expr.types.IntegerColumn:
+        """Computes score for a given column using either NTILE or custom cut points.
+
+        Args:
+            table: The table containing the data
+            column: The column name to compute scores for
+            segments: Either number of bins or list of cut points
+            ascending: Whether lower values should get higher scores (for recency=False, for frequency/monetary=True)
+
+        Returns:
+            An Ibis expression representing the computed scores
+        """
+        if isinstance(segments, int):
+            if ascending:
+                window = ibis.window(
+                    order_by=[ibis.asc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
+                )
+            else:
+                window = ibis.window(
+                    order_by=[ibis.desc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
+                )
+            return ibis.ntile(segments).over(window)
+
+        if ascending:
+            window_for_rank = ibis.window(
+                order_by=[ibis.asc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
+            )
+        else:
+            window_for_rank = ibis.window(
+                order_by=[ibis.desc(table[column]), ibis.asc(table[ColumnHelper().customer_id])],
+            )
+
+        percentile = table[column].percent_rank().over(window_for_rank)
+
+        sorted_segments = sorted(segments)
+        case_expr = ibis.literal(0).cast("int32")
+
+        for i, cutpoint in enumerate(sorted_segments):
+            condition = percentile > ibis.literal(cutpoint)
+            case_expr = condition.ifelse(
+                ibis.literal(i + 1).cast("int32"),
+                case_expr,
+            )
+
+        return case_expr
 
     @property
     def df(self) -> pd.DataFrame:
