@@ -1,0 +1,103 @@
+name: Slack Failure Notifications
+
+on:
+  workflow_run:
+    workflows: ["Pre-commit", "PyPi Package Deploy", "Page Deploy", "BigQuery Integration Tests"]
+    types: [completed]
+
+jobs:
+  notify-failure:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          webhook_url: ${{ secrets.GH_ACTIONS_SLACK_WEBHOOK_URL }}
+          channel: '#github-actions-notifications'
+          username: 'GitHub Actions'
+          icon_emoji: ':warning:'
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          custom_payload: |
+            {
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fallback": "Workflow failure notification",
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "❌ GitHub Action Failed"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Repository:*\n${{ github.event.workflow_run.repository.full_name }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Workflow:*\n${{ github.event.workflow_run.name }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branch:*\n${{ github.event.workflow_run.head_branch }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Event:*\n${{ github.event.workflow_run.event }}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Commit:*\n<${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }}|${{ github.event.workflow_run.head_sha }}>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Author:*\n${{ github.event.workflow_run.head_commit.author.name }}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*Commit Message:*\n```${{ github.event.workflow_run.head_commit.message }}```"
+                      }
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "🔍 View Failed Workflow"
+                          },
+                          "url": "${{ github.event.workflow_run.html_url }}",
+                          "style": "danger"
+                        },
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "📝 View Commit"
+                          },
+                          "url": "${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }

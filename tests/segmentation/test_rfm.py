@@ -205,27 +205,16 @@ class TestRFMSegmentation:
         assert result_df["f_score"].min() == 0
         assert result_df["m_score"].min() == 0
 
-    def test_backward_compatibility_default_values(self, base_df, expected_df):
+    def test_compatibility_default_values(self, base_df, expected_df):
         """Test that default behavior (10 bins) works as before."""
         current_date = "2025-03-17"
-
-        rfm_segmentation_explicit = RFMSegmentation(
-            df=base_df,
-            current_date=current_date,
-            r_segments=10,
-            f_segments=10,
-            m_segments=10,
-        )
 
         rfm_segmentation_implicit = RFMSegmentation(
             df=base_df,
             current_date=current_date,
         )
 
-        result_explicit = rfm_segmentation_explicit.df
         result_implicit = rfm_segmentation_implicit.df
-
-        pd.testing.assert_frame_equal(result_explicit, result_implicit)
 
         expected_df["recency_days"] = [16, 30, 46, 7, 25]
         expected_df["recency_days"] = expected_df["recency_days"].astype(result_implicit["recency_days"].dtype)

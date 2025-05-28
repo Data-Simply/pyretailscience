@@ -1,5 +1,6 @@
 """Tests for the cohort plot module."""
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +10,13 @@ from pyretailscience.plots import cohort
 from pyretailscience.style import graph_utils as gu
 
 RNG = np.random.default_rng(42)
+
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Clean up matplotlib figures after each test."""
+    yield
+    plt.close("all")
 
 
 @pytest.fixture

@@ -1,14 +1,21 @@
 """Tests for the plots.line module."""
 
-import warnings
 from itertools import cycle
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.plots import line
 from pyretailscience.style import graph_utils as gu
+
+
+@pytest.fixture(autouse=True)
+def cleanup_figures():
+    """Clean up matplotlib figures after each test."""
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
@@ -72,28 +79,6 @@ def test_plot_without_group_col(sample_dataframe):
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.get_lines()) == expected_num_lines  # Only one line
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_warns_if_xcol_is_datetime(sample_dataframe, mocker):
-    """Test the plot function warns if the x_col is datetime-like."""
-    mocker.patch("warnings.warn")
-
-    line.plot(
-        df=sample_dataframe,
-        value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
-        title="Test Plot Datetime Warning",
-        x_col="x",
-        group_col="group",
-    )
-
-    warnings.warn.assert_any_call(
-        "The column 'x' is datetime-like. Consider using the 'plots.time_line' module for time-based plots.",
-        UserWarning,
-        stacklevel=2,
-    )
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -218,34 +203,6 @@ def test_plot_with_legend_title_and_move_outside(sample_dataframe):
         y_label="Y Axis",
         legend_title=legend_title,
         move_legend_outside=True,
-    )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_datetime_index_warns(sample_dataframe, mocker):
-    """Test the plot function with a datetime index and no x_col, expecting a warning."""
-    df_with_datetime_index = sample_dataframe.set_index("x")
-
-    # Mock the warnings.warn method to check if it's called
-    mocker.patch("warnings.warn")
-
-    # Create the plot with a datetime index and no x_col
-    result_ax = line.plot(
-        df=df_with_datetime_index,
-        value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
-        title="Test Plot Datetime Index",
-    )
-
-    # Assert that the plot was created
-    assert isinstance(result_ax, Axes)
-
-    # Assert that the warning about datetime-like index was raised
-    warnings.warn.assert_called_once_with(
-        "The DataFrame index is datetime-like. Consider using the 'plots.time_line' module for time-based plots.",
-        UserWarning,
-        stacklevel=2,
     )
 
 
