@@ -15,7 +15,7 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: failure
-          webhook_url: ${{ secrets.GH_ACTIONS_SLACK_WEBHOOL_URL }}
+          webhook_url: ${{ secrets.GH_ACTIONS_SLACK_WEBHOOK_URL }}
           channel: '#github-actions-notifications'
           username: 'GitHub Actions'
           icon_emoji: ':warning:'
