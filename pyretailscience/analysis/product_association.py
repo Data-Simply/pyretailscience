@@ -54,7 +54,7 @@ class ProductAssociation:
             the product identifiers.
         group_col (str, optional): The name of the column that identifies unique
             transactions or customers. Defaults to option column.column_id.
-        target_item (str or None, optional): A specific product to focus the
+        target_item (str | float | list[str | float] | None, optional): A specific product or list of products to focus the
             association analysis on. If None, associations for all products are
             calculated. Defaults to None.
 
@@ -88,7 +88,7 @@ class ProductAssociation:
         df: pd.DataFrame | ibis.Table,
         value_col: str,
         group_col: str = get_option("column.customer_id"),
-        target_item: str | None = None,
+        target_item: str | float | list[str | float] | None = None,
         min_occurrences: int = 1,
         min_cooccurrences: int = 1,
         min_support: float = 0.0,
@@ -102,7 +102,7 @@ class ProductAssociation:
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
-            target_item (str or None, optional): A specific product to focus the association analysis on. If None,
+            target_item (str | float | list[str | float] | None, optional): A specific product or list of products to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.
@@ -144,7 +144,7 @@ class ProductAssociation:
         df: pd.DataFrame | ibis.Table,
         value_col: str,
         group_col: str = get_option("column.customer_id"),
-        target_item: str | None = None,
+        target_item: str | float | list[str | float] | None = None,
         min_occurrences: int = 1,
         min_cooccurrences: int = 1,
         min_support: float = 0.0,
@@ -161,7 +161,7 @@ class ProductAssociation:
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
-            target_item (str or None, optional): A specific product to focus the association analysis on. If None,
+            target_item (str | float | list[str | float] | None, optional): A specific product or list of products to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.
@@ -202,6 +202,21 @@ class ProductAssociation:
         if min_uplift < 0.0:
             raise ValueError("Minimum uplift must be greater or equal to 0.")
 
+        # Normalize target_item to a list for consistent processing
+        if target_item is not None:
+            if not isinstance(target_item, list):
+                target_item = [target_item]
+
+            # Validate that all items in target_item are of supported types
+            for item in target_item:
+                if not isinstance(item, str | float):
+                    msg = f"target_item must contain only str or float values. Got {type(item)}"
+                    raise TypeError(msg)
+
+            # Ensure target_item is not empty
+            if len(target_item) == 0:
+                raise ValueError("target_item cannot be an empty list")
+
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
 
@@ -225,7 +240,7 @@ class ProductAssociation:
             join_logic.extend(
                 [
                     left_table.item_1 != right_table.item_2,
-                    left_table.item_1 == target_item,
+                    left_table.item_1.isin(target_item),
                 ],
             )
         merged_df = left_table.join(right_table, predicates=join_logic)

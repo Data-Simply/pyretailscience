@@ -291,3 +291,62 @@ class TestProductAssociations:
                 group_col=cols.transaction_id,
                 min_uplift=-0.1,
             )
+
+    def test_calc_association_target_item_list(self, transactions_df):
+        """Test calculating association rules with a list of target items."""
+        target_items = ["milk", "bread"]
+
+        calc_df = ProductAssociation(
+            df=transactions_df,
+            value_col="product",
+            group_col=cols.transaction_id,
+            target_item=target_items,
+        )
+
+        result = calc_df.df
+
+        # Verify that we get exactly the target items we expect
+        assert set(target_items) == set(result["product_1"].unique())
+        assert len(result) > 0
+
+    def test_calc_association_target_item_single_vs_list(self, transactions_df):
+        """Test that single target item and list with single item produce same results."""
+        single_target = "milk"
+        list_target = ["milk"]
+
+        calc_single = ProductAssociation(
+            df=transactions_df,
+            value_col="product",
+            group_col=cols.transaction_id,
+            target_item=single_target,
+        )
+
+        calc_list = ProductAssociation(
+            df=transactions_df,
+            value_col="product",
+            group_col=cols.transaction_id,
+            target_item=list_target,
+        )
+
+        # Results should be identical
+        pd.testing.assert_frame_equal(calc_single.df, calc_list.df)
+
+    def test_calc_association_target_item_empty_list(self, transactions_df):
+        """Test that empty target item list raises ValueError."""
+        with pytest.raises(ValueError, match="target_item cannot be an empty list"):
+            ProductAssociation(
+                df=transactions_df,
+                value_col="product",
+                group_col=cols.transaction_id,
+                target_item=[],
+            )
+
+    def test_calc_association_target_item_invalid_type(self, transactions_df):
+        """Test that invalid types in target item list raise TypeError."""
+        with pytest.raises(TypeError, match="target_item must contain only str or float values"):
+            ProductAssociation(
+                df=transactions_df,
+                value_col="product",
+                group_col=cols.transaction_id,
+                target_item=["milk", {"invalid": "dict"}],
+            )
