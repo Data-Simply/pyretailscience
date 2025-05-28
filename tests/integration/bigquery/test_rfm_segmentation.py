@@ -8,11 +8,20 @@ from pyretailscience.segmentation.rfm import RFMSegmentation
 
 
 @pytest.mark.parametrize(
-    ("current_date", "r_segments", "f_segments", "m_segments"),
+    (
+        "current_date",
+        "r_segments",
+        "f_segments",
+        "m_segments",
+        "min_monetary",
+        "max_monetary",
+        "min_frequency",
+        "max_frequency",
+    ),
     [
-        (None, 10, 10, 10),
-        ("2023-12-31", 5, 5, 5),
-        (datetime.date(2023, 6, 30), [0.2, 0.4, 0.6, 0.8], [0.3, 0.6], [0.1, 0.5, 0.9]),
+        (None, 10, 10, 10, None, None, None, None),
+        ("2023-12-31", 5, 5, 5, 0.0, 1000.0, 1, 50),
+        (datetime.date(2023, 6, 30), [0.2, 0.4, 0.6, 0.8], [0.3, 0.6], [0.1, 0.5, 0.9], 10.0, 5000.0, 2, 100),
     ],
 )
 def test_rfm_segmentation_bigquery_executes(
@@ -21,6 +30,10 @@ def test_rfm_segmentation_bigquery_executes(
     r_segments,
     f_segments,
     m_segments,
+    min_monetary,
+    max_monetary,
+    min_frequency,
+    max_frequency,
 ):
     """Test RFMSegmentation with data fetched from BigQuery.
 
@@ -35,6 +48,10 @@ def test_rfm_segmentation_bigquery_executes(
         r_segments=r_segments,
         f_segments=f_segments,
         m_segments=m_segments,
+        min_monetary=min_monetary,
+        max_monetary=max_monetary,
+        min_frequency=min_frequency,
+        max_frequency=max_frequency,
     )
     assert result is not None
 

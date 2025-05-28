@@ -54,6 +54,10 @@ class RFMSegmentation:
         r_segments: int | list[float] = 10,
         f_segments: int | list[float] = 10,
         m_segments: int | list[float] = 10,
+        min_monetary: float | None = None,
+        max_monetary: float | None = None,
+        min_frequency: int | None = None,
+        max_frequency: int | None = None,
     ) -> None:
         """Initializes the RFM segmentation process.
 
@@ -72,9 +76,18 @@ class RFMSegmentation:
                 Defaults to 10 bins.
             m_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
                 Defaults to 10 bins.
+            min_monetary (Optional[float]): Minimum monetary value to include in segmentation.
+                Customers with total spend below this value will be excluded from the analysis.
+            max_monetary (Optional[float]): Maximum monetary value to include in segmentation.
+                Customers with total spend above this value will be excluded from the analysis.
+            min_frequency (Optional[int]): Minimum purchase frequency to include in segmentation.
+                Customers with fewer transactions will be excluded from the analysis.
+            max_frequency (Optional[int]): Maximum purchase frequency to include in segmentation.
+                Customers with more transactions will be excluded from the analysis.
 
         Raises:
-            ValueError: If the dataframe is missing required columns or invalid segment parameters.
+            ValueError: If the dataframe is missing required columns, invalid segment parameters,
+                       or invalid filter parameters.
             TypeError: If the input data is not a pandas DataFrame or an Ibis Table.
         """
         cols = ColumnHelper()
@@ -104,10 +117,16 @@ class RFMSegmentation:
         self._validate_segments(r_segments, "r_segments")
         self._validate_segments(f_segments, "f_segments")
         self._validate_segments(m_segments, "m_segments")
+        self._validate_monetary_filters(min_monetary, max_monetary)
+        self._validate_frequency_filters(min_frequency, max_frequency)
 
         self.r_segments = r_segments
         self.f_segments = f_segments
         self.m_segments = m_segments
+        self.min_monetary = min_monetary
+        self.max_monetary = max_monetary
+        self.min_frequency = min_frequency
+        self.max_frequency = max_frequency
 
         self.table = self._compute_rfm(df, current_date)
 
@@ -149,6 +168,38 @@ class RFMSegmentation:
             msg = f"{param_name} must be an integer or a list of floats"
             raise TypeError(msg)
 
+    def _validate_monetary_filters(self, min_monetary: float | None, max_monetary: float | None) -> None:
+        if min_monetary is not None:
+            if not isinstance(min_monetary, int | float):
+                raise TypeError("min_monetary must be a numeric value")
+            if min_monetary < 0:
+                raise ValueError("min_monetary must be non-negative")
+
+        if max_monetary is not None:
+            if not isinstance(max_monetary, int | float):
+                raise TypeError("max_monetary must be a numeric value")
+            if max_monetary < 0:
+                raise ValueError("max_monetary must be non-negative")
+
+        if min_monetary is not None and max_monetary is not None and min_monetary >= max_monetary:
+            raise ValueError("min_monetary must be less than max_monetary")
+
+    def _validate_frequency_filters(self, min_frequency: float | None, max_frequency: float | None) -> None:
+        if min_frequency is not None:
+            if not isinstance(min_frequency, int):
+                raise TypeError("min_frequency must be an integer")
+            if min_frequency < 1:
+                raise ValueError("min_frequency must be at least 1")
+
+        if max_frequency is not None:
+            if not isinstance(max_frequency, int):
+                raise TypeError("max_frequency must be an integer")
+            if max_frequency < 1:
+                raise ValueError("max_frequency must be at least 1")
+
+        if min_frequency is not None and max_frequency is not None and min_frequency > max_frequency:
+            raise ValueError("min_frequency must be less than or equal to max_frequency")
+
     def _compute_rfm(self, df: ibis.Table, current_date: datetime.date) -> ibis.Table:
         """Computes the RFM metrics and segments customers accordingly.
 
@@ -170,16 +221,43 @@ class RFMSegmentation:
             monetary=df[cols.unit_spend].sum(),
         )
 
-        rfm_scores = customer_metrics.mutate(
-            r_score=self._compute_score(customer_metrics, "recency_days", self.r_segments, ascending=False),
-            f_score=self._compute_score(customer_metrics, "frequency", self.f_segments, ascending=True),
-            m_score=self._compute_score(customer_metrics, "monetary", self.m_segments, ascending=True),
+        filtered_metrics = self._apply_filters(customer_metrics)
+
+        rfm_scores = filtered_metrics.mutate(
+            r_score=self._compute_score(filtered_metrics, "recency_days", self.r_segments, ascending=False),
+            f_score=self._compute_score(filtered_metrics, "frequency", self.f_segments, ascending=True),
+            m_score=self._compute_score(filtered_metrics, "monetary", self.m_segments, ascending=True),
         )
 
         return rfm_scores.mutate(
             rfm_segment=(rfm_scores.r_score * 100 + rfm_scores.f_score * 10 + rfm_scores.m_score),
             fm_segment=(rfm_scores.f_score * 10 + rfm_scores.m_score),
         )
+
+    def _apply_filters(self, customer_metrics: ibis.Table) -> ibis.Table:
+        """Applies the specified filters to the customer metrics.
+
+        Args:
+            customer_metrics: Table with customer metrics (recency_days, frequency, monetary)
+
+        Returns:
+            Filtered table containing only customers meeting all filter criteria
+        """
+        filter_configs = [
+            ("monetary", self.min_monetary, self.max_monetary),
+            ("frequency", self.min_frequency, self.max_frequency),
+        ]
+
+        filtered_table = customer_metrics
+
+        for column_name, min_val, max_val in filter_configs:
+            if min_val is not None:
+                filtered_table = filtered_table.filter(filtered_table[column_name] >= min_val)
+
+            if max_val is not None:
+                filtered_table = filtered_table.filter(filtered_table[column_name] <= max_val)
+
+        return filtered_table
 
     def _compute_score(
         self,
