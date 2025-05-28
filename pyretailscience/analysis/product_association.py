@@ -37,6 +37,7 @@ operations, and drive business growth.
 
 import ibis
 import pandas as pd
+from ibis import _
 
 from pyretailscience.options import get_option
 
@@ -204,16 +205,14 @@ class ProductAssociation:
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
 
-        unique_transactions = df.select(df[group_col], df[value_col]).distinct()
+        unique_transactions = df.select(_[group_col], _[value_col]).distinct()
         total_transactions = unique_transactions.alias("t")[group_col].nunique().name("total_count")
 
         product_occurrences = (
             unique_transactions.group_by(value_col)
-            .aggregate(
-                occurrences=lambda t: t[group_col].nunique(),
-            )
-            .mutate(occurrence_probability=lambda t: t.occurrences / total_transactions)
-            .filter(lambda t: t.occurrences >= min_occurrences)
+            .aggregate(occurrences=_[group_col].nunique())
+            .mutate(occurrence_probability=_.occurrences / total_transactions)
+            .filter(_.occurrences >= min_occurrences)
         )
 
         left_table = unique_transactions.rename({"item_1": value_col})
@@ -221,44 +220,21 @@ class ProductAssociation:
 
         join_logic = [left_table[group_col] == right_table[group_col]]
         if target_item is None:
-            join_logic.append(left_table["item_1"] < right_table["item_2"])
+            join_logic.append(left_table.item_1 < right_table.item_2)
         else:
             join_logic.extend(
                 [
-                    left_table["item_1"] != right_table["item_2"],
-                    left_table["item_1"] == target_item,
+                    left_table.item_1 != right_table.item_2,
+                    left_table.item_1 == target_item,
                 ],
             )
-        merged_df = left_table.join(
-            right_table,
-            predicates=join_logic,
-            lname="",
-            rname="{name}_right",
-        )
+        merged_df = left_table.join(right_table, predicates=join_logic)
 
-        product_occurrences_1 = product_occurrences.rename(
-            {"item_1": value_col, "occurrences_1": "occurrences", "occurrence_probability_1": "occurrence_probability"},
-        )
-        product_occurrences_2 = product_occurrences.rename(
-            {"item_2": value_col, "occurrences_2": "occurrences", "occurrence_probability_2": "occurrence_probability"},
-        )
-
-        merged_df = merged_df.join(
-            product_occurrences_1,
-            predicates=[merged_df["item_1"] == product_occurrences_1["item_1"]],
-        )
-
-        merged_df = merged_df.join(
-            product_occurrences_2,
-            predicates=[merged_df["item_2"] == product_occurrences_2["item_2"]],
-        )
-
-        cooccurrences = merged_df.group_by(["item_1", "item_2"]).aggregate(cooccurrences=merged_df[group_col].nunique())
-        cooccurrences = cooccurrences.mutate(
-            support=cooccurrences.cooccurrences / total_transactions,
-        )
-        cooccurrences = cooccurrences.filter(
-            (cooccurrences.cooccurrences >= min_cooccurrences) & (cooccurrences.support >= min_support),
+        cooccurrences = (
+            merged_df.group_by(["item_1", "item_2"])
+            .aggregate(cooccurrences=merged_df[group_col].nunique())
+            .mutate(support=_.cooccurrences / total_transactions)
+            .filter((_.cooccurrences >= min_cooccurrences) & (_.support >= min_support))
         )
 
         product_occurrences_1_rename = product_occurrences.rename(
@@ -268,21 +244,15 @@ class ProductAssociation:
             {"item_2": value_col, "occurrences_2": "occurrences", "prob_2": "occurrence_probability"},
         )
 
-        product_pairs = cooccurrences.join(
-            product_occurrences_1_rename,
-            predicates=[cooccurrences["item_1"] == product_occurrences_1_rename["item_1"]],
+        result = (
+            cooccurrences.join(product_occurrences_1_rename, "item_1")
+            .join(product_occurrences_2_rename, "item_2")
+            .mutate(
+                confidence=_.cooccurrences / _.occurrences_1,
+                uplift=_.support / (_.prob_1 * _.prob_2),
+            )
+            .filter(_.uplift >= min_uplift)
         )
-        product_pairs = product_pairs.join(
-            product_occurrences_2_rename,
-            predicates=[product_pairs["item_2"] == product_occurrences_2_rename["item_2"]],
-        )
-
-        product_pairs = product_pairs.mutate(
-            confidence=product_pairs["cooccurrences"] / product_pairs["occurrences_1"],
-            uplift=product_pairs["support"] / (product_pairs["prob_1"] * product_pairs["prob_2"]),
-        )
-
-        result = product_pairs.filter(product_pairs.uplift >= min_uplift)
 
         if target_item is None:
             col_order = [
@@ -296,25 +266,22 @@ class ProductAssociation:
                 "uplift",
             ]
             inverse_pairs = result.mutate(
-                item_1=result["item_2"],
-                item_2=result["item_1"],
-                occurrences_1=result["occurrences_2"],
-                occurrences_2=result["occurrences_1"],
-                prob_1=result["prob_2"],
-                prob_2=result["prob_1"],
-                confidence=result["cooccurrences"] / result["occurrences_2"],
+                item_1=result.item_2,
+                item_2=result.item_1,
+                occurrences_1=result.occurrences_2,
+                occurrences_2=result.occurrences_1,
+                prob_1=result.prob_2,
+                prob_2=result.prob_1,
+                confidence=result.cooccurrences / result.occurrences_2,
             )
             result = result[col_order].union(inverse_pairs[col_order])
 
-        result = result.filter(result.confidence >= min_confidence)
-        final_result = result.order_by(["item_1", "item_2"])
-        final_result = final_result.rename(
-            {
-                f"{value_col}_1": "item_1",
-                f"{value_col}_2": "item_2",
-            },
+        result = (
+            result.filter(result.confidence >= min_confidence)
+            .order_by(["item_1", "item_2"])
+            .rename({f"{value_col}_1": "item_1", f"{value_col}_2": "item_2"})
         )
-        return final_result[
+        return result[
             [
                 f"{value_col}_1",
                 f"{value_col}_2",
