@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 import pyretailscience.analysis.customer_decision_hierarchy as rp
-from pyretailscience.options import ColumnHelper
+from pyretailscience.options import ColumnHelper, option_context
 
 cols = ColumnHelper()
 
@@ -107,3 +107,41 @@ class TestCustomerDecisionHierarchy:
         ).astype("category")
 
         assert pairs_df.equals(expected_pairs_df)
+
+    def test_get_pairs_with_custom_columns(self):
+        """Test _get_pairs works with custom column names and both exclude_same_transaction_products options."""
+        custom_columns = {
+            "column.customer_id": "cust_identifier",
+            "column.transaction_id": "txn_identifier",
+            "column.product_id": "item_identifier",
+        }
+
+        test_df = pd.DataFrame(
+            {
+                "cust_identifier": [1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7],
+                "txn_identifier": [101, 101, 102, 201, 201, 202, 301, 302, 401, 402, 501, 502, 601, 602, 701, 702],
+                "product_name": ["A", "B", "C", "A", "D", "E", "A", "B", "C", "D", "E", "F", "G", "H", "A", "B"],
+            },
+        )
+
+        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+            # Test that _get_pairs method works with custom columns
+            pairs_df_true = rp.CustomerDecisionHierarchy._get_pairs(
+                df=test_df,
+                exclude_same_transaction_products=True,
+                product_col="product_name",
+            )
+
+            pairs_df_false = rp.CustomerDecisionHierarchy._get_pairs(
+                df=test_df,
+                exclude_same_transaction_products=False,
+                product_col="product_name",
+            )
+
+            assert not pairs_df_true.empty
+            assert not pairs_df_false.empty
+            assert "cust_identifier" in pairs_df_true.columns
+            assert "cust_identifier" in pairs_df_false.columns
+            assert "product_name" in pairs_df_true.columns
+            assert "product_name" in pairs_df_false.columns
+            assert len(pairs_df_false) >= len(pairs_df_true)

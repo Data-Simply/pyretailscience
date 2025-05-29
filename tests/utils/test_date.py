@@ -7,6 +7,7 @@ import ibis
 import pandas as pd
 import pytest
 
+from pyretailscience.options import get_option, option_context
 from pyretailscience.utils.date import filter_and_label_by_periods, find_overlapping_periods
 
 
@@ -252,6 +253,99 @@ class TestFilterAndLabelByPeriods:
             match="Periods 'Period_A' \\(2023-01-01-2023-03-31\\) and 'Period_B' \\(2023-03-15-2023-06-30\\) overlap",
         ):
             filter_and_label_by_periods(sample_transactions_table, period_ranges)
+
+    @pytest.mark.parametrize(
+        ("custom_date_column", "period_ranges", "expected_counts", "expected_ids"),
+        [
+            # Test with datetime objects and custom column
+            (
+                "custom_trans_date",
+                {
+                    "Q1": (
+                        datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC),
+                        datetime.datetime(2023, 3, 31, tzinfo=datetime.UTC),
+                    ),
+                    "Q2": (
+                        datetime.datetime(2023, 4, 1, tzinfo=datetime.UTC),
+                        datetime.datetime(2023, 6, 30, tzinfo=datetime.UTC),
+                    ),
+                },
+                {"Q1": 2, "Q2": 2, "total": 4},
+                {"Q1": [1, 2], "Q2": [3, 4]},
+            ),
+            # Test with string dates and different custom column
+            (
+                "my_transaction_timestamp",
+                {
+                    "Q1": ("2023-01-01", "2023-03-31"),
+                    "Q2": ("2023-04-01", "2023-06-30"),
+                    "Q3": ("2023-07-01", "2023-09-30"),
+                },
+                {"Q1": 2, "Q2": 2, "Q3": 2, "total": 6},
+                {"Q1": [1, 2], "Q2": [3, 4], "Q3": [5, 6]},
+            ),
+            # Test with single period and custom column
+            (
+                "event_date",
+                {"First_Half": ("2023-01-01", "2023-06-30")},
+                {"First_Half": 4, "total": 4},
+                {"First_Half": [1, 2, 3, 4]},
+            ),
+            # Test with specific date range and custom column
+            (
+                "purchase_datetime",
+                {
+                    "January_Only": ("2023-01-01", "2023-01-31"),
+                    "Summer": ("2023-07-01", "2023-08-31"),
+                },
+                {"January_Only": 1, "Summer": 2, "total": 3},
+                {"January_Only": [1], "Summer": [5, 6]},
+            ),
+        ],
+    )
+    def test_with_custom_column_names(
+        self,
+        sample_transactions_table,
+        custom_date_column,
+        period_ranges,
+        expected_counts,
+        expected_ids,
+    ):
+        """Test that filter_and_label_by_periods works correctly with custom column names."""
+        original_df = sample_transactions_table.execute()
+        custom_df = original_df.rename(columns={get_option("column.transaction_date"): custom_date_column})
+        custom_table = ibis.memtable(custom_df)
+
+        with option_context("column.transaction_date", custom_date_column):
+            result = filter_and_label_by_periods(custom_table, period_ranges)
+            result_df = result.execute()
+
+            assert len(result_df) == expected_counts["total"], (
+                f"Should return {expected_counts['total']} total transactions"
+            )
+
+            for period_name, expected_count in expected_counts.items():
+                if period_name != "total":
+                    period_transactions = result_df[result_df["period_name"] == period_name]
+                    assert len(period_transactions) == expected_count, (
+                        f"Period '{period_name}' should have {expected_count} transactions"
+                    )
+
+                    actual_ids = sorted(period_transactions["transaction_id"].tolist())
+                    assert actual_ids == expected_ids[period_name], (
+                        f"{period_name} should have transaction IDs {expected_ids[period_name]}"
+                    )
+
+            assert custom_date_column in result_df.columns, (
+                f"Custom date column '{custom_date_column}' should be present"
+            )
+            assert "period_name" in result_df.columns, "period_name column should be added"
+
+            unique_periods = set(result_df["period_name"].unique())
+            expected_periods = set(period_ranges.keys())
+            assert unique_periods == expected_periods, (
+                f"Result should contain periods {expected_periods}, got {unique_periods}"
+            )
 
 
 class TestFindOverlappingPeriods:

@@ -7,6 +7,7 @@ import pandas.testing as pdt
 import pytest
 
 from pyretailscience.analysis.cohort import CohortAnalysis
+from pyretailscience.options import option_context
 
 
 class TestCohortAnalysis:
@@ -101,3 +102,50 @@ class TestCohortAnalysis:
         )
         result = cohort.table
         assert (result.iloc[0] <= 1).all(), "Percentage values should be between 0 and 1"
+
+    @pytest.mark.parametrize(
+        ("agg_func", "percentage"),
+        [
+            ("nunique", False),
+            ("sum", True),
+        ],
+    )
+    def test_with_custom_column_names(self, transactions_df, agg_func, percentage):
+        """Test CohortAnalysis with custom column names and different aggregation options."""
+        custom_transactions_df = transactions_df.rename(
+            columns={
+                "transaction_id": "txn_id",
+                "customer_id": "cust_id",
+                "unit_spend": "spend_amount",
+                "transaction_date": "txn_date",
+            },
+        )
+        custom_columns = {
+            "column.customer_id": "cust_id",
+            "column.transaction_date": "txn_date",
+        }
+
+        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+            cohort = CohortAnalysis(
+                df=custom_transactions_df,
+                aggregation_column="spend_amount",
+                agg_func=agg_func,
+                period="month",
+                percentage=percentage,
+            )
+            result = cohort.table
+
+            assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
+            assert not result.empty, "Result should not be empty"
+            assert result.index.name == "min_period_shopped", "Index should be named correctly"
+            assert result.columns.name == "period_since", "Columns should be named correctly"
+            assert (result >= 0).all().all(), "All values in cohort table should be non-negative"
+
+            if percentage:
+                for idx in result.index:
+                    if result.loc[idx, 0] > 0:
+                        row_values = result.loc[idx].dropna()
+                        assert (row_values >= 0).all(), f"All percentage values in cohort {idx} should be non-negative"
+            else:
+                expected_length = 5
+                assert len(result.index) == expected_length, "Should have 5 cohort periods"

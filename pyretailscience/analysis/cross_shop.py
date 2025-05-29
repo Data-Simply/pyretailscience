@@ -23,7 +23,7 @@ class CrossShop:
         group_3_col: str | None = None,
         group_3_val: str | None = None,
         labels: list[str] | None = None,
-        value_col: str = get_option("column.unit_spend"),
+        value_col: str | None = None,
         agg_func: str = "sum",
     ) -> None:
         """Creates a cross-shop diagram that is used to show the overlap of customers between different groups.
@@ -47,6 +47,7 @@ class CrossShop:
             ValueError: If the dataframe does not contain the required columns or if the number of labels does not match
                 the number of group indexes given.
         """
+        value_col = value_col or get_option("column.unit_spend")
         required_cols = [get_option("column.customer_id"), value_col]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:

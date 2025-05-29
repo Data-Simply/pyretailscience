@@ -8,6 +8,7 @@ import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.analysis.gain_loss import GainLoss
+from pyretailscience.options import get_option, option_context
 
 
 @pytest.fixture(autouse=True)
@@ -254,3 +255,101 @@ def test_plot_returns_figure_from_gainloss(sample_df):
 
     fig = gl.plot()
     assert isinstance(fig, Axes)
+
+
+@pytest.mark.parametrize(
+    ("group_col", "agg_func", "expected_conservation"),
+    [
+        (None, "sum", True),
+        ("product_brand", "sum", True),
+        (None, "mean", True),
+    ],
+)
+def test_with_custom_column_names(sample_df, group_col, agg_func, expected_conservation):
+    """Test that GainLoss works correctly with completely renamed columns."""
+    custom_columns = {
+        "column.customer_id": "cust_identifier",
+        "column.unit_spend": "total_revenue",
+        "column.transaction_date": "purchase_date",
+    }
+
+    rename_mapping = {
+        get_option("column.customer_id"): custom_columns["column.customer_id"],
+        get_option("column.unit_spend"): custom_columns["column.unit_spend"],
+        "transaction_date": "purchase_date",
+        "brand": "product_brand",
+    }
+
+    custom_df = sample_df.rename(columns=rename_mapping)
+    p1_index = custom_df["purchase_date"] < datetime.date(2023, 5, 1)
+    p2_index = custom_df["purchase_date"] >= datetime.date(2023, 5, 1)
+    focus_group_index = custom_df["product_brand"] == "Brand A"
+    comparison_group_index = custom_df["product_brand"] == "Brand B"
+
+    with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        gl = GainLoss(
+            df=custom_df,
+            p1_index=p1_index,
+            p2_index=p2_index,
+            focus_group_index=focus_group_index,
+            focus_group_name="Brand A",
+            comparison_group_index=comparison_group_index,
+            comparison_group_name="Brand B",
+            group_col=group_col,
+            value_col="total_revenue",
+            agg_func=agg_func,
+        )
+
+        assert isinstance(gl, GainLoss)
+        assert gl.focus_group_name == "Brand A"
+        assert gl.comparison_group_name == "Brand B"
+        assert gl.value_col == "total_revenue"
+        assert gl.group_col == group_col
+
+        assert isinstance(gl.gain_loss_df, pd.DataFrame)
+        assert not gl.gain_loss_df.empty
+        assert isinstance(gl.gain_loss_table_df, pd.DataFrame)
+        assert not gl.gain_loss_table_df.empty
+
+        expected_columns = {
+            "focus_p1",
+            "comparison_p1",
+            "total_p1",
+            "focus_p2",
+            "comparison_p2",
+            "total_p2",
+            "focus_diff",
+            "comparison_diff",
+            "total_diff",
+            "new",
+            "lost",
+            "increased_focus",
+            "decreased_focus",
+            "switch_from_comparison",
+            "switch_to_comparison",
+        }
+
+        missing_columns = expected_columns - set(gl.gain_loss_df.columns)
+        assert not missing_columns, f"Missing columns: {missing_columns}"
+
+        # Test conservation of value (gains - losses = total change)
+        if expected_conservation:
+            _validate_conservation(gl.gain_loss_table_df)
+
+        # Test plotting functionality
+        ax = gl.plot(title="Custom Column Test Plot")
+        assert isinstance(ax, Axes)
+
+
+def _validate_conservation(gain_loss_table_df, epsilon=1e-10):
+    """Helper function to validate conservation of value in gain/loss analysis."""
+    for _, row in gain_loss_table_df.iterrows():
+        gains = row["new"] + row["increased_focus"] + row["switch_from_comparison"]
+        losses = abs(row["lost"]) + abs(row["decreased_focus"]) + abs(row["switch_to_comparison"])
+        total_focus_change = row["focus_p2"] - row["focus_p1"]
+        calculated_change = gains - losses
+
+        assert abs(calculated_change - total_focus_change) < epsilon, (
+            f"Conservation check failed: calculated={calculated_change}, "
+            f"expected={total_focus_change}, difference={abs(calculated_change - total_focus_change)}"
+        )
