@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.options import ColumnHelper, get_option, option_context
 from pyretailscience.segmentation.segstats import SegTransactionStats
 
 cols = ColumnHelper()
@@ -571,3 +571,204 @@ class TestSegTransactionStats:
             SegTransactionStats(df, "segment_name", extra_aggs={"invalid_agg": (cols.customer_id, "invalid_function")})
 
         assert "not available for column" in str(excinfo.value)
+
+    @pytest.mark.parametrize(
+        ("segment_config", "calc_total", "calc_rollup", "extra_aggs_config"),
+        [
+            # Single segment column
+            ("single", True, False, None),
+            ("single", False, False, None),
+            # Multiple segment columns
+            ("multiple", True, False, None),
+            ("multiple", True, True, None),
+            # With extra aggregations
+            ("single", True, False, "simple"),
+            ("multiple", True, True, "complex"),
+        ],
+    )
+    def test_with_custom_column_names(self, segment_config, calc_total, calc_rollup, extra_aggs_config):
+        """Test that SegTransactionStats works correctly with completely renamed columns."""
+        custom_columns = {
+            "column.customer_id": "custom_cust_id",
+            "column.unit_spend": "custom_revenue",
+            "column.transaction_id": "custom_trans_id",
+            "column.unit_quantity": "custom_quantity",
+        }
+
+        base_data, segment_col = self._create_test_data(segment_config)
+        custom_df = self._apply_custom_column_names(base_data, custom_columns)
+        extra_aggs = self._get_extra_aggs_config(extra_aggs_config)
+        rollup_value = self._get_rollup_value(segment_col)
+
+        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+            seg_stats = SegTransactionStats(
+                custom_df,
+                segment_col=segment_col,
+                calc_total=calc_total,
+                calc_rollup=calc_rollup,
+                rollup_value=rollup_value,
+                extra_aggs=extra_aggs,
+            )
+
+            self._validate_basic_structure(seg_stats, segment_col)
+            self._validate_core_columns(seg_stats.df)
+            self._validate_extra_aggregations(seg_stats.df, extra_aggs)
+            self._validate_total_rows(seg_stats.df, segment_col, calc_total, rollup_value)
+            self._validate_rollup_rows(seg_stats.df, segment_col, calc_rollup, rollup_value)
+            self._validate_numeric_data(seg_stats.df)
+            self._validate_plotting(seg_stats, segment_col)
+            self._validate_calculated_metrics(seg_stats.df)
+
+    def _create_test_data(self, segment_config):
+        """Create base test data and determine segment column configuration."""
+        base_data = {
+            get_option("column.customer_id"): [1, 1, 2, 2, 3, 3, 4, 4],
+            cols.unit_spend: [100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0],
+            cols.transaction_id: [101, 102, 103, 104, 105, 106, 107, 108],
+            cols.unit_qty: [10, 15, 20, 25, 30, 35, 40, 45],
+            "store_id": [1, 2, 1, 3, 2, 4, 1, 2],
+            "product_id": [10, 20, 10, 30, 20, 40, 50, 60],
+        }
+
+        if segment_config == "single":
+            base_data["segment_name"] = [
+                "Premium",
+                "Premium",
+                "Standard",
+                "Standard",
+                "Premium",
+                "Premium",
+                "Standard",
+                "Standard",
+            ]
+            segment_col = "segment_name"
+        else:
+            base_data["category"] = [
+                "Electronics",
+                "Electronics",
+                "Clothing",
+                "Clothing",
+                "Electronics",
+                "Electronics",
+                "Footwear",
+                "Footwear",
+            ]
+            base_data["region"] = ["North", "South", "North", "South", "East", "West", "North", "South"]
+            segment_col = ["category", "region"]
+
+        return base_data, segment_col
+
+    def _apply_custom_column_names(self, base_data, custom_columns):
+        """Apply custom column names to the base data."""
+        df = pd.DataFrame(base_data)
+        rename_mapping = {
+            get_option("column.customer_id"): custom_columns["column.customer_id"],
+            cols.unit_spend: custom_columns["column.unit_spend"],
+            cols.transaction_id: custom_columns["column.transaction_id"],
+            cols.unit_qty: custom_columns["column.unit_quantity"],
+        }
+        return df.rename(columns=rename_mapping)
+
+    def _get_extra_aggs_config(self, extra_aggs_config):
+        """Get extra aggregations configuration based on test parameter."""
+        if extra_aggs_config == "simple":
+            return {"distinct_stores": ("store_id", "nunique")}
+        if extra_aggs_config == "complex":
+            return {
+                "distinct_stores": ("store_id", "nunique"),
+                "distinct_products": ("product_id", "nunique"),
+            }
+        return None
+
+    def _get_rollup_value(self, segment_col):
+        """Get appropriate rollup value based on segment column configuration."""
+        return "Total" if not isinstance(segment_col, list) else ["All_Categories", "All_Regions"]
+
+    def _validate_basic_structure(self, seg_stats, segment_col):
+        """Validate basic structure of SegTransactionStats result."""
+        assert seg_stats is not None
+        result_df = seg_stats.df
+        assert not result_df.empty
+
+        if isinstance(segment_col, str):
+            assert segment_col in result_df.columns
+        else:
+            for col in segment_col:
+                assert col in result_df.columns
+
+    def _validate_core_columns(self, result_df):
+        """Validate that all expected core columns are present."""
+        expected_core_cols = [
+            cols.agg_unit_spend,
+            cols.agg_transaction_id,
+            cols.agg_customer_id,
+            cols.agg_unit_qty,
+            cols.calc_spend_per_cust,
+            cols.calc_spend_per_trans,
+            cols.calc_trans_per_cust,
+            cols.calc_price_per_unit,
+            cols.calc_units_per_trans,
+        ]
+
+        for col in expected_core_cols:
+            assert col in result_df.columns, f"Expected column {col} not found in result"
+
+    def _validate_extra_aggregations(self, result_df, extra_aggs):
+        """Validate extra aggregation columns if specified."""
+        if extra_aggs:
+            for agg_name in extra_aggs:
+                assert agg_name in result_df.columns, f"Expected extra agg column {agg_name} not found"
+
+    def _validate_total_rows(self, result_df, segment_col, calc_total, rollup_value):
+        """Validate total row presence based on calc_total parameter."""
+        if not calc_total:
+            return
+
+        if isinstance(segment_col, str):
+            total_rows = result_df[result_df[segment_col] == "Total"]
+        else:
+            # For multiple columns, check if total row exists with rollup values
+            total_condition = True
+            for i, col in enumerate(segment_col):
+                expected_val = rollup_value[i] if isinstance(rollup_value, list) else rollup_value
+                total_condition &= result_df[col] == expected_val
+            total_rows = result_df[total_condition]
+
+        assert len(total_rows) >= 1, "Total row should be present when calc_total=True"
+
+    def _validate_rollup_rows(self, result_df, segment_col, calc_rollup, rollup_value):
+        """Validate rollup rows if enabled (only for multiple segment columns)."""
+        if not (calc_rollup and isinstance(segment_col, list)):
+            return
+
+        rollup_condition = False
+        for i, col in enumerate(segment_col[1:], 1):
+            expected_val = rollup_value[i] if isinstance(rollup_value, list) else rollup_value
+            rollup_condition |= result_df[col] == expected_val
+
+        rollup_rows = result_df[rollup_condition]
+        assert len(rollup_rows) > 0, "Rollup rows should be present when calc_rollup=True"
+
+    def _validate_numeric_data(self, result_df):
+        """Validate numeric data integrity."""
+        numeric_cols = [cols.agg_unit_spend, cols.agg_transaction_id, cols.agg_customer_id]
+        for col in numeric_cols:
+            assert result_df[col].notna().all(), f"Column {col} should not have NaN values"
+            assert (result_df[col] >= 0).all(), f"Column {col} should have non-negative values"
+
+    def _validate_plotting(self, seg_stats, segment_col):
+        """Test plotting functionality for single segment column."""
+        if not isinstance(segment_col, str):
+            return
+
+        try:
+            ax = seg_stats.plot(cols.agg_unit_spend, hide_total=True)
+            assert ax is not None, "Plot should be created successfully"
+        except (ValueError, TypeError) as e:
+            pytest.fail(f"Plotting failed with custom columns: {e}")
+
+    def _validate_calculated_metrics(self, result_df):
+        """Validate calculated metrics have expected properties."""
+        assert (result_df[cols.calc_spend_per_cust] > 0).all(), "Spend per customer should be positive"
+        assert (result_df[cols.calc_spend_per_trans] > 0).all(), "Spend per transaction should be positive"
+        assert (result_df[cols.calc_trans_per_cust] > 0).all(), "Transactions per customer should be positive"

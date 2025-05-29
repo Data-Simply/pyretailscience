@@ -87,7 +87,7 @@ class ProductAssociation:
         self,
         df: pd.DataFrame | ibis.Table,
         value_col: str,
-        group_col: str = get_option("column.customer_id"),
+        group_col: str | None = None,
         target_item: str | None = None,
         min_occurrences: int = 1,
         min_cooccurrences: int = 1,
@@ -121,6 +121,7 @@ class ProductAssociation:
             ValueError: If the minimum occurrences or cooccurrences are less than 1.
             ValueError: If the input DataFrame does not contain the required columns or if they have null values.
         """
+        group_col = group_col or get_option("column.customer_id")
         required_cols = [group_col, value_col]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
