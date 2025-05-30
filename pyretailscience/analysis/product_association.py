@@ -140,6 +140,37 @@ class ProductAssociation:
         )
 
     @staticmethod
+    def _validate_minimum_values(
+        min_occurrences: int,
+        min_cooccurrences: int,
+        min_support: float,
+        min_confidence: float,
+        min_uplift: float,
+    ) -> None:
+        """Validate minimum value parameters.
+
+        Args:
+            min_occurrences (int): The minimum number of occurrences required for each product.
+            min_cooccurrences (int): The minimum number of co-occurrences required for product pairs.
+            min_support (float): The minimum support value required for association rules.
+            min_confidence (float): The minimum confidence value required for association rules.
+            min_uplift (float): The minimum uplift value required for association rules.
+
+        Raises:
+            ValueError: If any parameter is outside the valid range.
+        """
+        if min_occurrences < 1:
+            raise ValueError("Minimum occurrences must be at least 1.")
+        if min_cooccurrences < 1:
+            raise ValueError("Minimum cooccurrences must be at least 1.")
+        if min_support < 0.0 or min_support > 1.0:
+            raise ValueError("Minimum support must be between 0 and 1.")
+        if min_confidence < 0.0 or min_confidence > 1.0:
+            raise ValueError("Minimum confidence must be between 0 and 1.")
+        if min_uplift < 0.0:
+            raise ValueError("Minimum uplift must be greater or equal to 0.")
+
+    @staticmethod
     def _calc_association(
         df: pd.DataFrame | ibis.Table,
         value_col: str,
@@ -191,16 +222,13 @@ class ProductAssociation:
             - confidence: The probability of buying product_2 given that product_1 was bought.
             - uplift: The ratio of the observed support to the expected support if the products were independent.
         """
-        if min_occurrences < 1:
-            raise ValueError("Minimum occurrences must be at least 1.")
-        if min_cooccurrences < 1:
-            raise ValueError("Minimum cooccurrences must be at least 1.")
-        if min_support < 0.0 or min_support > 1.0:
-            raise ValueError("Minimum support must be between 0 and 1.")
-        if min_confidence < 0.0 or min_confidence > 1.0:
-            raise ValueError("Minimum confidence must be between 0 and 1.")
-        if min_uplift < 0.0:
-            raise ValueError("Minimum uplift must be greater or equal to 0.")
+        ProductAssociation._validate_minimum_values(
+            min_occurrences=min_occurrences,
+            min_cooccurrences=min_cooccurrences,
+            min_support=min_support,
+            min_confidence=min_confidence,
+            min_uplift=min_uplift,
+        )
 
         # Normalize target_item to a list for consistent processing
         if target_item is not None:
