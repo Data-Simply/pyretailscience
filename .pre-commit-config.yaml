@@ -16,6 +16,7 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        exclude: '\.svg$'
       - id: fix-encoding-pragma
         args: [--remove]
       - id: check-yaml

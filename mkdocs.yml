@@ -37,6 +37,7 @@ nav:
       - Plots:
           - Area Plot: api/plots/area.md
           - Bar Plot: api/plots/bar.md
+          - Broken Timeline Plot: api/plots/broken_timeline.md
           - Cohort Plot: api/plots/cohort.md
           - Histogram Plot: api/plots/histogram.md
           - Index Plot: api/plots/index.md
