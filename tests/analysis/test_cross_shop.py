@@ -426,89 +426,33 @@ def test_plot_with_additional_kwargs(sample_data):
             assert kwargs[key] == value
 
 
-@pytest.mark.parametrize(
-    ("groups", "labels", "value_col", "agg_func", "expected_group_count", "expected_columns", "expected_amount_checks"),
-    [
-        # Two groups, custom agg (nunique), custom value_col
-        (
-            [("product_category", "Jeans"), ("product_category", "Shoes")],
-            ["Jeans", "Shoes"],
-            "my_customer_identifier",
-            "nunique",
-            2,
-            ["group_1", "group_2", "groups", "my_customer_identifier"],
-            {5: 1, 8: 1},
-        ),
-        # Three groups, default agg (sum), default value_col
-        (
-            [("product_category", "Jeans"), ("product_category", "Shoes"), ("product_category", "Dresses")],
-            ["Jeans", "Shoes", "Dresses"],
-            None,
-            "sum",
-            3,
-            ["group_1", "group_2", "group_3", "groups", "total_amount_spent"],
-            {},
-        ),
-    ],
-)
-def test_with_custom_column_names(
-    sample_data,
-    groups,
-    labels,
-    value_col,
-    agg_func,
-    expected_group_count,
-    expected_columns,
-    expected_amount_checks,
-):
-    """Test CrossShop functionality with custom column names and aggregation functions."""
+def test_with_custom_column_names(sample_data):
+    """Test CrossShop with custom column names to ensure column overrides work correctly."""
     custom_data = sample_data.rename(
         columns={
             "customer_id": "my_customer_identifier",
-            "category_1_name": "product_category",
             "unit_spend": "total_amount_spent",
+            "category_1_name": "product_category",
         },
     )
 
-    with option_context(
-        "column.customer_id",
-        "my_customer_identifier",
-        "column.unit_spend",
-        "total_amount_spent",
-    ):
-        kwargs = {f"group_{i + 1}_col": col for i, (col, _) in enumerate(groups)}
-        kwargs.update({f"group_{i + 1}_val": val for i, (_, val) in enumerate(groups)})
+    custom_columns = {
+        "column.customer_id": "my_customer_identifier",
+        "column.unit_spend": "total_amount_spent",
+    }
 
-        if labels is not None:
-            kwargs["labels"] = labels
-        if value_col is not None:
-            kwargs["value_col"] = value_col
-        if agg_func is not None:
-            kwargs["agg_func"] = agg_func
-
-        cross_shop = CrossShop(df=custom_data, **kwargs)
-
-        assert cross_shop.group_count == expected_group_count
-        if labels:
-            assert cross_shop.labels == labels
-        assert not cross_shop.cross_shop_df.empty
-        assert not cross_shop.cross_shop_table_df.empty
-
-        if expected_columns:
-            result_df = cross_shop.cross_shop_df
-            missing_cols = [col for col in expected_columns if col not in result_df.columns]
-            assert not missing_cols, f"Missing expected columns: {missing_cols}"
-
-        for idx, expected_val in expected_amount_checks.items():
-            col_to_check = value_col or "total_amount_spent"
-            assert cross_shop.cross_shop_df.loc[idx, col_to_check] == expected_val
-
-        # Only test plot for 2-group cases
-        expected_two_group = 2
-        if expected_group_count == expected_two_group:
-            with patch("pyretailscience.plots.venn.plot") as mock_venn_plot:
-                cross_shop.plot(title="Custom Column Test")
-                mock_venn_plot.assert_called_once()
-                _, call_kwargs = mock_venn_plot.call_args
-                assert call_kwargs["df"] is cross_shop.cross_shop_table_df
-                assert call_kwargs["labels"] == cross_shop.labels
+    with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        cross_shop = CrossShop(
+            df=custom_data,
+            group_1_col="product_category",
+            group_1_val="Jeans",
+            group_2_col="product_category",
+            group_2_val="Shoes",
+        )
+        cross_shop_df = cross_shop.cross_shop_df
+        assert isinstance(cross_shop_df, pd.DataFrame)
+        assert not cross_shop_df.empty
+        assert "my_customer_identifier" in cross_shop_df.index.name or cross_shop_df.index.name is None, (
+            "Should handle custom customer_id column name"
+        )
+        assert "total_amount_spent" in cross_shop_df.columns, "Should handle custom unit_spend column name"

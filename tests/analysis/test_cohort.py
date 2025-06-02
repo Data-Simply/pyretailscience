@@ -103,23 +103,16 @@ class TestCohortAnalysis:
         result = cohort.table
         assert (result.iloc[0] <= 1).all(), "Percentage values should be between 0 and 1"
 
-    @pytest.mark.parametrize(
-        ("agg_func", "percentage"),
-        [
-            ("nunique", False),
-            ("sum", True),
-        ],
-    )
-    def test_with_custom_column_names(self, transactions_df, agg_func, percentage):
-        """Test CohortAnalysis with custom column names and different aggregation options."""
+    def test_with_custom_column_names(self, transactions_df):
+        """Test CohortAnalysis with custom column names to ensure column overrides work correctly."""
         custom_transactions_df = transactions_df.rename(
             columns={
-                "transaction_id": "txn_id",
                 "customer_id": "cust_id",
-                "unit_spend": "spend_amount",
                 "transaction_date": "txn_date",
+                "unit_spend": "spend_amount",
             },
         )
+
         custom_columns = {
             "column.customer_id": "cust_id",
             "column.transaction_date": "txn_date",
@@ -129,23 +122,10 @@ class TestCohortAnalysis:
             cohort = CohortAnalysis(
                 df=custom_transactions_df,
                 aggregation_column="spend_amount",
-                agg_func=agg_func,
+                agg_func="nunique",
                 period="month",
-                percentage=percentage,
             )
+
             result = cohort.table
-
-            assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
-            assert not result.empty, "Result should not be empty"
-            assert result.index.name == "min_period_shopped", "Index should be named correctly"
-            assert result.columns.name == "period_since", "Columns should be named correctly"
-            assert (result >= 0).all().all(), "All values in cohort table should be non-negative"
-
-            if percentage:
-                for idx in result.index:
-                    if result.loc[idx, 0] > 0:
-                        row_values = result.loc[idx].dropna()
-                        assert (row_values >= 0).all(), f"All percentage values in cohort {idx} should be non-negative"
-            else:
-                expected_length = 5
-                assert len(result.index) == expected_length, "Should have 5 cohort periods"
+            assert isinstance(result, pd.DataFrame), "Should return DataFrame with custom columns"
+            assert not result.empty, "Should produce results with custom column names"

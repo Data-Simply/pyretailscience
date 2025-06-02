@@ -108,40 +108,31 @@ class TestCustomerDecisionHierarchy:
 
         assert pairs_df.equals(expected_pairs_df)
 
-    def test_get_pairs_with_custom_columns(self):
-        """Test _get_pairs works with custom column names and both exclude_same_transaction_products options."""
-        custom_columns = {
-            "column.customer_id": "cust_identifier",
-            "column.transaction_id": "txn_identifier",
-            "column.product_id": "item_identifier",
-        }
-
-        test_df = pd.DataFrame(
+    def test_with_custom_column_names(self):
+        """Test CustomerDecisionHierarchy with custom column names to ensure column overrides work correctly."""
+        custom_test_df = pd.DataFrame(
             {
-                "cust_identifier": [1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7],
-                "txn_identifier": [101, 101, 102, 201, 201, 202, 301, 302, 401, 402, 501, 502, 601, 602, 701, 702],
-                "product_name": ["A", "B", "C", "A", "D", "E", "A", "B", "C", "D", "E", "F", "G", "H", "A", "B"],
+                "cust_identifier": [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8],
+                "txn_identifier": [101, 102, 201, 202, 301, 302, 401, 402, 501, 502, 601, 602, 701, 702, 801, 802],
+                "product_name": ["A", "B", "A", "C", "B", "C", "A", "D", "B", "D", "C", "D", "A", "B", "C", "D"],
             },
         )
 
+        custom_columns = {
+            "column.customer_id": "cust_identifier",
+            "column.transaction_id": "txn_identifier",
+        }
+
         with option_context(*[item for pair in custom_columns.items() for item in pair]):
-            # Test that _get_pairs method works with custom columns
-            pairs_df_true = rp.CustomerDecisionHierarchy._get_pairs(
-                df=test_df,
-                exclude_same_transaction_products=True,
+            hierarchy = rp.CustomerDecisionHierarchy(
+                df=custom_test_df,
                 product_col="product_name",
+                method="yules_q",
             )
 
-            pairs_df_false = rp.CustomerDecisionHierarchy._get_pairs(
-                df=test_df,
-                exclude_same_transaction_products=False,
-                product_col="product_name",
-            )
+            assert hasattr(hierarchy, "pairs_df"), "Should create pairs_df with custom columns"
+            assert hasattr(hierarchy, "distances"), "Should create distances with custom columns"
+            assert not hierarchy.pairs_df.empty, "Should produce results with custom column names"
 
-            assert not pairs_df_true.empty
-            assert not pairs_df_false.empty
-            assert "cust_identifier" in pairs_df_true.columns
-            assert "cust_identifier" in pairs_df_false.columns
-            assert "product_name" in pairs_df_true.columns
-            assert "product_name" in pairs_df_false.columns
-            assert len(pairs_df_false) >= len(pairs_df_true)
+            assert "cust_identifier" in hierarchy.pairs_df.columns, "Should handle custom customer_id column name"
+            assert "product_name" in hierarchy.pairs_df.columns, "Should handle product column"

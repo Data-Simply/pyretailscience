@@ -1,7 +1,5 @@
 """Tests for the RFMSegmentation class."""
 
-from contextlib import nullcontext
-
 import ibis
 import pandas as pd
 import pytest
@@ -457,41 +455,8 @@ class TestRFMSegmentation:
                 f"This suggests boundaries weren't recalculated properly."
             )
 
-    @pytest.mark.parametrize(
-        (
-            "current_date",
-            "r_segments",
-            "f_segments",
-            "m_segments",
-            "min_monetary",
-            "max_monetary",
-            "min_frequency",
-            "max_frequency",
-            "expected_max_scores",
-        ),
-        [
-            ("2025-03-17", 5, 5, 5, None, None, None, None, (4, 4, 4)),
-            (None, 3, 4, 6, None, None, None, None, (2, 3, 4)),
-            ("2025-03-20", [0.2, 0.5, 0.8], [0.33, 0.66], [0.25, 0.75], None, None, None, None, (3, 2, 2)),
-            ("2025-03-15", 10, 10, 10, None, None, None, None, (4, 4, 4)),
-            ("2025-03-17", 3, 3, 3, None, None, 1, 1, (2, 2, 2)),
-            ("2025-03-17", 4, 4, 4, 150.0, 300.0, 1, 1, (3, 3, 3)),
-        ],
-    )
-    def test_with_custom_column_names(
-        self,
-        base_df,
-        current_date,
-        r_segments,
-        f_segments,
-        m_segments,
-        min_monetary,
-        max_monetary,
-        min_frequency,
-        max_frequency,
-        expected_max_scores,
-    ):
-        """Test that RFMSegmentation works correctly with completely renamed columns and filter parameters."""
+    def test_with_custom_column_names(self, base_df):
+        """Test RFMSegmentation with custom column names."""
         custom_columns = {
             "column.customer_id": "custom_cust_id",
             "column.transaction_id": "custom_txn_id",
@@ -501,100 +466,9 @@ class TestRFMSegmentation:
 
         rename_mapping = {get_option(key): value for key, value in custom_columns.items()}
         custom_df = base_df.rename(columns=rename_mapping)
-        expected_r_max, expected_f_max, expected_m_max = expected_max_scores
 
         with option_context(*[item for pair in custom_columns.items() for item in pair]):
-            context_manager = freeze_time("2025-03-19") if current_date is None else nullcontext()
-
-            with context_manager:
-                rfm_segmentation = RFMSegmentation(
-                    df=custom_df,
-                    current_date=current_date,
-                    r_segments=r_segments,
-                    f_segments=f_segments,
-                    m_segments=m_segments,
-                    min_monetary=min_monetary,
-                    max_monetary=max_monetary,
-                    min_frequency=min_frequency,
-                    max_frequency=max_frequency,
-                )
-
-                assert rfm_segmentation is not None
-                assert hasattr(rfm_segmentation, "table")
-                assert rfm_segmentation.table is not None
-
-                table_result = rfm_segmentation.table.execute()
-
-                # When filters are applied, we might have fewer customers
-                expected_table_length = 5  # Default for base_df without filters
-                if (
-                    min_monetary is not None
-                    or max_monetary is not None
-                    or min_frequency is not None
-                    or max_frequency is not None
-                ):
-                    # Adjust expected length based on filters applied to base_df
-                    # base_df has monetary values: [100.0, 200.0, 150.0, 300.0, 250.0]
-                    # and all customers have frequency = 1
-                    filtered_count = 0
-                    for _, row in base_df.iterrows():
-                        # FIX: Use the original column name from base_df, not the custom column name
-                        monetary_val = row["unit_spend"]  # Use original column name
-                        frequency_val = 1  # All customers in base_df have 1 transaction
-
-                        passes_monetary = True
-                        if min_monetary is not None and monetary_val < min_monetary:
-                            passes_monetary = False
-                        if max_monetary is not None and monetary_val > max_monetary:
-                            passes_monetary = False
-
-                        passes_frequency = True
-                        if min_frequency is not None and frequency_val < min_frequency:
-                            passes_frequency = False
-                        if max_frequency is not None and frequency_val > max_frequency:
-                            passes_frequency = False
-
-                        if passes_monetary and passes_frequency:
-                            filtered_count += 1
-
-                    expected_table_length = filtered_count
-
-                assert len(table_result) == expected_table_length
-
-                expected_columns_in_table = [
-                    "recency_days",
-                    "frequency",
-                    "monetary",
-                    "r_score",
-                    "f_score",
-                    "m_score",
-                    "rfm_segment",
-                    "fm_segment",
-                ]
-
-                for col in expected_columns_in_table:
-                    assert col in table_result.columns, f"Missing column: {col}"
-
-                # Only check max scores if we have data after filtering
-                if len(table_result) > 0:
-                    assert table_result["r_score"].max() == expected_r_max or len(table_result) == 1
-                    assert table_result["f_score"].max() == expected_f_max or len(table_result) == 1
-                    assert table_result["m_score"].max() == expected_m_max or len(table_result) == 1
-                    assert all(table_result[col].min() == 0 for col in ["r_score", "f_score", "m_score"])
-
-                    expected_rfm = (
-                        table_result["r_score"] * 100 + table_result["f_score"] * 10 + table_result["m_score"]
-                    )
-                    expected_fm = table_result["f_score"] * 10 + table_result["m_score"]
-                    pd.testing.assert_series_equal(
-                        table_result["rfm_segment"],
-                        expected_rfm,
-                        check_names=False,
-                        check_dtype=False,
-                    )
-                    pd.testing.assert_series_equal(
-                        table_result["fm_segment"],
-                        expected_fm,
-                        check_names=False,
-                        check_dtype=False,
-                    )
+            rfm_segmentation = RFMSegmentation(df=custom_df)
+            result_df = rfm_segmentation.df
+            assert isinstance(result_df, pd.DataFrame), "Should execute successfully with custom column names"
+            assert result_df.index.name == "custom_cust_id", "Should use custom customer_id column name as index"

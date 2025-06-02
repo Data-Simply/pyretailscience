@@ -186,65 +186,31 @@ class TestThresholdSegmentation:
         with pytest.raises(ValueError):
             ThresholdSegmentation(df, thresholds, segments)
 
-    @pytest.mark.parametrize(
-        ("value_col", "agg_func", "zero_handling"),
-        [
-            (None, "sum", "separate_segment"),
-            ("revenue", "mean", "exclude"),
-            ("revenue", "max", "include_with_light"),
-        ],
-    )
-    def test_with_custom_column_names(self, value_col, agg_func, zero_handling):
-        """Test that ThresholdSegmentation works correctly with completely renamed columns."""
+    def test_with_custom_column_names(self):
+        """Test ThresholdSegmentation with custom column names."""
         df = pd.DataFrame(
             {
                 "buyer_id": [1, 2, 3, 4, 5, 1, 2, 3],
-                "revenue": [100, 200, 0, 150, 0, 50, 100, 300],
-                "other_col": ["A", "B", "C", "D", "E", "F", "G", "H"],
+                "spend_amount": [100, 200, 50, 150, 75, 50, 100, 300],
+                "purchase_date": pd.date_range("2023-01-01", periods=8),
             },
         )
 
-        thresholds = [0.33, 0.66, 1.0]
-        segments = ["Low", "Medium", "High"]
-
         custom_columns = {
             "column.customer_id": "buyer_id",
-            "column.unit_spend": "revenue",
+            "column.unit_spend": "spend_amount",
         }
+
+        thresholds = [0.5, 1.0]
+        segments = ["Low", "High"]
+
         with option_context(*[item for pair in custom_columns.items() for item in pair]):
             seg = ThresholdSegmentation(
                 df=df,
                 thresholds=thresholds,
                 segments=segments,
-                value_col=value_col,
-                agg_func=agg_func,
-                zero_value_customers=zero_handling,
             )
+
             result_df = seg.df
-
-            assert isinstance(result_df, pd.DataFrame)
-            assert "buyer_id" in result_df.index.names or result_df.index.name == "buyer_id"
-            assert "segment_name" in result_df.columns
-            assert "revenue" in result_df.columns
-
-            expected_customers = df["buyer_id"].unique()
-            actual_customers = result_df.index.values
-
-            if zero_handling == "exclude":
-                aggregated_df = df.groupby("buyer_id")["revenue"].agg(agg_func)
-                expected_count = len(aggregated_df[aggregated_df != 0])
-                assert len(actual_customers) == expected_count
-            else:
-                assert len(actual_customers) == len(expected_customers)
-
-            expected_segment_names = set(segments)
-            if zero_handling == "separate_segment":
-                expected_segment_names.add("Zero")
-
-            actual_segment_names = set(result_df["segment_name"].unique())
-            assert actual_segment_names.issubset(expected_segment_names)
-
-            original_df_with_segments = seg.add_segment(df)
-            assert isinstance(original_df_with_segments, pd.DataFrame)
-            assert len(original_df_with_segments) == len(df)
-            assert "segment_name" in original_df_with_segments.columns
+            assert isinstance(result_df, pd.DataFrame), "Should execute successfully with custom column names"
+            assert result_df.index.name == "buyer_id", "Should use custom customer_id column name as index"

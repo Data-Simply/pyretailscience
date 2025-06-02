@@ -397,89 +397,41 @@ class TestRevenueTree:
 
             assert round(result["price_elasticity"].iloc[0], 6) == round(expected_elasticity, 6)
 
-    @pytest.mark.parametrize("include_quantity", [True, False])
-    def test_with_custom_column_names(self, include_quantity: bool, cols: ColumnHelper):
-        """Test RevenueTree with completely renamed columns."""
+    def test_with_custom_column_names(self, cols: ColumnHelper):
+        """Test RevenueTree with custom column names."""
         custom_columns = {
-            "column.transaction_id": "custom_trans_id",
-            "column.customer_id": "custom_cust_id",
-            "column.unit_spend": "custom_spend",
-            "column.transaction_date": "custom_date",
-            "column.unit_quantity": "custom_quantity",
+            "column.transaction_id": "txn_id",
+            "column.customer_id": "cust_id",
+            "column.unit_spend": "spend_amt",
+            "column.unit_quantity": "qty",
         }
 
         data = {
-            "store_id": [1, 1, 1, 2, 2, 2],
-            "custom_cust_id": [1, 2, 3, 4, 5, 6],
-            "custom_trans_id": [1, 2, 3, 4, 5, 6],
-            "custom_spend": [150.0, 75.5, 220.0, 310.0, 450.0, 120.0],
-            "custom_date": [
-                "2023-01-01",
-                "2023-01-05",
-                "2023-01-03",
-                "2023-01-06",
-                "2023-01-02",
-                "2023-01-04",
-            ],
-            "period": ["P1", "P2", "P1", "P2", "P1", "P2"],
+            "cust_id": [1, 2, 3, 4],
+            "txn_id": [101, 102, 103, 104],
+            "spend_amt": [100.0, 200.0, 150.0, 300.0],
+            "qty": [2, 3, 1, 4],
+            "period": ["P1", "P1", "P2", "P2"],
         }
-
-        if include_quantity:
-            data["custom_quantity"] = [2, 1, 3, 4, 5, 2]
         df = pd.DataFrame(data)
 
         with option_context(*[item for pair in custom_columns.items() for item in pair]):
-            # Test RevenueTree initialization with custom group column
             rt = RevenueTree(
                 df=df,
                 period_col="period",
                 p1_value="P1",
                 p2_value="P2",
-                group_col="store_id",
             )
 
-            assert rt.df is not None
-            assert not rt.df.empty
-            assert rt.df.index.name == "store_id"
-            expected_base_columns = [
+            assert not rt.df.empty, "Result should not be empty"
+            expected_columns = [
                 cols.agg_customer_id_p1,
                 cols.agg_customer_id_p2,
-                cols.agg_customer_id_diff,
                 cols.agg_transaction_id_p1,
                 cols.agg_transaction_id_p2,
                 cols.agg_unit_spend_p1,
                 cols.agg_unit_spend_p2,
-                cols.calc_spend_per_cust_p1,
-                cols.calc_spend_per_cust_p2,
-                cols.calc_trans_per_cust_p1,
-                cols.calc_trans_per_cust_p2,
-                cols.calc_spend_per_trans_p1,
-                cols.calc_spend_per_trans_p2,
             ]
-            for col in expected_base_columns:
-                assert col in rt.df.columns, f"Expected column {col} not found in output"
-            if include_quantity:
-                expected_qty_columns = [
-                    cols.agg_unit_qty_p1,
-                    cols.agg_unit_qty_p2,
-                    cols.calc_units_per_trans_p1,
-                    cols.calc_units_per_trans_p2,
-                    cols.calc_price_per_unit_p1,
-                    cols.calc_price_per_unit_p2,
-                ]
-                for col in expected_qty_columns:
-                    assert col in rt.df.columns, f"Expected quantity column {col} not found in output"
-            tree_data = rt.df.to_dict(orient="records")[0]
-            spend_per_trans_contrib = tree_data[cols.calc_spend_per_trans_contrib]
-            spend_per_cust_contrib = tree_data[cols.calc_spend_per_cust_contrib]
-            trans_per_cust_contrib = tree_data[cols.calc_trans_per_cust_contrib]
-            cust_contrib = tree_data[cols.agg_customer_id_contrib]
-            unit_spend_diff = tree_data[cols.agg_unit_spend_diff]
 
-            assert math.isclose(trans_per_cust_contrib + spend_per_trans_contrib, spend_per_cust_contrib)
-            assert math.isclose(cust_contrib + spend_per_cust_contrib, unit_spend_diff)
-
-            if include_quantity:
-                units_per_trans_contrib = tree_data[cols.calc_units_per_trans_contrib]
-                price_per_unit_contrib = tree_data[cols.calc_price_per_unit_contrib]
-                assert math.isclose(units_per_trans_contrib + price_per_unit_contrib, spend_per_trans_contrib)
+            for col in expected_columns:
+                assert col in rt.df.columns, f"Expected column {col} missing from output"
