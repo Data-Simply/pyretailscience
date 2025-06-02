@@ -1,5 +1,7 @@
 """Tests for the broken timeline plot module."""
 
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
 from matplotlib import pyplot as plt
@@ -122,40 +124,45 @@ class TestBrokenTimelinePlot:
         assert threshold_bars <= no_threshold_bars
 
     def test_different_periods(self):
-        """Test period aggregation works correctly for all valid periods."""
+        """Test period aggregation works correctly for valid periods."""
         date_col = get_option("column.transaction_date")
 
-        # Create data spanning multiple years for comprehensive testing
+        # Create data spanning multiple weeks for comprehensive testing
         data = {
             date_col: pd.to_datetime(
                 [
-                    "2023-01-01",
-                    "2023-01-15",
-                    "2023-02-01",
-                    "2023-04-01",  # Q1 2023
-                    "2023-07-01",
-                    "2023-10-01",  # Q3, Q4 2023
-                    "2024-01-01",
-                    "2024-06-01",
-                    "2024-12-01",  # 2024
-                    "2025-03-01",  # 2025
+                    "2025-01-01",
+                    "2025-01-02",
+                    "2025-01-08",
+                    "2025-01-15",
+                    "2025-01-22",
+                    "2025-01-29",
+                    "2025-02-05",
+                    "2025-02-12",
                 ],
             ),
-            "category": ["A"] * 10,
-            "value": [100] * 10,
+            "category": ["A"] * 8,
+            "value": [100] * 8,
         }
         df = pd.DataFrame(data)
 
         results = {}
-        for period in ["D", "W", "M", "Q", "Y"]:
+        for period in ["D", "W"]:
             ax = broken_timeline.plot(df, "category", "value", period=period)
             results[period] = len(list(ax.patches))
 
-        # Each aggregation level should have fewer or equal bars than more granular ones
-        assert results["W"] <= results["D"]  # Weekly <= Daily
-        assert results["M"] <= results["W"]  # Monthly <= Weekly
-        assert results["Q"] <= results["M"]  # Quarterly <= Monthly
-        assert results["Y"] <= results["Q"]  # Yearly <= Quarterly
+        # Weekly aggregation should have fewer or equal bars than daily
+        assert results["W"] <= results["D"]
+
+    def test_lowercase_period_handling(self, sample_dataframe):
+        """Test that lowercase period parameters are properly converted."""
+        ax = broken_timeline.plot(
+            df=sample_dataframe,
+            category_col="category",
+            value_col="value",
+            period="d",
+        )
+        assert isinstance(ax, Axes)
 
     def test_with_source_text(self, sample_dataframe):
         """Test adding source text appears in plot."""
@@ -286,3 +293,59 @@ class TestBrokenTimelinePlot:
         )
 
         assert isinstance(ax, Axes)
+
+    @pytest.mark.parametrize(
+        ("period", "dates", "num_periods"),
+        [
+            ("D", ["2025-01-01", "2025-01-02", "2025-01-03"], 3),
+            ("W", ["2025-01-01", "2025-01-08"], 2),
+        ],
+    )
+    def test_bar_width_calculation_for_different_periods(self, period, dates, num_periods):
+        """Test that bar widths are calculated correctly for different time periods."""
+        date_col = get_option("column.transaction_date")
+        expected_width = num_periods * broken_timeline.PERIOD_CONFIG[period]
+
+        data = {
+            date_col: pd.to_datetime(dates),
+            "category": ["A"] * len(dates),
+            "value": [100] * len(dates),
+        }
+        df = pd.DataFrame(data)
+
+        with patch("matplotlib.axes.Axes.broken_barh") as mock_broken_barh:
+            broken_timeline.plot(df, "category", "value", period=period)
+            segments = mock_broken_barh.call_args[0][0]
+            actual_width = segments[0][1]
+            assert actual_width == expected_width
+
+    @pytest.mark.parametrize(
+        ("period", "dates", "expected_segments"),
+        [
+            (
+                "D",
+                ["2025-01-01", "2025-01-02", "2025-01-06", "2025-01-07"],
+                2,  # 4-day gap > 1-day threshold creates 2 segments
+            ),
+            (
+                "W",
+                ["2025-01-01", "2025-01-08", "2025-01-22", "2025-01-29"],
+                2,  # 14-day gap > 7-day threshold creates 2 segments
+            ),
+        ],
+    )
+    def test_gap_detection_with_different_periods(self, period, dates, expected_segments):
+        """Test that gaps are correctly detected based on period type."""
+        date_col = get_option("column.transaction_date")
+
+        data = {
+            date_col: pd.to_datetime(dates),
+            "category": ["A"] * len(dates),
+            "value": [100] * len(dates),
+        }
+        df = pd.DataFrame(data)
+
+        with patch("matplotlib.axes.Axes.broken_barh") as mock_broken_barh:
+            broken_timeline.plot(df, "category", "value", period=period)
+            segments = mock_broken_barh.call_args[0][0]
+            assert len(segments) == expected_segments

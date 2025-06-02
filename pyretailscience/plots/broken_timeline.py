@@ -6,7 +6,7 @@ data is available as horizontal bars, with gaps indicating missing data periods.
 ### Features
 
 - **Multiple Categories**: Support for displaying multiple categories with different colors
-- **Customizable Periods**: Aggregate data by different time periods (daily, weekly, monthly)
+- **Customizable Periods**: Aggregate data by different time periods (daily, weekly)
 - **Threshold Filtering**: Filter out values below a specified threshold
 - **Date Formatting**: Uses matplotlib's ConciseDateFormatter for clean date axis labels
 
@@ -28,6 +28,44 @@ from matplotlib.axes import Axes, SubplotBase
 import pyretailscience.style.graph_utils as gu
 from pyretailscience.options import get_option
 from pyretailscience.style.tailwind import COLORS
+
+# Period configurations: gap threshold and duration (in days)
+PERIOD_CONFIG = {
+    "D": 1,  # Daily: 1 day gap and duration
+    "W": 7,  # Weekly: 1 week gap and duration
+}
+
+
+def _validate_inputs(df: pd.DataFrame, category_col: str, value_col: str, date_col: str, period: str) -> None:
+    """Validate input parameters for the plot function.
+
+    Args:
+        df: Input DataFrame
+        category_col: Category column name
+        value_col: Value column name
+        date_col: Date column name
+        period: Time period for aggregation
+
+    Raises:
+        ValueError: If DataFrame is empty or invalid period specified
+        KeyError: If required columns don't exist
+    """
+    if df.empty:
+        raise ValueError("Cannot plot with empty DataFrame")
+
+    # Validate required columns exist
+    required_cols = [date_col, category_col, value_col]
+
+    for col in required_cols:
+        if col not in df.columns:
+            msg = f"Required column '{col}' not found in DataFrame"
+            raise KeyError(msg)
+
+    # Validate period parameter
+    valid_periods = list(PERIOD_CONFIG.keys())
+    if period not in valid_periods:
+        msg = f"Invalid period '{period}'. Must be one of {valid_periods}"
+        raise ValueError(msg)
 
 
 def plot(
@@ -59,7 +97,7 @@ def plot(
         y_label (str, optional): The label for the y-axis. Defaults to None.
         ax (Axes, optional): The Matplotlib Axes object to plot on. Defaults to None.
         source_text (str, optional): Text to be displayed as a source at the bottom of the plot. Defaults to None.
-        period (str, optional): Period for aggregating data using pandas to_period ("D", "W", "M", etc.).
+        period (str, optional): Period for aggregating data using pandas to_period ("D", "W").
             Defaults to "D".
         agg_func (str, optional): The aggregation function to apply to the value_col when grouping by period.
             Defaults to "sum".
@@ -75,23 +113,13 @@ def plot(
         ValueError: If DataFrame is empty, required columns are missing, or invalid period specified.
         KeyError: If specified columns don't exist in the DataFrame.
     """
-    if df.empty:
-        raise ValueError("Cannot plot with empty DataFrame")
+    date_col = get_option("column.transaction_date")
+
+    # Convert period to uppercase to handle lowercase inputs
+    period = period.upper()
 
     # Validate required columns exist
-    date_col = get_option("column.transaction_date")
-    required_cols = [date_col, category_col, value_col]
-
-    for col in required_cols:
-        if col not in df.columns:
-            msg = f"Required column '{col}' not found in DataFrame"
-            raise KeyError(msg)
-
-    # Validate period parameter
-    valid_periods = ["D", "W", "M", "Q", "Y"]
-    if period not in valid_periods:
-        msg = f"Invalid period '{period}'. Must be one of {valid_periods}"
-        raise ValueError(msg)
+    _validate_inputs(df, category_col, value_col, date_col, period)
 
     # Create a copy of the data and ensure date column is datetime
     df_copy = df.copy()
@@ -115,25 +143,27 @@ def plot(
     if ax is None:
         _, ax = plt.subplots(figsize=figsize)
 
-    # Define gap thresholds for different periods (moved outside loop)
-    gap_thresholds = {"D": 1, "W": 7, "M": 31, "Q": 92, "Y": 366}
-    gap_threshold = gap_thresholds[period]
+    # Use module-level period configuration
+    gap_threshold = PERIOD_CONFIG[period]
     bar_color = COLORS["green"][500]
 
     # Process each category
     for category in categories:
         dates = df_copy[df_copy[category_col] == category][date_col].values
 
-        if len(dates) == 0:
-            continue
-
         # Convert to matplotlib date numbers and find segments
         dates_num = mdates.date2num(dates)
         gaps = np.diff(dates_num) > gap_threshold
         date_segments = np.split(dates_num, np.where(gaps)[0] + 1)
 
-        # Create segments and plot
-        segments = [(seg[0], seg[-1] - seg[0] + 1) for seg in date_segments if len(seg) > 0]
+        # Calculate appropriate width based on period type
+        base_width = PERIOD_CONFIG[period]
+        segments = []
+        for seg in date_segments:
+            if len(seg) > 0:
+                # Width should be number of periods * typical period duration
+                width = len(seg) * base_width
+                segments.append((seg[0], width))
         bar_offset = bar_height / 2
         ax.broken_barh(
             segments,

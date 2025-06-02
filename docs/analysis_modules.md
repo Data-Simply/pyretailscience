@@ -615,6 +615,8 @@ broken_timeline.plot(
     category_col="product_size",
     value_col="sales_value",
     title="Data Availability Timeline by Product Size",
+    x_label="Time Period",
+    y_label="Product Size",
     source_text="Source: Sample retail transaction data",
 )
 ```
