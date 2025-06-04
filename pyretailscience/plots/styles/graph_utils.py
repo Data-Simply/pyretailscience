@@ -1,3 +1,4 @@
+# graph_utils.py
 """Helper functions for styling graphs."""
 
 import importlib.resources as pkg_resources
@@ -15,6 +16,8 @@ from matplotlib.dates import date2num
 from matplotlib.text import Text
 from scipy import stats
 
+from pyretailscience.plots.styles.styling_helpers import PlotStyler
+
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 _MAGNITUDE_SUFFIXES = ["", "K", "M", "B", "T", "P"]
 
@@ -30,23 +33,34 @@ def _hatches_gen() -> Generator[str, None, None]:
 
 
 class GraphStyles:
-    """A class to hold the styles for a graph."""
+    """A class to hold the styles for a graph.
 
-    POPPINS_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Bold.ttf")
-    POPPINS_SEMI_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-SemiBold.ttf")
-    POPPINS_REG = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Regular.ttf")
-    POPPINS_MED = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Medium.ttf")
-    POPPINS_LIGHT_ITALIC = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-LightItalic.ttf")
+    DEPRECATED: This class is maintained for backwards compatibility only.
+    Use PlotStyler from styling_helpers instead.
+    """
+
+    # Font properties - kept for backwards compatibility
+    try:
+        POPPINS_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Bold.ttf")
+        POPPINS_SEMI_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-SemiBold.ttf")
+        POPPINS_REG = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Regular.ttf")
+        POPPINS_MED = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Medium.ttf")
+        POPPINS_LIGHT_ITALIC = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-LightItalic.ttf")
+    except (OSError, RuntimeError):
+        # Fallback to default fonts if bundled fonts are not available
+        POPPINS_BOLD = fm.FontProperties()
+        POPPINS_SEMI_BOLD = fm.FontProperties()
+        POPPINS_REG = fm.FontProperties()
+        POPPINS_MED = fm.FontProperties()
+        POPPINS_LIGHT_ITALIC = fm.FontProperties()
 
     DEFAULT_TITLE_FONT_SIZE = 20
     DEFAULT_SOURCE_FONT_SIZE = 10
     DEFAULT_AXIS_LABEL_FONT_SIZE = 12
     DEFAULT_TICK_LABEL_FONT_SIZE = 10
     DEFAULT_BAR_LABEL_FONT_SIZE = 11
-
     DEFAULT_AXIS_LABEL_PAD = 10
     DEFAULT_TITLE_PAD = 10
-
     DEFAULT_BAR_WIDTH = 0.8
 
 
@@ -150,50 +164,28 @@ def truncate_to_x_digits(num_str: str, digits: int) -> str:
     return f"{truncated_num}{suffix}"
 
 
-def _add_legend(ax: Axes, legend_title: str | None, move_legend_outside: bool) -> Axes:
-    """Add a legend to a Matplotlib graph.
-
-    Args:
-        ax (Axes): The axes object of the plot.
-        legend_title (str, optional): The title for the legend.
-        move_legend_outside (bool, optional): Whether to move legend outside the plot.
-    """
-    has_legend = ax.get_legend() is not None
-    if has_legend or legend_title is not None or move_legend_outside:
-        legend = (
-            ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", frameon=False)
-            if move_legend_outside
-            else ax.legend(frameon=False)
-        )
-        if legend_title:
-            legend.set_title(legend_title)
-
-    return ax
-
-
 def standard_graph_styles(
     ax: Axes,
     title: str | None = None,
     x_label: str | None = None,
     y_label: str | None = None,
-    title_pad: int = GraphStyles.DEFAULT_TITLE_PAD,
-    x_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
-    y_label_pad: int = GraphStyles.DEFAULT_AXIS_LABEL_PAD,
+    title_pad: int | None = None,
+    x_label_pad: int | None = None,
+    y_label_pad: int | None = None,
     legend_title: str | None = None,
     move_legend_outside: bool = False,
     show_legend: bool = True,
 ) -> Axes:
-    """Apply standard styles to a Matplotlib graph.
+    """Apply standard styles to a Matplotlib graph using styling helpers.
 
     Args:
         ax (Axes): The graph to apply the styles to.
         title (str, optional): The title of the graph. Defaults to None.
         x_label (str, optional): The x-axis label. Defaults to None.
         y_label (str, optional): The y-axis label. Defaults to None.
-        title_pad (int, optional): The padding above the title. Defaults to GraphStyles.DEFAULT_TITLE_PAD.
-        x_label_pad (int, optional): The padding below the x-axis label. Defaults to GraphStyles.DEFAULT_AXIS_LABEL_PAD.
-        y_label_pad (int, optional): The padding to the left of the y-axis label. Defaults to
-            GraphStyles.DEFAULT_AXIS_LABEL_PAD.
+        title_pad (int, optional): The padding above the title. Defaults to styling context default.
+        x_label_pad (int, optional): The padding below the x-axis label. Defaults to styling context default.
+        y_label_pad (int, optional): The padding to the left of the y-axis label. Defaults to styling context default.
         legend_title (str, optional): The title of the legend. If None, no legend title is applied. Defaults to None.
         move_legend_outside (bool, optional): Whether to move the legend outside the plot. Defaults to False.
         show_legend (bool): Whether to display the legend or not.
@@ -201,48 +193,33 @@ def standard_graph_styles(
     Returns:
         Axes: The graph with the styles applied.
     """
-    ax.set_facecolor("w")  # set background color to white
-    ax.set_axisbelow(True)  # set grid lines behind the plot
-    ax.spines[["top", "right"]].set_visible(False)
-    ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
-    ax.grid(which="major", axis="y", color="#DAD8D7", alpha=0.5, zorder=1)
+    plot_styler = PlotStyler()
 
+    # Apply base plot styling
+    plot_styler.apply_base_styling(ax)
+
+    # Apply text styling
     if title is not None:
-        ax.set_title(
-            title,
-            fontproperties=GraphStyles.POPPINS_SEMI_BOLD,
-            fontsize=GraphStyles.DEFAULT_TITLE_FONT_SIZE,
-            pad=title_pad,
-        )
+        plot_styler.apply_title(ax, title, title_pad)
 
     if x_label is not None:
-        ax.set_xlabel(
-            x_label,
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=x_label_pad,
-        )
+        plot_styler.apply_label(ax, x_label, "x", x_label_pad)
 
     if y_label is not None:
-        ax.set_ylabel(
-            y_label,
-            fontproperties=GraphStyles.POPPINS_REG,
-            fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-            labelpad=y_label_pad,
-        )
+        plot_styler.apply_label(ax, y_label, "y", y_label_pad)
 
-    if not show_legend:
-        return ax
+    # Apply tick styling
+    plot_styler.apply_ticks(ax)
 
-    return _add_legend(
-        ax=ax,
-        legend_title=legend_title,
-        move_legend_outside=move_legend_outside,
-    )
+    # Apply legend styling if needed
+    if show_legend and (ax.get_legend() is not None or legend_title is not None or move_legend_outside):
+        plot_styler.apply_legend(ax, legend_title, move_legend_outside)
+
+    return ax
 
 
 def standard_tick_styles(ax: Axes) -> Axes:
-    """Apply standard tick styles to a Matplotlib graph.
+    """Apply standard tick styles using styling helpers.
 
     Args:
         ax (Axes): The graph to apply the styles to.
@@ -250,21 +227,8 @@ def standard_tick_styles(ax: Axes) -> Axes:
     Returns:
         Axes: The graph with the styles applied.
     """
-    ax.tick_params(
-        axis="both",
-        which="both",
-        labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE,
-    )
-
-    for tick in [
-        *ax.xaxis.get_major_ticks(),
-        *ax.xaxis.get_minor_ticks(),
-        *ax.yaxis.get_major_ticks(),
-        *ax.yaxis.get_minor_ticks(),
-    ]:
-        tick.label1.set_fontproperties(GraphStyles.POPPINS_REG)
-        tick.label2.set_fontproperties(GraphStyles.POPPINS_REG)
-
+    plot_styler = PlotStyler()
+    plot_styler.apply_ticks(ax)
     return ax
 
 
@@ -337,37 +301,37 @@ def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decima
 def add_source_text(
     ax: Axes,
     source_text: str,
-    font_size: float = GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
+    font_size: float | None = None,
     vertical_padding: float = 2,
     is_venn_diagram: bool = False,
 ) -> Text:
-    """Add source text to the bottom left corner of a graph.
+    """Add source text to the bottom left corner of a graph using styling helpers.
 
     Args:
         ax (Axes): The graph to add the source text to.
         source_text (str): The source text.
-        font_size (float, optional): The font size of the source text.
-            Defaults to GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE.
+        font_size (float, optional): The font size of the source text. If None, uses styling context default.
         vertical_padding (float, optional): The padding in ems below the x-axis label. Defaults to 2.
         is_venn_diagram (bool, optional): Flag to indicate if the diagram is a Venn diagram.
-            If True, `x_norm` and `y_norm` will be set to fixed values.
-            Defaults to False.
+            If True, `x_norm` and `y_norm` will be set to fixed values. Defaults to False.
 
     Returns:
         Text: The source text.
     """
+    plot_styler = PlotStyler()
+
+    # Calculate position (preserve existing logic)
     ax.figure.canvas.draw()
     if is_venn_diagram:
-        x_norm = 0.01
-        y_norm = 0.02
+        x_norm, y_norm = 0.01, 0.02
     else:
         # Get y coordinate of the text
         xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
 
         top_of_label_px = xlabel_box.y0
-
-        padding_px = vertical_padding * font_size
-
+        # Use styling context font size if not provided
+        effective_font_size = font_size or plot_styler.context.fonts.source_size
+        padding_px = vertical_padding * effective_font_size
         y_disp = top_of_label_px - padding_px - (xlabel_box.height)
 
         # Convert display coordinates to normalized figure coordinates
@@ -379,18 +343,7 @@ def add_source_text(
         min_x0 = min(ylabel_box.x0, title_box.x0)
         x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
 
-    # Add text to the bottom left corner of the figure
-    return ax.figure.text(
-        x_norm,
-        y_norm,
-        source_text,
-        ha="left",
-        va="bottom",
-        transform=ax.figure.transFigure,
-        fontsize=GraphStyles.DEFAULT_SOURCE_FONT_SIZE,
-        fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
-        color="dimgray",
-    )
+    return plot_styler.apply_source_text(ax, source_text, x=x_norm, y=y_norm)
 
 
 def set_axis_percent(
@@ -454,6 +407,8 @@ def _add_equation_text(
     if not (show_equation or show_r2):
         return
 
+    plot_styler = PlotStyler()
+
     equation_parts = []
 
     if show_equation:
@@ -478,8 +433,8 @@ def _add_equation_text(
         text_y,
         text,
         color=color,
-        fontsize=GraphStyles.DEFAULT_AXIS_LABEL_FONT_SIZE,
-        fontproperties=GraphStyles.POPPINS_LIGHT_ITALIC,
+        fontsize=plot_styler.context.fonts.label_size,
+        fontproperties=plot_styler.context.get_font_properties(plot_styler.context.fonts.source_font),
         bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
     )
 
@@ -594,9 +549,6 @@ def add_regression_line(
         ax (Axes): The matplotlib axes object containing the plot (line or scatter).
         color (str, optional): Color of the regression line. Defaults to "red".
         linestyle (str, optional): Style of the regression line. Defaults to "--".
-        alpha (float, optional): Transparency of the regression line. Defaults to 0.8.
-        linewidth (float, optional): Width of the regression line. Defaults to 2.0.
-        label (str, optional): Label for the regression line in the legend. Defaults to "Regression Line".
         text_position (float, optional): Relative position (0-1) for the equation text. Defaults to 0.6.
         show_equation (bool, optional): Whether to display the equation on the plot. Defaults to True.
         show_r2 (bool, optional): Whether to display the R² value on the plot. Defaults to True.

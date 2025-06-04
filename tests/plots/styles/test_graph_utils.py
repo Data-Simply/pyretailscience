@@ -7,7 +7,7 @@ import matplotlib.ticker as mtick
 import numpy as np
 import pytest
 
-from pyretailscience.style import graph_utils as gu
+from pyretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -295,3 +295,188 @@ class TestRegressionLine:
 
         # Check for appropriate error message
         assert "regression" in str(excinfo.value).lower()
+
+
+class TestVisualRegression:
+    """Visual regression tests to ensure refactored code produces identical output."""
+
+    WHITE_RGBA = (1.0, 1.0, 1.0, 1.0)
+
+    def test_visual_regression_standard_graph_styles_basic(self):
+        """Ensure standard_graph_styles produces consistent visual output."""
+        fig, ax = plt.subplots(figsize=(8, 6))
+        rng = np.random.default_rng(42)
+        x = np.linspace(0, 10, 50)
+        y = np.sin(x) + 0.1 * rng.standard_normal(50)
+        ax.plot(x, y, label="Sin Wave")
+
+        gu.standard_graph_styles(
+            ax,
+            title="Test Graph Title",
+            x_label="X Axis Label",
+            y_label="Y Axis Label",
+            legend_title="Legend Title",
+        )
+
+        assert ax.get_title() == "Test Graph Title"
+        assert ax.get_xlabel() == "X Axis Label"
+        assert ax.get_ylabel() == "Y Axis Label"
+        assert ax.get_facecolor() == self.WHITE_RGBA
+        assert not ax.spines["top"].get_visible()
+        assert not ax.spines["right"].get_visible()
+
+        plt.close(fig)
+
+    @pytest.mark.parametrize(
+        ("plot_type", "data_generator"),
+        [
+            (
+                "line",
+                lambda: (
+                    np.linspace(0, 10, 20),
+                    np.sin(np.linspace(0, 10, 20)) + 0.1 * np.random.default_rng(42).standard_normal(20),
+                ),
+            ),
+            (
+                "scatter",
+                lambda: (
+                    np.linspace(0, 10, 20),
+                    np.sin(np.linspace(0, 10, 20)) + 0.1 * np.random.default_rng(42).standard_normal(20),
+                ),
+            ),
+            ("bar", lambda: (["A", "B", "C", "D", "E"], [23, 45, 56, 78, 32])),
+        ],
+    )
+    def test_visual_regression_all_plot_types(self, plot_type, data_generator):
+        """Test visual consistency across different plot types."""
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+        x, y = data_generator()
+
+        plot_methods = {
+            "line": lambda ax, x, y: ax.plot(x, y),
+            "scatter": lambda ax, x, y: ax.scatter(x, y),
+            "bar": lambda ax, x, y: ax.bar(x, y),
+        }
+        plot_methods[plot_type](ax, x, y)
+
+        gu.standard_graph_styles(
+            ax,
+            title=f"Test {plot_type.title()} Plot",
+            x_label="X Values",
+            y_label="Y Values",
+        )
+
+        assert ax.get_facecolor() == self.WHITE_RGBA
+        assert not ax.spines["top"].get_visible()
+        assert not ax.spines["right"].get_visible()
+
+        plt.close(fig)
+
+    def test_visual_regression_source_text(self):
+        """Test source text visual consistency."""
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+        x = np.linspace(0, 10, 50)
+        y = np.exp(-x / 5) * np.cos(x)
+        ax.plot(x, y)
+
+        source_text = gu.add_source_text(ax, "Source: Test Data 2024")
+
+        assert source_text.get_text() == "Source: Test Data 2024"
+        assert source_text.get_color() == "dimgray"
+
+        plt.close(fig)
+
+
+class TestImportPaths:
+    """Test all new import paths work correctly."""
+
+    def test_graph_utils_import(self):
+        """Test graph_utils can be imported from new location."""
+        try:
+            from pyretailscience.plots.styles.graph_utils import add_source_text, human_format, standard_graph_styles
+
+            assert callable(standard_graph_styles)
+            assert callable(human_format)
+            assert callable(add_source_text)
+        except ImportError as e:
+            pytest.fail(f"Failed to import from new graph_utils location: {e}")
+
+    def test_styling_helpers_import(self):
+        """Test styling_helpers can be imported."""
+        try:
+            from pyretailscience.plots.styles.styling_helpers import PlotStyler
+
+            assert PlotStyler is not None
+        except ImportError as e:
+            pytest.fail(f"Failed to import PlotStyler: {e}")
+
+    def test_styling_context_import(self):
+        """Test styling_context can be imported."""
+        try:
+            from pyretailscience.plots.styles.styling_context import (
+                FontConfig,
+                StylingContext,
+                get_styling_context,
+                update_styling_context,
+            )
+
+            assert StylingContext is not None
+            assert FontConfig is not None
+            assert callable(get_styling_context)
+            assert callable(update_styling_context)
+        except ImportError as e:
+            pytest.fail(f"Failed to import styling_context components: {e}")
+
+    def test_tailwind_import(self):
+        """Test tailwind can be imported from new location."""
+        try:
+            from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
+
+            assert callable(get_multi_color_cmap)
+            assert callable(get_single_color_cmap)
+        except ImportError as e:
+            pytest.fail(f"Failed to import from new tailwind location: {e}")
+
+
+class TestBackwardsCompatibility:
+    """Test that existing code still works with new structure."""
+
+    def test_standard_graph_styles_api_unchanged(self):
+        """Test standard_graph_styles maintains same API."""
+        fig, ax = plt.subplots()
+        x = [1, 2, 3, 4, 5]
+        y = [2, 4, 1, 5, 3]
+        ax.plot(x, y, label="Test Data")
+
+        result = gu.standard_graph_styles(
+            ax,
+            title="Test Title",
+            x_label="X Axis",
+            y_label="Y Axis",
+            title_pad=10,
+            x_label_pad=8,
+            y_label_pad=12,
+            legend_title="Legend",
+            move_legend_outside=False,
+            show_legend=True,
+        )
+
+        assert result is ax
+        assert ax.get_title() == "Test Title"
+        assert ax.get_xlabel() == "X Axis"
+        assert ax.get_ylabel() == "Y Axis"
+
+        plt.close(fig)
+
+    def test_utility_functions_unchanged(self):
+        """Test utility functions maintain same behavior."""
+        # Test human_format
+        assert gu.human_format(1500) == "2K"
+        assert gu.human_format(1500000, decimals=1) == "1.5M"
+        assert gu.human_format(1000, prefix="$") == "$1K"
+
+        # Test truncate_to_x_digits
+        assert gu.truncate_to_x_digits("1.234K", 3) == "1.23K"
+        assert gu.truncate_to_x_digits("999.999M", 4) == "999.9M"

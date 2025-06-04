@@ -729,10 +729,10 @@ from pyretailscience.analysis import cross_shop
 
 data = {
     "customer_id": [1, 2, 3, 4, 5, 5, 6, 9, 7, 7, 8, 9, 5, 8],
-    "category_name" = [
-        "Electronics", "Clothing", "Home", "Sports", "Clothing", "Electronics", "Electronics"
+    "category_name" : [
+        "Electronics", "Clothing", "Home", "Sports", "Clothing", "Electronics", "Electronics",
         "Clothing", "Home", "Electronics", "Clothing", "Electronics", "Home", "Home"
-        ]
+        ],
     "unit_spend": [100, 200, 300, 400, 200, 500, 100, 200, 300, 350, 400, 500, 250, 360]
 }
 
@@ -1098,9 +1098,9 @@ rfm_results = rfm_segmenter.df
 
 | customer_id | recency_days | frequency | monetary | r_score | f_score | m_score | rfm_segment | fm_segment |
 |-------------|--------------|-----------|----------|---------|---------|---------|-------------|------------|
-| 1           | 113          | 2         | 125      | 0       | 0       | 0       | 0           | 0          |
+| 1           | 113          | 2         | 125      | 2       | 0       | 0       | 200         | 0          |
 | 2           | 127          | 2         | 250      | 1       | 1       | 1       | 111         | 11         |
-| 3           | 147          | 3         | 750      | 2       | 2       | 2       | 222         | 22         |
+| 3           | 147          | 3         | 750      | 0       | 2       | 2       | 22          | 22         |
 
 ### Purchases Per Customer
 
@@ -1310,9 +1310,9 @@ result_df.groupby("period_name").agg(
 
 | period_name    | transaction_count | total_sales | avg_transaction_value |
 |:---------------|------------------:|------------:|----------------------:|
-| Pre-Promotion  |                31 |      1937.5 |                 62.50 |
-| Promotion      |                28 |      1750.0 |                 62.50 |
-| Post-Promotion |                31 |      1937.5 |                 62.50 |
+| Pre-Promotion  |                31 |      3050.0 |                 98.39 |
+| Promotion      |                28 |      2800.0 |                100.00 |
+| Post-Promotion |                31 |      3150.0 |                101.61 |
 
 ### Find Overlapping Periods
 

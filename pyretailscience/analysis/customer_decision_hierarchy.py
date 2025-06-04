@@ -8,9 +8,9 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.style.graph_utils import GraphStyles
+from pyretailscience.plots.styles.graph_utils import GraphStyles
 
 
 class CustomerDecisionHierarchy:

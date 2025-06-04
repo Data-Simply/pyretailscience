@@ -9,7 +9,7 @@ from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
 
 from pyretailscience.plots import bar
-from pyretailscience.style import graph_utils as gu
+from pyretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -41,17 +41,17 @@ def _mock_color_generators(mocker):
     """Mock the color generators for single and multi color maps."""
     single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator
-    mocker.patch("pyretailscience.style.tailwind.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.style.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("pyretailscience.plots.styles.tailwind.get_single_color_cmap", return_value=single_color_gen)
+    mocker.patch("pyretailscience.plots.styles.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture
 def _mock_gu_functions(mocker):
     """Mock the standard graph utilities functions."""
-    mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.style.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-    mocker.patch("pyretailscience.style.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")

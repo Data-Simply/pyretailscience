@@ -15,9 +15,9 @@ import ibis
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper
-from pyretailscience.style.tailwind import COLORS
+from pyretailscience.plots.styles.tailwind import COLORS
 
 
 class SegTransactionStats:

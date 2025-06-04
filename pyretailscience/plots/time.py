@@ -38,9 +38,9 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from pandas.tseries.offsets import BaseOffset
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import get_option
-from pyretailscience.style.tailwind import COLORS, get_linear_cmap
+from pyretailscience.plots.styles.tailwind import COLORS, get_linear_cmap
 
 
 def plot(

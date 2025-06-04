@@ -17,7 +17,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 from matplotlib.axes import Axes
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.line import plot as line_plot
 
 LINE_STYLES = [
