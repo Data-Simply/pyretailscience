@@ -113,12 +113,7 @@ class TestCohortAnalysis:
             },
         )
 
-        custom_columns = {
-            "column.customer_id": "cust_id",
-            "column.transaction_date": "txn_date",
-        }
-
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context("column.customer_id", "cust_id", "column.transaction_date", "txn_date"):
             cohort = CohortAnalysis(
                 df=custom_transactions_df,
                 aggregation_column="spend_amount",

@@ -8,7 +8,7 @@ import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.analysis.gain_loss import GainLoss
-from pyretailscience.options import get_option, option_context
+from pyretailscience.options import option_context
 
 
 @pytest.fixture(autouse=True)
@@ -259,25 +259,17 @@ def test_plot_returns_figure_from_gainloss(sample_df):
 
 def test_with_custom_column_names(sample_df):
     """Test GainLoss with custom column names."""
-    custom_columns = {
-        "column.customer_id": "cust_identifier",
-        "column.unit_spend": "total_revenue",
-    }
-
     rename_mapping = {
-        get_option("column.customer_id"): custom_columns["column.customer_id"],
-        get_option("column.unit_spend"): custom_columns["column.unit_spend"],
-        "transaction_date": "purchase_date",
-        "brand": "product_brand",
+        "customer_id": "cust_identifier",
+        "unit_spend": "total_revenue",
     }
-
     custom_df = sample_df.rename(columns=rename_mapping)
-    p1_index = custom_df["purchase_date"] < datetime.date(2023, 5, 1)
-    p2_index = custom_df["purchase_date"] >= datetime.date(2023, 5, 1)
-    focus_group_index = custom_df["product_brand"] == "Brand A"
-    comparison_group_index = custom_df["product_brand"] == "Brand B"
+    p1_index = custom_df["transaction_date"] < datetime.date(2023, 5, 1)
+    p2_index = custom_df["transaction_date"] >= datetime.date(2023, 5, 1)
+    focus_group_index = custom_df["brand"] == "Brand A"
+    comparison_group_index = custom_df["brand"] == "Brand B"
 
-    with option_context(*[item for pair in custom_columns.items() for item in pair]):
+    with option_context("column.customer_id", "cust_identifier", "column.unit_spend", "total_revenue"):
         gl = GainLoss(
             df=custom_df,
             p1_index=p1_index,

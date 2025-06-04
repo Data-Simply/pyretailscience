@@ -49,12 +49,7 @@ class TestPurchasesPerCustomer:
             },
         )
 
-        custom_columns = {
-            "column.customer_id": "cust_id",
-            "column.transaction_id": "txn_id",
-        }
-
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context("column.customer_id", "cust_id", "column.transaction_id", "txn_id"):
             ppc = PurchasesPerCustomer(df=custom_transactions_df)
 
             assert hasattr(ppc, "cust_purchases_s"), "Should have cust_purchases_s attribute"
@@ -77,12 +72,7 @@ class TestDaysBetweenPurchases:
         )
         custom_transactions_df["txn_date"] = pd.to_datetime(custom_transactions_df["txn_date"])
 
-        custom_columns = {
-            "column.customer_id": "cust_id",
-            "column.transaction_date": "txn_date",
-        }
-
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context("column.customer_id", "cust_id", "column.transaction_date", "txn_date"):
             dbp = DaysBetweenPurchases(df=custom_transactions_df)
 
             assert hasattr(dbp, "purchase_dist_s"), "Should have purchase_dist_s attribute"
@@ -105,12 +95,7 @@ class TestTransactionChurn:
         )
         custom_transactions_df["txn_date"] = pd.to_datetime(custom_transactions_df["txn_date"])
 
-        custom_columns = {
-            "column.customer_id": "cust_id",
-            "column.transaction_date": "txn_date",
-        }
-
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context("column.customer_id", "cust_id", "column.transaction_date", "txn_date"):
             tc = TransactionChurn(df=custom_transactions_df, churn_period=30)
 
             assert hasattr(tc, "purchase_dist_df"), "Should have purchase_dist_df attribute"

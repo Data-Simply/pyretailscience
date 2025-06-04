@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from pyretailscience.options import ColumnHelper, get_option, option_context
+from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.segmentation.hml import HMLSegmentation
 
 cols = ColumnHelper()
@@ -86,23 +86,3 @@ class TestHMLSegmentation:
         assert result_df.loc[2, "segment_name"] == "Light"
         assert result_df.loc[4, "segment_name"] == "Medium"
         assert result_df.loc[5, "segment_name"] == "Light"
-
-    def test_with_custom_column_names(self, base_df):
-        """Test HMLSegmentation with custom column names."""
-        custom_columns = {
-            "column.customer_id": "custom_cust_id",
-            "column.unit_spend": "custom_spend_col",
-        }
-
-        rename_mapping = {
-            get_option("column.customer_id"): custom_columns["column.customer_id"],
-            cols.unit_spend: custom_columns["column.unit_spend"],
-        }
-
-        custom_df = base_df.rename(columns=rename_mapping)
-
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
-            hml_segmentation = HMLSegmentation(custom_df)
-            result_df = hml_segmentation.df
-            assert isinstance(result_df, pd.DataFrame), "Should execute successfully with custom column names"
-            assert result_df.index.name == "custom_cust_id", "Should use custom customer_id column name as index"

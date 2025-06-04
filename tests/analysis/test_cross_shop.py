@@ -436,12 +436,7 @@ def test_with_custom_column_names(sample_data):
         },
     )
 
-    custom_columns = {
-        "column.customer_id": "my_customer_identifier",
-        "column.unit_spend": "total_amount_spent",
-    }
-
-    with option_context(*[item for pair in custom_columns.items() for item in pair]):
+    with option_context("column.customer_id", "my_customer_identifier", "column.unit_spend", "total_amount_spent"):
         cross_shop = CrossShop(
             df=custom_data,
             group_1_col="product_category",

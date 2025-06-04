@@ -196,15 +196,10 @@ class TestThresholdSegmentation:
             },
         )
 
-        custom_columns = {
-            "column.customer_id": "buyer_id",
-            "column.unit_spend": "spend_amount",
-        }
-
         thresholds = [0.5, 1.0]
         segments = ["Low", "High"]
 
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context("column.customer_id", "buyer_id", "column.unit_spend", "spend_amount"):
             seg = ThresholdSegmentation(
                 df=df,
                 thresholds=thresholds,

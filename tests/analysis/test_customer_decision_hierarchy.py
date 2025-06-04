@@ -118,12 +118,7 @@ class TestCustomerDecisionHierarchy:
             },
         )
 
-        custom_columns = {
-            "column.customer_id": "cust_identifier",
-            "column.transaction_id": "txn_identifier",
-        }
-
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context("column.customer_id", "cust_identifier", "column.transaction_id", "txn_identifier"):
             hierarchy = rp.CustomerDecisionHierarchy(
                 df=custom_test_df,
                 product_col="product_name",

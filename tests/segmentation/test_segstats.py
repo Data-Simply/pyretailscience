@@ -578,6 +578,7 @@ class TestSegTransactionStats:
             "column.customer_id": "cust_id",
             "column.unit_spend": "revenue",
             "column.transaction_id": "trans_id",
+            "column.unit_quantity": "quantity",
         }
 
         custom_df = pd.DataFrame(
@@ -586,6 +587,7 @@ class TestSegTransactionStats:
                 "revenue": [100.0, 150.0, 200.0, 250.0],
                 "trans_id": [101, 102, 103, 104],
                 "segment_name": ["A", "A", "B", "B"],
+                "quantity": [2, 3, 4, 5],
             },
         )
 

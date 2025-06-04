@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from pyretailscience.options import ColumnHelper, get_option, option_context
+from pyretailscience.options import ColumnHelper, option_context
 from pyretailscience.segmentation.rfm import RFMSegmentation
 
 cols = ColumnHelper()
@@ -457,17 +457,25 @@ class TestRFMSegmentation:
 
     def test_with_custom_column_names(self, base_df):
         """Test RFMSegmentation with custom column names."""
-        custom_columns = {
-            "column.customer_id": "custom_cust_id",
-            "column.transaction_id": "custom_txn_id",
-            "column.unit_spend": "custom_spend_amount",
-            "column.transaction_date": "custom_txn_date",
+        rename_mapping = {
+            "customer_id": "custom_cust_id",
+            "transaction_id": "custom_txn_id",
+            "unit_spend": "custom_spend_amount",
+            "transaction_date": "custom_txn_date",
         }
 
-        rename_mapping = {get_option(key): value for key, value in custom_columns.items()}
         custom_df = base_df.rename(columns=rename_mapping)
 
-        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+        with option_context(
+            "column.customer_id",
+            "custom_cust_id",
+            "column.transaction_id",
+            "custom_txn_id",
+            "column.unit_spend",
+            "custom_spend_amount",
+            "column.transaction_date",
+            "custom_txn_date",
+        ):
             rfm_segmentation = RFMSegmentation(df=custom_df)
             result_df = rfm_segmentation.df
             assert isinstance(result_df, pd.DataFrame), "Should execute successfully with custom column names"
