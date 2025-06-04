@@ -571,6 +571,56 @@ time.plot(
 )
 ```
 
+### Broken Timeline Plot
+
+<div class="clear" markdown>
+
+![Broken Timeline](assets/images/analysis_modules/plots/broken_timeline.svg){ align=right loading=lazy width="50%"}
+
+A broken timeline plot visualizes data availability across categories over time, showing periods where
+data is available as horizontal bars, with gaps indicating missing data periods. This is particularly
+useful for:
+
+- **Data Quality Assessment**: Visualize data availability gaps across categories/segments over time
+- **Product Availability Analysis**: Identify periods with stock outs by store/category
+- **Seasonality Analysis**: Assess to look for period of low sales that may indicate seasonality or other trends
+
+The plot automatically detects gaps in date sequences and handles different time periods (daily, weekly, monthly)
+with customizable bar heights and threshold filtering.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import broken_timeline
+
+np.random.seed(42)
+
+# Generate sample data with intentional gaps
+date_range = pd.date_range("2025-04-01", "2025-05-15", freq="D")
+data = []
+for _ in range(150):
+    date = np.random.choice(date_range)
+    size = np.random.choice(["Small", "Medium", "Large"])
+    value = np.random.randint(50, 500)
+    data.append({"transaction_date": date, "product_size": size, "sales_value": value})
+
+df = pd.DataFrame(data).drop_duplicates(["transaction_date", "product_size"])
+
+broken_timeline.plot(
+    df=df,
+    category_col="product_size",
+    value_col="sales_value",
+    title="Data Availability Timeline by Product Size",
+    x_label="Time Period",
+    y_label="Product Size",
+    source_text="Source: Sample retail transaction data",
+)
+```
+
 ## Analysis Modules
 
 ### Cohort Analysis
