@@ -431,6 +431,8 @@ class TestRevenueTree:
                 cols.agg_transaction_id_p2,
                 cols.agg_unit_spend_p1,
                 cols.agg_unit_spend_p2,
+                cols.agg_unit_qty_p1,
+                cols.agg_unit_qty_p2,
             ]
 
             for col in expected_columns:

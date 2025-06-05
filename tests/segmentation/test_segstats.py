@@ -596,3 +596,7 @@ class TestSegTransactionStats:
             result = seg_stats.df
             assert isinstance(result, pd.DataFrame)
             assert not result.empty
+
+            expected_columns = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend, cols.agg_unit_qty]
+            for col in expected_columns:
+                assert col in seg_stats.df.columns, f"Expected column {col} missing from output"

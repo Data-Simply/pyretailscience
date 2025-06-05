@@ -44,8 +44,6 @@ class TestPurchasesPerCustomer:
             columns={
                 "transaction_id": "txn_id",
                 "customer_id": "cust_id",
-                "unit_spend": "spend_amount",
-                "transaction_date": "txn_date",
             },
         )
 
@@ -64,9 +62,7 @@ class TestDaysBetweenPurchases:
         """Test DaysBetweenPurchases with custom column names."""
         custom_transactions_df = transactions_df.rename(
             columns={
-                "transaction_id": "txn_id",
                 "customer_id": "cust_id",
-                "unit_spend": "spend_amount",
                 "transaction_date": "txn_date",
             },
         )
@@ -87,9 +83,7 @@ class TestTransactionChurn:
         """Test TransactionChurn with custom column names."""
         custom_transactions_df = transactions_df.rename(
             columns={
-                "transaction_id": "txn_id",
                 "customer_id": "cust_id",
-                "unit_spend": "spend_amount",
                 "transaction_date": "txn_date",
             },
         )

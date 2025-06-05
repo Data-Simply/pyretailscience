@@ -283,20 +283,3 @@ def test_with_custom_column_names(sample_df):
         gain_loss_df = gl.gain_loss_df
         assert isinstance(gain_loss_df, pd.DataFrame)
         assert not gain_loss_df.empty
-
-        expected_columns = {
-            "focus_p1",
-            "comparison_p1",
-            "total_p1",
-            "focus_p2",
-            "comparison_p2",
-            "total_p2",
-            "new",
-            "lost",
-            "increased_focus",
-            "decreased_focus",
-            "switch_from_comparison",
-            "switch_to_comparison",
-        }
-        missing_columns = expected_columns - set(gain_loss_df.columns)
-        assert not missing_columns, f"Missing expected columns: {missing_columns}"

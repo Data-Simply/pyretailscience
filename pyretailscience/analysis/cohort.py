@@ -85,7 +85,7 @@ class CohortAnalysis:
             error_message = f"Missing required columns: {missing_cols}"
             raise ValueError(error_message)
 
-        self.table = self._calculate_cohorts(
+        self.df = self._calculate_cohorts(
             df=df,
             agg_func=agg_func,
             period=period,

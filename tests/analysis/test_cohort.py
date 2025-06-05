@@ -65,7 +65,7 @@ class TestCohortAnalysis:
             period="month",
             percentage=False,
         )
-        result = cohort.table
+        result = cohort.df
         expected_results_df.index = result.index.astype("datetime64[ns]")
         pdt.assert_frame_equal(result, expected_results_df)
 
@@ -100,7 +100,7 @@ class TestCohortAnalysis:
             period="month",
             percentage=True,
         )
-        result = cohort.table
+        result = cohort.df
         assert (result.iloc[0] <= 1).all(), "Percentage values should be between 0 and 1"
 
     def test_with_custom_column_names(self, transactions_df):
@@ -121,6 +121,6 @@ class TestCohortAnalysis:
                 period="month",
             )
 
-            result = cohort.table
+            result = cohort.df
             assert isinstance(result, pd.DataFrame), "Should return DataFrame with custom columns"
             assert not result.empty, "Should produce results with custom column names"
