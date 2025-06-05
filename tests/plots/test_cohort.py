@@ -7,7 +7,7 @@ import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.plots import cohort
-from pyretailscience.style import graph_utils as gu
+from pyretailscience.plots.styles import graph_utils as gu
 
 RNG = np.random.default_rng(42)
 
@@ -29,10 +29,10 @@ def sample_cohort_dataframe():
 @pytest.fixture
 def _mock_gu_functions(mocker):
     """Mocks graph utility functions to avoid modifying global styles."""
-    mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
     mocker.patch(
-        "pyretailscience.style.graph_utils.add_source_text",
+        "pyretailscience.plots.styles.graph_utils.add_source_text",
         side_effect=lambda ax, source_text: ax,
     )
 

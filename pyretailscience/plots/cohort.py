@@ -26,8 +26,8 @@ import pandas as pd
 from matplotlib import ticker
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.tailwind import get_listed_cmap
+import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.plots.styles.tailwind import get_listed_cmap
 
 
 def plot(

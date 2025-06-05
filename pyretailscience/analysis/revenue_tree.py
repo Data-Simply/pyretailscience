@@ -34,9 +34,9 @@ import ibis
 import pandas as pd
 
 from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.plots.styles import graph_utils as gu
+from pyretailscience.plots.styles.tailwind import COLORS
 from pyretailscience.plugin import plugin_manager
-from pyretailscience.style import graph_utils as gu
-from pyretailscience.style.tailwind import COLORS
 
 
 @plugin_manager.extensible

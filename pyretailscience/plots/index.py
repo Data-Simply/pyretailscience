@@ -42,9 +42,9 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles
-from pyretailscience.style.tailwind import COLORS, get_linear_cmap
+import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.plots.styles.graph_utils import GraphStyles
+from pyretailscience.plots.styles.tailwind import COLORS, get_linear_cmap
 
 
 def filter_by_groups(

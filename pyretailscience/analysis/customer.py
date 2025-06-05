@@ -6,10 +6,10 @@ import matplotlib.ticker as mtick
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper
-from pyretailscience.style.graph_utils import human_format, standard_graph_styles
-from pyretailscience.style.tailwind import COLORS
+from pyretailscience.plots.styles.graph_utils import human_format, standard_graph_styles
+from pyretailscience.plots.styles.tailwind import COLORS
 
 
 class PurchasesPerCustomer:
