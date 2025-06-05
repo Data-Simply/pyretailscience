@@ -8,6 +8,7 @@ import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.analysis.gain_loss import GainLoss
+from pyretailscience.options import option_context
 
 
 @pytest.fixture(autouse=True)
@@ -254,3 +255,31 @@ def test_plot_returns_figure_from_gainloss(sample_df):
 
     fig = gl.plot()
     assert isinstance(fig, Axes)
+
+
+def test_with_custom_column_names(sample_df):
+    """Test GainLoss with custom column names."""
+    rename_mapping = {
+        "customer_id": "cust_identifier",
+        "unit_spend": "total_revenue",
+    }
+    custom_df = sample_df.rename(columns=rename_mapping)
+    p1_index = custom_df["transaction_date"] < datetime.date(2023, 5, 1)
+    p2_index = custom_df["transaction_date"] >= datetime.date(2023, 5, 1)
+    focus_group_index = custom_df["brand"] == "Brand A"
+    comparison_group_index = custom_df["brand"] == "Brand B"
+
+    with option_context("column.customer_id", "cust_identifier", "column.unit_spend", "total_revenue"):
+        gl = GainLoss(
+            df=custom_df,
+            p1_index=p1_index,
+            p2_index=p2_index,
+            focus_group_index=focus_group_index,
+            focus_group_name="Brand A",
+            comparison_group_index=comparison_group_index,
+            comparison_group_name="Brand B",
+            value_col="total_revenue",
+        )
+        gain_loss_df = gl.gain_loss_df
+        assert isinstance(gain_loss_df, pd.DataFrame)
+        assert not gain_loss_df.empty

@@ -7,6 +7,7 @@ import pandas.testing as pdt
 import pytest
 
 from pyretailscience.analysis.cohort import CohortAnalysis
+from pyretailscience.options import option_context
 
 
 class TestCohortAnalysis:
@@ -64,7 +65,7 @@ class TestCohortAnalysis:
             period="month",
             percentage=False,
         )
-        result = cohort.table
+        result = cohort.df
         expected_results_df.index = result.index.astype("datetime64[ns]")
         pdt.assert_frame_equal(result, expected_results_df)
 
@@ -99,5 +100,27 @@ class TestCohortAnalysis:
             period="month",
             percentage=True,
         )
-        result = cohort.table
+        result = cohort.df
         assert (result.iloc[0] <= 1).all(), "Percentage values should be between 0 and 1"
+
+    def test_with_custom_column_names(self, transactions_df):
+        """Test CohortAnalysis with custom column names to ensure column overrides work correctly."""
+        custom_transactions_df = transactions_df.rename(
+            columns={
+                "customer_id": "cust_id",
+                "transaction_date": "txn_date",
+                "unit_spend": "spend_amount",
+            },
+        )
+
+        with option_context("column.customer_id", "cust_id", "column.transaction_date", "txn_date"):
+            cohort = CohortAnalysis(
+                df=custom_transactions_df,
+                aggregation_column="spend_amount",
+                agg_func="nunique",
+                period="month",
+            )
+
+            result = cohort.df
+            assert isinstance(result, pd.DataFrame), "Should return DataFrame with custom columns"
+            assert not result.empty, "Should produce results with custom column names"

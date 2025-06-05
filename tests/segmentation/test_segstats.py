@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.options import ColumnHelper, get_option, option_context
 from pyretailscience.segmentation.segstats import SegTransactionStats
 
 cols = ColumnHelper()
@@ -571,3 +571,32 @@ class TestSegTransactionStats:
             SegTransactionStats(df, "segment_name", extra_aggs={"invalid_agg": (cols.customer_id, "invalid_function")})
 
         assert "not available for column" in str(excinfo.value)
+
+    def test_with_custom_column_names(self):
+        """Test SegTransactionStats with custom column names."""
+        custom_columns = {
+            "column.customer_id": "cust_id",
+            "column.unit_spend": "revenue",
+            "column.transaction_id": "trans_id",
+            "column.unit_quantity": "quantity",
+        }
+
+        custom_df = pd.DataFrame(
+            {
+                "cust_id": [1, 1, 2, 2],
+                "revenue": [100.0, 150.0, 200.0, 250.0],
+                "trans_id": [101, 102, 103, 104],
+                "segment_name": ["A", "A", "B", "B"],
+                "quantity": [2, 3, 4, 5],
+            },
+        )
+
+        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+            seg_stats = SegTransactionStats(custom_df, segment_col="segment_name")
+            result = seg_stats.df
+            assert isinstance(result, pd.DataFrame)
+            assert not result.empty
+
+            expected_columns = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend, cols.agg_unit_qty]
+            for col in expected_columns:
+                assert col in seg_stats.df.columns, f"Expected column {col} missing from output"

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from pyretailscience.analysis.cross_shop import CrossShop
-from pyretailscience.options import ColumnHelper
+from pyretailscience.options import ColumnHelper, option_context
 
 cols = ColumnHelper()
 
@@ -424,3 +424,30 @@ def test_plot_with_additional_kwargs(sample_data):
         _, kwargs = mock_venn_plot.call_args
         for key, value in additional_kwargs.items():
             assert kwargs[key] == value
+
+
+def test_with_custom_column_names(sample_data):
+    """Test CrossShop with custom column names to ensure column overrides work correctly."""
+    custom_data = sample_data.rename(
+        columns={
+            "customer_id": "my_customer_identifier",
+            "unit_spend": "total_amount_spent",
+            "category_1_name": "product_category",
+        },
+    )
+
+    with option_context("column.customer_id", "my_customer_identifier", "column.unit_spend", "total_amount_spent"):
+        cross_shop = CrossShop(
+            df=custom_data,
+            group_1_col="product_category",
+            group_1_val="Jeans",
+            group_2_col="product_category",
+            group_2_val="Shoes",
+        )
+        cross_shop_df = cross_shop.cross_shop_df
+        assert isinstance(cross_shop_df, pd.DataFrame)
+        assert not cross_shop_df.empty
+        assert "my_customer_identifier" in cross_shop_df.index.name or cross_shop_df.index.name is None, (
+            "Should handle custom customer_id column name"
+        )
+        assert "total_amount_spent" in cross_shop_df.columns, "Should handle custom unit_spend column name"
