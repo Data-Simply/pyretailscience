@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.options import ColumnHelper, get_option, option_context
 from pyretailscience.segmentation.threshold import ThresholdSegmentation
 
 cols = ColumnHelper()
@@ -185,3 +185,27 @@ class TestThresholdSegmentation:
 
         with pytest.raises(ValueError):
             ThresholdSegmentation(df, thresholds, segments)
+
+    def test_with_custom_column_names(self):
+        """Test ThresholdSegmentation with custom column names."""
+        df = pd.DataFrame(
+            {
+                "buyer_id": [1, 2, 3, 4, 5, 1, 2, 3],
+                "spend_amount": [100, 200, 50, 150, 75, 50, 100, 300],
+                "purchase_date": pd.date_range("2023-01-01", periods=8),
+            },
+        )
+
+        thresholds = [0.5, 1.0]
+        segments = ["Low", "High"]
+
+        with option_context("column.customer_id", "buyer_id", "column.unit_spend", "spend_amount"):
+            seg = ThresholdSegmentation(
+                df=df,
+                thresholds=thresholds,
+                segments=segments,
+            )
+
+            result_df = seg.df
+            assert isinstance(result_df, pd.DataFrame), "Should execute successfully with custom column names"
+            assert result_df.index.name == "buyer_id", "Should use custom customer_id column name as index"

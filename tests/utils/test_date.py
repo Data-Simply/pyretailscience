@@ -7,6 +7,7 @@ import ibis
 import pandas as pd
 import pytest
 
+from pyretailscience.options import option_context
 from pyretailscience.utils.date import filter_and_label_by_periods, find_overlapping_periods
 
 
@@ -252,6 +253,20 @@ class TestFilterAndLabelByPeriods:
             match="Periods 'Period_A' \\(2023-01-01-2023-03-31\\) and 'Period_B' \\(2023-03-15-2023-06-30\\) overlap",
         ):
             filter_and_label_by_periods(sample_transactions_table, period_ranges)
+
+    def test_with_custom_column_names(self, sample_transactions_table):
+        """Test filter_and_label_by_periods with custom column names."""
+        custom_table = sample_transactions_table.mutate(my_date_col=sample_transactions_table.transaction_date).drop(
+            "transaction_date",
+        )
+        period_ranges = {"Test_Period": ("2023-01-01", "2023-12-31")}
+
+        with option_context("column.transaction_date", "my_date_col"):
+            result = filter_and_label_by_periods(custom_table, period_ranges)
+            result_df = result.execute()
+
+            assert isinstance(result_df, pd.DataFrame)
+            assert "my_date_col" in result_df.columns
 
 
 class TestFindOverlappingPeriods:

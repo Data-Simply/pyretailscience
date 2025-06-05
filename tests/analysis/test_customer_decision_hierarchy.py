@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 import pyretailscience.analysis.customer_decision_hierarchy as rp
-from pyretailscience.options import ColumnHelper
+from pyretailscience.options import ColumnHelper, option_context
 
 cols = ColumnHelper()
 
@@ -107,3 +107,27 @@ class TestCustomerDecisionHierarchy:
         ).astype("category")
 
         assert pairs_df.equals(expected_pairs_df)
+
+    def test_with_custom_column_names(self):
+        """Test CustomerDecisionHierarchy with custom column names to ensure column overrides work correctly."""
+        custom_test_df = pd.DataFrame(
+            {
+                "cust_identifier": [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8],
+                "txn_identifier": [101, 102, 201, 202, 301, 302, 401, 402, 501, 502, 601, 602, 701, 702, 801, 802],
+                "product_name": ["A", "B", "A", "C", "B", "C", "A", "D", "B", "D", "C", "D", "A", "B", "C", "D"],
+            },
+        )
+
+        with option_context("column.customer_id", "cust_identifier", "column.transaction_id", "txn_identifier"):
+            hierarchy = rp.CustomerDecisionHierarchy(
+                df=custom_test_df,
+                product_col="product_name",
+                method="yules_q",
+            )
+
+            assert hasattr(hierarchy, "pairs_df"), "Should create pairs_df with custom columns"
+            assert hasattr(hierarchy, "distances"), "Should create distances with custom columns"
+            assert not hierarchy.pairs_df.empty, "Should produce results with custom column names"
+
+            assert "cust_identifier" in hierarchy.pairs_df.columns, "Should handle custom customer_id column name"
+            assert "product_name" in hierarchy.pairs_df.columns, "Should handle product column"

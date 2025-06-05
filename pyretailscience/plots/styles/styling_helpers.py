@@ -4,6 +4,7 @@ from matplotlib.axes import Axes
 from matplotlib.text import Text
 
 from pyretailscience.plots.styles.styling_context import get_styling_context
+from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
 
 
 class PlotStyler:
@@ -96,3 +97,25 @@ class PlotStyler:
         for text in legend.get_texts():
             text.set_fontproperties(legend_font_props)
             text.set_fontsize(fonts.label_size - 1)
+
+    def get_colors_for_plot(self, num_colors: int) -> list[str]:
+        """Get appropriate colors - now enterprise-aware.
+
+        Args:
+            num_colors: Number of colors needed for the plot
+
+        Returns:
+            List of color values for the plot
+        """
+        num_color_count = 2
+        # Check if enterprise context provides custom color generators
+        color_gens = self.context.get_color_generators()
+
+        if hasattr(self.context, "_custom_color_generators") and color_gens:
+            # Use enterprise color generators
+            color_gen = color_gens["single"] if num_colors < num_color_count else color_gens["multi"]
+        else:
+            # Fall back to default tailwind colors
+            color_gen = get_single_color_cmap() if num_colors < num_color_count else get_multi_color_cmap()
+
+        return [next(color_gen) for _ in range(num_colors)]

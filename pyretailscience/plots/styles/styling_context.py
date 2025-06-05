@@ -2,6 +2,7 @@
 
 import contextlib
 import importlib.resources as pkg_resources
+from collections.abc import Generator
 from dataclasses import dataclass
 
 import matplotlib.font_manager as fm
@@ -60,6 +61,17 @@ class StylingContext:
 
         self._font_cache[font_name] = font_props
         return font_props
+
+    def get_color_generators(self) -> dict[str, Generator[str, None, None]] | None:
+        """Get color generators for plots.
+
+        Returns:
+            Dictionary with 'single' and 'multi' color generators if custom colors are set,
+            or None to fall back to default tailwind colors.
+            Enterprise plugins override this method to provide custom color generators.
+        """
+        # Base implementation returns None - enterprise plugins will override this
+        return None
 
 
 # Global styling context instance

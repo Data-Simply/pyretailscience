@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from pyretailscience.analysis.product_association import ProductAssociation
-from pyretailscience.options import ColumnHelper
+from pyretailscience.options import ColumnHelper, option_context
 
 cols = ColumnHelper()
 
@@ -350,3 +350,22 @@ class TestProductAssociations:
                 group_col=cols.transaction_id,
                 target_item=["milk", {"invalid": "dict"}],
             )
+
+    def test_with_custom_column_names(self, transactions_df):
+        """Test ProductAssociation with custom column names."""
+        custom_df = transactions_df.rename(
+            columns={
+                "transaction_id": "custom_customer_id",
+            },
+        )
+
+        with option_context("column.customer_id", "custom_customer_id"):
+            pa = ProductAssociation(
+                df=custom_df,
+                value_col="product",
+                group_col="custom_customer_id",
+            )
+
+            result = pa.df
+            assert isinstance(result, pd.DataFrame)
+            assert not result.empty, "Should produce results with custom column names"

@@ -1,4 +1,3 @@
-# graph_utils.py
 """Helper functions for styling graphs."""
 
 import importlib.resources as pkg_resources

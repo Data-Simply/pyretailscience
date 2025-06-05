@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from pyretailscience.analysis.revenue_tree import RevenueTree, calc_tree_kpis
-from pyretailscience.options import ColumnHelper
+from pyretailscience.options import ColumnHelper, option_context
 
 
 class TestRevenueTree:
@@ -396,3 +396,44 @@ class TestRevenueTree:
             expected_elasticity = ((q2 - q1) / ((q2 + q1) / 2)) / ((p2 - p1) / ((p2 + p1) / 2))
 
             assert round(result["price_elasticity"].iloc[0], 6) == round(expected_elasticity, 6)
+
+    def test_with_custom_column_names(self, cols: ColumnHelper):
+        """Test RevenueTree with custom column names."""
+        custom_columns = {
+            "column.transaction_id": "txn_id",
+            "column.customer_id": "cust_id",
+            "column.unit_spend": "spend_amt",
+            "column.unit_quantity": "qty",
+        }
+
+        data = {
+            "cust_id": [1, 2, 3, 4],
+            "txn_id": [101, 102, 103, 104],
+            "spend_amt": [100.0, 200.0, 150.0, 300.0],
+            "qty": [2, 3, 1, 4],
+            "period": ["P1", "P1", "P2", "P2"],
+        }
+        df = pd.DataFrame(data)
+
+        with option_context(*[item for pair in custom_columns.items() for item in pair]):
+            rt = RevenueTree(
+                df=df,
+                period_col="period",
+                p1_value="P1",
+                p2_value="P2",
+            )
+
+            assert not rt.df.empty, "Result should not be empty"
+            expected_columns = [
+                cols.agg_customer_id_p1,
+                cols.agg_customer_id_p2,
+                cols.agg_transaction_id_p1,
+                cols.agg_transaction_id_p2,
+                cols.agg_unit_spend_p1,
+                cols.agg_unit_spend_p2,
+                cols.agg_unit_qty_p1,
+                cols.agg_unit_qty_p2,
+            ]
+
+            for col in expected_columns:
+                assert col in rt.df.columns, f"Expected column {col} missing from output"

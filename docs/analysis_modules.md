@@ -682,7 +682,7 @@ cohort = CohortAnalysis(
     period="month",
     percentage=True,
 )
-cohort.table.head()
+cohort.df.head()
 ```
 
 | min_period_shopped |    0 |    1 |    2 |    3 |
