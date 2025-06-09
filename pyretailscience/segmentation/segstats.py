@@ -65,14 +65,13 @@ class SegTransactionStats:
 
         if isinstance(segment_col, str):
             segment_col = [segment_col]
+
         required_cols = [
-            cols.customer_id,
             cols.unit_spend,
             cols.transaction_id,
             *segment_col,
+            *filter(lambda x: x in data.columns, [cols.unit_qty, cols.customer_id]),
         ]
-        if cols.unit_qty in data.columns:
-            required_cols.append(cols.unit_qty)
 
         missing_cols = set(required_cols) - set(data.columns)
         if len(missing_cols) > 0:
@@ -98,32 +97,31 @@ class SegTransactionStats:
         self.table = self._calc_seg_stats(data, segment_col, calc_total, self.extra_aggs, calc_rollup, rollup_value)
 
     @staticmethod
-    def _get_col_order(include_quantity: bool) -> list[str]:
+    def _get_col_order(include_quantity: bool, include_customer: bool) -> list[str]:
         """Returns the default column order.
-
-        Columns should be supplied in the same order regardless of the function being called.
 
         Args:
             include_quantity (bool): Whether to include the columns related to quantity.
+            include_customer (bool): Whether to include customer-based columns.
 
         Returns:
             list[str]: The default column order.
         """
         cols = ColumnHelper()
-        col_order = [
-            cols.agg_unit_spend,
-            cols.agg_transaction_id,
-            cols.agg_customer_id,
-            cols.calc_spend_per_cust,
-            cols.calc_spend_per_trans,
-            cols.calc_trans_per_cust,
-        ]
-        if include_quantity:
-            col_order.insert(3, "units")
-            col_order.insert(7, cols.calc_units_per_trans)
-            col_order.insert(7, cols.calc_price_per_unit)
 
-        return col_order
+        column_configs = [
+            (cols.agg_unit_spend, True),
+            (cols.agg_transaction_id, True),
+            (cols.agg_customer_id, include_customer),
+            ("units", include_quantity),
+            (cols.calc_spend_per_cust, include_customer),
+            (cols.calc_spend_per_trans, True),
+            (cols.calc_trans_per_cust, include_customer),
+            (cols.calc_price_per_unit, include_quantity),
+            (cols.calc_units_per_trans, include_quantity),
+        ]
+
+        return [col for col, condition in column_configs if condition]
 
     @staticmethod
     def _create_typed_literals(
@@ -188,19 +186,18 @@ class SegTransactionStats:
             raise ValueError(msg)
 
         # Base aggregations for segments
-        aggs = {
-            cols.agg_unit_spend: data[cols.unit_spend].sum(),
-            cols.agg_transaction_id: data[cols.transaction_id].nunique(),
-            cols.agg_customer_id: data[cols.customer_id].nunique(),
-        }
-        if cols.unit_qty in data.columns:
-            aggs[cols.agg_unit_qty] = data[cols.unit_qty].sum()
+        agg_specs = [
+            (cols.agg_unit_spend, cols.unit_spend, "sum"),
+            (cols.agg_transaction_id, cols.transaction_id, "nunique"),
+            (cols.agg_unit_qty, cols.unit_qty, "sum"),
+            (cols.agg_customer_id, cols.customer_id, "nunique"),
+        ]
+
+        aggs = {agg_name: getattr(data[col], func)() for agg_name, col, func in agg_specs if col in data.columns}
 
         # Add extra aggregations if provided
-        if extra_aggs is not None:
-            for agg_name, col_tuple in extra_aggs.items():
-                col, func = col_tuple
-                aggs[agg_name] = getattr(data[col], func)()
+        if extra_aggs:
+            aggs.update({agg_name: getattr(data[col], func)() for agg_name, (col, func) in extra_aggs.items()})
 
         # Calculate metrics for segments
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
@@ -243,9 +240,7 @@ class SegTransactionStats:
         # Calculate derived metrics
         final_metrics = final_metrics.mutate(
             **{
-                cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
                 cols.calc_spend_per_trans: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_transaction_id],
-                cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id] / ibis._[cols.agg_customer_id].cast("float"),
             },
         )
 
@@ -257,6 +252,16 @@ class SegTransactionStats:
                     / ibis._[cols.agg_transaction_id].cast("float"),
                 },
             )
+
+        if cols.customer_id in data.columns:
+            final_metrics = final_metrics.mutate(
+                **{
+                    cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
+                    cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id]
+                    / ibis._[cols.agg_customer_id].cast("float"),
+                },
+            )
+
         return final_metrics
 
     @property
@@ -264,9 +269,14 @@ class SegTransactionStats:
         """Returns the dataframe with the transaction statistics by segment."""
         if self._df is None:
             cols = ColumnHelper()
+            include_quantity = cols.agg_unit_qty in self.table.columns
+            include_customer = cols.agg_customer_id in self.table.columns
             col_order = [
                 *self.segment_col,
-                *SegTransactionStats._get_col_order(include_quantity=cols.agg_unit_qty in self.table.columns),
+                *SegTransactionStats._get_col_order(
+                    include_quantity=include_quantity,
+                    include_customer=include_customer,
+                ),
             ]
 
             # Add any extra aggregation columns to the column order

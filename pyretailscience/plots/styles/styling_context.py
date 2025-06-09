@@ -1,15 +1,12 @@
 """Central configuration for fonts, colors, and styling options with proper bundled font management."""
 
 import importlib.resources as pkg_resources
-import logging
 from collections.abc import Generator
 from dataclasses import dataclass
 
 import matplotlib.font_manager as fm
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -50,7 +47,6 @@ class StylingContext:
         1. Check cache for previously loaded font
         2. Try to load from bundled fonts if font_name matches a built-in font
         3. Try to load as a system font family name
-        4. Fall back to matplotlib's default font
 
         Args:
             font_name (str): The name of the font to load. Can be:
@@ -59,40 +55,19 @@ class StylingContext:
 
         Returns:
             fm.FontProperties: A matplotlib FontProperties object that can be used
-                for text rendering. Always returns a valid FontProperties object,
-                falling back to the default font if the requested font cannot be loaded.
+                for text rendering.
         """
         if font_name in self._font_cache:
             return self._font_cache[font_name]
 
         # Try to load built-in bundled fonts first
         if font_name in self._builtin_fonts:
-            try:
-                font_props = fm.FontProperties(fname=self._builtin_fonts[font_name])
-                logger.debug("Successfully loaded built-in font: %s", font_name)
-                self._font_cache[font_name] = font_props
-            except (OSError, RuntimeError) as e:
-                logger.warning(
-                    "Failed to load built-in font '%s' from %s: %s. Trying system fonts.",
-                    font_name,
-                    self._builtin_fonts[font_name],
-                    e,
-                )
-            else:
-                return font_props
+            font_props = fm.FontProperties(fname=self._builtin_fonts[font_name])
+            self._font_cache[font_name] = font_props
+            return font_props
 
         # Try to load as system font family
-        try:
-            font_props = fm.FontProperties(family=font_name)
-            logger.debug("Successfully loaded system font family: %s", font_name)
-            self._font_cache[font_name] = font_props
-        except (OSError, RuntimeError) as e:
-            logger.warning("Failed to load system font family '%s': %s. Using default font.", font_name, e)
-        else:
-            return font_props
-        # Fall back to default font
-        font_props = fm.FontProperties()
-        logger.info("Using default font as fallback for '%s'", font_name)
+        font_props = fm.FontProperties(family=font_name)
         self._font_cache[font_name] = font_props
         return font_props
 

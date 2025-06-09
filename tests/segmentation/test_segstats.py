@@ -144,6 +144,28 @@ class TestCalcSegStats:
 
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
+    def test_calculates_segment_stats_without_customer_data(self, base_df):
+        """Test that the method correctly calculates segment statistics without customer data."""
+        df_without_customer = base_df.drop(columns=[cols.customer_id])
+
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B", "Total"],
+                cols.agg_unit_spend: [500.0, 500.0, 1000.0],
+                cols.agg_transaction_id: [3, 2, 5],
+                cols.agg_unit_qty: [50, 50, 100],
+                cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
+                cols.calc_price_per_unit: [10.0, 10.0, 10.0],
+                cols.calc_units_per_trans: [16.666667, 25.0, 20.0],
+            },
+        )
+        segment_stats = (
+            SegTransactionStats(df_without_customer, "segment_name")
+            .df.sort_values("segment_name")
+            .reset_index(drop=True)
+        )
+        pd.testing.assert_frame_equal(segment_stats, expected_output)
+
 
 class TestSegTransactionStats:
     """Tests for the SegTransactionStats class."""

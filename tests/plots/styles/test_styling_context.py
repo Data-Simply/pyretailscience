@@ -1,7 +1,5 @@
 """Test for the StylingContext configuration."""
 
-from unittest.mock import MagicMock, patch
-
 import matplotlib.font_manager as fm
 import pytest
 
@@ -81,19 +79,6 @@ class TestStylingContext:
 
         assert updated_context.fonts.title_size == expected_title_size
         assert updated_context is new_context
-
-    @patch("matplotlib.font_manager.FontProperties")
-    def test_builtin_font_loading_failure_fallback(self, mock_font_props, context):
-        """Test fallback when built-in font loading fails."""
-        fallback_props = MagicMock()
-        mock_font_props.side_effect = [OSError("Font not found"), fallback_props]
-
-        result = context.get_font_properties("poppins_regular")
-
-        # Should have been called twice - once for built-in, once for fallback
-        expected_call_count = 2
-        assert mock_font_props.call_count == expected_call_count
-        assert result == fallback_props
 
     def test_font_config_customization(self):
         """Test FontConfig can be customized."""

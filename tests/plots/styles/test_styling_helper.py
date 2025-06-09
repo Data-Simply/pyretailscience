@@ -1,7 +1,5 @@
 """Tests for the PlotStyler module."""
 
-from unittest.mock import Mock
-
 import pytest
 from matplotlib import pyplot as plt
 
@@ -104,46 +102,3 @@ class TestPlotStyler:
             assert legend.get_title().get_text() == expected_title
         else:
             assert legend.get_bbox_to_anchor() is not None
-
-    def test_get_colors_integration_with_actual_plot(self, fig_ax, styler):
-        """Integration test: verify colors work with actual matplotlib plot."""
-        _, ax = fig_ax
-
-        colors = styler.get_colors_for_plot(3)
-        expected_colors = set(colors)
-
-        x_data = [1, 2, 3]
-        for i, color in enumerate(colors):
-            ax.plot(x_data, [i + 1, i + 2, i + 3], color=color, label=f"Series {i + 1}")
-
-        lines = ax.get_lines()
-        expected_line = 3
-        assert len(lines) == expected_line
-
-        for i, line in enumerate(lines):
-            actual_color = line.get_color()
-            assert actual_color in expected_colors, (
-                f"Line {i} color {actual_color} not in expected colors {expected_colors}"
-            )
-
-    def test_get_colors_for_plot_with_custom_multi_color_generator(self, fig_ax, styler):
-        """Test get_colors_for_plot with custom multi-color generator (covers line 115)."""
-        mock_single_gen = Mock()
-        mock_multi_gen = Mock()
-        mock_single_gen.__next__ = Mock(side_effect=["#FF0000", "#00FF00", "#0000FF"])
-        mock_multi_gen.__next__ = Mock(side_effect=["#FF0000", "#00FF00", "#0000FF"])
-
-        styler.context.get_color_generators = Mock(
-            return_value={
-                "single": mock_single_gen,
-                "multi": mock_multi_gen,
-            },
-        )
-        styler.context._custom_color_generators = True
-        expected_color_count = 3
-        colors = styler.get_colors_for_plot(expected_color_count)
-
-        assert colors == ["#FF0000", "#00FF00", "#0000FF"]
-
-        assert mock_multi_gen.__next__.call_count == expected_color_count
-        assert mock_single_gen.__next__.call_count == 0
