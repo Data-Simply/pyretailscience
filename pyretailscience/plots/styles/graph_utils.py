@@ -319,30 +319,13 @@ def add_source_text(
     """
     plot_styler = PlotStyler()
 
-    # Calculate position (preserve existing logic)
-    ax.figure.canvas.draw()
-    if is_venn_diagram:
-        x_norm, y_norm = 0.01, 0.02
-    else:
-        # Get y coordinate of the text
-        xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
-
-        top_of_label_px = xlabel_box.y0
-        # Use styling context font size if not provided
-        effective_font_size = font_size or plot_styler.context.fonts.source_size
-        padding_px = vertical_padding * effective_font_size
-        y_disp = top_of_label_px - padding_px - (xlabel_box.height)
-
-        # Convert display coordinates to normalized figure coordinates
-        y_norm = y_disp / ax.figure.bbox.height
-
-        # Get x coordinate of the text
-        ylabel_box = ax.yaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
-        title_box = ax.title.get_window_extent(renderer=ax.figure.canvas.get_renderer())
-        min_x0 = min(ylabel_box.x0, title_box.x0)
-        x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
-
-    return plot_styler.apply_source_text(ax, source_text, x=x_norm, y=y_norm)
+    return plot_styler.apply_source_text(
+        ax=ax,
+        text=source_text,
+        font_size=font_size,
+        vertical_padding=vertical_padding,
+        is_venn_diagram=is_venn_diagram,
+    )
 
 
 def set_axis_percent(

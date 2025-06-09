@@ -23,10 +23,9 @@ class PlotStyler:
         ax.grid(which="major", axis="x", color="#DAD8D7", alpha=0.5, zorder=1)
         ax.grid(which="major", axis="y", color="#DAD8D7", alpha=0.5, zorder=1)
 
-    def apply_title(self, ax: Axes, title: str, pad: int | None = None) -> None:
+    def apply_title(self, ax: Axes, title: str, pad: int | None = 10) -> None:
         """Apply title styling using context fonts."""
         fonts = self.context.fonts
-        pad = pad or 10
 
         ax.set_title(
             title,
@@ -35,10 +34,9 @@ class PlotStyler:
             pad=pad,
         )
 
-    def apply_label(self, ax: Axes, label: str, axis: str, pad: int | None = None) -> None:
+    def apply_label(self, ax: Axes, label: str, axis: str, pad: int | None = 10) -> None:
         """Apply axis label styling using context fonts."""
         fonts = self.context.fonts
-        pad = pad or 10
 
         font_props = self.context.get_font_properties(fonts.label_font)
 
@@ -61,18 +59,71 @@ class PlotStyler:
             tick.label1.set_fontproperties(tick_font_props)
             tick.label2.set_fontproperties(tick_font_props)
 
-    def apply_source_text(self, ax: Axes, text: str, **kwargs: object) -> Text:
-        """Apply source text styling using context fonts."""
+    def apply_source_text(
+        self,
+        ax: Axes,
+        text: str,
+        font_size: float | None = None,
+        vertical_padding: float = 2,
+        is_venn_diagram: bool = False,
+        **kwargs: object,
+    ) -> Text:
+        """Apply source text styling using context fonts.
+
+        Args:
+            ax (Axes): The graph to add the source text to.
+            text (str): The source text.
+            font_size (float, optional): The font size of the source text. If None, uses styling context default.
+            vertical_padding (float, optional): The padding in ems below the x-axis label. Defaults to 2.
+            is_venn_diagram (bool, optional): Flag to indicate if the diagram is a Venn diagram.
+                If True, `x_norm` and `y_norm` will be set to fixed values. Defaults to False.
+            **kwargs: Additional keyword arguments for positioning (x, y coordinates)
+
+        Returns:
+            Text: The source text object.
+        """
         fonts = self.context.fonts
 
+        effective_font_size = font_size or fonts.source_size
+
+        # Calculate position if not provided in kwargs
+        if "x" not in kwargs or "y" not in kwargs:
+            ax.figure.canvas.draw()
+
+            if is_venn_diagram:
+                x_norm, y_norm = 0.01, 0.02
+            else:
+                # Get y coordinate of the text
+                xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+
+                top_of_label_px = xlabel_box.y0
+                padding_px = vertical_padding * effective_font_size
+                y_disp = top_of_label_px - padding_px - (xlabel_box.height)
+
+                # Convert display coordinates to normalized figure coordinates
+                y_norm = y_disp / ax.figure.bbox.height
+
+                # Get x coordinate of the text
+                ylabel_box = ax.yaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+                title_box = ax.title.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+                min_x0 = min(ylabel_box.x0, title_box.x0)
+                x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
+
+            # Use calculated positions if not provided
+            x_pos = kwargs.get("x", x_norm)
+            y_pos = kwargs.get("y", y_norm)
+        else:
+            x_pos = kwargs.get("x", 0.01)
+            y_pos = kwargs.get("y", 0.02)
+
         return ax.figure.text(
-            kwargs.get("x", 0.01),
-            kwargs.get("y", 0.02),
+            x_pos,
+            y_pos,
             text,
             ha="left",
             va="bottom",
             transform=ax.figure.transFigure,
-            fontsize=fonts.source_size,
+            fontsize=effective_font_size,
             fontproperties=self.context.get_font_properties(fonts.source_font),
             color="dimgray",
         )
