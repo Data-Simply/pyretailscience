@@ -351,8 +351,33 @@ class TestIndexPlot:
             value_to_index="A",
             drop_na=True,
         )
-
         assert isinstance(result_ax, plt.Axes)
+        ytick_labels = [label.get_text() for label in result_ax.get_yticklabels()]
+        xtick_labels = [label.get_text() for label in result_ax.get_xticklabels()]
+        assert not any(
+            label == "" or label is None or str(label).lower() == "nan" or str(label).lower() == "na"
+            for label in ytick_labels
+        )
+        assert not any(
+            label == "" or label is None or str(label).lower() == "nan" or str(label).lower() == "na"
+            for label in xtick_labels
+        )
+        bar_values = [patch.get_width() for patch in result_ax.patches]
+        assert not any(pd.isna(val) for val in bar_values)
+
+    def test_nan_index_values_present_in_data(self, test_data):
+        """Test that NaN index values are present in the index DataFrame when expected."""
+        df = test_data.copy()
+        df.loc[df["category"] == "A", "sales"] = np.nan
+
+        index_df = get_indexes(
+            df,
+            value_to_index="A",
+            index_col="category",
+            value_col="sales",
+            group_col="category",
+        )
+        assert index_df["index"].isna().any(), "Expected at least one NaN value in the 'index' column"
 
     def test_filter_by_index_values(self, test_data):
         """Test that the function can filter indexes by value."""
