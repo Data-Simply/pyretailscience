@@ -28,6 +28,7 @@ nav:
           - Customer Decision Hierarchy: api/analysis/customer_decision_hierarchy.md
           - Revenue Tree: api/analysis/revenue_tree.md
           - Composite Rank: api/analysis/composite_rank.md
+          - Purchase Path: api/analysis/purchase_path.md
       - Segmentation:
           - Base Segmentation: api/segmentation/base.md
           - HML Segmentation: api/segmentation/hml.md
