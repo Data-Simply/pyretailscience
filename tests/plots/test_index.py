@@ -398,9 +398,14 @@ class TestIndexPlot:
             value_col="sales",
             group_col="category",
         )
+
         available_groups = result_df["category"].unique()
 
         group_count = len(available_groups)
+
+        # Sort to find expected top and bottom groups
+        expected_top_group = result_df.nlargest(1, "index")["category"].iloc[0]
+        expected_bottom_group = result_df.nsmallest(1, "index")["category"].iloc[0]
 
         # Test with top_n (making sure value is ≤ available groups)
         top_count = min(1, group_count)
@@ -414,6 +419,10 @@ class TestIndexPlot:
         )
 
         assert isinstance(result_ax, plt.Axes)
+        # For top_n=1 case
+        labels = [t.get_text() for t in result_ax.get_yticklabels()]
+        assert len(labels) == 1, f"Expected 1 group for top_n=1, got {len(labels)}"
+        assert labels[0] == expected_top_group, f"Expected top group '{expected_top_group}', got '{labels[0]}'"
 
         # Test with bottom_n (making sure value is ≤ available groups)
         bottom_count = min(1, group_count)
@@ -427,6 +436,11 @@ class TestIndexPlot:
         )
 
         assert isinstance(result_ax, plt.Axes)
+
+        # For bottom_n=1 case
+        labels = [t.get_text() for t in result_ax.get_yticklabels()]
+        assert len(labels) == 1, f"Expected 1 group for bottom_n=1, got {len(labels)}"
+        assert labels[0] == expected_bottom_group, f"Expected bottom group '{expected_bottom_group}', got '{labels[0]}'"
 
         # Test with both top_n and bottom_n if we have enough groups
         minimum_group_count = 2
@@ -442,6 +456,14 @@ class TestIndexPlot:
             )
 
             assert isinstance(result_ax, plt.Axes)
+            # For combined top_n=1 and bottom_n=1 case
+            labels = [t.get_text() for t in result_ax.get_yticklabels()]
+            expected_len = 2
+            assert len(labels) == expected_len, f"Expected 2 groups for top_n=1 and bottom_n=1, got {len(labels)}"
+            assert expected_top_group in labels, f"Expected top group '{expected_top_group}' not found in {labels}"
+            assert expected_bottom_group in labels, (
+                f"Expected bottom group '{expected_bottom_group}' not found in {labels}"
+            )
 
     def test_error_with_series_and_filtering(self, test_data):
         """Test that appropriate error is raised when using filtering with series_col."""
