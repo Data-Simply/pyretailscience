@@ -258,8 +258,12 @@ class Options:
         """
         options_instance = cls()
 
-        with open(file_path) as f:
-            toml_data = toml.load(f)
+        try:
+            with open(file_path) as f:
+                toml_data = toml.load(f)
+        except toml.TomlDecodeError as e:
+            error_msg = f"Invalid TOML format in {file_path}: {e}"
+            raise ValueError(error_msg) from e
 
         for section, options in toml_data.items():
             for option_name, option_value in Options.flatten_options(section, options).items():
