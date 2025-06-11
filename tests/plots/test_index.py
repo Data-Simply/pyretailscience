@@ -461,66 +461,71 @@ class TestIndexPlot:
                 top_n=2,
             )
 
-    def test_sort_values_with_series_col(self):
-        """Test that the sort_values function works correctly with [group_col, series_col]."""
-        # Create a test dataframe directly to test the sorting functionality
+    @pytest.mark.parametrize(
+        ("sort_order", "expected_pairs", "expected_y_labels"),
+        [
+            (
+                "ascending",
+                [("A", "X"), ("A", "Y"), ("B", "X"), ("B", "Y"), ("C", "X"), ("C", "Y")],
+                ["A", "B", "C"],
+            ),
+            (
+                "descending",
+                [("C", "Y"), ("C", "X"), ("B", "Y"), ("B", "X"), ("A", "Y"), ("A", "X")],
+                ["C", "B", "A"],
+            ),
+        ],
+    )
+    def test_sort_and_plot_with_series_col(
+        self,
+        sort_order,
+        expected_pairs,
+        expected_y_labels,
+    ):
+        """Combined test: validates sorting of dataframe and sorting in plot output."""
         test_df = pd.DataFrame(
             {
-                "category": ["C", "A", "B", "C", "A", "B"],
+                "category": ["A", "B", "C", "A", "B", "C"],
                 "region": ["X", "X", "X", "Y", "Y", "Y"],
-                "index": [100, 90, 110, 105, 95, 115],
+                "sales": [100, 200, 150, 120, 180, 160],
+                "baseline_category": ["A", "A", "A", "A", "A", "A"],
             },
         )
+        ascending_flag = sort_order == "ascending"
 
-        # Test ascending sort
-        sorted_asc = test_df.sort_values(by=["category", "region"], ascending=True)
-
-        # Verify sorting is correct for ascending
-        expected_order_asc = [
-            ("A", "X"),
-            ("A", "Y"),
-            ("B", "X"),
-            ("B", "Y"),
-            ("C", "X"),
-            ("C", "Y"),
-        ]
-        actual_order_asc = list(zip(sorted_asc["category"], sorted_asc["region"], strict=True))
-        assert actual_order_asc == expected_order_asc
-
-        # Test descending sort
-        sorted_desc = test_df.sort_values(by=["category", "region"], ascending=False)
-
-        # Verify sorting is correct for descending
-        expected_order_desc = [
-            ("C", "Y"),
-            ("C", "X"),
-            ("B", "Y"),
-            ("B", "X"),
-            ("A", "Y"),
-            ("A", "X"),
-        ]
-        actual_order_desc = list(zip(sorted_desc["category"], sorted_desc["region"], strict=True))
-        assert actual_order_desc == expected_order_desc
-
-        # Now test the actual implementation in the plot function
-        # Create a plot with series_col to trigger the code path we're testing
-        result_ax = plot(
-            test_df,
-            value_col="index",
-            group_col="category",
-            index_col="category",
-            value_to_index="A",
-            series_col="region",
-            sort_by="group",
-            sort_order="ascending",
+        sorted_df = test_df.sort_values(by=["category", "region"], ascending=ascending_flag)
+        actual_pairs = list(zip(sorted_df["category"], sorted_df["region"], strict=False))
+        assert actual_pairs == expected_pairs, (
+            f"{sort_order=} sort mismatch: expected {expected_pairs}, got {actual_pairs}"
         )
 
-        # Verify the plot was created
-        assert isinstance(result_ax, plt.Axes)
+        ax = plot(
+            test_df,
+            value_col="sales",
+            group_col="category",
+            index_col="baseline_category",
+            value_to_index="A",  # Compare all categories against baseline category A
+            series_col="region",
+            sort_by="group",
+            sort_order=sort_order,
+        )
 
-        # Verify legend exists
-        legend = result_ax.get_legend()
+        assert isinstance(ax, plt.Axes)
+
+        # Verify y-axis labels reflect sorted categories
+        y_labels = [t.get_text() for t in ax.get_yticklabels()]
+        assert y_labels == expected_y_labels, (
+            f"{sort_order=} y-ticks mismatch: expected {expected_y_labels}, got {y_labels}"
+        )
+
+        # Verify legend contains series_col values
+        legend = ax.get_legend()
         assert legend is not None
+        legend_labels = [t.get_text() for t in legend.get_texts()]
+        expected_legend_labels = ["X", "Y"]
+        assert set(legend_labels) == set(expected_legend_labels), (
+            f"Legend mismatch: expected {expected_legend_labels}, got {legend_labels}"
+        )
 
     def test_error_with_excessive_top_and_bottom_n(self, test_data):
         """Test that appropriate error is raised when top_n + bottom_n exceeds group count."""
