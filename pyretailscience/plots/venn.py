@@ -30,9 +30,9 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes, SubplotBase
 from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
-from pyretailscience.style import graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles
-from pyretailscience.style.tailwind import COLORS
+from pyretailscience.plots.styles import graph_utils as gu
+from pyretailscience.plots.styles.graph_utils import GraphStyles
+from pyretailscience.plots.styles.tailwind import COLORS
 
 MAX_SUPPORTED_SETS = 3
 MIN_SUPPORTED_SETS = 2
