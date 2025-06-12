@@ -267,12 +267,24 @@ class TestIndexPlot:
             df,
             value_col="sales",
             group_col="category",
-            index_col="category",
-            value_to_index="A",
+            index_col="region",
+            value_to_index="North",
             include_only_groups=["A", "B"],
         )
 
         assert isinstance(result_ax, plt.Axes)
+
+        # Verify that only the filtered groups appear in the plot
+        y_labels = [label.get_text() for label in result_ax.get_yticklabels()]
+        plotted_groups = set(y_labels)
+        expected_groups = {"A", "B"}
+
+        assert plotted_groups.issubset(expected_groups), (
+            f"Found groups {plotted_groups - expected_groups} that should have been filtered out. "
+            f"Expected only groups from {expected_groups}."
+        )
+
+        assert len(plotted_groups) > 0, "No groups were plotted - filtering may have removed all data."
 
     def test_raises_value_error_for_invalid_sort_by(self, test_data):
         """Test that the function raises a ValueError for an invalid sort_by parameter."""
