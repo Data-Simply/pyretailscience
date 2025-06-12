@@ -379,18 +379,52 @@ class TestIndexPlot:
         )
         assert index_df["index"].isna().any(), "Expected at least one NaN value in the 'index' column"
 
-    def test_filter_by_index_values(self, test_data):
+    def test_filter_by_index_values(self):
         """Test that the function can filter indexes by value."""
-        df = test_data
+        df = pd.DataFrame(
+            {
+                "category": ["A", "B", "C", "D", "E"] * 10,
+                "sales": [100, 200, 50, 300, 75] * 10,
+                "region": ["North", "South", "East", "West", "Central"] * 10,
+            },
+        )
 
-        # Create plot with value-based filtering (use a reasonable value for filter_above)
+        # Calculate what the actual index values will be so we can choose a meaningful threshold
+        index_df = get_indexes(
+            df=df,
+            value_to_index="A",
+            index_col="category",
+            value_col="sales",
+            group_col="category",
+            offset=100,
+        )
+
+        # Choose a threshold that will actually filter some data
+        sorted_indexes = index_df.sort_values("index")["index"].tolist()
+
+        # Use the second-lowest value as threshold to ensure at least one group is above it
+        min_element_for_second_threshold = 2
+        threshold = (
+            sorted_indexes[1] if len(sorted_indexes) >= min_element_for_second_threshold else sorted_indexes[0] - 0.1
+        )
+        expected_above_threshold_groups = index_df[index_df["index"] > threshold]["category"].tolist()
+
         result_ax = plot(
             df,
             value_col="sales",
             group_col="category",
             index_col="category",
             value_to_index="A",
-            filter_above=0,  # Using a lower value that should pass
+            filter_above=threshold,
+        )
+
+        filtered_labels = [t.get_text() for t in result_ax.get_yticklabels()]
+
+        assert len(filtered_labels) == len(expected_above_threshold_groups), (
+            f"Expected {len(expected_above_threshold_groups)} groups, got {len(filtered_labels)}"
+        )
+        assert all(label in expected_above_threshold_groups for label in filtered_labels), (
+            f"Expected groups {expected_above_threshold_groups}, but got {filtered_labels}"
         )
 
         assert isinstance(result_ax, plt.Axes)
