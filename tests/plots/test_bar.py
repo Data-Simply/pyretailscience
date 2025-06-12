@@ -508,7 +508,7 @@ def test_percentage_by_bar_group_with_negative_values():
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_percentage_by_bar_group_with_zero_group_total():
-    """Test percentage_by_bar_group with zero group totals and suppress the warning."""
+    """Test percentage_by_bar_group with zero group totals and verify warning is emitted."""
     df = pd.DataFrame({"product": ["A", "B"], "sales": [0, 0]})
 
     with pytest.warns(UserWarning, match="Division by zero detected"):
