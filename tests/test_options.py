@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import toml
 
 import pyretailscience.options as opt
 
@@ -127,9 +128,9 @@ class TestOptions:
         assert opt.list_options() == options_list
 
     def test_load_invalid_format_toml(self):
-        """Test loading an invalid TOML file raises a ValueError."""
+        """Test loading an invalid TOML file raises a TomlDecodeError."""
         test_file_path = Path("tests/toml_files/corrupt.toml").resolve()
-        with pytest.raises(ValueError, match="Invalid TOML format"):
+        with pytest.raises(toml.TomlDecodeError):
             opt.Options.load_from_toml(test_file_path)
 
     def test_load_valid_toml(self):
