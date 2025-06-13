@@ -441,6 +441,9 @@ def test_default_value_col_handling(sample_series):
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.patches) == expected_num_patches
+    _, legend_labels = result_ax.get_legend_handles_labels()
+    assert legend_labels, "Expected legend labels but found none"
+    assert legend_labels == ["Value"], f"Expected legend label to be 'Value', got {legend_labels}"
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
