@@ -128,7 +128,7 @@ class TestOptions:
         assert opt.list_options() == options_list
 
     def test_load_invalid_format_toml(self):
-        """Test loading an invalid TOML file raises a ValueError."""
+        """Test loading an invalid TOML file raises a TomlDecodeError."""
         test_file_path = Path("tests/toml_files/corrupt.toml").resolve()
         with pytest.raises(toml.TomlDecodeError):
             opt.Options.load_from_toml(test_file_path)
