@@ -441,6 +441,9 @@ def test_default_value_col_handling(sample_series):
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.patches) == expected_num_patches
+    _, legend_labels = result_ax.get_legend_handles_labels()
+    assert legend_labels, "Expected legend labels but found none"
+    assert legend_labels == ["Value"], f"Expected legend label to be 'Value', got {legend_labels}"
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -508,7 +511,7 @@ def test_percentage_by_bar_group_with_negative_values():
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_percentage_by_bar_group_with_zero_group_total():
-    """Test percentage_by_bar_group with zero group totals and suppress the warning."""
+    """Test percentage_by_bar_group with zero group totals and verify warning is emitted."""
     df = pd.DataFrame({"product": ["A", "B"], "sales": [0, 0]})
 
     with pytest.warns(UserWarning, match="Division by zero detected"):
