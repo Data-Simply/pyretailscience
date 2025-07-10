@@ -9,7 +9,7 @@ import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.plots import scatter
-from pyretailscience.style import graph_utils as gu
+from pyretailscience.plots.styles import graph_utils as gu
 
 PERIODS = 6
 RNG = np.random.default_rng(42)
@@ -41,15 +41,15 @@ def _mock_color_generators(mocker):
     single_color_gen = cycle(["#FF0000"])
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])
 
-    mocker.patch("pyretailscience.style.tailwind.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.style.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("pyretailscience.plots.styles.tailwind.get_single_color_cmap", return_value=single_color_gen)
+    mocker.patch("pyretailscience.plots.styles.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture
 def _mock_gu_functions(mocker):
-    mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.style.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")

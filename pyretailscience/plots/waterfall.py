@@ -32,9 +32,9 @@ from typing import Literal
 import pandas as pd
 from matplotlib.axes import Axes
 
-import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles
-from pyretailscience.style.tailwind import COLORS
+import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.plots.styles.graph_utils import GraphStyles
+from pyretailscience.plots.styles.tailwind import COLORS
 
 
 def plot(

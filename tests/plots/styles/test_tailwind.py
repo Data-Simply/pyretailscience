@@ -2,7 +2,7 @@
 
 from itertools import islice
 
-from pyretailscience.style.tailwind import COLORS, get_multi_color_cmap, get_single_color_cmap
+from pyretailscience.plots.styles.tailwind import COLORS, get_multi_color_cmap, get_single_color_cmap
 
 
 def test_get_single_color_cmap_three_colors():
