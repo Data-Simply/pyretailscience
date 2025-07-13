@@ -51,6 +51,7 @@ def test_calc_cross_shop_two_groups(sample_data):
             "group_1": pd.Series([1, 0, 0, 0, 1, 1, 0, 1, 0, 1], dtype="int32"),
             "group_2": pd.Series([0, 1, 0, 0, 1, 0, 1, 0, 1, 0], dtype="int32"),
             "groups": [(1, 0), (0, 1), (0, 0), (0, 0), (1, 1), (1, 0), (0, 1), (1, 0), (0, 1), (1, 0)],
+            "group_labels": ["A", "B", "No Groups", "No Groups", "A, B", "A", "B", "A", "B", "A"],
             cols.unit_spend: [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
         },
     ).set_index(cols.customer_id)
@@ -87,6 +88,7 @@ def test_calc_cross_shop_three_groups(sample_data):
                 (0, 1, 0),
                 (1, 0, 0),
             ],
+            "group_labels": ["A", "B", "C", "No Groups", "A, B", "A", "B", "A, C", "B", "A"],
             cols.unit_spend: [10, 20, 30, 40, 70, 10, 20, 45, 40, 50],
         },
     ).set_index(cols.customer_id)
@@ -124,6 +126,7 @@ def test_calc_cross_shop_three_groups_customer_id_nunique(sample_data):
                 (0, 1, 0),
                 (1, 0, 0),
             ],
+            "group_labels": ["A", "B", "C", "No Groups", "A, B", "A", "B", "A, C", "B", "A"],
             cols.customer_id: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         },
         index=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -159,6 +162,7 @@ def test_calc_cross_shop_table(sample_data):
                 (1, 0, 1),
                 (1, 1, 0),
             ],
+            "group_labels": ["No Groups", "C", "B", "A", "A, C", "A, B"],
             cols.unit_spend: [40, 30, 80, 70, 45, 70],
             "percent": [0.119402985, 0.089552239, 0.23880597, 0.208955224, 0.134328358, 0.208955224],
         },
@@ -169,6 +173,30 @@ def test_calc_cross_shop_table(sample_data):
     cross_shop_table["percent"] = cross_shop_table["percent"].round(6)
 
     assert cross_shop_table.equals(ret_df)
+
+    # Test with labels
+    cross_shop_df_with_labels = CrossShop._calc_cross_shop(
+        sample_data,
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",
+        group_2_val="Shoes",
+        group_3_col="category_1_name",
+        group_3_val="Dresses",
+        value_col=cols.unit_spend,
+        labels=["Denim", "Footwear", "Clothing"],
+    )
+    cross_shop_table_with_labels = CrossShop._calc_cross_shop_table(
+        cross_shop_df_with_labels,
+        value_col=cols.unit_spend,
+    )
+
+    assert "group_labels" in cross_shop_table_with_labels.columns
+    assert "groups" in cross_shop_table_with_labels.columns
+
+    expected_group_labels = ["Clothing", "Denim", "Denim, Clothing", "Denim, Footwear", "Footwear", "No Groups"]
+    assert set(cross_shop_table_with_labels["group_labels"]) == set(expected_group_labels)
+    assert cross_shop_table_with_labels["percent"].sum() == pytest.approx(1.0, rel=1e-6)
 
 
 def test_calc_cross_shop_table_customer_id_nunique(sample_data):
@@ -191,6 +219,7 @@ def test_calc_cross_shop_table_customer_id_nunique(sample_data):
     ret_df = pd.DataFrame(
         {
             "groups": [(0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 0, 0), (1, 0, 1), (1, 1, 0)],
+            "group_labels": ["No Groups", "C", "B", "A", "A, C", "A, B"],
             cols.customer_id: [1, 1, 3, 3, 1, 1],
             "percent": [0.1, 0.1, 0.3, 0.3, 0.1, 0.1],
         },
@@ -380,6 +409,12 @@ def test_cross_shop_with_non_empty_dataframe():
     assert cross_shop.group_count == group_count
     assert not cross_shop.cross_shop_df.empty
     assert not cross_shop.cross_shop_table_df.empty
+    assert "group_labels" in cross_shop.cross_shop_df.columns
+    assert "group_labels" in cross_shop.cross_shop_table_df.columns
+
+    # Should have default alphabetical labels when none provided
+    expected_group_labels = ["A", "B"]
+    assert set(cross_shop.cross_shop_table_df["group_labels"]) == set(expected_group_labels)
 
 
 def test_cross_shop_with_custom_value_col_and_agg_func(sample_data):
