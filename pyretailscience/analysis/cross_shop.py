@@ -13,6 +13,18 @@ from pyretailscience.plots import venn
 class CrossShop:
     """A class to create a cross-shop diagram."""
 
+    @staticmethod
+    def _generate_default_labels(count: int) -> list[str]:
+        """Generate default alphabetical labels for groups.
+
+        Args:
+            count (int): Number of labels to generate.
+
+        Returns:
+            list[str]: List of alphabetical labels (A, B, C, etc.).
+        """
+        return [chr(65 + i) for i in range(count)]
+
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -59,7 +71,7 @@ class CrossShop:
         if (labels is not None) and (len(labels) != self.group_count):
             raise ValueError("The number of labels must be equal to the number of group indexes given")
 
-        self.labels = labels if labels is not None else [chr(65 + i) for i in range(self.group_count)]
+        self.labels = labels if labels is not None else self._generate_default_labels(self.group_count)
 
         self.cross_shop_df = self._calc_cross_shop(
             df=df,
@@ -146,7 +158,7 @@ class CrossShop:
 
         # Use default alphabetical labels if none provided
         if labels is None:
-            labels = [chr(65 + i) for i in range(len(group_cols))]
+            labels = CrossShop._generate_default_labels(len(group_cols))
 
         group_label_series = cs_df[group_cols].apply(
             lambda x: [labels[i] for i, grp_val in enumerate(x) if grp_val == 1],

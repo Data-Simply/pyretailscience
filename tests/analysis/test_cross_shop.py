@@ -486,3 +486,9 @@ def test_with_custom_column_names(sample_data):
             "Should handle custom customer_id column name"
         )
         assert "total_amount_spent" in cross_shop_df.columns, "Should handle custom unit_spend column name"
+
+
+def test_generate_default_labels():
+    """Test the _generate_default_labels static method."""
+    assert CrossShop._generate_default_labels(2) == ["A", "B"]
+    assert CrossShop._generate_default_labels(3) == ["A", "B", "C"]
