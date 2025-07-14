@@ -13,6 +13,18 @@ from pyretailscience.plots import venn
 class CrossShop:
     """A class to create a cross-shop diagram."""
 
+    @staticmethod
+    def _generate_default_labels(count: int) -> list[str]:
+        """Generate default alphabetical labels for groups.
+
+        Args:
+            count (int): Number of labels to generate.
+
+        Returns:
+            list[str]: List of alphabetical labels (A, B, C, etc.).
+        """
+        return [chr(65 + i) for i in range(count)]
+
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -59,7 +71,7 @@ class CrossShop:
         if (labels is not None) and (len(labels) != self.group_count):
             raise ValueError("The number of labels must be equal to the number of group indexes given")
 
-        self.labels = labels if labels is not None else [chr(65 + i) for i in range(self.group_count)]
+        self.labels = labels if labels is not None else self._generate_default_labels(self.group_count)
 
         self.cross_shop_df = self._calc_cross_shop(
             df=df,
@@ -71,6 +83,7 @@ class CrossShop:
             group_3_val=group_3_val,
             value_col=value_col,
             agg_func=agg_func,
+            labels=labels,
         )
         self.cross_shop_table_df = self._calc_cross_shop_table(
             df=self.cross_shop_df,
@@ -88,6 +101,7 @@ class CrossShop:
         group_3_val: str | None = None,
         value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
+        labels: list[str] | None = None,
     ) -> pd.DataFrame:
         """Calculate the cross-shop dataframe that will be used to plot the diagram.
 
@@ -101,6 +115,7 @@ class CrossShop:
             group_3_val (str, optional): Value to filter for the third group. Defaults to None.
             value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
+            labels (list[str], optional): The labels for the groups. Defaults to None.
 
         Returns:
             pd.DataFrame: The cross-shop dataframe.
@@ -140,7 +155,18 @@ class CrossShop:
         ).execute()
 
         cs_df["groups"] = cs_df[group_cols].apply(lambda x: tuple(x), axis=1)
-        column_order = [cols.customer_id, *group_cols, "groups", temp_value_col]
+
+        # Use default alphabetical labels if none provided
+        if labels is None:
+            labels = CrossShop._generate_default_labels(len(group_cols))
+
+        group_label_series = cs_df[group_cols].apply(
+            lambda x: [labels[i] for i, grp_val in enumerate(x) if grp_val == 1],
+            axis=1,
+        )
+        cs_df["group_labels"] = group_label_series.map(lambda x: "No Groups" if len(x) == 0 else ", ".join(x))
+
+        column_order = [cols.customer_id, *group_cols, "groups", "group_labels", temp_value_col]
         cs_df = cs_df[column_order]
         cs_df.set_index(cols.customer_id, inplace=True)
         return cs_df.rename(columns={temp_value_col: value_col})
@@ -159,7 +185,7 @@ class CrossShop:
         Returns:
             pd.DataFrame: The cross-shop table.
         """
-        df = df.groupby(["groups"], dropna=False)[value_col].sum().reset_index().copy()
+        df = df.groupby(["groups", "group_labels"], dropna=False)[value_col].sum().reset_index().copy()
         df["percent"] = df[value_col] / df[value_col].sum()
         return df
 

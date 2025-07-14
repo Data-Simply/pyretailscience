@@ -30,7 +30,7 @@ repos:
         entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration
         types: [python]
         pass_filenames: false
-        always_run: true
+        files: ^pyretailscience/
   - repo: https://github.com/kynan/nbstripout
     rev: 0.5.0
     hooks:
