@@ -246,7 +246,7 @@ class CustomerDecisionHierarchy:
             SubplotBase: The matplotlib SubplotBase object.
         """
         linkage_matrix = linkage(self.distances, method="ward")
-        labels = self.pairs_df["product_name"].cat.categories
+        labels = self.pairs_df[self.product_col].cat.categories
 
         if ax is None:
             _, ax = plt.subplots(figsize=figsize)
