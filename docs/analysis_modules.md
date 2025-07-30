@@ -1455,3 +1455,57 @@ labeled_data = filter_and_label_by_condition(products, conditions).execute()
 | 5          | electronics | 200   | Premium Electronics |
 | 6          | toys        | 35    | Toys                |
 | 7          | shoes       | 60    | Shoes               |
+
+### Label by Condition
+
+<div class="clear" markdown>
+
+The **Label by Condition** module provides functionality to label groups (customers, transactions, stores, etc.) based
+on whether they contain items that meet specified conditions. This module is designed for group-level analysis where you
+want to classify entire entities rather than individual records. Unlike the Filter and Label by Condition function which
+filters and labels individual rows of data, this module aggregates data by groups and applies labels at the group level.
+
+The Label by Condition module allows you to:
+
+- Label groups in a table based on whether items in the group meet a specified condition
+- Support both binary labeling (contains/not_contains) and extended labeling (contains/mixed/not_contains)
+- Customize label names and return column names for flexible analysis
+- Analyze group-level patterns for customer segmentation, product categorization, and promotional analysis
+
+This functionality is particularly useful for:
+
+- Tagging transactions as containing a product, product category, or promotion
+- Tagging customers as having bought a product, product category, or promotion, or store_id
+- Segmenting customers as new, repeating or lapsed
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.label import label_by_condition
+
+# Sample transaction data
+df = pd.DataFrame({
+    "customer_id": [1, 1, 1, 2, 2, 3, 3],
+    "product_category": ["toys", "books", "toys", "books", "clothes", "clothes", "clothes"],
+})
+
+transactions = ibis.memtable(df)
+
+# Binary labeling: Label customers who bought any toys
+toy_customers = label_by_condition(
+    table=transactions,
+    label_col="customer_id",
+    condition=transactions["product_category"] == "toys",
+    labeling_strategy="binary"
+).execute()
+```
+
+| customer_id | label_name   |
+|:------------|-------------:|
+| 1           | contains     |
+| 2           | not_contains |
+| 3           | not_contains |
