@@ -22,7 +22,6 @@ class TestLabelByCondition:
 
         result = label_by_condition(
             table=table,
-            label_col="customer_id",
             condition=table["product_category"] == "toys",
             labeling_strategy="binary",
         )
