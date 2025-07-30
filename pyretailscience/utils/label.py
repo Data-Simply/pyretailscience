@@ -41,7 +41,8 @@ def label_by_condition(
         table (ibis.Table): An ibis table to process.
         condition (ibis.expr.types.BooleanColumn): Boolean expression representing
             the condition to evaluate.
-        label_col (str): Column name to group by for labeling. Defaults to the setting column.customer_id
+        label_col (str | None): Column name to group by for labeling. If None, defaults to the setting
+            column.customer_id.
         return_col (str): Name of the column to add with the labels. Defaults to "label_name".
         labeling_strategy (Literal["binary", "extended"]): Strategy for labeling groups.
             Defaults to "binary".
