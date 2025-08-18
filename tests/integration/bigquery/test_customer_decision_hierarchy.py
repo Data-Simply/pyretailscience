@@ -8,8 +8,6 @@ from pyretailscience.analysis.customer_decision_hierarchy import CustomerDecisio
 @pytest.mark.parametrize(
     ("method", "exclude_same_transaction"),
     [
-        ("truncated_svd", False),
-        ("truncated_svd", None),
         ("yules_q", False),
         ("yules_q", None),
     ],

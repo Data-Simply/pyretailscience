@@ -21,8 +21,7 @@ class CustomerDecisionHierarchy:
         df: pd.DataFrame,
         product_col: str,
         exclude_same_transaction_products: bool = True,
-        method: Literal["truncated_svd", "yules_q"] = "truncated_svd",
-        min_var_explained: float = 0.8,
+        method: Literal["yules_q"] = "yules_q",
         random_state: int = 42,
     ) -> None:
         """Initializes the RangePlanning object.
@@ -35,10 +34,8 @@ class CustomerDecisionHierarchy:
                 the same transaction from a customer's distinct list of products bought. The idea is that if a
                 customer bought two products in the same transaction they can't be substitutes for that customer.
                 Thus they should be excluded from the analysis. Defaults to True.
-            method (Literal["truncated_svd", "yules_q"], optional): The method to use for calculating distances.
-                Defaults to "truncated_svd".
-            min_var_explained (float, optional): The minimum variance explained required for truncated SVD method.
-                Only applicable if method is "truncated_svd". Defaults to 0.8.
+            method (Literal["yules_q"], optional): The method to use for calculating distances.
+                Defaults to "yules_q".
             random_state (int, optional): Random seed for reproducibility. Defaults to 42.
 
         Raises:
@@ -55,7 +52,7 @@ class CustomerDecisionHierarchy:
         self.random_state = random_state
         self.product_col = product_col
         self.pairs_df = self._get_pairs(df, exclude_same_transaction_products, product_col)
-        self.distances = self._calculate_distances(method=method, min_var_explained=min_var_explained)
+        self.distances = self._calculate_distances(method=method)
 
     @staticmethod
     def _get_pairs(df: pd.DataFrame, exclude_same_transaction_products: bool, product_col: str) -> pd.DataFrame:
@@ -79,42 +76,6 @@ class CustomerDecisionHierarchy:
             pairs_df = df[[cols.customer_id, product_col]].drop_duplicates()
 
         return pairs_df.reset_index(drop=True).astype("category")
-
-    def _get_truncated_svd_distances(self, min_var_explained: float = 0.8) -> np.array:
-        """Calculate the truncated SVD distances for the given pairs dataframe.
-
-        Args:
-            min_var_explained (float): The minimum variance explained required.
-
-        Returns:
-            np.array: The normalized matrix of truncated SVD distances.
-        """
-        from scipy.sparse import csr_matrix
-        from sklearn.decomposition import TruncatedSVD
-
-        sparse_matrix = csr_matrix(
-            (
-                [1] * len(self.pairs_df),
-                (
-                    self.pairs_df[self.product_col].cat.codes,
-                    self.pairs_df[get_option("column.customer_id")].cat.codes,
-                ),
-            ),
-        )
-
-        n_products = sparse_matrix.shape[0]
-        svd = TruncatedSVD(n_components=n_products, random_state=self.random_state)
-        svd.fit(sparse_matrix)
-        cuml_var = np.cumsum(svd.explained_variance_ratio_)
-
-        req_n_components = np.argmax(cuml_var >= min_var_explained) + 1
-
-        reduced_matrix = TruncatedSVD(n_components=req_n_components, random_state=self.random_state).fit_transform(
-            sparse_matrix,
-        )
-        norm_matrix = reduced_matrix / np.linalg.norm(reduced_matrix, axis=1, keepdims=True)
-
-        return norm_matrix  # noqa: RET504
 
     @staticmethod
     def _calculate_yules_q(bought_product_1: np.array, bought_product_2: np.array) -> float:
@@ -195,15 +156,12 @@ class CustomerDecisionHierarchy:
 
     def _calculate_distances(
         self,
-        method: Literal["truncated_svd", "yules_q"],
-        min_var_explained: float,
+        method: Literal["yules_q"],
     ) -> None:
         """Calculates distances between items using the specified method.
 
         Args:
-            method (Literal["truncated_svd", "yules_q"], optional): The method to use for calculating distances.
-            min_var_explained (float, optional): The minimum variance explained required for truncated SVD method.
-                Only applicable if method is "truncated_svd".
+            method (Literal["yules_q"], optional): The method to use for calculating distances.
 
         Raises:
             ValueError: If the method is not valid.
@@ -212,12 +170,10 @@ class CustomerDecisionHierarchy:
             None
         """
         # Check method is valid
-        if method == "truncated_svd":
-            distances = self._get_truncated_svd_distances(min_var_explained=min_var_explained)
-        elif method == "yules_q":
+        if method == "yules_q":
             distances = self._get_yules_q_distances()
         else:
-            raise ValueError("Method must be 'truncated_svd' or 'yules_q'")
+            raise ValueError("Method must be 'yules_q'")
 
         return distances
 
