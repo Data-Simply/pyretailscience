@@ -5,7 +5,6 @@ from collections.abc import Generator
 from datetime import datetime
 from itertools import cycle
 
-import matplotlib.font_manager as fm
 import matplotlib.ticker as mtick
 import numpy as np
 import pandas as pd
@@ -29,38 +28,6 @@ def _hatches_gen() -> Generator[str, None, None]:
     """
     _hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
     return cycle(_hatches)
-
-
-class GraphStyles:
-    """A class to hold the styles for a graph.
-
-    DEPRECATED: This class is maintained for backwards compatibility only.
-    Use PlotStyler from styling_helpers instead.
-    """
-
-    # Font properties - kept for backwards compatibility
-    try:
-        POPPINS_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Bold.ttf")
-        POPPINS_SEMI_BOLD = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-SemiBold.ttf")
-        POPPINS_REG = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Regular.ttf")
-        POPPINS_MED = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-Medium.ttf")
-        POPPINS_LIGHT_ITALIC = fm.FontProperties(fname=f"{ASSETS_PATH}/fonts/Poppins-LightItalic.ttf")
-    except (OSError, RuntimeError):
-        # Fallback to default fonts if bundled fonts are not available
-        POPPINS_BOLD = fm.FontProperties()
-        POPPINS_SEMI_BOLD = fm.FontProperties()
-        POPPINS_REG = fm.FontProperties()
-        POPPINS_MED = fm.FontProperties()
-        POPPINS_LIGHT_ITALIC = fm.FontProperties()
-
-    DEFAULT_TITLE_FONT_SIZE = 20
-    DEFAULT_SOURCE_FONT_SIZE = 10
-    DEFAULT_AXIS_LABEL_FONT_SIZE = 12
-    DEFAULT_TICK_LABEL_FONT_SIZE = 10
-    DEFAULT_BAR_LABEL_FONT_SIZE = 11
-    DEFAULT_AXIS_LABEL_PAD = 10
-    DEFAULT_TITLE_PAD = 10
-    DEFAULT_BAR_WIDTH = 0.8
 
 
 def human_format(

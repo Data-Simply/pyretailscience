@@ -43,7 +43,6 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.graph_utils import GraphStyles
 from pyretailscience.plots.styles.tailwind import COLORS, get_linear_cmap
 
 
@@ -323,7 +322,7 @@ def plot(  # noqa: C901, PLR0913
         legend=show_legend,
         ax=ax,
         color=colors,
-        width=GraphStyles.DEFAULT_BAR_WIDTH,
+        width=0.8,
         zorder=2,
         **kwargs,
     )
