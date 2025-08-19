@@ -59,10 +59,9 @@ class TestCustomerDecisionHierarchy:
             {cols.customer_id: [1, 2, 3], cols.transaction_id: [1, 2, 3], "product_name": ["A", "B", "C"]},
         )
         exclude_same_transaction_products = True
-        random_state = 42
 
         with pytest.raises(ValueError):
-            rp.CustomerDecisionHierarchy(df, exclude_same_transaction_products, random_state)
+            rp.CustomerDecisionHierarchy(df, "invalid_product_col", exclude_same_transaction_products)
 
     def test_init_exclude_same_transaction_products_true(self):
         """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is True."""
