@@ -10,7 +10,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.plots.styles.graph_utils import GraphStyles
+from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 
 class CustomerDecisionHierarchy:
@@ -228,9 +228,8 @@ class CustomerDecisionHierarchy:
             ax.xaxis.set_label_position("top")
 
         dendrogram(linkage_matrix, labels=labels, ax=ax, **kwargs)
-
-        ax.xaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
-        ax.yaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
+        styler = PlotStyler()
+        styler.apply_ticks(ax)
 
         # Rotate the x-axis labels if they are too long
         if orientation in ["top", "bottom"]:

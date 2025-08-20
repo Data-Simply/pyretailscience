@@ -33,7 +33,7 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.graph_utils import GraphStyles
+from pyretailscience.plots.styles.styling_helpers import PlotStyler
 from pyretailscience.plots.styles.tailwind import COLORS
 
 
@@ -127,7 +127,7 @@ def plot(
         title=title,
         y_label=gu.not_none(y_label, "Amounts"),
         x_label=x_label,
-        title_pad=GraphStyles.DEFAULT_TITLE_PAD + extra_title_pad,
+        title_pad=10 + extra_title_pad,
     )
 
     decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
@@ -137,7 +137,7 @@ def plot(
 
     # Add a black line at the y=0 position
     ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
-
+    styler = PlotStyler()
     if data_label_format is not None:
         labels = format_data_labels(
             df["amounts"],
@@ -151,8 +151,8 @@ def plot(
             label_type="edge",
             labels=labels,
             padding=5,
-            fontsize=GraphStyles.DEFAULT_BAR_LABEL_FONT_SIZE,
-            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=styler.context.fonts.label_size - 1,
+            fontproperties=styler.context.get_font_properties(styler.context.fonts.label_font),
         )
 
     if display_net_line:
