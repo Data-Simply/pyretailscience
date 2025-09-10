@@ -622,3 +622,56 @@ class TestSegTransactionStats:
             expected_columns = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend, cols.agg_unit_qty]
             for col in expected_columns:
                 assert col in seg_stats.df.columns, f"Expected column {col} missing from output"
+
+    def test_complete_rollup_hierarchy_two_columns(self):
+        """Expect prefix and suffix rollups plus grand total when calc_rollup and calc_total are True.
+
+        Expected rows (with rollup_value defaulting to "Total"):
+        - Detail: (Clothing, Jeans), (Clothing, Shirts), (Footwear, Jeans), (Footwear, Shirts)
+        - Prefix rollups: (Clothing, Total), (Footwear, Total)
+        - Suffix rollups: (Total, Jeans), (Total, Shirts)
+        - Grand total: (Total, Total)
+        Total expected rows = 9.
+        """
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3, 4],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "category": ["Clothing", "Clothing", "Footwear", "Footwear"],
+                "subcategory": ["Jeans", "Shirts", "Jeans", "Shirts"],
+            },
+        )
+
+        seg_stats = SegTransactionStats(
+            df,
+            segment_col=["category", "subcategory"],
+            calc_rollup=True,
+            calc_total=True,
+        )
+
+        result_df = seg_stats.df
+
+        # Should include detail (4), prefix (2), suffix (2), and grand total (1)
+        assert len(result_df) == 9
+
+        # Prefix rollups (category subtotal)
+        clothing_prefix = result_df[(result_df["category"] == "Clothing") & (result_df["subcategory"] == "Total")]
+        footwear_prefix = result_df[(result_df["category"] == "Footwear") & (result_df["subcategory"] == "Total")]
+        assert len(clothing_prefix) == 1
+        assert len(footwear_prefix) == 1
+        assert clothing_prefix[cols.agg_unit_spend].values[0] == 100.0 + 200.0
+        assert footwear_prefix[cols.agg_unit_spend].values[0] == 300.0 + 400.0
+
+        # Suffix rollups (subcategory subtotal)
+        jeans_suffix = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Jeans")]
+        shirts_suffix = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Shirts")]
+        assert len(jeans_suffix) == 1
+        assert len(shirts_suffix) == 1
+        assert jeans_suffix[cols.agg_unit_spend].values[0] == 100.0 + 300.0
+        assert shirts_suffix[cols.agg_unit_spend].values[0] == 200.0 + 400.0
+
+        # Grand total
+        grand_total = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Total")]
+        assert len(grand_total) == 1
+        assert grand_total[cols.agg_unit_spend].values[0] == 100.0 + 200.0 + 300.0 + 400.0
