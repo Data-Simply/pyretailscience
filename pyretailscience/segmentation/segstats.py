@@ -224,6 +224,22 @@ class SegTransactionStats:
                 rollup_result = rollup_result.mutate(**rollup_mutations)
                 rollup_metrics.append(rollup_result)
 
+            # Generate all suffixes of segment_col (except the full list and empty suffix)
+            for i in range(1, len(segment_col)):
+                suffix = segment_col[i:]
+
+                # Group by the suffix and aggregate
+                rollup_result = data.group_by(suffix).aggregate(**aggs)
+
+                # Add rollup values for the preceding columns with proper types
+                preceding_cols = segment_col[:i]
+                preceding_values = rollup_value[:i]
+                rollup_mutations = SegTransactionStats._create_typed_literals(data, preceding_cols, preceding_values)
+
+                # Apply all mutations at once
+                rollup_result = rollup_result.mutate(**rollup_mutations)
+                rollup_metrics.append(rollup_result)
+
             # Union all rollup results
             if rollup_metrics:
                 final_metrics = final_metrics.union(*rollup_metrics)
