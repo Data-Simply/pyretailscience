@@ -3,7 +3,11 @@
 This module provides the `SegTransactionStats` class, which allows for the computation of
 transaction-based statistics grouped by one or more segment columns. The statistics include
 aggregations such as total spend, unique customers, transactions per customer, and optional
-custom aggregations.
+custom aggregations. When rollups are enabled for multi-column segmentations, the output includes
+subtotals for all non-empty prefixes and suffixes of the segment hierarchy, plus an overall grand
+total. For example, with columns [A, B, C], the result will include rollups for [A, B, Total],
+[A, Total, Total] (prefixes) as well as [Total, B, C] and [Total, Total, C] (suffixes), in addition
+to the grand total [Total, Total, Total].
 
 The module supports both Pandas DataFrames and Ibis Tables as input data formats. It also
 offers visualization capabilities to generate plots of segment-based statistics.
@@ -50,7 +54,11 @@ class SegTransactionStats:
                 - column_name is the name of the column to aggregate
                 - aggregation_function is a string name of an Ibis aggregation function (e.g., "nunique", "sum")
                 Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
-            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False.
+            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False. When True and
+                multiple segment columns are provided, the method generates subtotal rows for both:
+                - Prefix rollups: progressively aggregating left-to-right (e.g., [A, B, Total], [A, Total, Total]).
+                - Suffix rollups: progressively aggregating right-to-left (e.g., [Total, B, C], [Total, Total, C]).
+                A grand total row is also included when calc_total is True.
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
@@ -163,7 +171,10 @@ class SegTransactionStats:
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function).
-            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False.
+            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False. When True with
+                multiple segment columns, subtotal rows are added for all non-empty prefixes and suffixes of the
+                hierarchy. For example, with [A, B, C], prefixes include [A, B, Total], [A, Total, Total]; suffixes
+                include [Total, B, C], [Total, Total, C].
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
