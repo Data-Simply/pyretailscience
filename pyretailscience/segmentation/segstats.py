@@ -9,6 +9,12 @@ total. For example, with columns [A, B, C], the result will include rollups for 
 [A, Total, Total] (prefixes) as well as [Total, B, C] and [Total, Total, C] (suffixes), in addition
 to the grand total [Total, Total, Total].
 
+Performance considerations:
+- Enabling suffix rollups adds an additional O(n) set of aggregations where n is the number of
+  segment columns (similar to prefix rollups). For typical hierarchies (2–5 columns), the overhead
+  is minimal. For very wide hierarchies, consider disabling `calc_rollup`, limiting the number of
+  segment columns used, or relying solely on `calc_total`.
+
 The module supports both Pandas DataFrames and Ibis Tables as input data formats. It also
 offers visualization capabilities to generate plots of segment-based statistics.
 """
@@ -59,6 +65,8 @@ class SegTransactionStats:
                 - Prefix rollups: progressively aggregating left-to-right (e.g., [A, B, Total], [A, Total, Total]).
                 - Suffix rollups: progressively aggregating right-to-left (e.g., [Total, B, C], [Total, Total, C]).
                 A grand total row is also included when calc_total is True.
+                Performance: adds O(n) extra aggregation passes where n is the number of segment
+                columns. For large hierarchies, consider disabling rollups or reducing columns.
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
@@ -174,7 +182,8 @@ class SegTransactionStats:
             calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False. When True with
                 multiple segment columns, subtotal rows are added for all non-empty prefixes and suffixes of the
                 hierarchy. For example, with [A, B, C], prefixes include [A, B, Total], [A, Total, Total]; suffixes
-                include [Total, B, C], [Total, Total, C].
+                include [Total, B, C], [Total, Total, C]. Performance: O(n) additional aggregation passes for suffixes,
+                where n is the number of segment columns.
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".

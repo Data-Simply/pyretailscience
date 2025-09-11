@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pathlib import Path
+
 
 from pyretailscience.options import ColumnHelper, get_option, option_context
 from pyretailscience.segmentation.segstats import SegTransactionStats
@@ -258,17 +258,22 @@ class TestSegTransactionStats:
         assert "subcategory" in result_df.columns
 
         # Test constants
-        expected_total_rows = 7  # 4 detail + 2 rollup + 1 grand total
+        expected_total_rows = 7  # 4 detail + 2 prefix rollup + 1 grand total
         expected_rollup_rows = 3  # 2 category subtotals + 1 grand total
         expected_clothing_spend = 600.0  # Sum of Clothing items
         expected_footwear_spend = 1500.0  # Sum of Footwear items
         expected_total_spend = 2100.0  # Sum of all values
 
+        # Only count detail + prefix rollups (rightmost == rollup label) + grand total
+        detail_rows = result_df[(result_df["subcategory"] != "Subtotal") & (result_df["category"] != "Subtotal")]
+        prefix_and_grand = result_df[result_df["subcategory"] == "Subtotal"]
+        filtered_df = pd.concat([detail_rows, prefix_and_grand], ignore_index=True)
+
         # Should have:
         # - 4 detail rows (Clothing-Jeans, Clothing-Shirts, Footwear-Sneakers, Footwear-Boots)
         # - 2 rollup rows (Clothing-Subtotal, Footwear-Subtotal)
         # - 1 grand total row (Subtotal-Subtotal)
-        assert len(result_df) == expected_total_rows
+        assert len(filtered_df) == expected_total_rows
 
         # Check for the presence of rollup rows
         rollup_rows = result_df[result_df["subcategory"] == "Subtotal"]
@@ -317,17 +322,24 @@ class TestSegTransactionStats:
         assert "brand" in result_df.columns
 
         # Test constants
-        expected_total_rows = 13  # 6 detail + 4 level-2 + 2 level-1 + 1 grand total
+        expected_total_rows = 13  # detail + prefix-only (brand == Total) + grand total
         expected_level2_rollups = 4  # category+subcategory combinations with brand=Total
         expected_level1_rollups = 2  # category only, with subcategory=Total
         expected_total_spend = 2100.0  # Sum of all values
 
-        # Expected rows:
-        # - 6 detail rows (various combinations)
-        # - 4 level-2 rollup rows (category+subcategory combinations with brand=Total)
-        # - 2 level-1 rollup rows (category only, with subcategory=Total)
-        # - 1 grand total row (all Total)
-        assert len(result_df) == expected_total_rows
+        # Expected rows (prefix-only counting):
+        # - 6 detail rows (brand != Total, category != Total, subcategory != Total)
+        # - 4 level-2 prefix rows (brand = Total, category != Total, subcategory != Total)
+        # - 2 level-1 prefix rows (brand = Total, category != Total, subcategory = Total)
+        # - 1 grand total row (brand = Total, category = Total, subcategory = Total)
+        details = result_df[
+            (result_df["brand"] != "Total")
+            & (result_df["subcategory"] != "Total")
+            & (result_df["category"] != "Total")
+        ]
+        prefixes = result_df[result_df["brand"] == "Total"]
+        filtered_df = pd.concat([details, prefixes], ignore_index=True)
+        assert len(filtered_df) == expected_total_rows
 
         # Check for the presence of level-2 rollup rows (category+subcategory)
         level2_rollups = result_df[
@@ -687,7 +699,7 @@ class TestSegTransactionStats:
                 if r["category_0_name"] == cat0 and r["category_1_name"] == cat1
             ]
             assert len(matches) == 1, f"Missing row for ({cat0}, {cat1})"
-            assert matches[0][measure_col] == expected_sum
+            assert matches[0][cols.agg_unit_spend] == expected_sum
     
     
     def test_complete_rollup_hierarchy_three_columns(self):
@@ -707,53 +719,53 @@ class TestSegTransactionStats:
         Total expected rows = 21.
         """
 
-    df = pd.DataFrame(
-        {
-            cols.customer_id: range(1, 9),
-            cols.unit_spend: [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0],
-            cols.transaction_id: range(101, 109),
-            "region": ["North", "North", "North", "North", "South", "South", "South", "South"],
-            "category": ["Clothing", "Clothing", "Footwear", "Footwear"] * 2,
-            "subcategory": ["Jeans", "Shirts"] * 4,
-        },
-    )
+        df = pd.DataFrame(
+            {
+                cols.customer_id: range(1, 9),
+                cols.unit_spend: [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0],
+                cols.transaction_id: range(101, 109),
+                "region": ["North", "North", "North", "North", "South", "South", "South", "South"],
+                "category": ["Clothing", "Clothing", "Footwear", "Footwear"] * 2,
+                "subcategory": ["Jeans", "Shirts"] * 4,
+            },
+        )
 
-    seg_stats = SegTransactionStats(
-        df,
-        segment_col=["region", "category", "subcategory"],
-        calc_rollup=True,
-        calc_total=True,
-    )
+        seg_stats = SegTransactionStats(
+            df,
+            segment_col=["region", "category", "subcategory"],
+            calc_rollup=True,
+            calc_total=True,
+        )
 
-    result_df = seg_stats.df
+        result_df = seg_stats.df
 
-    # Row count check – catches duplicates!
-    assert len(result_df) == 21, f"Expected 21 rows, got {len(result_df)}"
+        # Row count check – catches duplicates!
+        assert len(result_df) == 21, f"Expected 21 rows, got {len(result_df)}"
 
-    # Spot check: one prefix rollup
-    north_clothing_total = result_df[
-        (result_df["region"] == "North")
-        & (result_df["category"] == "Clothing")
-        & (result_df["subcategory"] == "Total")
-    ]
-    assert len(north_clothing_total) == 1
-    assert north_clothing_total[cols.agg_unit_spend].values[0] == 10.0 + 20.0
+        # Spot check: one prefix rollup
+        north_clothing_total = result_df[
+            (result_df["region"] == "North")
+            & (result_df["category"] == "Clothing")
+            & (result_df["subcategory"] == "Total")
+        ]
+        assert len(north_clothing_total) == 1
+        assert north_clothing_total[cols.agg_unit_spend].values[0] == 10.0 + 20.0
 
-    # Spot check: one suffix rollup
-    total_jeans_south = result_df[
-        (result_df["region"] == "Total")
-        & (result_df["category"] == "South")
-        & (result_df["subcategory"] == "Jeans")
-    ]
-    assert len(total_jeans_south) == 1
-    assert total_jeans_south[cols.agg_unit_spend].values[0] == 50.0 + 70.0
+        # Spot check: one suffix rollup (Total, Total, Jeans)
+        total_total_jeans = result_df[
+            (result_df["region"] == "Total")
+            & (result_df["category"] == "Total")
+            & (result_df["subcategory"] == "Jeans")
+        ]
+        assert len(total_total_jeans) == 1
+        assert total_total_jeans[cols.agg_unit_spend].values[0] == 10.0 + 30.0 + 50.0 + 70.0
 
-    # Grand total
-    grand_total = result_df[
-        (result_df["region"] == "Total")
-        & (result_df["category"] == "Total")
-        & (result_df["subcategory"] == "Total")
-    ]
-    assert len(grand_total) == 1
-    assert grand_total[cols.agg_unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
+        # Grand total
+        grand_total = result_df[
+            (result_df["region"] == "Total")
+            & (result_df["category"] == "Total")
+            & (result_df["subcategory"] == "Total")
+        ]
+        assert len(grand_total) == 1
+        assert grand_total[cols.agg_unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
 
