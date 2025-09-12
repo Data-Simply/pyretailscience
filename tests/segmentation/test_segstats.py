@@ -230,7 +230,6 @@ class TestSegTransactionStats:
         # Use pandas testing to compare the dataframes
         pd.testing.assert_frame_equal(result_df[expected_output.columns], expected_output)
 
-
     def test_rollup_disabled(self):
         """Test that rollup rows are not included when calc_rollup is False."""
         df = pd.DataFrame(
