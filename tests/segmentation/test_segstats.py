@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-
 from pyretailscience.options import ColumnHelper, get_option, option_context
 from pyretailscience.segmentation.segstats import SegTransactionStats
 
@@ -333,9 +332,7 @@ class TestSegTransactionStats:
         # - 2 level-1 prefix rows (brand = Total, category != Total, subcategory = Total)
         # - 1 grand total row (brand = Total, category = Total, subcategory = Total)
         details = result_df[
-            (result_df["brand"] != "Total")
-            & (result_df["subcategory"] != "Total")
-            & (result_df["category"] != "Total")
+            (result_df["brand"] != "Total") & (result_df["subcategory"] != "Total") & (result_df["category"] != "Total")
         ]
         prefixes = result_df[result_df["brand"] == "Total"]
         filtered_df = pd.concat([details, prefixes], ignore_index=True)
@@ -636,7 +633,6 @@ class TestSegTransactionStats:
             for col in expected_columns:
                 assert col in seg_stats.df.columns, f"Expected column {col} missing from output"
 
-
     def test_complete_rollup_hierarchy_two_columns(self):
         """Expect prefix and suffix rollups plus grand total when calc_rollup and calc_total are True.
 
@@ -655,7 +651,7 @@ class TestSegTransactionStats:
                 cols.transaction_id: [101, 102, 103, 104],
                 "category_0_name": ["Clothing", "Clothing", "Footwear", "Footwear"],
                 "category_1_name": ["Jeans", "Shirts", "Jeans", "Shirts"],
-            }
+            },
         )
 
         segment_cols = ["category_0_name", "category_1_name"]
@@ -694,20 +690,16 @@ class TestSegTransactionStats:
 
         # Validate each expected row exists and sums match
         for (cat0, cat1), expected_sum in expected.items():
-            matches = [
-                r for r in records
-                if r["category_0_name"] == cat0 and r["category_1_name"] == cat1
-            ]
+            matches = [r for r in records if r["category_0_name"] == cat0 and r["category_1_name"] == cat1]
             assert len(matches) == 1, f"Missing row for ({cat0}, {cat1})"
             assert matches[0][cols.agg_unit_spend] == expected_sum
-    
-    
+
     def test_complete_rollup_hierarchy_three_columns(self):
         """Expect prefix + suffix rollups + grand total with 3 segment columns.
-        
+
         Columns: region, category, subcategory
         Expected rows:
-        - Detail: 2 regions × 2 categories × 2 subcategories = 8
+        - Detail: 2 regions x 2 categories x 2 subcategories = 8
         - Prefix rollups:
             (region, category, Total) → 4
             (region, Total, Total) → 2
@@ -715,10 +707,9 @@ class TestSegTransactionStats:
             (Total, category, subcategory) → 4
             (Total, Total, subcategory) → 2
         - Grand total: (Total, Total, Total) → 1
-        
+
         Total expected rows = 21.
         """
-
         df = pd.DataFrame(
             {
                 cols.customer_id: range(1, 9),
@@ -739,8 +730,9 @@ class TestSegTransactionStats:
 
         result_df = seg_stats.df
 
-        # Row count check – catches duplicates!
-        assert len(result_df) == 21, f"Expected 21 rows, got {len(result_df)}"
+        # Row count check - catches duplicates!
+        expected_rows = 21
+        assert len(result_df) == expected_rows, f"Expected {expected_rows} rows, got {len(result_df)}"
 
         # Spot check: one prefix rollup
         north_clothing_total = result_df[
@@ -768,4 +760,3 @@ class TestSegTransactionStats:
         ]
         assert len(grand_total) == 1
         assert grand_total[cols.agg_unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
-

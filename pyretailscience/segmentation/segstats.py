@@ -11,7 +11,7 @@ to the grand total [Total, Total, Total].
 
 Performance considerations:
 - Enabling suffix rollups adds an additional O(n) set of aggregations where n is the number of
-  segment columns (similar to prefix rollups). For typical hierarchies (2–5 columns), the overhead
+  segment columns (similar to prefix rollups). For typical hierarchies (2-5 columns), the overhead
   is minimal. For very wide hierarchies, consider disabling `calc_rollup`, limiting the number of
   segment columns used, or relying solely on `calc_total`.
 
