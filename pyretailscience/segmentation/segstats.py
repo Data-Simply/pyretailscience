@@ -227,38 +227,26 @@ class SegTransactionStats:
         if calc_rollup:
             rollup_metrics = []
 
-            # Generate all prefixes of segment_col (except the empty prefix which is the grand total)
-            # and excluding the full segment_col list which is already calculated
-            for i in range(1, len(segment_col)):
-                prefix = segment_col[:i]
+            # Configuration for both prefix and suffix rollups
+            rollup_configs = [
+                # Prefix rollups: group by prefixes, mutate remaining columns
+                [(segment_col[:i], segment_col[i:], rollup_value[i:]) for i in range(1, len(segment_col))],
+                # Suffix rollups: group by suffixes, mutate preceding columns
+                [(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
+            ]
 
-                # Group by the prefix and aggregate
-                rollup_result = data.group_by(prefix).aggregate(**aggs)
+            # Process both prefix and suffix rollups with unified logic
+            for config_set in rollup_configs:
+                for group_cols, mutation_cols, mutation_values in config_set:
+                    # Group by the specified columns and aggregate
+                    rollup_result = data.group_by(group_cols).aggregate(**aggs)
 
-                # Add rollup values for the remaining columns with proper types
-                remaining_cols = segment_col[i:]
-                remaining_values = rollup_value[i:]
-                rollup_mutations = SegTransactionStats._create_typed_literals(data, remaining_cols, remaining_values)
+                    # Add rollup values for mutation columns with proper types
+                    rollup_mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
 
-                # Apply all mutations at once
-                rollup_result = rollup_result.mutate(**rollup_mutations)
-                rollup_metrics.append(rollup_result)
-
-            # Generate all suffixes of segment_col (except the full list and empty suffix)
-            for i in range(1, len(segment_col)):
-                suffix = segment_col[i:]
-
-                # Group by the suffix and aggregate
-                rollup_result = data.group_by(suffix).aggregate(**aggs)
-
-                # Add rollup values for the preceding columns with proper types
-                preceding_cols = segment_col[:i]
-                preceding_values = rollup_value[:i]
-                rollup_mutations = SegTransactionStats._create_typed_literals(data, preceding_cols, preceding_values)
-
-                # Apply all mutations at once
-                rollup_result = rollup_result.mutate(**rollup_mutations)
-                rollup_metrics.append(rollup_result)
+                    # Apply all mutations at once
+                    rollup_result = rollup_result.mutate(**rollup_mutations)
+                    rollup_metrics.append(rollup_result)
 
             # Union all rollup results
             if rollup_metrics:
