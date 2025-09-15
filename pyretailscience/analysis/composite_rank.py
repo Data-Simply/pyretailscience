@@ -1,15 +1,64 @@
-"""Composite Rank Analysis Module.
+"""Composite Rank Analysis Module for Multi-Factor Retail Decision Making.
 
-This module provides the `CompositeRank` class which creates a composite ranking of
-several columns by giving each column an individual rank and then combining those
-ranks together into a single composite rank.
+## Business Context
+
+In retail, critical decisions like product ranging, supplier selection, and store
+performance evaluation require balancing multiple competing factors. A product might
+have high sales but low margin, or a supplier might offer great prices but poor
+delivery reliability. Composite ranking enables data-driven decisions by combining
+multiple performance metrics into a single, actionable score.
+
+## Real-World Applications
+
+1. **Product Range Optimization**: Rank products for listing/delisting decisions based on:
+   - Sales velocity (units per week)
+   - Gross margin percentage
+   - Stock turn rate
+   - Customer satisfaction scores
+   - Return rates
+
+2. **Supplier Performance Management**: Evaluate suppliers using:
+   - On-time delivery percentage
+   - Price competitiveness
+   - Quality scores (defect rates)
+   - Payment terms flexibility
+   - Order fill rates
+
+3. **Store Performance Assessment**: Rank stores for investment decisions based on:
+   - Sales per square foot
+   - Conversion rates
+   - Labor productivity
+   - Customer satisfaction (NPS)
+   - Shrinkage rates
+
+4. **Category Management**: Prioritize categories for space allocation using:
+   - Category growth rates
+   - Market share
+   - Profitability
+   - Cross-category purchase influence
+   - Seasonal consistency
+
+## How It Works
+
+The module creates individual rankings for each metric, then combines these rankings
+using aggregation functions (mean, sum, min, max) to produce a final composite score.
+This approach normalizes metrics with different scales and ensures each factor contributes
+appropriately to the final decision.
+
+## Business Value
+
+- **Objective Decision Making**: Removes bias by systematically weighing all factors
+- **Scalability**: Can evaluate thousands of products/stores/suppliers simultaneously
+- **Transparency**: Clear methodology that stakeholders can understand and trust
+- **Flexibility**: Different aggregation methods suit different business strategies
+- **Actionable Output**: Direct ranking enables clear cut-off decisions
 
 Key Features:
-- Creates individual ranks for multiple columns
-- Supports both ascending and descending sort orders for each column
-- Combines individual ranks using a specified aggregation function
-- Can handle tie values with configurable options
-- Utilizes Ibis for efficient query execution
+- Creates individual ranks for multiple columns with business metrics
+- Supports both ascending and descending sort orders for each metric
+- Combines individual ranks using business-appropriate aggregation functions
+- Handles tie values for fair comparison
+- Utilizes Ibis for efficient query execution on large retail datasets
 """
 
 import ibis
@@ -17,12 +66,45 @@ import pandas as pd
 
 
 class CompositeRank:
-    """Creates a composite rank from multiple columns.
+    """Creates multi-factor composite rankings for retail decision-making.
 
-    This class creates a composite rank of several columns by giving each column an
-    individual rank, and then combining those ranks together into a single composite rank.
-    Composite ranks are often used in product range reviews when there are several important
-    factors to consider when deciding to list or delist a product.
+    The CompositeRank class enables retailers to make data-driven decisions by combining
+    multiple performance metrics into a single, actionable ranking. This is essential for
+    scenarios where no single metric tells the complete story.
+
+    ## Business Problem Solved
+
+    Retailers face complex trade-offs daily: Should we keep the high-volume product with
+    low margins or the high-margin product with slow sales? Which supplier offers the best
+    overall value when considering price, quality, and reliability? This class provides a
+    systematic approach to these multi-dimensional decisions.
+
+    ## Example Use Case: Product Range Review
+
+    When conducting quarterly range reviews, a retailer might rank products by:
+    - Sales performance (higher is better → descending order)
+    - Days of inventory (lower is better → ascending order)
+    - Customer rating (higher is better → descending order)
+    - Return rate (lower is better → ascending order)
+
+    The composite rank identifies products that perform well across ALL metrics, not just
+    excel in one area. Products with the best composite scores are clear "keep" decisions,
+    while those with the worst scores are candidates for delisting.
+
+    ## Aggregation Strategies
+
+    Different business contexts require different aggregation approaches:
+    - **Mean**: Balanced scorecard approach, all factors equally important
+    - **Min**: Conservative approach, focus on worst-performing metric
+    - **Max**: Optimistic approach, highlight strength in any area
+    - **Sum**: Cumulative performance across all dimensions
+
+    ## Actionable Outcomes
+
+    The composite rank directly supports decisions like:
+    - Top 20% composite rank → Increase inventory investment
+    - Bottom 20% composite rank → Consider delisting or markdown
+    - Middle 60% → Maintain current strategy, monitor for changes
     """
 
     _df: pd.DataFrame | None = None
@@ -34,21 +116,43 @@ class CompositeRank:
         agg_func: str,
         ignore_ties: bool = False,
     ) -> None:
-        """Initialize the CompositeRank class.
+        """Initialize the CompositeRank class for multi-criteria retail analysis.
 
         Args:
-            df (pd.DataFrame | ibis.Table): An ibis table or pandas DataFrame containing the data.
-            rank_cols (List[Union[Tuple[str, str], str]]): A list of columns to create the composite rank on.
-                Can be specified as tuples of (column_name, sort_order) where sort_order is 'asc', 'ascending',
-                'desc', or 'descending'. If just a string is provided, ascending order is assumed.
-            agg_func (str): The aggregation function to use when combining ranks.
-                Supported values are "mean", "sum", "min", "max".
-            ignore_ties (bool, optional): Whether to ignore ties when calculating ranks. If True, will use
-                row_number (each row gets a unique rank). If False (default), will use rank (ties get the same rank).
+            df (pd.DataFrame | ibis.Table): Product, store, or supplier performance data.
+            rank_cols (List[Union[Tuple[str, str], str]]): Metrics to rank with their optimization direction.
+                Examples for product ranging:
+                - ("sales_units", "desc") - Higher sales are better
+                - ("days_inventory", "asc") - Lower inventory days are better
+                - ("margin_pct", "desc") - Higher margins are better
+                - ("return_rate", "asc") - Lower returns are better
+                If just a string is provided, ascending order is assumed.
+            agg_func (str): How to combine individual rankings:
+                - "mean": Balanced scorecard (most common for range reviews)
+                - "sum": Total performance score (for bonus calculations)
+                - "min": Worst-case performance (for risk assessment)
+                - "max": Best-case performance (for opportunity identification)
+            ignore_ties (bool, optional): How to handle identical values:
+                - False (default): Products with same sales get same rank (fair comparison)
+                - True: Force unique ranks even for ties (strict ordering needed)
 
         Raises:
-            ValueError: If any of the specified columns are not in the DataFrame or if a sort order is invalid.
-            ValueError: If the aggregation function is not one of the supported values.
+            ValueError: If specified metrics are not in the data or sort order is invalid.
+            ValueError: If aggregation function is not supported.
+
+        Example:
+            >>> # Rank products for quarterly range review
+            >>> ranker = CompositeRank(
+            ...     df=product_data,
+            ...     rank_cols=[
+            ...         ("weekly_sales", "desc"),
+            ...         ("margin_percentage", "desc"),
+            ...         ("stock_cover_days", "asc"),
+            ...         ("customer_rating", "desc")
+            ...     ],
+            ...     agg_func="mean"
+            ... )
+            >>> # Products with lowest composite_rank should be reviewed for delisting
         """
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
@@ -105,11 +209,13 @@ class CompositeRank:
 
     @property
     def df(self) -> pd.DataFrame:
-        """Returns the pandas DataFrame representation of the table.
+        """Returns ranked data ready for business decision-making.
 
         Returns:
-            pd.DataFrame: A pandas DataFrame containing the original data,
-                individual column ranks, and the composite rank.
+            pd.DataFrame: Performance data with ranking columns added:
+                - Original metrics (sales, margin, etc.)
+                - Individual rank columns (e.g., sales_rank, margin_rank)
+                - composite_rank: Final combined ranking for decisions
         """
         if self._df is None:
             self._df = self.table.execute()
