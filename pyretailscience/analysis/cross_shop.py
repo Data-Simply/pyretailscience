@@ -1,4 +1,62 @@
-"""This module contains the CrossShop class that is used to create a cross-shop diagram."""
+"""Cross-Shopping Analysis Module for Category and Brand Interaction Insights.
+
+## Business Context
+
+Cross-shopping analysis reveals how customers navigate between different product
+categories, brands, or store locations. This intelligence drives critical retail
+decisions from store layout and category adjacencies to promotional bundling and
+targeted marketing campaigns.
+
+## Real-World Problem
+
+Retailers often make incorrect assumptions about customer behavior. They might place
+baby products far from beer, not realizing these categories have high cross-shopping
+rates (the famous "diapers and beer" phenomenon). Cross-shop analysis replaces
+assumptions with data-driven insights about actual customer purchase patterns.
+
+## Business Applications
+
+1. **Store Layout Optimization**
+   - Place frequently cross-shopped categories near each other
+   - Create logical customer journey paths through the store
+   - Reduce friction in the shopping experience
+
+2. **Promotional Strategy**
+   - Bundle products from highly cross-shopped categories
+   - Time promotions to capture cross-category purchases
+   - Design "buy from A, get discount on B" offers
+
+3. **Category Management**
+   - Understand category interdependencies
+   - Identify opportunity categories for existing shoppers
+   - Spot categories at risk when others decline
+
+4. **Multi-Channel Strategy**
+   - Analyze cross-shopping between online and physical stores
+   - Optimize channel-specific assortments
+   - Design omnichannel customer journeys
+
+5. **Competitive Analysis**
+   - Understand customer loyalty across competing brands
+   - Identify vulnerable competitor segments
+   - Design conquest strategies for shared customers
+
+## Business Value
+
+- **Increased Basket Size**: Strategic placement increases impulse purchases
+- **Customer Retention**: Better store experience reduces defection
+- **Marketing Efficiency**: Target promotions to actual behavior patterns
+- **Strategic Insights**: Understand true category relationships
+- **Competitive Advantage**: Leverage unique customer behavior insights
+
+## Visualization Output
+
+The module generates Venn diagrams showing:
+- Exclusive shoppers for each category/brand
+- Overlap segments with cross-shopping behavior
+- Relative size of each segment by customer count or spend
+- Percentage breakdowns for strategic planning
+"""
 
 from collections.abc import Callable
 
@@ -11,7 +69,22 @@ from pyretailscience.plots import venn
 
 
 class CrossShop:
-    """A class to create a cross-shop diagram."""
+    """Analyzes customer cross-shopping behavior between categories, brands, or locations.
+
+    The CrossShop class reveals hidden relationships in customer purchasing patterns,
+    enabling retailers to optimize everything from store layouts to marketing campaigns.
+    By understanding which products customers buy together across shopping trips, retailers
+    can make smarter decisions about product placement, promotions, and assortment.
+
+    ## Business Problem Solved
+
+    Many retail decisions assume customer behavior that may not reflect reality. For example:
+    - Are organic shoppers also buying conventional products?
+    - Do online grocery shoppers still visit physical stores?
+    - Which private label categories attract national brand buyers?
+
+    This analysis provides definitive answers with actionable percentages.
+    """
 
     @staticmethod
     def _generate_default_labels(count: int) -> list[str]:
@@ -38,26 +111,51 @@ class CrossShop:
         value_col: str | None = None,
         agg_func: str = "sum",
     ) -> None:
-        """Creates a cross-shop diagram that is used to show the overlap of customers between different groups.
+        """Initialize cross-shopping analysis between retail categories, brands, or locations.
 
         Args:
-            df (pd.DataFrame | ibis.Table):  The input DataFrame or ibis Table containing transactional data.
-            group_1_col (str): The column name for the first group.
-            group_1_val (str): The value of the first group to match.
-            group_2_col (str): The column name for the second group.
-            group_2_val (str): The value of the second group to match.
-            group_3_col (str, optional): The column name for the third group. Defaults to None.
-            group_3_val (str, optional): The value of the third group to match. Defaults to None.
-            labels (list[str], optional): The labels for the groups. Defaults to None.
-            value_col (str, optional): The column to aggregate. Defaults to the option column.unit_spend.
-            agg_func (str, optional): The aggregation function. Defaults to "sum".
+            df (pd.DataFrame | ibis.Table): Transaction data with customer purchases.
+            group_1_col (str): Column identifying first segment (e.g., "category", "brand", "channel").
+            group_1_val (str): Value to analyze for first segment (e.g., "organic", "Brand_A", "online").
+            group_2_col (str): Column identifying second segment.
+            group_2_val (str): Value to analyze for second segment.
+            group_3_col (str, optional): Column for three-way analysis. Defaults to None.
+            group_3_val (str, optional): Value for third segment. Defaults to None.
+            labels (list[str], optional): Custom labels for diagram (e.g., ["Organic", "Local"]).
+                Defaults to alphabetical labels [A, B, C].
+            value_col (str, optional): Metric to analyze (sales, units, visits).
+                Defaults to spend column from options.
+            agg_func (str, optional): How to combine customer values ("sum", "mean", "count").
+                Defaults to "sum" for total opportunity sizing.
 
         Returns:
             None
 
         Raises:
-            ValueError: If the dataframe does not contain the required columns or if the number of labels does not match
-                the number of group indexes given.
+            ValueError: If required columns missing or label count doesn't match groups.
+
+        Business Examples:
+            >>> # Analyze organic vs conventional shoppers
+            >>> cross_shop = CrossShop(
+            ...     df=transactions,
+            ...     group_1_col="product_type",
+            ...     group_1_val="organic",
+            ...     group_2_col="product_type",
+            ...     group_2_val="conventional",
+            ...     labels=["Organic", "Conventional"]
+            ... )
+            ...
+            >>> # Three-way analysis: Online vs Store vs Mobile
+            >>> cross_shop = CrossShop(
+            ...     df=transactions,
+            ...     group_1_col="channel",
+            ...     group_1_val="online",
+            ...     group_2_col="channel",
+            ...     group_2_val="store",
+            ...     group_3_col="channel",
+            ...     group_3_val="mobile",
+            ...     labels=["Online", "Store", "Mobile"]
+            ... )
         """
         value_col = value_col or get_option("column.unit_spend")
         required_cols = [get_option("column.customer_id"), value_col]
@@ -199,20 +297,21 @@ class CrossShop:
         subset_label_formatter: Callable | None = None,
         **kwargs: dict[str, any],
     ) -> SubplotBase:
-        """Plot the cross-shop diagram.
+        """Generate Venn diagram showing customer segment overlaps.
 
         Args:
-            title (str, optional): The title of the plot. Defaults to None.
-            source_text (str, optional): The source text for the plot. Defaults to None.
-            vary_size (bool, optional): Whether to vary the size of the circles based on their values. Defaults to
-                False.
-            figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
-            ax (Axes, optional): The axes to plot on. Defaults to None.
-            subset_label_formatter (callable, optional): Function to format the subset labels.
-            **kwargs (dict[str, any]): Additional keyword arguments to pass to the diagram.
+            title (str, optional): Chart title (e.g., "Cross-Shopping: Organic vs Conventional").
+            source_text (str, optional): Data source attribution. Defaults to None.
+            vary_size (bool, optional): Scale circles by segment value for visual impact.
+                True = larger segments appear bigger. Defaults to False.
+            figsize (tuple[int, int], optional): Plot dimensions. Defaults to None.
+            ax (Axes, optional): Existing axes for subplot integration. Defaults to None.
+            subset_label_formatter (callable, optional): Custom formatting for percentages.
+                Default shows one decimal place (e.g., "34.5%").
+            **kwargs (dict[str, any]): Additional diagram customization options.
 
         Returns:
-            SubplotBase: The axes of the plot.
+            SubplotBase: Matplotlib axes containing the cross-shop visualization.
         """
         return venn.plot(
             df=self.cross_shop_table_df,

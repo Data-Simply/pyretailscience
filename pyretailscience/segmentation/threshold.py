@@ -1,13 +1,46 @@
-"""Threshold-Based Customer Segmentation Module.
+"""Threshold-Based Segmentation for Flexible Business Classification.
 
-This module provides the `ThresholdSegmentation` class, which segments customers
-based on user-defined thresholds and segment mappings.
+## Business Context
 
-Key Features:
-- Segments customers based on specified percentile thresholds.
-- Uses a specified column for segmentation, with an aggregation function applied.
-- Handles customers with zero spend using configurable options.
-- Utilizes Ibis for efficient query execution.
+Many retail segmentation needs don't fit standard models like RFM. Businesses often need
+custom segments based on specific metrics and thresholds - whether segmenting customers
+by spend percentiles, stores by performance quintiles, or products by sales velocity.
+This module provides flexible threshold-based segmentation for any business dimension.
+
+## The Business Problem
+
+Retailers need custom segmentation rules for different business scenarios:
+- Create spend-based customer tiers (Bronze, Silver, Gold, Platinum)
+- Classify stores into performance bands (A, B, C, D stores)
+- Segment products by velocity (Fast, Medium, Slow movers)
+- Define custom categories based on business-specific thresholds
+
+Standard segmentation approaches are too rigid, while manual classification is inconsistent
+and doesn't scale across large datasets.
+
+## Real-World Applications
+
+### Customer Classification
+- Create VIP tiers based on total spend percentiles
+- Segment by transaction frequency for different service levels
+- Classify customers by recency for retention campaigns
+
+### Store Performance Tiers
+- Classify stores by sales per square foot into performance bands
+- Segment locations by customer conversion rates
+- Create store tiers for investment prioritization
+
+### Product Categorization
+- Segment SKUs by sales velocity for inventory management
+- Classify products by margin contribution for pricing strategies
+- Create ABC analysis categories for supply chain optimization
+
+## Technical Features
+
+- Flexible percentile-based thresholds for consistent segment sizing
+- Custom aggregation functions for different business metrics
+- Configurable handling of zero-value entities
+- Efficient execution using Ibis for large datasets
 """
 
 from typing import Literal

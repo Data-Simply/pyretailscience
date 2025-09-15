@@ -698,33 +698,32 @@ cohort.df.head()
 The product association module implements functionality for generating product association rules, a powerful technique
 in retail analytics and market basket analysis.
 
-Product association rules are used to uncover relationships between different products that customers tend to purchase
-together. These rules provide valuable insights into consumer behavior and purchasing patterns, which can be leveraged
-by retail businesses in various ways:
+Product Association Analysis (Market Basket Analysis) uncovers hidden relationships in customer purchasing behavior,
+transforming how retailers approach merchandising, marketing, and operations by revealing which products naturally
+sell together.
 
-1. Cross-selling and upselling: By identifying products frequently bought together, retailers can make targeted product
-   recommendations to increase sales and average order value.
+**Business Problem:**
 
-2. Store layout optimization: Understanding product associations helps in strategic product placement within stores,
-   potentially increasing impulse purchases and overall sales.
+Retailers lose revenue from missed cross-selling opportunities and poor product placement. Without understanding
+product associations, stores might place complementary items in different aisles, miss bundling opportunities,
+or stock out on associated items when promoting a product.
 
-3. Inventory management: Knowing which products are often bought together aids in maintaining appropriate stock levels
-   and predicting demand.
+**Real-World Applications:**
 
-4. Marketing and promotions: Association rules can guide the creation ofeffective bundle offers and promotional
-   campaigns.
+- **Strategic Merchandising**: Place chips near beer when data shows strong association
+- **Dynamic Bundle Pricing**: Create "Breakfast bundle" (Coffee + Pastry) when uplift shows synergy
+- **Personalized Recommendations**: Power "Customers who bought X also bought Y" suggestions
+- **Inventory Optimization**: Stock pasta sauce when pasta is promoted if association exists
+- **New Product Placement**: Position private label next to associated national brands
 
-5. Customer segmentation: Patterns in product associations can reveal distinct customer segments with specific
-   preferences.
+**Key Metrics Explained:**
 
-6. New product development: Insights from association rules can inform decisions about new product lines or features.
-
-The module uses metrics such as support, confidence, and uplift to quantifythe strength and significance of product
-associations:
-
-- Support: The frequency of items appearing together in transactions.
-- Confidence: The likelihood of buying one product given the purchase of another.
-- Uplift: The increase in purchase probability of one product when another is bought.
+- **Support**: Proportion of transactions containing both products (frequency indicator)
+- **Confidence**: Probability of buying B given A was purchased (predictive power)
+- **Uplift/Lift**: How much more likely products are bought together than by chance
+    - Uplift > 1: Positive association (sell better together)
+    - Uplift = 1: Independent (no relationship)
+    - Uplift < 1: Negative association (rarely bought together)
 
 Example:
 
@@ -754,20 +753,23 @@ pa.df.head()
 
 ![Cross Shop](assets/images/analysis_modules/cross_shop.svg){ align=right loading=lazy width="50%"}
 
-Cross Shop analysis visualizes the overlap between different customer groups or product categories, helping retailers
-understand cross-purchasing behaviors. This powerful visualization technique employs Venn or Euler diagrams to show how
-customers interact across different product categories or segments.
+Cross Shop analysis reveals how customers navigate between different categories, brands, or store locations,
+replacing assumptions with data-driven insights about actual purchase patterns. The Venn diagram visualization
+immediately shows which products customers buy together versus separately.
 
-Key applications include:
+**Business Problem Solved:**
 
-- Identifying opportunities for cross-selling and bundling
-- Evaluating product category relationships
-- Analyzing promotion cannibalization
-- Understanding customer shopping patterns across departments
-- Planning targeted marketing campaigns based on complementary purchasing behavior
+Retailers often make incorrect assumptions about customer behavior. They might place baby products far from beer,
+not realizing these categories have high cross-shopping rates. This analysis reveals the truth about customer
+purchase patterns.
 
-The module provides options to visualize both the proportional size of each group and the percentage of overlap, making
-it easy to identify significant patterns in customer shopping behavior.
+**Real-World Applications:**
+
+- **Store Layout Optimization**: Place frequently cross-shopped categories near each other to reduce friction
+- **Promotional Strategy**: Bundle products from highly cross-shopped categories for better lift
+- **Category Management**: Understand interdependencies and identify opportunity categories
+- **Multi-Channel Strategy**: Analyze cross-shopping between online and physical stores
+- **Competitive Analysis**: Understand customer loyalty across competing brands
 
 </div>
 
@@ -871,27 +873,31 @@ gain_loss.plot(
     assets/images/analysis_modules/customer_decision_hierarchy.svg
 ){ align=right loading=lazy width="50%"}
 
-A Customer Decision Hierarchy (CDH), also known as a Customer Decision Tree, is a powerful tool in retail analytics that
- visually represents the sequential steps and criteria customers use when making purchase decisions within a specific
- product category. Here's a brief summary of its purpose and utility:
+Customer Decision Hierarchy (CDH) analysis reveals how customers perceive products as substitutes or complements,
+enabling data-driven range planning decisions. By analyzing actual switching behavior rather than relying on
+product attributes or manager intuition, CDH identifies which products customers view as interchangeable versus
+essential variety.
 
-CDHs allow analysts to:
+**Business Problem Solved:**
 
-- Map out the hierarchical structure of customer decision-making processes
-- Identify key product attributes that drive purchase decisions
-- Understand product substitutions and alternatives customers consider
-- Prioritize product attributes based on their importance to customers
+Retailers struggle with range rationalization: Which products can be delisted without losing customers? When does
+variety add value versus create confusion? CDH answers these questions by examining customer purchase patterns to
+identify true substitutability.
 
-In retail contexts, CDHs are valuable for:
+**How It Works:**
 
-- Optimizing product assortments and shelf layouts
-- Developing targeted marketing strategies
-- Identifying opportunities for new product development
-- Understanding competitive dynamics within a category
+- Products rarely bought by the same customer → likely substitutes
+- Products often bought by the same customer → complements or variety-seeking
+- Uses Yule's Q coefficient to measure substitutability strength
+- Creates hierarchical clusters showing substitution relationships
 
-By visualizing the decision-making process, CDHs help retailers align their offerings and strategies with customer
-preferences, potentially increasing sales and customer satisfaction. They provide insights into how customers navigate
-choices, enabling more effective category management and merchandising decisions.
+**Real-World Applications:**
+
+- **Range Rationalization**: Identify safe delisting candidates within substitute clusters
+- **New Product Introduction**: Understand which existing products new items might cannibalize
+- **Private Label Strategy**: Identify national brand products suitable for PL alternatives
+- **Space Optimization**: Allocate more space to non-substitutable products
+- **Markdown Strategy**: Clear substitute products sequentially, not simultaneously
 
 </div>
 
@@ -1243,23 +1249,30 @@ tc.plot(
 
 <div class="clear" markdown>
 
-The Composite Rank module creates a composite ranking of several columns by giving each column an individual rank and
-then combining those ranks together. Composite rankings are particularly useful for:
+The Composite Rank module enables data-driven multi-factor decision making by combining multiple performance metrics
+into a single actionable ranking. This is essential when no single metric tells the complete story - for instance,
+a product might have high sales but low margin, or a supplier might offer great prices but poor delivery reliability.
 
-- Product range reviews when multiple factors need to be considered together
-- Prioritizing actions based on multiple performance metrics
-- Creating balanced scorecards that consider multiple dimensions
-- Identifying outliers across multiple metrics
+**Real-World Applications:**
 
-This module allows you to specify different sort orders for each column (ascending or descending) and supports various
-aggregation functions to combine the ranks, such as mean, sum, min, or max.
+- **Product Range Optimization**: Balance sales velocity, margin, stock turn, and ratings for listing decisions
+- **Supplier Performance Management**: Evaluate based on price, quality, delivery, and payment terms
+- **Store Performance Assessment**: Rank stores using sales per sq ft, conversion rates, labor productivity, and NPS
+- **Category Management**: Prioritize categories for space allocation using growth, profitability, and market share
 
-Key features:
+**Business Value:**
 
-- Supports both ascending and descending sort orders
-- Handles ties in rankings with configurable options
-- Combines multiple individual ranks into a single composite rank
-- Works with both pandas DataFrames and ibis Tables
+- Removes bias through systematic multi-factor evaluation
+- Scales to thousands of products/stores/suppliers simultaneously
+- Provides transparent methodology stakeholders can trust
+- Enables clear cut-off decisions based on composite performance
+
+**Aggregation Strategies:**
+
+- **Mean**: Balanced scorecard approach, all factors equally important
+- **Min**: Conservative approach, focus on worst-performing metric
+- **Max**: Optimistic approach, highlight strength in any area
+- **Sum**: Cumulative performance across all dimensions
 
 </div>
 

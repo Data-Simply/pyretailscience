@@ -1,12 +1,48 @@
-"""Module for calculating and visualizing transaction statistics by segment.
+"""Segment Performance Analysis for Retail Business Intelligence.
 
-This module provides the `SegTransactionStats` class, which allows for the computation of
-transaction-based statistics grouped by one or more segment columns. The statistics include
-aggregations such as total spend, unique customers, transactions per customer, and optional
-custom aggregations.
+## Business Context
 
-The module supports both Pandas DataFrames and Ibis Tables as input data formats. It also
-offers visualization capabilities to generate plots of segment-based statistics.
+Retailers need to understand performance differences across various business dimensions -
+whether comparing customer segments, store locations, product categories, brands, channels,
+or any other grouping. This module transforms transactional data into actionable insights
+by calculating key performance metrics for any segment or combination of segments.
+
+## The Business Problem
+
+Business stakeholders receive segment data but struggle to answer performance questions:
+- Which stores/categories/customer segments generate the most revenue?
+- How do transaction patterns differ between segments?
+- What's the customer density and spending behavior by segment?
+- Are certain combinations of segments more valuable than others?
+
+Without segment performance analysis, decisions are made on incomplete information
+rather than data-driven insights about segment value and behavior.
+
+## Real-World Applications
+
+### Customer Segment Analysis
+- Compare RFM segments: Which customer types drive the most revenue?
+- Analyze geographic segments: Regional performance differences
+- Age/demographic segments: Spending patterns by customer characteristics
+
+### Store/Location Analysis
+- Store performance comparison: Revenue per customer, transaction frequency
+- Regional analysis: Market penetration and customer behavior by area
+- Channel analysis: Online vs in-store performance metrics
+
+### Product/Category Analysis
+- Category performance: Which product lines drive customer frequency?
+- Brand analysis: Private label vs national brand customer behavior
+- SKU analysis: Performance metrics for product rationalization decisions
+
+### Multi-Dimensional Analysis
+- Store + Customer segment: High-value customers by location
+- Category + Channel: Product performance across sales channels
+- Brand + Geography: Regional brand performance variations
+
+This module calculates comprehensive statistics including spend, customer counts,
+transaction frequency, average basket size, and custom business metrics for any
+segment combination.
 """
 
 from typing import Any, Literal
@@ -21,7 +57,16 @@ from pyretailscience.plots.styles.tailwind import COLORS
 
 
 class SegTransactionStats:
-    """Calculates transaction statistics by segment."""
+    """Calculates transaction performance statistics for any business segment or dimension.
+
+    Analyzes transaction data across segments like customer types, store locations,
+    product categories, brands, channels, or any combination to reveal performance
+    differences and guide business decisions.
+
+    The class automatically calculates key retail metrics including total spend,
+    unique customers, transaction frequency, spend per customer, and custom
+    aggregations for comparison across segments.
+    """
 
     _df: pd.DataFrame | None = None
 
