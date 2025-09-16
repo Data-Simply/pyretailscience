@@ -124,7 +124,7 @@ class CrossShop:
             group_3_val (str, optional): Value for third segment. Defaults to None.
             labels (list[str], optional): Custom labels for diagram (e.g., ["Organic", "Local"]).
                 Defaults to alphabetical labels [A, B, C].
-            group_col (str, optional): Customer grouping column. Defaults to customer_id from options.
+            group_col (str, optional): Grouping column (e.g., customer_id, store_id, segment_name). Defaults to customer_id from options.
             value_col (str, optional): Metric to analyze (sales, units, visits).
                 Defaults to spend column from options.
             agg_func (str, optional): How to combine customer values ("sum", "mean", "count").
@@ -230,7 +230,7 @@ class CrossShop:
             group_2_val (str): Value to filter for the second group.
             group_3_col (str, optional): Column name for the third group. Defaults to None.
             group_3_val (str, optional): Value to filter for the third group. Defaults to None.
-            group_col (str, optional): Customer grouping column. Defaults to customer_id from options.
+            group_col (str, optional): Grouping column (e.g., customer_id, store_id, segment_name). Defaults to customer_id from options.
             value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
             labels (list[str], optional): The labels for the groups. Defaults to None.
