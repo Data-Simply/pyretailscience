@@ -1,22 +1,48 @@
-"""Module for calculating and visualizing transaction statistics by segment.
+"""Segment Performance Analysis for Retail Business Intelligence.
 
-This module provides the `SegTransactionStats` class, which allows for the computation of
-transaction-based statistics grouped by one or more segment columns. The statistics include
-aggregations such as total spend, unique customers, transactions per customer, and optional
-custom aggregations. When rollups are enabled for multi-column segmentations, the output includes
-subtotals for all non-empty prefixes and suffixes of the segment hierarchy, plus an overall grand
-total. For example, with columns [A, B, C], the result will include rollups for [A, B, Total],
-[A, Total, Total] (prefixes) as well as [Total, B, C] and [Total, Total, C] (suffixes), in addition
-to the grand total [Total, Total, Total].
+## Business Context
 
-Performance considerations:
-- Enabling suffix rollups adds an additional O(n) set of aggregations where n is the number of
-  segment columns (similar to prefix rollups). For typical hierarchies (2-5 columns), the overhead
-  is minimal. For very wide hierarchies, consider disabling `calc_rollup`, limiting the number of
-  segment columns used, or relying solely on `calc_total`.
+Retailers need to understand performance differences across various business dimensions -
+whether comparing customer segments, store locations, product categories, brands, channels,
+or any other grouping. This module transforms transactional data into actionable insights
+by calculating key performance metrics for any segment or combination of segments.
 
-The module supports both Pandas DataFrames and Ibis Tables as input data formats. It also
-offers visualization capabilities to generate plots of segment-based statistics.
+## The Business Problem
+
+Business stakeholders receive segment data but struggle to answer performance questions:
+- Which stores/categories/customer segments generate the most revenue?
+- How do transaction patterns differ between segments?
+- What's the customer density and spending behavior by segment?
+- Are certain combinations of segments more valuable than others?
+
+Without segment performance analysis, decisions are made on incomplete information
+rather than data-driven insights about segment value and behavior.
+
+## Real-World Applications
+
+### Customer Segment Analysis
+- Compare RFM segments: Which customer types drive the most revenue?
+- Analyze geographic segments: Regional performance differences
+- Age/demographic segments: Spending patterns by customer characteristics
+
+### Store/Location Analysis
+- Store performance comparison: Revenue per customer, transaction frequency
+- Regional analysis: Market penetration and customer behavior by area
+- Channel analysis: Online vs in-store performance metrics
+
+### Product/Category Analysis
+- Category performance: Which product lines drive customer frequency?
+- Brand analysis: Private label vs national brand customer behavior
+- SKU analysis: Performance metrics for product rationalization decisions
+
+### Multi-Dimensional Analysis
+- Store + Customer segment: High-value customers by location
+- Category + Channel: Product performance across sales channels
+- Brand + Geography: Regional brand performance variations
+
+This module calculates comprehensive statistics including spend, customer counts,
+transaction frequency, average basket size, and custom business metrics for any
+segment combination.
 """
 
 from typing import Any, Literal
