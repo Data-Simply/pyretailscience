@@ -794,9 +794,7 @@ cs_customers = cross_shop.CrossShop(
     df,
     group_1_col="category_name",
     group_1_val="Electronics",
-    group_2_col="category_name",
     group_2_val="Clothing",
-    group_3_col="category_name",
     group_3_val="Home",
     labels=["Electronics", "Clothing", "Home"],
 )
