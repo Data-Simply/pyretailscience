@@ -633,3 +633,85 @@ class TestSegTransactionStats:
         ]
         assert len(grand_total) == 1
         assert grand_total[cols.agg_unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
+
+    def test_rollup_enabled_total_disabled(self):
+        """Test that rollup rows are included but grand total is excluded when calc_rollup=True, calc_total=False."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3, 4, 5, 6],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "category": ["Clothing", "Clothing", "Clothing", "Footwear", "Footwear", "Footwear"],
+                "subcategory": ["Jeans", "Jeans", "Shirts", "Sneakers", "Boots", "Boots"],
+            },
+        )
+
+        # Create SegTransactionStats with rollup enabled but total disabled
+        seg_stats = SegTransactionStats(
+            df,
+            segment_col=["category", "subcategory"],
+            calc_rollup=True,
+            calc_total=False,
+        )
+
+        result_df = seg_stats.df
+
+        # Expected counts:
+        # - 4 detail rows (Clothing-Jeans, Clothing-Shirts, Footwear-Sneakers, Footwear-Boots)
+        # - 2 prefix rollup rows (Clothing-Total, Footwear-Total)
+        # - 2 suffix rollup rows (Total-Jeans, Total-Shirts, Total-Sneakers, Total-Boots) = 4
+        # - NO grand total row (Total-Total)
+        expected_rows_with_rollup_no_total = 10
+
+        assert len(result_df) == expected_rows_with_rollup_no_total
+
+        # Test constants
+        expected_prefix_rollups = 2  # Clothing-Total, Footwear-Total
+        expected_suffix_rollups = 4  # Total-Jeans, Total-Shirts, Total-Sneakers, Total-Boots
+
+        # Check for presence of prefix rollup rows
+        prefix_rollups = result_df[(result_df["subcategory"] == "Total") & (result_df["category"] != "Total")]
+        assert len(prefix_rollups) == expected_prefix_rollups
+
+        # Check for presence of suffix rollup rows
+        suffix_rollups = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] != "Total")]
+        assert len(suffix_rollups) == expected_suffix_rollups
+
+        # Check for absence of grand total row
+        grand_total = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Total")]
+        assert len(grand_total) == 0
+
+    def test_rollup_disabled_total_disabled(self):
+        """Test that only detail rows are included when calc_rollup=False, calc_total=False."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3, 4, 5, 6],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "category": ["Clothing", "Clothing", "Clothing", "Footwear", "Footwear", "Footwear"],
+                "subcategory": ["Jeans", "Jeans", "Shirts", "Sneakers", "Boots", "Boots"],
+            },
+        )
+
+        # Create SegTransactionStats with both rollup and total disabled
+        seg_stats = SegTransactionStats(
+            df,
+            segment_col=["category", "subcategory"],
+            calc_rollup=False,
+            calc_total=False,
+        )
+
+        result_df = seg_stats.df
+
+        # Expected: only 4 detail rows (Clothing-Jeans, Clothing-Shirts, Footwear-Sneakers, Footwear-Boots)
+        expected_rows_detail_only = 4
+
+        assert len(result_df) == expected_rows_detail_only
+
+        # Check for absence of any rollup rows
+        rollup_rows = result_df[(result_df["subcategory"] == "Total") | (result_df["category"] == "Total")]
+        assert len(rollup_rows) == 0
+
+        # Verify all rows are detail rows (no "Total" values)
+        assert "Total" not in result_df["category"].values
+        assert "Total" not in result_df["subcategory"].values
