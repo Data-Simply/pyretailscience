@@ -25,16 +25,16 @@ def sample_price_dataframe():
     data = {
         "product_id": range(1, 101),
         "unit_price": [
-            # Retailer A - mix of low and medium prices
+            # Walmart - mix of low and medium prices
             *np.random.default_rng(42).uniform(1, 3, 25),
-            # Retailer B - mostly medium prices
+            # Target - mostly medium prices
             *np.random.default_rng(42).uniform(2, 5, 25),
-            # Retailer C - higher prices
+            # Amazon - higher prices
             *np.random.default_rng(42).uniform(4, 8, 25),
-            # Retailer D - wide range
+            # Best Buy - wide range
             *np.random.default_rng(42).uniform(1, 10, 25),
         ],
-        "retailer": (["Retailer_A"] * 25 + ["Retailer_B"] * 25 + ["Retailer_C"] * 25 + ["Retailer_D"] * 25),
+        "retailer": (["Walmart"] * 25 + ["Target"] * 25 + ["Amazon"] * 25 + ["Best Buy"] * 25),
         "country": (["US"] * 50 + ["UK"] * 50),
     }
     return pd.DataFrame(data)
@@ -45,7 +45,7 @@ def simple_price_dataframe():
     """A simple dataframe for predictable testing."""
     data = {
         "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-        "retailer": ["A", "A", "B", "B", "C", "C"],
+        "retailer": ["Walmart", "Walmart", "Target", "Target", "Amazon", "Amazon"],
     }
     return pd.DataFrame(data)
 
@@ -87,7 +87,7 @@ def test_plot_missing_value_col():
     df = pd.DataFrame(
         {
             "price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -106,7 +106,7 @@ def test_plot_missing_group_col():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "store": ["A", "B", "C"],
+            "store": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -125,7 +125,7 @@ def test_plot_non_numeric_value_col():
     df = pd.DataFrame(
         {
             "unit_price": ["low", "medium", "high"],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -144,7 +144,7 @@ def test_plot_invalid_bins_zero():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -163,7 +163,7 @@ def test_plot_invalid_bins_negative():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -182,7 +182,7 @@ def test_plot_invalid_bins_list_too_short():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -201,7 +201,7 @@ def test_plot_invalid_bins_list_non_numeric():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -220,7 +220,7 @@ def test_plot_with_unsorted_bins_list():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -240,7 +240,7 @@ def test_plot_invalid_bins_type():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
-            "retailer": ["A", "B", "C"],
+            "retailer": ["Walmart", "Target", "Amazon"],
         },
     )
 
@@ -259,7 +259,7 @@ def test_plot_with_missing_values():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, None, 4, 5],
-            "retailer": ["A", "A", "B", "B", None],
+            "retailer": ["Walmart", "Walmart", "Target", "Target", None],
         },
     )
 
@@ -305,7 +305,7 @@ def test_plot_with_integer_bins(simple_price_dataframe):
 
     assert isinstance(result_ax, Axes)
 
-    expected_retailers = 3  # A, B, C retailers
+    expected_retailers = 3  # Walmart, Target, Amazon retailers
     assert len(result_ax.get_xticks()) == expected_retailers
 
     expected_bins = 3  # 3 price bins/boundaries
@@ -325,7 +325,7 @@ def test_plot_with_list_bins(simple_price_dataframe):
 
     assert isinstance(result_ax, Axes)
 
-    expected_retailers = 3  # A, B, C retailers
+    expected_retailers = 3  # Walmart, Target, Amazon retailers
     assert len(result_ax.get_xticks()) == expected_retailers
 
     expected_bins = 3  # 3 price bins/boundaries
@@ -442,7 +442,7 @@ def test_plot_single_group_uses_single_color():
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3, 4],
-            "retailer": ["A", "A", "A", "A"],  # Only one retailer
+            "retailer": ["Walmart", "Walmart", "Walmart", "Walmart"],  # Only one retailer
         },
     )
 
@@ -467,3 +467,46 @@ def test_plot_many_groups_uses_multi_color(sample_price_dataframe):
     )
 
     assert isinstance(result_ax, Axes)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_handles_zero_percentages():
+    """Test that plot handles edge case where all percentages might be zero."""
+    # Create a DataFrame where all products fall into the same bin
+    # This creates a scenario where some bins have 0%
+    df = pd.DataFrame(
+        {
+            "unit_price": [1.0, 1.0, 1.0, 1.0],  # All same price
+            "retailer": ["Walmart", "Walmart", "Target", "Target"],
+        },
+    )
+
+    result_ax = price.plot(
+        df=df,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=5,  # More bins than data points creates empty bins
+    )
+
+    # Should not raise division by zero error
+    assert isinstance(result_ax, Axes)
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_plot_raises_error_when_no_data_in_bins():
+    """Test that plot raises error when no data falls within the specified bins."""
+    df = pd.DataFrame(
+        {
+            "unit_price": [5.0, 6.0, 7.0, 8.0],
+            "retailer": ["Walmart", "Walmart", "Target", "Target"],
+        },
+    )
+
+    # Create bins that don't include any of the data points
+    with pytest.raises(ValueError, match="All percentages are zero - no data falls within the specified bins"):
+        price.plot(
+            df=df,
+            value_col="unit_price",
+            group_col="retailer",
+            bins=[1.0, 2.0, 3.0, 4.0],  # All data is above these bins
+        )

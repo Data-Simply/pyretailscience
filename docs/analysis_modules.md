@@ -602,33 +602,22 @@ import numpy as np
 from pyretailscience.plots import price
 
 np.random.seed(42)
-data = {
+df = pd.DataFrame({
     "product_id": range(1, 101),
-    "unit_price": [
-        # Retailer A - mix of low and medium prices
-        *np.random.uniform(1, 3, 25),
-        # Retailer B - mostly medium prices
-        *np.random.uniform(2, 5, 25),
-        # Retailer C - higher prices
-        *np.random.uniform(4, 8, 25),
-        # Retailer D - wide range
-        *np.random.uniform(1, 10, 25),
-    ],
-    "retailer": (["Retailer_A"] * 25 + ["Retailer_B"] * 25 +
-                ["Retailer_C"] * 25 + ["Retailer_D"] * 25),
-}
-df = pd.DataFrame(data)
+    "unit_price": np.concatenate([np.random.uniform(*b, 25) for b in [(1,3),(2,5),(4,8),(1,10)]]),
+    "retailer": np.repeat(["Walmart","Target","Walgreens","CVS"], 25)
+})
 
 price.plot(
     df=df,
     value_col="unit_price",
     group_col="retailer",
-    bins=5,
+    bins=10,
     title="Price Distribution Analysis by Retailer",
     x_label="Retailers",
     y_label="Price Bands",
     legend_title="Retailers",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: PyRetailScience",
     move_legend_outside=True,
 )
 ```

@@ -29,12 +29,13 @@ from typing import Any
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
+from matplotlib.lines import Line2D
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
 
 
-def plot(  # noqa: C901, PLR0912
+def plot(  # noqa: C901
     df: pd.DataFrame,
     value_col: str,
     group_col: str,
@@ -140,35 +141,43 @@ def plot(  # noqa: C901, PLR0912
 
     alpha = kwargs.pop("alpha", 0.7)
     s_scale = kwargs.pop("s", 800)  # size for bubbles
-    edge_color = kwargs.pop("edgecolor", "white")  # White stroke around bubbles
+    edge_color = kwargs.pop("edgecolor", "black")  # black stroke around bubbles
     line_width = kwargs.pop("linewidth", 1.5)  # Stroke width
 
-    labeled_groups = set()
+    # Validate that we have some data
+    if percentages.max().max() == 0 or pd.isna(percentages.max().max()):
+        raise ValueError("All percentages are zero - no data falls within the specified bins")
 
-    for i, group in enumerate(groups):
-        for j, price_bin in enumerate(price_bins):
-            percentage = percentages.loc[group, price_bin]
-            if percentage > 0:
-                bubble_size = (percentage / percentages.max().max()) * s_scale
+    # Stack to get all (group, price_bin) combinations with their percentages
+    stacked = percentages.stack()
+    # Filter out zero percentages to avoid invisible bubbles
+    stacked = stacked[stacked > 0]
 
-                label = group if group not in labeled_groups else ""
-                if group not in labeled_groups:
-                    labeled_groups.add(group)
+    if len(stacked) > 0:  # Only plot if there are non-zero percentages
+        x_positions = [groups.index(group) for group, _ in stacked.index]
+        y_positions = [price_bins.index(price_bin) for _, price_bin in stacked.index]
+        # Calculate bubble sizes using per-group maximum for consistent scaling across columns
+        bubble_sizes = []
+        for group, price_bin in stacked.index:
+            group_max = percentages.loc[group].max()  # Max percentage within this group
+            percentage_value = stacked.loc[(group, price_bin)]
+            scaled_size = (percentage_value / group_max) * s_scale
+            bubble_sizes.append(scaled_size)
+        bubble_colors = [colors[groups.index(group)] for group, _ in stacked.index]
 
-                ax.scatter(
-                    i,  # x-position based on group index
-                    j,  # y-position based i n index
-                    s=bubble_size,
-                    color=colors[i],
-                    alpha=alpha,
-                    edgecolor=edge_color,
-                    linewidth=line_width,
-                    label=label,
-                    **kwargs,
-                )
+        ax.scatter(
+            x_positions,
+            y_positions,
+            s=bubble_sizes,
+            c=bubble_colors,
+            alpha=alpha,
+            edgecolor=edge_color,
+            linewidth=line_width,
+            **kwargs,
+        )
 
     ax.set_xticks(range(len(groups)))
-    ax.set_xticklabels(groups, rotation=45, ha="right")
+    ax.set_xticklabels(groups)
     ax.set_yticks(range(len(price_bins)))
 
     # Format price bin labels to be more user-friendly
@@ -186,8 +195,8 @@ def plot(  # noqa: C901, PLR0912
     ax = gu.standard_graph_styles(
         ax=ax,
         title=title,
-        x_label=x_label or group_col.replace("_", " ").title(),
-        y_label=y_label or "Price Bands",
+        x_label=x_label,
+        y_label=y_label,
         legend_title=None,
         move_legend_outside=False,
         show_legend=False,
@@ -195,8 +204,6 @@ def plot(  # noqa: C901, PLR0912
 
     # Create custom legend with uniform circle sizes AFTER standard_graph_styles
     if len(groups) > 1:  # Only create legend if there are multiple groups
-        from matplotlib.lines import Line2D
-
         legend_elements = []
         for i, _group in enumerate(groups):
             legend_elements.append(
