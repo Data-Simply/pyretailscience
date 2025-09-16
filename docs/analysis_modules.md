@@ -571,6 +571,68 @@ time.plot(
 )
 ```
 
+### Price Architecture Plot
+
+<div class="clear" markdown>
+
+![Price Plot](assets/images/analysis_modules/plots/price_plot.svg){ align=right loading=lazy width="50%"}
+
+Price architecture plots create bubble chart visualizations that display price distribution analysis across different
+categories. The chart shows price distribution as vertical layers (price bands) with bubble sizes representing the
+percentage of products in each price range for different groups like retailers, countries, or brands.
+
+This visualization is particularly useful for:
+
+- **Retailer Price Comparison**: Compare price distributions across different retailers to identify competitive
+  positioning
+- **Regional Price Analysis**: Analyze price positioning by country/region to understand market dynamics
+- **Competitive Pricing**: Identify pricing gaps and opportunities in the competitive landscape
+- **Price Architecture Visualization**: Visualize competitive pricing landscapes and market segments
+
+The plot supports both integer (equal-width bins) and custom boundary arrays for flexible price band analysis,
+with automatic percentage calculations and professional styling integration.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import price
+
+np.random.seed(42)
+data = {
+    "product_id": range(1, 101),
+    "unit_price": [
+        # Retailer A - mix of low and medium prices
+        *np.random.uniform(1, 3, 25),
+        # Retailer B - mostly medium prices
+        *np.random.uniform(2, 5, 25),
+        # Retailer C - higher prices
+        *np.random.uniform(4, 8, 25),
+        # Retailer D - wide range
+        *np.random.uniform(1, 10, 25),
+    ],
+    "retailer": (["Retailer_A"] * 25 + ["Retailer_B"] * 25 +
+                ["Retailer_C"] * 25 + ["Retailer_D"] * 25),
+}
+df = pd.DataFrame(data)
+
+price.plot(
+    df=df,
+    value_col="unit_price",
+    group_col="retailer",
+    bins=5,
+    title="Price Distribution Analysis by Retailer",
+    x_label="Retailers",
+    y_label="Price Bands",
+    legend_title="Retailers",
+    source_text="Source: PyRetailScience - 2024",
+    move_legend_outside=True,
+)
+```
+
 ### Broken Timeline Plot
 
 <div class="clear" markdown>
