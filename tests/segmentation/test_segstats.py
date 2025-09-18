@@ -659,23 +659,22 @@ class TestSegTransactionStats:
         # Expected counts:
         # - 4 detail rows (Clothing-Jeans, Clothing-Shirts, Footwear-Sneakers, Footwear-Boots)
         # - 2 prefix rollup rows (Clothing-Total, Footwear-Total)
-        # - 2 suffix rollup rows (Total-Jeans, Total-Shirts, Total-Sneakers, Total-Boots) = 4
+        # - NO suffix rollup rows (to avoid "Total" in category when calc_total=False)
         # - NO grand total row (Total-Total)
-        expected_rows_with_rollup_no_total = 10
+        expected_rows_with_rollup_no_total = 6
 
         assert len(result_df) == expected_rows_with_rollup_no_total
 
         # Test constants
         expected_prefix_rollups = 2  # Clothing-Total, Footwear-Total
-        expected_suffix_rollups = 4  # Total-Jeans, Total-Shirts, Total-Sneakers, Total-Boots
 
         # Check for presence of prefix rollup rows
         prefix_rollups = result_df[(result_df["subcategory"] == "Total") & (result_df["category"] != "Total")]
         assert len(prefix_rollups) == expected_prefix_rollups
 
-        # Check for presence of suffix rollup rows
+        # Check for absence of suffix rollup rows (should not exist when calc_total=False)
         suffix_rollups = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] != "Total")]
-        assert len(suffix_rollups) == expected_suffix_rollups
+        assert len(suffix_rollups) == 0
 
         # Check for absence of grand total row
         grand_total = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Total")]
