@@ -215,7 +215,7 @@ def test_plot_invalid_bins_list_non_numeric():
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_unsorted_bins_list():
+def test_plot_with_unsorted_bins_list(mocker):
     """Test price architecture plot automatically sorts unsorted bins list."""
     df = pd.DataFrame(
         {
@@ -224,14 +224,27 @@ def test_plot_with_unsorted_bins_list():
         },
     )
 
-    result_ax = price.plot(
+    # Mock pd.cut to capture the bins parameter and return realistic intervals
+    mock_cut = mocker.patch("pandas.cut")
+    # Create mock intervals that mimic pandas.cut behavior
+    intervals = [
+        pd.Interval(left=1, right=2, closed="right"),
+        pd.Interval(left=2, right=3, closed="right"),
+        pd.Interval(left=2, right=3, closed="right"),
+    ]
+    mock_cut.return_value = pd.Series(intervals, name="price_bin")
+
+    price.plot(
         df=df,
         value_col="unit_price",
         group_col="retailer",
         bins=[3, 1, 2],  # Unsorted bins
     )
 
-    assert isinstance(result_ax, Axes)
+    # Verify pd.cut was called with sorted bins
+    mock_cut.assert_called_once()
+    call_args = mock_cut.call_args
+    assert call_args[1]["bins"] == [1, 2, 3]  # Should be sorted
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -254,14 +267,26 @@ def test_plot_invalid_bins_type():
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_missing_values():
-    """Test price architecture plot handles missing values."""
+def test_plot_with_missing_values(mocker):
+    """Test price architecture plot handles missing values by dropping rows with NaN."""
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, None, 4, 5],
             "retailer": ["Walmart", "Walmart", "Target", "Target", None],
         },
     )
+
+    # Expected data after dropping missing values (rows 2 and 4 should be dropped)
+    expected_clean_df = pd.DataFrame(
+        {
+            "unit_price": [1, 2, 4],
+            "retailer": ["Walmart", "Walmart", "Target"],
+        },
+    )
+
+    # Mock dropna to verify it's called and return expected clean data
+    mock_dropna = mocker.patch.object(pd.DataFrame, "dropna")
+    mock_dropna.return_value = expected_clean_df
 
     result_ax = price.plot(
         df=df,
@@ -270,6 +295,10 @@ def test_plot_with_missing_values():
         bins=3,
     )
 
+    # Verify dropna was called on the subset of columns
+    mock_dropna.assert_called_once()
+
+    # Verify the function still works with cleaned data
     assert isinstance(result_ax, Axes)
 
 
@@ -333,8 +362,12 @@ def test_plot_with_list_bins(simple_price_dataframe):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_basic_functionality(sample_price_dataframe):
-    """Test basic price architecture plot functionality."""
+def test_plot_basic_functionality(sample_price_dataframe, mocker):
+    """Test basic price architecture plot functionality with labels and titles."""
+    # Mock standard_graph_styles to capture title and label parameters
+    mock_standard_styles = mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles")
+    mock_standard_styles.side_effect = lambda ax, **kwargs: ax
+
     result_ax = price.plot(
         df=sample_price_dataframe,
         value_col="unit_price",
@@ -347,7 +380,15 @@ def test_plot_basic_functionality(sample_price_dataframe):
 
     assert isinstance(result_ax, Axes)
 
-    expected_retailers = 4
+    # Verify that standard_graph_styles was called with correct parameters
+    mock_standard_styles.assert_called_once()
+    call_kwargs = mock_standard_styles.call_args[1]
+    assert call_kwargs["title"] == "Price Distribution Analysis"
+    assert call_kwargs["x_label"] == "Retailers"
+    assert call_kwargs["y_label"] == "Price Bands"
+
+    # Verify we have the expected number of retailers and bins
+    expected_retailers = 4  # Walmart, Target, Amazon, Best Buy
     assert len(result_ax.get_xticks()) == expected_retailers
 
     expected_bins = 5
@@ -421,9 +462,12 @@ def test_plot_adds_source_text(simple_price_dataframe):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_kwargs(simple_price_dataframe):
+def test_plot_with_kwargs(simple_price_dataframe, mocker):
     """Test that additional kwargs are passed to scatter plot."""
-    result_ax = price.plot(
+    # Mock ax.scatter to capture kwargs
+    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
+
+    price.plot(
         df=simple_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
@@ -433,12 +477,19 @@ def test_plot_with_kwargs(simple_price_dataframe):
         marker="^",
     )
 
-    assert isinstance(result_ax, Axes)
+    # Verify scatter was called with the custom kwargs
+    mock_scatter.assert_called()
+
+    # Check that our custom kwargs were passed through
+    # Note: alpha and s are handled specially, but marker should pass through
+    call_kwargs = mock_scatter.call_args[1]
+    assert "marker" in call_kwargs
+    assert call_kwargs["marker"] == "^"
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_group_uses_single_color():
-    """Test that single group uses single color mapping."""
+    """Test that single group data successfully creates a plot (implying single color logic works)."""
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3, 4],
@@ -446,6 +497,8 @@ def test_plot_single_group_uses_single_color():
         },
     )
 
+    # Test that single group data works without errors
+    # The fact it succeeds implies the single color mapping logic is working
     result_ax = price.plot(
         df=df,
         value_col="unit_price",
@@ -455,10 +508,14 @@ def test_plot_single_group_uses_single_color():
 
     assert isinstance(result_ax, Axes)
 
+    # Verify we have 1 group's data plotted
+    expected_groups = 1  # Only Walmart
+    assert len(result_ax.get_xticks()) == expected_groups
+
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_many_groups_uses_multi_color(sample_price_dataframe):
-    """Test that many groups use multi-color mapping."""
+    """Test that many groups data successfully creates a plot (implying multi-color logic works)."""
     result_ax = price.plot(
         df=sample_price_dataframe,
         value_col="unit_price",
@@ -467,6 +524,10 @@ def test_plot_many_groups_uses_multi_color(sample_price_dataframe):
     )
 
     assert isinstance(result_ax, Axes)
+
+    # Verify we have multiple groups plotted (4+ groups trigger multi-color mapping)
+    expected_groups = 4  # Walmart, Target, Amazon, Best Buy (threshold is 4)
+    assert len(result_ax.get_xticks()) == expected_groups
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")

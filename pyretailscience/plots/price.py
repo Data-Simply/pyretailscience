@@ -35,6 +35,34 @@ import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
 
 
+def _validate_bins(bins: int | list[float]) -> int | list[float]:
+    """Validates and processes the bins parameter for price distribution plotting.
+
+    Args:
+        bins: Either number of equal-width bins (int) or custom bin boundaries (list).
+
+    Returns:
+        Validated and processed bins parameter.
+
+    Raises:
+        ValueError: If bins parameter is invalid.
+        TypeError: If bins parameter has invalid type.
+    """
+    if isinstance(bins, int):
+        if bins <= 0:
+            raise ValueError("bins must be a positive integer")
+        return bins
+    if isinstance(bins, list):
+        min_bins = 2
+        if len(bins) < min_bins:
+            raise ValueError("bins list must contain at least 2 values")
+        if not all(isinstance(x, int | float) for x in bins):
+            raise ValueError("All values in bins list must be numeric")
+        return sorted(bins)
+    msg = "bins must be either an integer or a list of numeric values"
+    raise TypeError(msg)
+
+
 def plot(  # noqa: C901
     df: pd.DataFrame,
     value_col: str,
@@ -94,19 +122,7 @@ def plot(  # noqa: C901
         raise ValueError(msg)
 
     # Validate bins parameter
-    if isinstance(bins, int):
-        if bins <= 0:
-            raise ValueError("bins must be a positive integer")
-    elif isinstance(bins, list):
-        min_bins = 2
-        if len(bins) < min_bins:
-            raise ValueError("bins list must contain at least 2 values")
-        if not all(isinstance(x, int | float) for x in bins):
-            raise ValueError("All values in bins list must be numeric")
-        bins = sorted(bins)
-    else:
-        msg = "bins must be either an integer or a list of numeric values"
-        raise TypeError(msg)
+    bins = _validate_bins(bins)
 
     # Remove rows with missing values in key columns
     df_clean = df[[value_col, group_col]].dropna()
