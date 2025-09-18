@@ -90,9 +90,10 @@ def plot(
     color_gen = get_single_color_cmap() if num_colors < color_gen_threshold else get_multi_color_cmap()
     colors = [next(color_gen) for _ in range(num_colors)]
 
+    linewidth = kwargs.pop("linewidth", 3)
     ax = pivot_df.plot(
         ax=ax,
-        linewidth=3,
+        linewidth=linewidth,
         color=colors,
         legend=is_multi_line,
         **kwargs,

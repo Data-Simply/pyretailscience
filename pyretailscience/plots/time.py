@@ -113,8 +113,9 @@ def plot(
         default_title = f"{value_col.title()} by {group_col.title()}"
         show_legend = True
 
+    linewidth = kwargs.pop("linewidth", 3)
     ax = df.plot(
-        linewidth=3,
+        linewidth=linewidth,
         color=colors,
         legend=show_legend,
         ax=ax,

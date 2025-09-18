@@ -317,12 +317,13 @@ def plot(  # noqa: C901, PLR0913
             sort=False,
         )
 
+    width = kwargs.pop("width", 0.8)
     ax = index_df.plot.barh(
         left=100,
         legend=show_legend,
         ax=ax,
         color=colors,
-        width=0.8,
+        width=width,
         zorder=2,
         **kwargs,
     )

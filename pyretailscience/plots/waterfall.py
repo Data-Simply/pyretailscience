@@ -110,13 +110,14 @@ def plot(
         bottom.append(0)
 
     # Create the plot
+    width = kwargs.pop("width", 0.8)
     ax = df.plot.bar(
         x="labels",
         y="amounts",
         legend=None,
         bottom=bottom,
         color=colors,
-        width=0.8,
+        width=width,
         ax=ax,
         **kwargs,
     )
