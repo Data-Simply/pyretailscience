@@ -145,7 +145,7 @@ def plot(
 
     # Use module-level period configuration
     gap_threshold = PERIOD_CONFIG[period]
-    bar_color = COLORS["green"][500]
+    bar_color = kwargs.pop("color", COLORS["green"][500])
 
     # Process each category
     for category in categories:

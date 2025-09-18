@@ -84,15 +84,19 @@ def plot(
     color_gen_threshold = 3
     num_colors = len(pivot_df.columns) if is_multi_scatter else 1
     color_gen = get_single_color_cmap() if num_colors < color_gen_threshold else get_multi_color_cmap()
-    colors = [next(color_gen) for _ in range(num_colors)]
+    default_colors = [next(color_gen) for _ in range(num_colors)]
+
+    # Handle color parameter - can be single color or list of colors
+    color = kwargs.pop("color", default_colors)
+    colors = [color] * num_colors if not isinstance(color, list) else color
 
     ax = ax or plt.gca()
     alpha = kwargs.pop("alpha", 0.7)
-    for col, color in zip(pivot_df.columns, colors, strict=False):
+    for col, color_val in zip(pivot_df.columns, colors, strict=False):
         ax.scatter(
             pivot_df.index,
             pivot_df[col],
-            color=color,
+            color=color_val,
             label=col if is_multi_scatter else None,
             alpha=alpha,
             **kwargs,
