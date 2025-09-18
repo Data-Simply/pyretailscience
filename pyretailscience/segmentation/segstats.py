@@ -265,7 +265,7 @@ class SegTransactionStats:
                     [
                         # Suffix rollups: group by suffixes, mutate preceding columns
                         *[(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
-                    ]
+                    ],
                 )
 
             # Process both prefix and suffix rollups with unified logic
