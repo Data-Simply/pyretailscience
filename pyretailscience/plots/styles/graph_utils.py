@@ -389,7 +389,12 @@ def _add_equation_text(
 
 
 def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
-    """Extract x and y data from a matplotlib plot (line or scatter).
+    """Extract x and y data from a matplotlib plot (line, scatter, or bar).
+
+    Supports multiple plot types:
+    - Line plots: Extracts data from line objects
+    - Bar charts: Extracts center positions and heights/widths, with automatic orientation detection
+    - Scatter plots: Extracts data from collection offsets
 
     Args:
         ax (Axes): The matplotlib axes object containing the plot.
@@ -511,11 +516,18 @@ def add_regression_line(
     """Add a regression line to a plot.
 
     This function examines the data in a matplotlib Axes object and adds a linear
-    regression line to it. It can work with both line plots and scatter plots, and
-    can handle both numeric and datetime x-axis values.
+    regression line to it. It supports line plots, scatter plots, and bar charts
+    (both vertical and horizontal), and can handle both numeric and datetime x-axis values.
+
+    For bar charts, the function automatically detects orientation using matplotlib's
+    BarContainer API and extracts appropriate x,y coordinates from bar positions and heights.
+
+    Note: If an axes contains multiple plot types (e.g., both lines and bars), the function
+    processes them in priority order: lines first, then bars, then scatter plots. Only the
+    first available plot type will be used for regression analysis.
 
     Args:
-        ax (Axes): The matplotlib axes object containing the plot (line or scatter).
+        ax (Axes): The matplotlib axes object containing the plot (line, scatter, or bar).
         color (str, optional): Color of the regression line. Defaults to "red".
         linestyle (str, optional): Style of the regression line. Defaults to "--".
         text_position (float, optional): Relative position (0-1) for the equation text. Defaults to 0.6.
@@ -527,7 +539,7 @@ def add_regression_line(
         Axes: The matplotlib axes with the regression line added.
 
     Raises:
-        ValueError: If the plot contains no visible lines or scatter points.
+        ValueError: If the plot contains no visible lines, scatter points, or bar patches.
     """
     # Extract data from the plot
     x_data, y_data = _extract_plot_data(ax)
