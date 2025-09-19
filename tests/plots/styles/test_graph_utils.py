@@ -230,6 +230,9 @@ class TestRegressionLine:
     # Constants to avoid magic numbers
     ORIGINAL_LINE_COUNT = 1
     EXPECTED_LINE_COUNT_AFTER_REGRESSION = 2
+    STACKED_PATCH_COUNT = 8  # 4 bars + 4 stacked bars
+    GROUPED_PATCH_COUNT = 8  # 4 bars + 4 grouped bars
+    REGRESSION_LINE_POINTS = 2  # Regression line has 2 endpoints
 
     def test_line_plot_with_numeric_data(self):
         """Test regression line with a standard line plot and numeric data."""
@@ -285,7 +288,7 @@ class TestRegressionLine:
         assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
 
     def test_bar_plot(self):
-        """Test regression line with a bar chart."""
+        """Test regression line with a vertical bar chart."""
         _, ax = plt.subplots()
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([2, 4, 3, 5, 6])
@@ -294,6 +297,20 @@ class TestRegressionLine:
         gu.add_regression_line(ax, color="orange", show_equation=True, show_r2=True)
 
         # Check that a regression line was added (bar plots start with 0 lines)
+        assert len(ax.get_lines()) == 1
+        # Check that we still have the bar patches
+        assert len(ax.patches) == len(x)
+
+    def test_barh_plot(self):
+        """Test regression line with a horizontal bar chart."""
+        _, ax = plt.subplots()
+        y = np.array([1, 2, 3, 4, 5])
+        x = np.array([2, 4, 3, 5, 6])
+        ax.barh(y, x)
+
+        gu.add_regression_line(ax, color="green", show_equation=True, show_r2=True)
+
+        # Check that a regression line was added
         assert len(ax.get_lines()) == 1
         # Check that we still have the bar patches
         assert len(ax.patches) == len(x)
@@ -309,6 +326,118 @@ class TestRegressionLine:
 
         # Check for appropriate error message
         assert "regression" in str(excinfo.value).lower()
+
+    def test_bar_plot_negative_values(self):
+        """Test regression line correctly handles negative bar values."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([-2, 4, -1, 3, -5])  # Mix of positive and negative values
+        ax.bar(x, y)
+
+        gu.add_regression_line(ax, color="red")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Get the regression line data
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+        line_y = line.get_ydata()
+
+        # Verify the line spans a reasonable range (uses axis limits, not exact data range)
+        assert line_x[0] < min(x)  # Line starts before first bar
+        assert line_x[1] > max(x)  # Line ends after last bar
+
+        # Verify line handles negative values (should not be all zeros)
+        assert not all(val == 0 for val in line_y)
+
+    def test_barh_plot_negative_values(self):
+        """Test regression line correctly handles negative horizontal bar values."""
+        _, ax = plt.subplots()
+        y = np.array([1, 2, 3, 4, 5])
+        x = np.array([-2, 4, -1, 3, -5])  # Mix of positive and negative values
+        ax.barh(y, x)
+
+        gu.add_regression_line(ax, color="purple")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Get the regression line data
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+        line_y = line.get_ydata()
+
+        # For horizontal bars, verify the line spans the value range reasonably
+        # Line should encompass the data range (may extend beyond due to axis limits)
+        assert min(line_x) <= max(x)  # Line should reach at least the max value
+        assert max(line_x) >= min(x)  # Line should reach at least the min value
+
+        # Verify line handles negative values (should not be all zeros)
+        assert not all(val == 0 for val in line_y)
+
+    def test_bar_plot_stacked(self):
+        """Test regression line with stacked bar chart uses correct data ordering."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4])
+        y1 = np.array([2, 3, 4, 1])
+        y2 = np.array([1, 2, 1, 3])
+
+        # Create stacked bars
+        ax.bar(x, y1, label="Series 1")
+        ax.bar(x, y2, bottom=y1, label="Series 2")
+
+        gu.add_regression_line(ax, color="blue")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Verify we have patches for both series (8 total: 4 + 4)
+        assert len(ax.patches) == self.STACKED_PATCH_COUNT
+
+        # Get the regression line to ensure it was calculated
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+
+        # Verify line spans the x range of the bars
+        assert min(line_x) <= min(x)
+        assert max(line_x) >= max(x)
+
+    def test_bar_plot_grouped(self):
+        """Test regression line with grouped bar chart handles data ordering correctly."""
+        _, ax = plt.subplots()
+
+        # Create grouped bars with different x positions
+        x1 = np.array([1, 2, 3, 4])
+        x2 = np.array([1.3, 2.3, 3.3, 4.3])  # Offset for grouping
+        y1 = np.array([2, 3, 4, 1])
+        y2 = np.array([3, 1, 2, 4])
+
+        width = 0.3
+        ax.bar(x1, y1, width, label="Group 1")
+        ax.bar(x2, y2, width, label="Group 2")
+
+        gu.add_regression_line(ax, color="orange")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Verify we have patches for both groups (8 total: 4 + 4)
+        assert len(ax.patches) == self.GROUPED_PATCH_COUNT
+
+        # Get the regression line
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+        line_y = line.get_ydata()
+
+        # Verify line data exists and spans a reasonable range
+        assert len(line_x) == self.REGRESSION_LINE_POINTS  # Regression line should have 2 points
+        assert len(line_y) == self.REGRESSION_LINE_POINTS
+
+        # Verify line spans across the grouped bars
+        all_x_positions = np.concatenate([x1, x2])
+        assert min(line_x) <= min(all_x_positions)
+        assert max(line_x) >= max(all_x_positions)
 
 
 class TestVisualRegression:

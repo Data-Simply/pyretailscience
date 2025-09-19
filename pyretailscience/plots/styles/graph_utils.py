@@ -408,9 +408,24 @@ def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
         y_data = lines[0].get_ydata()
     # Check for bar charts (patches)
     elif hasattr(ax, "patches") and ax.patches:
-        # Extract data from bar patches
-        x_data = np.array([patch.get_x() + patch.get_width() / 2 for patch in ax.patches])
-        y_data = np.array([patch.get_height() for patch in ax.patches])
+        # Detect bar orientation using BarContainer (stable API)
+        is_vertical = True  # Default assumption
+        for container in ax.containers:
+            if hasattr(container, "orientation") and container.orientation:
+                is_vertical = container.orientation == "vertical"
+                break
+
+        if is_vertical:
+            # Vertical bars: x is center position, y is height
+            bar_data = [(patch.get_x() + patch.get_width() / 2, patch.get_height()) for patch in ax.patches]
+        else:
+            # Horizontal bars: x is width, y is center position
+            bar_data = [(patch.get_width(), patch.get_y() + patch.get_height() / 2) for patch in ax.patches]
+
+        # Sort by x-coordinate to ensure consistency with grouped/stacked bar charts
+        bar_data.sort(key=lambda point: point[0])
+        x_data = np.array([point[0] for point in bar_data])
+        y_data = np.array([point[1] for point in bar_data])
     # If no lines or bars, check for scatter plots (or other collections)
     elif hasattr(ax, "collections") and ax.collections:
         # Extract data from the first collection (e.g., scatter plot)
@@ -529,7 +544,8 @@ def add_regression_line(
     y_max = intercept + slope * max(x_numeric)
 
     # Plot the regression line
-    ax.plot([min(x_numeric), max(x_numeric)], [y_min, y_max], color=color, linestyle=linestyle, **kwargs)
+    x_min, x_max = ax.get_xlim()
+    ax.plot([x_min, x_max], [y_min, y_max], color=color, linestyle=linestyle, **kwargs)
 
     # Add equation and R² text if requested
     _add_equation_text(ax, slope, intercept, r_squared, color, text_position, show_equation, show_r2)
