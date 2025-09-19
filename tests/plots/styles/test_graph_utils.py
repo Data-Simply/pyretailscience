@@ -439,6 +439,37 @@ class TestRegressionLine:
         assert min(line_x) <= min(all_x_positions)
         assert max(line_x) >= max(all_x_positions)
 
+    def test_bar_plot_container_no_orientation_attr(self):
+        """Test regression line with container lacking orientation attribute."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3])
+        y = np.array([2, 4, 3])
+        ax.bar(x, y)
+
+        # Add a mock container without orientation to test the hasattr branch
+        class MockContainer:
+            pass
+
+        mock_container = MockContainer()
+        ax.containers.insert(0, mock_container)  # Insert at beginning
+
+        gu.add_regression_line(ax, color="red")
+        # Should still work by falling back to default (vertical)
+        assert len(ax.get_lines()) == 1
+
+    def test_bar_plot_container_none_orientation(self):
+        """Test regression line with container having None orientation."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3])
+        y = np.array([2, 4, 3])
+        ax.bar(x, y)
+
+        ax.containers[0].orientation = None
+
+        gu.add_regression_line(ax, color="blue")
+        # Should still work by falling back to default (vertical)
+        assert len(ax.get_lines()) == 1
+
 
 class TestVisualRegression:
     """Visual regression tests to ensure refactored code produces identical output."""
