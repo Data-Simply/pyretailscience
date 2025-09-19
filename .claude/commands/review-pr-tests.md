@@ -452,13 +452,116 @@ def test_rfm_segmentation():
 - Serves as implicit documentation of expected data formats and business logic
 - Reduces cognitive load when reading and maintaining tests
 
+### 11. Tests That Don't Verify Their Claimed Behavior
+Tests where the function name, docstring, or description claims to test specific behavior, but the assertions are too generic to actually verify that behavior. These tests create false confidence by appearing to test important functionality while only checking trivial outcomes.
+
+**Red Flags:**
+- Test name mentions specific behavior (e.g., "sorts", "validates", "filters", "transforms")
+- Docstring describes particular functionality being tested
+- Assertions only check return types, basic existence, or that no exceptions occurred
+- Missing assertions that would actually verify the claimed behavior
+- Could pass even if the specific behavior is completely broken
+
+**Example:**
+```python
+def test_plot_with_unsorted_bins_list():
+    """Test price architecture plot automatically sorts unsorted bins list."""
+    df = pd.DataFrame({
+        "unit_price": [1, 2, 3],
+        "retailer": ["Walmart", "Target", "Amazon"],
+    })
+
+    # BAD: Claims to test sorting but doesn't verify it
+    result_ax = price.plot(
+        df=df,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=[3, 1, 2],  # Unsorted bins - but test doesn't verify they get sorted!
+    )
+
+    assert isinstance(result_ax, Axes)  # Only checks return type
+
+def test_validates_email_format():
+    """Test that email validation properly checks format."""
+    validator = EmailValidator()
+
+    # BAD: Claims to test validation but doesn't verify it
+    result = validator.validate("not-an-email")
+    assert result is not None  # Doesn't check if validation actually worked
+
+def test_filters_inactive_customers():
+    """Test customer filtering removes inactive customers."""
+    customers = create_test_customers()  # Mix of active/inactive
+
+    # BAD: Claims to test filtering but doesn't verify the filtering logic
+    filtered = CustomerFilter().filter_active(customers)
+    assert len(filtered) >= 0  # Trivial assertion, doesn't verify filtering
+
+def test_calculates_price_elasticity():
+    """Test price elasticity calculation returns correct values."""
+    price_data = [100, 110, 120, 130]
+    demand_data = [1000, 900, 800, 700]
+
+    # BAD: Claims to test calculation but doesn't verify correctness
+    elasticity = calculate_elasticity(price_data, demand_data)
+    assert elasticity is not None  # Doesn't verify the calculation is correct
+
+# GOOD: Actually verify the claimed behavior
+def test_plot_with_unsorted_bins_list():
+    """Test price architecture plot automatically sorts unsorted bins list."""
+    df = pd.DataFrame({
+        "unit_price": [1, 2, 3],
+        "retailer": ["Walmart", "Target", "Amazon"],
+    })
+
+    result_ax = price.plot(
+        df=df,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=[3, 1, 2],  # Unsorted bins
+    )
+
+    # GOOD: Verify the bins were actually sorted by checking output
+    y_labels = [label.get_text() for label in result_ax.get_yticklabels()]
+    assert "$1.0 - $2.0" in y_labels[0]  # Sorted order: first bin is 1-2
+    assert "$2.0 - $3.0" in y_labels[1]  # Second bin is 2-3
+
+def test_validates_email_format():
+    """Test that email validation properly checks format."""
+    validator = EmailValidator()
+
+    # GOOD: Actually test validation behavior
+    assert validator.validate("user@example.com") == True
+    assert validator.validate("invalid-email") == False
+    assert validator.validate("missing@") == False
+
+def test_filters_inactive_customers():
+    """Test customer filtering removes inactive customers."""
+    active_customers = [Customer(id=1, active=True), Customer(id=2, active=True)]
+    inactive_customers = [Customer(id=3, active=False), Customer(id=4, active=False)]
+    all_customers = active_customers + inactive_customers
+
+    # GOOD: Verify filtering actually works
+    filtered = CustomerFilter().filter_active(all_customers)
+    assert len(filtered) == 2  # Should have exactly 2 active customers
+    assert all(c.active for c in filtered)  # All should be active
+    assert {c.id for c in filtered} == {1, 2}  # Should be the right customers
+```
+
+**Why this matters:**
+- Test names and docstrings serve as documentation of what functionality is tested
+- False confidence is dangerous - tests appear to cover behavior but actually don't
+- Bugs in the claimed functionality will go undetected
+- Future developers may assume the behavior is tested and working correctly
+- Makes debugging harder when the "tested" functionality actually fails
+
 ## Instructions:
 1. **View the PR** using `gh pr view $1` and `gh pr diff $1` to understand the changes
 2. **Optionally checkout the PR** if local examination is needed using `gh pr checkout $1` (this fetches if necessary)
 3. **Check for Python test files** - if none exist, provide guidance on what should be tested based on the PR changes
 4. **Identify the PyRetailScience module under test** by analyzing imports and function calls in the test code
 5. Review each test function in the provided PR
-6. Categorize any problematic tests using the categories above (1-10)
+6. Categorize any problematic tests using the categories above (1-11)
 7. **Highlight the specific problematic code** from each test function
 8. Provide brief explanations for why each flagged test is problematic
 9. Suggest improvements where appropriate (e.g., "combine with test_X", "use pytest.parametrize", "add actual package functionality", "use realistic retail/business data")
