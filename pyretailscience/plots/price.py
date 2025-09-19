@@ -35,7 +35,60 @@ import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
 
 
-def _validate_bins(bins: int | list[float]) -> int | list[float]:
+def _validate_inputs(
+    df: pd.DataFrame,
+    value_col: str,
+    group_col: str,
+    bins: int | list[float],
+) -> tuple[pd.DataFrame, int | list[float]]:
+    """Validates and processes inputs for price distribution plotting.
+
+    Args:
+        df: Input DataFrame containing product-level data.
+        value_col: Column containing the price/value data.
+        group_col: Column containing the categorical grouping.
+        bins: Either number of equal-width bins (int) or custom bin boundaries (list).
+
+    Returns:
+        Tuple of (cleaned_dataframe, validated_bins).
+
+    Raises:
+        ValueError: If DataFrame is empty, columns don't exist, value column is not numeric, or bins parameter is invalid.
+        KeyError: If specified columns are not found in DataFrame.
+        TypeError: If bins parameter has invalid type.
+    """
+    # Validate DataFrame is not empty
+    if df.empty:
+        raise ValueError("Cannot plot with empty DataFrame")
+
+    # Validate columns exist
+    if value_col not in df.columns:
+        msg = f"value_col '{value_col}' not found in DataFrame"
+        raise KeyError(msg)
+
+    if group_col not in df.columns:
+        msg = f"group_col '{group_col}' not found in DataFrame"
+        raise KeyError(msg)
+
+    # Validate value column is numeric
+    if not pd.api.types.is_numeric_dtype(df[value_col]):
+        msg = f"value_col '{value_col}' must be numeric for binning"
+        raise ValueError(msg)
+
+    # Validate bins parameter
+    validated_bins = _validate_bins_parameter(bins)
+
+    # Remove rows with missing values in key columns
+    df_clean = df[[value_col, group_col]].dropna()
+
+    if df_clean.empty:
+        msg = f"No valid data after removing missing values from {value_col} and {group_col}"
+        raise ValueError(msg)
+
+    return df_clean.copy(), validated_bins
+
+
+def _validate_bins_parameter(bins: int | list[float]) -> int | list[float]:
     """Validates and processes the bins parameter for price distribution plotting.
 
     Args:
@@ -63,7 +116,7 @@ def _validate_bins(bins: int | list[float]) -> int | list[float]:
     raise TypeError(msg)
 
 
-def plot(  # noqa: C901
+def plot(
     df: pd.DataFrame,
     value_col: str,
     group_col: str,
@@ -104,34 +157,8 @@ def plot(  # noqa: C901
         KeyError: If specified columns are not found in DataFrame.
         TypeError: If bins parameter has invalid type.
     """
-    if df.empty:
-        raise ValueError("Cannot plot with empty DataFrame")
-
-    # Validate columns exist
-    if value_col not in df.columns:
-        msg = f"value_col '{value_col}' not found in DataFrame"
-        raise KeyError(msg)
-
-    if group_col not in df.columns:
-        msg = f"group_col '{group_col}' not found in DataFrame"
-        raise KeyError(msg)
-
-    # Validate value column is numeric
-    if not pd.api.types.is_numeric_dtype(df[value_col]):
-        msg = f"value_col '{value_col}' must be numeric for binning"
-        raise ValueError(msg)
-
-    # Validate bins parameter
-    bins = _validate_bins(bins)
-
-    # Remove rows with missing values in key columns
-    df_clean = df[[value_col, group_col]].dropna()
-
-    if df_clean.empty:
-        msg = f"No valid data after removing missing values from {value_col} and {group_col}"
-        raise ValueError(msg)
-
-    df_clean = df_clean.copy()
+    # Validate inputs and get clean data
+    df_clean, bins = _validate_inputs(df, value_col, group_col, bins)
 
     # Create price bins
     df_clean["price_bin"] = pd.cut(df_clean[value_col], bins=bins, include_lowest=True)
@@ -202,8 +229,8 @@ def plot(  # noqa: C901
         # Extract left and right bounds from pandas Interval
         left = bin_.left
         right = bin_.right
-        # Format as currency ranges
-        formatted_labels.append(f"${left:.1f} - ${right:.1f}")
+        # Format as price ranges
+        formatted_labels.append(f"{left:.1f} - {right:.1f}")
 
     ax.set_yticklabels(formatted_labels)
 

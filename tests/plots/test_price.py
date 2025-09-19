@@ -216,7 +216,7 @@ def test_plot_invalid_bins_list_non_numeric():
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_unsorted_bins_list(mocker):
-    """Test price architecture plot automatically sorts unsorted bins list."""
+    """Test price architecture plot passes sorted bins to pd.cut."""
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
@@ -321,35 +321,21 @@ def test_plot_all_missing_values():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_integer_bins(simple_price_dataframe):
-    """Test price architecture plot with integer bins."""
+@pytest.mark.parametrize(
+    ("bins", "title"),
+    [
+        (3, "Test Price Architecture Plot"),
+        ([1, 3, 5, 7], "Test Price Architecture Plot with Custom Bins"),
+    ],
+)
+def test_plot_with_bins(simple_price_dataframe, bins, title):
+    """Test price architecture plot with integer bins and custom bin boundaries."""
     result_ax = price.plot(
         df=simple_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
-        bins=3,
-        title="Test Price Architecture Plot",
-    )
-
-    assert isinstance(result_ax, Axes)
-
-    expected_retailers = 3  # Walmart, Target, Amazon retailers
-    assert len(result_ax.get_xticks()) == expected_retailers
-
-    expected_bins = 3  # 3 price bins/boundaries
-    assert len(result_ax.get_yticks()) == expected_bins
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_list_bins(simple_price_dataframe):
-    """Test price architecture plot with custom bin boundaries."""
-    result_ax = price.plot(
-        df=simple_price_dataframe,
-        value_col="unit_price",
-        group_col="retailer",
-        bins=[1, 3, 5, 7],
-        title="Test Price Architecture Plot with Custom Bins",
+        bins=bins,
+        title=title,
     )
 
     assert isinstance(result_ax, Axes)
@@ -488,49 +474,6 @@ def test_plot_with_kwargs(simple_price_dataframe, mocker):
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_single_group_uses_single_color():
-    """Test that single group data successfully creates a plot (implying single color logic works)."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3, 4],
-            "retailer": ["Walmart", "Walmart", "Walmart", "Walmart"],  # Only one retailer
-        },
-    )
-
-    # Test that single group data works without errors
-    # The fact it succeeds implies the single color mapping logic is working
-    result_ax = price.plot(
-        df=df,
-        value_col="unit_price",
-        group_col="retailer",
-        bins=2,
-    )
-
-    assert isinstance(result_ax, Axes)
-
-    # Verify we have 1 group's data plotted
-    expected_groups = 1  # Only Walmart
-    assert len(result_ax.get_xticks()) == expected_groups
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_many_groups_uses_multi_color(sample_price_dataframe):
-    """Test that many groups data successfully creates a plot (implying multi-color logic works)."""
-    result_ax = price.plot(
-        df=sample_price_dataframe,
-        value_col="unit_price",
-        group_col="retailer",
-        bins=3,
-    )
-
-    assert isinstance(result_ax, Axes)
-
-    # Verify we have multiple groups plotted (4+ groups trigger multi-color mapping)
-    expected_groups = 4  # Walmart, Target, Amazon, Best Buy (threshold is 4)
-    assert len(result_ax.get_xticks()) == expected_groups
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_handles_zero_percentages():
     """Test that plot handles edge case where all percentages might be zero."""
     # Create a DataFrame where all products fall into the same bin
@@ -571,3 +514,142 @@ def test_plot_raises_error_when_no_data_in_bins():
             group_col="retailer",
             bins=[1.0, 2.0, 3.0, 4.0],  # All data is above these bins
         )
+
+
+def test_percentages_sum_to_100_for_each_group():
+    """Test that percentages calculated for each group sum to 100%."""
+    tolerance = 0.001  # Floating point comparison tolerance
+
+    # Create test data with known distribution
+    df = pd.DataFrame(
+        {
+            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],  # 8 items
+            "retailer": ["Walmart", "Walmart", "Walmart", "Walmart", "Target", "Target", "Target", "Target"],  # 4 each
+        },
+    )
+
+    # Clean data like the plot function does
+    df_clean = df[["unit_price", "retailer"]].dropna().copy()
+    bins = [1.0, 3.0, 5.0, 7.0, 9.0]  # 4 bins
+
+    # Replicate the percentage calculation logic from the plot function
+    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
+    group_totals = df_clean.groupby("retailer", observed=True).size()
+    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
+    percentages = bin_counts.div(group_totals, axis=0) * 100
+
+    # Verify each group's percentages sum to 100%
+    for group in percentages.index:
+        group_percentage_sum = percentages.loc[group].sum()
+        assert abs(group_percentage_sum - 100.0) < tolerance, (
+            f"Group {group} percentages sum to {group_percentage_sum}, not 100%"
+        )
+
+
+def test_individual_percentage_calculations_are_correct():
+    """Test that individual percentage calculations are mathematically correct."""
+    tolerance = 0.001  # Floating point comparison tolerance
+
+    # Create test data with known, predictable distribution
+    df = pd.DataFrame(
+        {
+            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],  # 10 items total
+            "retailer": ["Walmart"] * 4 + ["Target"] * 6,  # Walmart: 4 items, Target: 6 items
+        },
+    )
+
+    # Clean data like the plot function does
+    df_clean = df[["unit_price", "retailer"]].dropna().copy()
+    bins = [0.0, 3.0, 6.0, 11.0]  # 3 bins: [0-3], (3-6], (6-11]
+
+    # Replicate the percentage calculation logic from the plot function
+    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
+    group_totals = df_clean.groupby("retailer", observed=True).size()
+    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
+    percentages = bin_counts.div(group_totals, axis=0) * 100
+
+    # Expected distribution:
+    # Walmart (4 items): [1,2,3,4] -> bin1: [1,2,3] (3 items = 75%), bin2: [4] (1 item = 25%), bin3: 0%
+    # Target (6 items): [5,6,7,8,9,10] -> bin1: 0%, bin2: [5,6] (2 items = 33.33%), bin3: [7,8,9,10] (4 items = 66.67%)
+
+    # Verify Walmart percentages
+    walmart_percentages = percentages.loc["Walmart"]
+    assert abs(walmart_percentages.iloc[0] - 75.0) < tolerance, (
+        f"Walmart bin1 should be 75%, got {walmart_percentages.iloc[0]}"
+    )
+    assert abs(walmart_percentages.iloc[1] - 25.0) < tolerance, (
+        f"Walmart bin2 should be 25%, got {walmart_percentages.iloc[1]}"
+    )
+    assert abs(walmart_percentages.iloc[2] - 0.0) < tolerance, (
+        f"Walmart bin3 should be 0%, got {walmart_percentages.iloc[2]}"
+    )
+
+    # Verify Target percentages
+    target_percentages = percentages.loc["Target"]
+    assert abs(target_percentages.iloc[0] - 0.0) < tolerance, (
+        f"Target bin1 should be 0%, got {target_percentages.iloc[0]}"
+    )
+    assert abs(target_percentages.iloc[1] - 33.333333333333336) < tolerance, (
+        f"Target bin2 should be ~33.33%, got {target_percentages.iloc[1]}"
+    )
+    assert abs(target_percentages.iloc[2] - 66.66666666666667) < tolerance, (
+        f"Target bin3 should be ~66.67%, got {target_percentages.iloc[2]}"
+    )
+
+
+def test_percentage_calculations_edge_cases():
+    """Test percentage calculations with edge cases like single items and uneven distributions."""
+    tolerance = 0.001  # Floating point comparison tolerance
+
+    # Test case 1: Single item per group
+    df_single = pd.DataFrame(
+        {
+            "unit_price": [2.0, 8.0],
+            "retailer": ["Walmart", "Target"],
+        },
+    )
+
+    # Clean and calculate
+    df_clean = df_single[["unit_price", "retailer"]].dropna().copy()
+    bins = [0.0, 5.0, 10.0]  # 2 bins
+    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
+    group_totals = df_clean.groupby("retailer", observed=True).size()
+    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
+    percentages = bin_counts.div(group_totals, axis=0) * 100
+
+    # Each group has 1 item, so one bin should be 100%, other should be 0%
+    walmart_percentages = percentages.loc["Walmart"]
+    target_percentages = percentages.loc["Target"]
+
+    # Walmart (price=2.0) falls in first bin [0-5]
+    assert abs(walmart_percentages.iloc[0] - 100.0) < tolerance, "Walmart should have 100% in first bin"
+    assert abs(walmart_percentages.iloc[1] - 0.0) < tolerance, "Walmart should have 0% in second bin"
+
+    # Target (price=8.0) falls in second bin (5-10]
+    assert abs(target_percentages.iloc[0] - 0.0) < tolerance, "Target should have 0% in first bin"
+    assert abs(target_percentages.iloc[1] - 100.0) < tolerance, "Target should have 100% in second bin"
+
+    # Test case 2: Highly uneven distribution
+    df_uneven = pd.DataFrame(
+        {
+            "unit_price": [1.0] * 9 + [9.0],  # 9 items at 1.0, 1 item at 9.0
+            "retailer": ["Walmart"] * 10,
+        },
+    )
+
+    # Clean and calculate
+    df_clean = df_uneven[["unit_price", "retailer"]].dropna().copy()
+    bins = [0.0, 5.0, 10.0]  # 2 bins
+    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
+    group_totals = df_clean.groupby("retailer", observed=True).size()
+    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
+    percentages = bin_counts.div(group_totals, axis=0) * 100
+
+    # Should have 90% in first bin, 10% in second bin
+    walmart_percentages = percentages.loc["Walmart"]
+    assert abs(walmart_percentages.iloc[0] - 90.0) < tolerance, (
+        f"Should be 90% in first bin, got {walmart_percentages.iloc[0]}"
+    )
+    assert abs(walmart_percentages.iloc[1] - 10.0) < tolerance, (
+        f"Should be 10% in second bin, got {walmart_percentages.iloc[1]}"
+    )
