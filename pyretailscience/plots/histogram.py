@@ -108,7 +108,8 @@ def plot(
     num_histograms = _get_num_histograms(df=df, value_col=value_col, group_col=group_col)
 
     color_gen = get_multi_color_cmap()
-    colors = [next(color_gen) for _ in range(num_histograms)]
+    default_colors = [next(color_gen) for _ in range(num_histograms)]
+    colors = kwargs.pop("color", default_colors)
 
     ax = _plot_histogram(
         df=df,

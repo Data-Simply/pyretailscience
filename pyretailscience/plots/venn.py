@@ -72,9 +72,10 @@ def plot(
     if num_sets not in {MIN_SUPPORTED_SETS, MAX_SUPPORTED_SETS}:
         raise ValueError("Only 2-set or 3-set Venn diagrams are supported.")
 
-    colors = [COLORS["green"][500], COLORS["green"][800]]
+    default_colors = [COLORS["green"][500], COLORS["green"][800]]
     if num_sets == MAX_SUPPORTED_SETS:
-        colors.append(COLORS["green"][200])
+        default_colors.append(COLORS["green"][200])
+    colors = kwargs.pop("color", default_colors)
 
     zero_group = (0, 0) if num_sets == MIN_SUPPORTED_SETS else (0, 0, 0)
     percent_s = df.loc[df["groups"] != zero_group, ["groups", "percent"]].set_index("groups")["percent"]

@@ -88,12 +88,14 @@ def plot(
     color_gen_threshold = 4
     num_colors = len(pivot_df.columns) if is_multi_line else 1
     color_gen = get_single_color_cmap() if num_colors < color_gen_threshold else get_multi_color_cmap()
-    colors = [next(color_gen) for _ in range(num_colors)]
+    default_colors = [next(color_gen) for _ in range(num_colors)]
 
+    linewidth = kwargs.pop("linewidth", 3)
+    color = kwargs.pop("color", default_colors)
     ax = pivot_df.plot(
         ax=ax,
-        linewidth=3,
-        color=colors,
+        linewidth=linewidth,
+        color=color,
         legend=is_multi_line,
         **kwargs,
     )
