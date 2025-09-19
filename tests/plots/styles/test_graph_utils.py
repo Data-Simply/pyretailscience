@@ -284,6 +284,20 @@ class TestRegressionLine:
         # Check that a line was added
         assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
 
+    def test_bar_plot(self):
+        """Test regression line with a bar chart."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([2, 4, 3, 5, 6])
+        ax.bar(x, y)
+
+        gu.add_regression_line(ax, color="orange", show_equation=True, show_r2=True)
+
+        # Check that a regression line was added (bar plots start with 0 lines)
+        assert len(ax.get_lines()) == 1
+        # Check that we still have the bar patches
+        assert len(ax.patches) == len(x)
+
     def test_single_data_point(self):
         """Test that regression line raises ValueError with a single data point."""
         _, ax = plt.subplots()

@@ -406,7 +406,12 @@ def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
     if len(lines) > 0:
         x_data = lines[0].get_xdata()
         y_data = lines[0].get_ydata()
-    # If no lines, check for scatter plots (or other collections)
+    # Check for bar charts (patches)
+    elif hasattr(ax, "patches") and ax.patches:
+        # Extract data from bar patches
+        x_data = np.array([patch.get_x() + patch.get_width() / 2 for patch in ax.patches])
+        y_data = np.array([patch.get_height() for patch in ax.patches])
+    # If no lines or bars, check for scatter plots (or other collections)
     elif hasattr(ax, "collections") and ax.collections:
         # Extract data from the first collection (e.g., scatter plot)
         collection = ax.collections[0]
@@ -524,8 +529,7 @@ def add_regression_line(
     y_max = intercept + slope * max(x_numeric)
 
     # Plot the regression line
-    x_min, x_max = ax.get_xlim()
-    ax.plot([x_min, x_max], [y_min, y_max], color=color, linestyle=linestyle, **kwargs)
+    ax.plot([min(x_numeric), max(x_numeric)], [y_min, y_max], color=color, linestyle=linestyle, **kwargs)
 
     # Add equation and R² text if requested
     _add_equation_text(ax, slope, intercept, r_squared, color, text_position, show_equation, show_r2)
