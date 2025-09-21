@@ -3,6 +3,7 @@
 from itertools import cycle
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
@@ -26,6 +27,27 @@ def sample_dataframe():
         "y": range(10, 20),
         "group": ["A"] * 5 + ["B"] * 5,
     }
+    return pd.DataFrame(data)
+
+
+@pytest.fixture
+def retail_sales_dataframe():
+    """A realistic retail sales dataframe that creates predictable NaN values when pivoted."""
+    data = {
+        "week": [1, 1, 2, 2, 3, 3, 4],
+        "sales": [1250.50, 890.25, 1450.75, 920.00, 1100.00, 980.30, 750.00],
+        "store": [
+            "Store_North",
+            "Store_South",
+            "Store_North",
+            "Store_South",
+            "Store_North",
+            "Store_South",
+            "Store_South",
+        ],
+    }
+    # Store_South has complete data for weeks 1, 2, 3, 4 (no missing values)
+    # Store_North has data for weeks 1, 2, 3 but missing week 4 (creates NaN when pivoted)
     return pd.DataFrame(data)
 
 
@@ -267,3 +289,70 @@ def test_plot_multiple_columns_with_group_col(sample_dataframe):
             x_col="x",
             group_col="group",
         )
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_fill_na_value_fills_missing_pivot_values(retail_sales_dataframe):
+    """Test that fill_na_value fills NaN values for Store_North but not Store_South."""
+    result_ax = line.plot(
+        df=retail_sales_dataframe,
+        value_col="sales",
+        x_col="week",
+        group_col="store",
+        fill_na_value=0.0,
+    )
+
+    assert isinstance(result_ax, Axes)
+    expected_num_lines = 2  # One for each store
+    assert len(result_ax.get_lines()) == expected_num_lines
+
+    # Get the plotted data for each store
+    line_data = {}
+    for plot_line in result_ax.get_lines():
+        label = plot_line.get_label()
+        y_data = plot_line.get_ydata()
+        line_data[label] = y_data
+
+    north_data = line_data["Store_North"]
+    south_data = line_data["Store_South"]
+
+    # Store_North should have 0.0 (filled value) for missing week 4
+    assert 0.0 in north_data, "Store_North should have 0.0 for missing week 4"
+
+    # Store_South should NOT have any 0.0 values (has complete data)
+    assert 0.0 not in south_data, "Store_South should not have any 0.0 values"
+
+
+@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
+def test_fill_na_value_none_preserves_nan_values(retail_sales_dataframe):
+    """Test that when fill_na_value is None, NaN exists in Store_North but not Store_South."""
+    result_ax = line.plot(
+        df=retail_sales_dataframe,
+        value_col="sales",
+        x_col="week",
+        group_col="store",
+        fill_na_value=None,
+    )
+
+    assert isinstance(result_ax, Axes)
+    expected_num_lines = 2  # One for each store
+    assert len(result_ax.get_lines()) == expected_num_lines
+
+    # Get the plotted data for each store
+    line_data = {}
+    for plot_line in result_ax.get_lines():
+        label = plot_line.get_label()
+        y_data = plot_line.get_ydata()
+        line_data[label] = y_data
+
+    north_data = line_data["Store_North"]
+    south_data = line_data["Store_South"]
+
+    # When fill_na_value=None, matplotlib handles missing data with masked arrays
+    # Store_North with missing data should be a masked array
+    assert isinstance(north_data, np.ma.MaskedArray), "Store_North data should be a masked array due to missing data"
+    assert north_data.mask.any(), "Store_North should have masked values for missing week 4"
+
+    # Store_South with complete data should be a regular numpy array (no masking needed)
+    assert isinstance(south_data, np.ndarray), "Store_South data should be a numpy array"
+    assert not isinstance(south_data, np.ma.MaskedArray), "Store_South should not be a masked array (has complete data)"
