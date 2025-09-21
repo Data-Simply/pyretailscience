@@ -256,16 +256,15 @@ class SegTransactionStats:
             # Configuration for rollups
             rollup_configs = [
                 # Prefix rollups: always include when calc_rollup=True
-                *[(segment_col[:i], segment_col[i:], rollup_value[i:]) for i in range(1, len(segment_col))],
+                (segment_col[:i], segment_col[i:], rollup_value[i:])
+                for i in range(1, len(segment_col))
             ]
 
             # Only add suffix rollups when calc_total=True (to avoid "Total" in category when no grand total)
             if calc_total:
                 rollup_configs.extend(
-                    [
-                        # Suffix rollups: group by suffixes, mutate preceding columns
-                        *[(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
-                    ],
+                    # Suffix rollups: group by suffixes, mutate preceding columns
+                    [(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
                 )
 
             # Process both prefix and suffix rollups with unified logic
