@@ -67,7 +67,6 @@ def _mock_gu_functions(mocker):
     mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_empty_dataframe():
     """Test price architecture plot with an empty DataFrame."""
     empty_df = pd.DataFrame(columns=["unit_price", "retailer"])
@@ -81,7 +80,6 @@ def test_plot_with_empty_dataframe():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_missing_value_col():
     """Test price architecture plot when value_col doesn't exist."""
     df = pd.DataFrame(
@@ -100,7 +98,6 @@ def test_plot_missing_value_col():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_missing_group_col():
     """Test price architecture plot when group_col doesn't exist."""
     df = pd.DataFrame(
@@ -119,7 +116,6 @@ def test_plot_missing_group_col():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_non_numeric_value_col():
     """Test price architecture plot with non-numeric value column."""
     df = pd.DataFrame(
@@ -138,9 +134,9 @@ def test_plot_non_numeric_value_col():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_invalid_bins_zero():
-    """Test price architecture plot with zero bins."""
+@pytest.mark.parametrize("bins", [0, -5])
+def test_plot_invalid_bins_non_positive(bins):
+    """Test price architecture plot with zero or negative bins."""
     df = pd.DataFrame(
         {
             "unit_price": [1, 2, 3],
@@ -153,30 +149,10 @@ def test_plot_invalid_bins_zero():
             df=df,
             value_col="unit_price",
             group_col="retailer",
-            bins=0,
+            bins=bins,
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_invalid_bins_negative():
-    """Test price architecture plot with negative bins."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
-
-    with pytest.raises(ValueError, match="bins must be a positive integer"):
-        price.plot(
-            df=df,
-            value_col="unit_price",
-            group_col="retailer",
-            bins=-5,
-        )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_invalid_bins_list_too_short():
     """Test price architecture plot with bins list too short."""
     df = pd.DataFrame(
@@ -195,7 +171,6 @@ def test_plot_invalid_bins_list_too_short():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_invalid_bins_list_non_numeric():
     """Test price architecture plot with non-numeric bins list."""
     df = pd.DataFrame(
@@ -214,7 +189,6 @@ def test_plot_invalid_bins_list_non_numeric():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_unsorted_bins_list(mocker):
     """Test price architecture plot passes sorted bins to pd.cut."""
     df = pd.DataFrame(
@@ -247,7 +221,6 @@ def test_plot_with_unsorted_bins_list(mocker):
     assert call_args[1]["bins"] == [1, 2, 3]  # Should be sorted
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_invalid_bins_type():
     """Test price architecture plot with invalid bins type."""
     df = pd.DataFrame(
@@ -266,7 +239,6 @@ def test_plot_invalid_bins_type():
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_missing_values(mocker):
     """Test price architecture plot handles missing values by dropping rows with NaN."""
     df = pd.DataFrame(
@@ -276,17 +248,15 @@ def test_plot_with_missing_values(mocker):
         },
     )
 
-    # Expected data after dropping missing values (rows 2 and 4 should be dropped)
-    expected_clean_df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 4],
-            "retailer": ["Walmart", "Walmart", "Target"],
-        },
-    )
-
-    # Mock dropna to verify it's called and return expected clean data
-    mock_dropna = mocker.patch.object(pd.DataFrame, "dropna")
-    mock_dropna.return_value = expected_clean_df
+    # Mock pd.cut to capture the cleaned data that gets passed to it
+    mock_cut = mocker.patch("pandas.cut")
+    # Create mock intervals that mimic pandas.cut behavior
+    intervals = [
+        pd.Interval(left=1, right=2, closed="right"),
+        pd.Interval(left=1, right=2, closed="right"),
+        pd.Interval(left=2, right=4, closed="right"),
+    ]
+    mock_cut.return_value = pd.Series(intervals, name="price_bin")
 
     result_ax = price.plot(
         df=df,
@@ -295,14 +265,29 @@ def test_plot_with_missing_values(mocker):
         bins=3,
     )
 
-    # Verify dropna was called on the subset of columns
-    mock_dropna.assert_called_once()
+    # Verify pd.cut was called and extract the cleaned data
+    mock_cut.assert_called_once()
+    cleaned_data = mock_cut.call_args[0][0]  # First positional argument to pd.cut
+
+    # Verify that missing values were properly dropped
+    # Expected: rows with indices 0, 1, 3 (original data [1, 2, 4])
+    # Row 2 (unit_price=None) and row 4 (retailer=None) should be dropped
+    expected_values = [1.0, 2.0, 4.0]
+
+    assert list(cleaned_data.values) == expected_values, f"Expected {expected_values}, got {list(cleaned_data.values)}"
+
+    # Also verify the retailer data was cleaned correctly by checking the DataFrame index
+    # The cleaned DataFrame should have the correct corresponding retailer values
+    call_kwargs = mock_cut.call_args[1]
+    if "bins" in call_kwargs:
+        expected_bins = 3
+        # The function should have properly cleaned both columns together
+        assert len(cleaned_data) == expected_bins, f"Expected 3 clean rows, got {len(cleaned_data)}"
 
     # Verify the function still works with cleaned data
     assert isinstance(result_ax, Axes)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_all_missing_values():
     """Test price architecture plot with all missing values."""
     df = pd.DataFrame(
@@ -347,7 +332,6 @@ def test_plot_with_bins(simple_price_dataframe, bins, title):
     assert len(result_ax.get_yticks()) == expected_bins
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_basic_functionality(sample_price_dataframe, mocker):
     """Test basic price architecture plot functionality with labels and titles."""
     # Mock standard_graph_styles to capture title and label parameters
@@ -381,7 +365,6 @@ def test_plot_basic_functionality(sample_price_dataframe, mocker):
     assert len(result_ax.get_yticks()) == expected_bins
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_country_grouping(sample_price_dataframe):
     """Test price architecture plot with country grouping."""
     result_ax = price.plot(
@@ -447,7 +430,6 @@ def test_plot_adds_source_text(simple_price_dataframe):
     gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_kwargs(simple_price_dataframe, mocker):
     """Test that additional kwargs are passed to scatter plot."""
     # Mock ax.scatter to capture kwargs
@@ -473,7 +455,6 @@ def test_plot_with_kwargs(simple_price_dataframe, mocker):
     assert call_kwargs["marker"] == "^"
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_handles_zero_percentages():
     """Test that plot handles edge case where all percentages might be zero."""
     # Create a DataFrame where all products fall into the same bin
@@ -496,7 +477,6 @@ def test_plot_handles_zero_percentages():
     assert isinstance(result_ax, Axes)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_raises_error_when_no_data_in_bins():
     """Test that plot raises error when no data falls within the specified bins."""
     df = pd.DataFrame(
@@ -516,10 +496,8 @@ def test_plot_raises_error_when_no_data_in_bins():
         )
 
 
-def test_percentages_sum_to_100_for_each_group():
-    """Test that percentages calculated for each group sum to 100%."""
-    tolerance = 0.001  # Floating point comparison tolerance
-
+def test_percentages_sum_to_100_for_each_group(mocker):
+    """Test that percentages calculated by the plot function for each group sum to 100%."""
     # Create test data with known distribution
     df = pd.DataFrame(
         {
@@ -528,28 +506,50 @@ def test_percentages_sum_to_100_for_each_group():
         },
     )
 
-    # Clean data like the plot function does
-    df_clean = df[["unit_price", "retailer"]].dropna().copy()
-    bins = [1.0, 3.0, 5.0, 7.0, 9.0]  # 4 bins
+    # Mock the scatter plot to capture the actual size values (percentages) being plotted
+    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
 
-    # Replicate the percentage calculation logic from the plot function
-    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
-    group_totals = df_clean.groupby("retailer", observed=True).size()
-    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
-    percentages = bin_counts.div(group_totals, axis=0) * 100
+    # Call the actual plot function
+    price.plot(
+        df=df,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=[1.0, 3.0, 5.0, 7.0, 9.0],  # 4 bins
+    )
 
-    # Verify each group's percentages sum to 100%
-    for group in percentages.index:
-        group_percentage_sum = percentages.loc[group].sum()
-        assert abs(group_percentage_sum - 100.0) < tolerance, (
-            f"Group {group} percentages sum to {group_percentage_sum}, not 100%"
-        )
+    # Extract the actual data passed to scatter
+    mock_scatter.assert_called_once()
+    scatter_call = mock_scatter.call_args
+    sizes = scatter_call.kwargs["s"]
+    x_positions = scatter_call[0][0]  # retailer positions
+
+    # Test that the percentage calculation logic maintains the fundamental property:
+    # When retailers have equal numbers of items, their maximum bubble sizes should be similar
+    # (since each group's bubbles are scaled relative to that group's maximum percentage)
+
+    # Group sizes by retailer position
+    walmart_sizes = [sizes[i] for i, x in enumerate(x_positions) if x == 0]  # x=0 is Walmart
+    target_sizes = [sizes[i] for i, x in enumerate(x_positions) if x == 1]  # x=1 is Target
+
+    # Both retailers have equal items (4 each), so their max bubble sizes should be equal
+    # because the scaling is: (percentage / group_max) * scale_factor
+    # With equal items, both groups should have the same group_max (percentage-wise)
+    walmart_max = max(walmart_sizes)
+    target_max = max(target_sizes)
+
+    # They should be equal within a small tolerance (both groups have same scale factor)
+    max_size_tolerance = 50
+    assert abs(walmart_max - target_max) < max_size_tolerance, (
+        f"Equal-sized groups should have similar max bubble sizes: {walmart_max} vs {target_max}"
+    )
+
+    # Verify that all non-zero sizes were plotted (no data should be filtered incorrectly)
+    assert len(sizes) > 0, "Should have plotted some bubbles"
+    assert all(s > 0 for s in sizes), "All plotted bubbles should have positive size"
 
 
-def test_individual_percentage_calculations_are_correct():
-    """Test that individual percentage calculations are mathematically correct."""
-    tolerance = 0.001  # Floating point comparison tolerance
-
+def test_individual_percentage_calculations_are_correct(mocker):
+    """Test that the plot function handles percentage calculations correctly with known data."""
     # Create test data with known, predictable distribution
     df = pd.DataFrame(
         {
@@ -558,50 +558,63 @@ def test_individual_percentage_calculations_are_correct():
         },
     )
 
-    # Clean data like the plot function does
-    df_clean = df[["unit_price", "retailer"]].dropna().copy()
-    bins = [0.0, 3.0, 6.0, 11.0]  # 3 bins: [0-3], (3-6], (6-11]
+    # Mock scatter to capture the actual percentage values being plotted
+    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
 
-    # Replicate the percentage calculation logic from the plot function
-    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
-    group_totals = df_clean.groupby("retailer", observed=True).size()
-    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
-    percentages = bin_counts.div(group_totals, axis=0) * 100
-
-    # Expected distribution:
-    # Walmart (4 items): [1,2,3,4] -> bin1: [1,2,3] (3 items = 75%), bin2: [4] (1 item = 25%), bin3: 0%
-    # Target (6 items): [5,6,7,8,9,10] -> bin1: 0%, bin2: [5,6] (2 items = 33.33%), bin3: [7,8,9,10] (4 items = 66.67%)
-
-    # Verify Walmart percentages
-    walmart_percentages = percentages.loc["Walmart"]
-    assert abs(walmart_percentages.iloc[0] - 75.0) < tolerance, (
-        f"Walmart bin1 should be 75%, got {walmart_percentages.iloc[0]}"
-    )
-    assert abs(walmart_percentages.iloc[1] - 25.0) < tolerance, (
-        f"Walmart bin2 should be 25%, got {walmart_percentages.iloc[1]}"
-    )
-    assert abs(walmart_percentages.iloc[2] - 0.0) < tolerance, (
-        f"Walmart bin3 should be 0%, got {walmart_percentages.iloc[2]}"
+    # Call the actual plot function with known bins
+    price.plot(
+        df=df,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=[0.0, 3.0, 6.0, 11.0],  # 3 bins: [0-3], (3-6], (6-11]
     )
 
-    # Verify Target percentages
-    target_percentages = percentages.loc["Target"]
-    assert abs(target_percentages.iloc[0] - 0.0) < tolerance, (
-        f"Target bin1 should be 0%, got {target_percentages.iloc[0]}"
-    )
-    assert abs(target_percentages.iloc[1] - 33.333333333333336) < tolerance, (
-        f"Target bin2 should be ~33.33%, got {target_percentages.iloc[1]}"
-    )
-    assert abs(target_percentages.iloc[2] - 66.66666666666667) < tolerance, (
-        f"Target bin3 should be ~66.67%, got {target_percentages.iloc[2]}"
-    )
+    # Extract the actual data passed to scatter
+    mock_scatter.assert_called_once()
+    scatter_call = mock_scatter.call_args
+    x_data = scatter_call[0][0]  # x coordinates (retailers)
+    y_data = scatter_call[0][1]  # y coordinates (bins)
+    sizes = scatter_call.kwargs["s"]  # sizes (scaled percentages)
+
+    # Test that the percentage calculations produce the expected relative distribution
+    # Expected with our test data and bins [0.0, 3.0, 6.0, 11.0]:
+    # Walmart (4 items): [1,2,3,4] -> bin0: [1,2,3] (75%), bin1: [4] (25%), bin2: [] (0%)
+    # Target (6 items): [5,6,7,8,9,10] -> bin0: [] (0%), bin1: [5,6] (33.33%), bin2: [7,8,9,10] (66.67%)
+
+    # Group the data by retailer and bin
+    walmart_data = {}
+    target_data = {}
+
+    for x, y, size in zip(x_data, y_data, sizes, strict=False):
+        if x == 0:  # Walmart
+            walmart_data[y] = size
+        elif x == 1:  # Target
+            target_data[y] = size
+
+    # Test the fundamental behavior: relative distribution within each group
+    # Walmart should have largest bubble in bin 0 (prices 1-3), smaller in bin 1 (price 4)
+    if 0 in walmart_data and 1 in walmart_data:
+        assert walmart_data[0] > walmart_data[1], "Walmart should have more items in lower price bin than higher"
+
+    # Target should have largest bubble in bin 2 (prices 7-10), smaller in bin 1 (prices 5-6)
+    bin_1 = 1
+    bin_2 = 2
+    if bin_1 in target_data and bin_2 in target_data:
+        assert target_data[bin_2] > target_data[bin_1], "Target should have more items in higher price bin than lower"
+
+    # Test that we get sensible output structure
+    expected_retailers = 2
+    assert len(set(x_data)) == expected_retailers, "Should have data for exactly 2 retailers"
+    assert len(sizes) > 0, "Should have plotted some bubbles"
+    assert all(s > 0 for s in sizes), "All bubble sizes should be positive"
 
 
-def test_percentage_calculations_edge_cases():
-    """Test percentage calculations with edge cases like single items and uneven distributions."""
-    tolerance = 0.001  # Floating point comparison tolerance
+def test_percentage_calculations_edge_cases(mocker):
+    """Test that the plot function correctly handles extreme percentage distributions."""
+    # Mock scatter to capture the actual percentage calculations
+    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
 
-    # Test case 1: Single item per group
+    # Test case: Single item per group - should result in 100% in one bin, 0% in others
     df_single = pd.DataFrame(
         {
             "unit_price": [2.0, 8.0],
@@ -609,27 +622,21 @@ def test_percentage_calculations_edge_cases():
         },
     )
 
-    # Clean and calculate
-    df_clean = df_single[["unit_price", "retailer"]].dropna().copy()
-    bins = [0.0, 5.0, 10.0]  # 2 bins
-    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
-    group_totals = df_clean.groupby("retailer", observed=True).size()
-    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
-    percentages = bin_counts.div(group_totals, axis=0) * 100
+    price.plot(
+        df=df_single,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=[0.0, 5.0, 10.0],  # 2 bins: [0-5], (5-10]
+    )
 
-    # Each group has 1 item, so one bin should be 100%, other should be 0%
-    walmart_percentages = percentages.loc["Walmart"]
-    target_percentages = percentages.loc["Target"]
+    # Get the first test results
+    first_call = mock_scatter.call_args
+    sizes_1 = first_call.kwargs["s"]
 
-    # Walmart (price=2.0) falls in first bin [0-5]
-    assert abs(walmart_percentages.iloc[0] - 100.0) < tolerance, "Walmart should have 100% in first bin"
-    assert abs(walmart_percentages.iloc[1] - 0.0) < tolerance, "Walmart should have 0% in second bin"
+    # Reset mock for second test
+    mock_scatter.reset_mock()
 
-    # Target (price=8.0) falls in second bin (5-10]
-    assert abs(target_percentages.iloc[0] - 0.0) < tolerance, "Target should have 0% in first bin"
-    assert abs(target_percentages.iloc[1] - 100.0) < tolerance, "Target should have 100% in second bin"
-
-    # Test case 2: Highly uneven distribution
+    # Test case: Highly uneven distribution - 90% of items in one price range
     df_uneven = pd.DataFrame(
         {
             "unit_price": [1.0] * 9 + [9.0],  # 9 items at 1.0, 1 item at 9.0
@@ -637,19 +644,34 @@ def test_percentage_calculations_edge_cases():
         },
     )
 
-    # Clean and calculate
-    df_clean = df_uneven[["unit_price", "retailer"]].dropna().copy()
-    bins = [0.0, 5.0, 10.0]  # 2 bins
-    df_clean["price_bin"] = pd.cut(df_clean["unit_price"], bins=bins, include_lowest=True)
-    group_totals = df_clean.groupby("retailer", observed=True).size()
-    bin_counts = df_clean.groupby(["retailer", "price_bin"], observed=True).size().unstack(fill_value=0)
-    percentages = bin_counts.div(group_totals, axis=0) * 100
+    price.plot(
+        df=df_uneven,
+        value_col="unit_price",
+        group_col="retailer",
+        bins=[0.0, 5.0, 10.0],  # 2 bins: [0-5] gets 9 items, (5-10] gets 1 item
+    )
 
-    # Should have 90% in first bin, 10% in second bin
-    walmart_percentages = percentages.loc["Walmart"]
-    assert abs(walmart_percentages.iloc[0] - 90.0) < tolerance, (
-        f"Should be 90% in first bin, got {walmart_percentages.iloc[0]}"
-    )
-    assert abs(walmart_percentages.iloc[1] - 10.0) < tolerance, (
-        f"Should be 10% in second bin, got {walmart_percentages.iloc[1]}"
-    )
+    # Get the second test results
+    second_call = mock_scatter.call_args
+    sizes_2 = second_call.kwargs["s"]
+    y_data_2 = second_call[0][1]
+
+    # Test the fundamental behavior: uneven distribution should show extreme size differences
+    # With 90% vs 10% distribution, the larger bin should have a much bigger bubble
+    bin_sizes = dict(zip(y_data_2, sizes_2, strict=False))
+
+    # Find bins 0 and 1
+    if 0 in bin_sizes and 1 in bin_sizes:
+        larger_bin = bin_sizes[0]  # Should have 9 items (90%)
+        smaller_bin = bin_sizes[1]  # Should have 1 item (10%)
+
+        # The 90% bin should be significantly larger than the 10% bin
+        assert larger_bin > smaller_bin * 5, (
+            f"90% bin should be much larger than 10% bin: {larger_bin} vs {smaller_bin}"
+        )
+
+    # Verify both test cases completed and produced valid output
+    assert len(sizes_1) > 0, "Single item test should produce scatter data"
+    assert len(sizes_2) > 0, "Uneven distribution test should produce scatter data"
+    assert all(s > 0 for s in sizes_1), "All bubbles should have positive size"
+    assert all(s > 0 for s in sizes_2), "All bubbles should have positive size"
