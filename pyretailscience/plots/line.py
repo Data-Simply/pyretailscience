@@ -50,6 +50,7 @@ def plot(
     source_text: str | None = None,
     legend_title: str | None = None,
     move_legend_outside: bool = False,
+    fill_na_value: float | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
     """Plots the `value_col` over the specified `x_col` or index, creating a separate line for each unique value in `group_col`.
@@ -66,6 +67,7 @@ def plot(
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): The source text to add to the plot.
         move_legend_outside (bool, optional): Move the legend outside the plot.
+        fill_na_value (float, optional): Value to fill NaNs with after pivoting.
         **kwargs: Additional keyword arguments for Pandas' `plot` function.
 
     Returns:
@@ -81,7 +83,13 @@ def plot(
             [value_col] if isinstance(value_col, str) else value_col
         ]
     else:
-        pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
+        pivot_df = (
+            df.pivot(columns=group_col, values=value_col)
+            if x_col is None
+            else df.pivot(index=x_col, columns=group_col, values=value_col)
+        )
+        if fill_na_value is not None:
+            pivot_df = pivot_df.fillna(fill_na_value)
 
     is_multi_line = (group_col is not None) or (isinstance(value_col, list) and len(value_col) > 1)
 

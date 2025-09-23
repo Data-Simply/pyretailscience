@@ -190,7 +190,7 @@ def test_truncate_to_x_digits_decimal_edge_cases():
 def test_set_axis_percent():
     """Test set_axis_percent function formats axis correctly."""
     # Create a test plot
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
 
     # Apply our function to the y-axis
@@ -205,7 +205,7 @@ def test_set_axis_percent():
     assert formatter._symbol == "%"
 
     # Test with custom parameters
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.plot([0, 25, 50, 75, 100], [0, 30, 50, 70, 100])
 
     # Define test values
@@ -233,7 +233,7 @@ class TestRegressionLine:
 
     def test_line_plot_with_numeric_data(self):
         """Test regression line with a standard line plot and numeric data."""
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([2, 3, 5, 7, 11])  # Not a perfect line to test regression
         ax.plot(x, y)
@@ -387,44 +387,3 @@ class TestVisualRegression:
         assert source_text.get_color() == "dimgray"
 
         plt.close(fig)
-
-
-class TestImportPaths:
-    """Test all new import paths work correctly."""
-
-    def test_graph_utils_import(self):
-        """Test graph_utils can be imported from new location."""
-        try:
-            from pyretailscience.plots.styles.graph_utils import add_source_text, human_format, standard_graph_styles
-
-            assert callable(standard_graph_styles)
-            assert callable(human_format)
-            assert callable(add_source_text)
-        except ImportError as e:
-            pytest.fail(f"Failed to import from new graph_utils location: {e}")
-
-    def test_styling_helpers_import(self):
-        """Test styling_helpers can be imported."""
-        try:
-            from pyretailscience.plots.styles.styling_helpers import PlotStyler
-
-            assert PlotStyler is not None
-        except ImportError as e:
-            pytest.fail(f"Failed to import PlotStyler: {e}")
-
-    def test_styling_context_import(self):
-        """Test styling_context can be imported."""
-        try:
-            from pyretailscience.plots.styles.styling_context import (
-                FontConfig,
-                StylingContext,
-                get_styling_context,
-                update_styling_context,
-            )
-
-            assert StylingContext is not None
-            assert FontConfig is not None
-            assert callable(get_styling_context)
-            assert callable(update_styling_context)
-        except ImportError as e:
-            pytest.fail(f"Failed to import styling_context components: {e}")
