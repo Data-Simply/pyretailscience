@@ -4,6 +4,7 @@ import importlib.resources as pkg_resources
 from collections.abc import Generator
 from datetime import datetime
 from itertools import cycle
+from typing import Any, Literal
 
 import matplotlib.ticker as mtick
 import numpy as np
@@ -331,27 +332,167 @@ def set_axis_percent(
     return fmt_axis.set_major_formatter(mtick.PercentFormatter(xmax=xmax, decimals=decimals, symbol=symbol))
 
 
+def _calculate_r_squared_original_space(y_actual: np.ndarray, y_predicted: np.ndarray) -> float:
+    """Calculate R² in original data space.
+
+    Args:
+        y_actual (np.ndarray): Actual y values.
+        y_predicted (np.ndarray): Predicted y values from regression model.
+
+    Returns:
+        float: R² value calculated in original data space.
+    """
+    ss_res = np.sum((y_actual - y_predicted) ** 2)  # Sum of squares of residuals
+    ss_tot = np.sum((y_actual - np.mean(y_actual)) ** 2)  # Total sum of squares
+
+    # Handle edge case where all y values are identical
+    if ss_tot == 0:
+        return 1.0 if ss_res == 0 else 0.0
+
+    return 1 - (ss_res / ss_tot)
+
+
+def _perform_regression_calculation(
+    regression_type: str,
+    x_filtered: np.ndarray,
+    y_filtered: np.ndarray,
+) -> tuple[float, float, float]:
+    """Perform regression calculation and return coefficients and R² in original data space.
+
+    Args:
+        regression_type (str): Type of regression to perform.
+        x_filtered (np.ndarray): Filtered x data.
+        y_filtered (np.ndarray): Filtered y data.
+
+    Returns:
+        tuple[float, float, float]: param1, param2, r_squared (calculated in original data space)
+    """
+    if regression_type == "linear":
+        # Linear regression: y = mx + b
+        slope, intercept, r_value, _, _ = stats.linregress(x_filtered, y_filtered)
+        return slope, intercept, r_value**2
+
+    if regression_type == "power":
+        # Power law regression: y = ax^b → log(y) = log(a) + b*log(x)
+        log_x = np.log(x_filtered)
+        log_y = np.log(y_filtered)
+        slope, intercept, _, _, _ = stats.linregress(log_x, log_y)
+        a = np.exp(intercept)  # Convert back: a = exp(intercept), b = slope
+        b = slope
+
+        # Calculate R² in original data space
+        y_predicted = a * (x_filtered**b)
+        r_squared = _calculate_r_squared_original_space(y_filtered, y_predicted)
+        return a, b, r_squared
+
+    if regression_type == "logarithmic":
+        # Logarithmic regression: y = a*ln(x) + b
+        log_x = np.log(x_filtered)
+        slope, intercept, _, _, _ = stats.linregress(log_x, y_filtered)
+        a = slope  # a = slope, b = intercept
+        b = intercept
+
+        # Calculate R² in original data space
+        y_predicted = a * np.log(x_filtered) + b
+        r_squared = _calculate_r_squared_original_space(y_filtered, y_predicted)
+        return a, b, r_squared
+
+    if regression_type == "exponential":
+        # Exponential regression: y = ae^(bx) → ln(y) = ln(a) + bx
+        log_y = np.log(y_filtered)
+        slope, intercept, _, _, _ = stats.linregress(x_filtered, log_y)
+        a = np.exp(intercept)  # Convert back: a = exp(intercept), b = slope
+        b = slope
+
+        # Calculate R² in original data space
+        y_predicted = a * np.exp(b * x_filtered)
+        r_squared = _calculate_r_squared_original_space(y_filtered, y_predicted)
+        return a, b, r_squared
+
+    msg = f"Unsupported regression type: {regression_type}"
+    raise ValueError(msg)
+
+
+def _generate_regression_line(
+    regression_type: str,
+    param1: float,
+    param2: float,
+    x_min: float,
+    x_max: float,
+    data_size: int = 50,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Generate regression line points for plotting with adaptive point calculation.
+
+    Args:
+        regression_type (str): Type of regression.
+        param1 (float): First parameter (slope/a coefficient).
+        param2 (float): Second parameter (intercept/b coefficient).
+        x_min (float): Minimum x value for line.
+        x_max (float): Maximum x value for line.
+        data_size (int): Number of original data points for adaptive calculation.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: x_line, y_line arrays for plotting.
+    """
+    if regression_type == "linear":
+        # Linear: use endpoints for efficiency
+        x_line = np.array([x_min, x_max])
+        y_line = param1 * x_line + param2
+        return x_line, y_line
+
+    # For non-linear types, use adaptive point calculation
+    # Base points on data size but ensure smooth curves for complex functions
+    min_points = 50
+    max_points = 500
+    adaptive_points = max(data_size * 3, min_points)
+    num_points = min(adaptive_points, max_points)
+
+    if regression_type == "power":
+        # Ensure we don't go below a small positive value to avoid log issues
+        x_start = max(x_min, 1e-6)
+        x_line = np.linspace(x_start, x_max, num_points)
+        y_line = param1 * (x_line**param2)
+        return x_line, y_line
+
+    if regression_type == "logarithmic":
+        # Ensure we don't go below a small positive value to avoid log issues
+        x_start = max(x_min, 1e-6)
+        x_line = np.linspace(x_start, x_max, num_points)
+        y_line = param1 * np.log(x_line) + param2
+        return x_line, y_line
+
+    if regression_type == "exponential":
+        x_line = np.linspace(x_min, x_max, num_points)
+        y_line = param1 * np.exp(param2 * x_line)
+        return x_line, y_line
+
+    msg = f"Unsupported regression type: {regression_type}"
+    raise ValueError(msg)
+
+
 def _add_equation_text(
     ax: Axes,
-    slope: float,
-    intercept: float,
+    param1: float,
+    param2: float,
     r_squared: float,
     color: str,
     text_position: float,
     show_equation: bool,
     show_r2: bool,
+    regression_type: str = "linear",
 ) -> None:
     """Add equation and R² text to the plot.
 
     Args:
         ax (Axes): The matplotlib axes object.
-        slope (float): The slope of the regression line.
-        intercept (float): The intercept of the regression line.
+        param1 (float): First regression parameter (slope/a coefficient).
+        param2 (float): Second regression parameter (intercept/b coefficient).
         r_squared (float): The R² value of the regression.
         color (str): The color of the text.
         text_position (float): The relative y-position of the text.
         show_equation (bool): Whether to display the equation.
         show_r2 (bool): Whether to display the R² value.
+        regression_type (str): The type of regression for equation formatting.
     """
     if not (show_equation or show_r2):
         return
@@ -361,12 +502,23 @@ def _add_equation_text(
     equation_parts = []
 
     if show_equation:
-        sign = "+" if intercept >= 0 else "-"
-        equation = f"y = {slope:.4g}x {sign} {abs(intercept):.4g}"
+        if regression_type == "linear":
+            sign = "+" if param2 >= 0 else "-"
+            equation = f"y = {param1:.3f}x {sign} {abs(param2):.3f}"
+        elif regression_type == "power":
+            equation = f"y = {param1:.3f}x^{param2:.3f}"
+        elif regression_type == "logarithmic":
+            sign = "+" if param2 >= 0 else "-"
+            equation = f"y = {param1:.3f}ln(x) {sign} {abs(param2):.3f}"
+        elif regression_type == "exponential":
+            equation = f"y = {param1:.3f}e^({param2:.3f}x)"
+        else:
+            equation = f"y = {param1:.3f}x + {param2:.3f}"  # Fallback
+
         equation_parts.append(equation)
 
     if show_r2:
-        r2_text = f"R² = {r_squared:.4g}"
+        r2_text = f"R² = {r_squared:.3f}"
         equation_parts.append(r2_text)
 
     text = "\n".join(equation_parts)
@@ -500,21 +652,100 @@ def _prepare_numeric_data(x_data: np.ndarray, y_data: np.ndarray) -> tuple[np.nd
         error_msg = f"At least {min_points_for_regression} valid data points are required for regression analysis"
         raise ValueError(error_msg)
 
-    return x_numeric[valid_mask], y_numeric[valid_mask]
+    x_filtered = x_numeric[valid_mask]
+    y_filtered = y_numeric[valid_mask]
+
+    # Check for zero variance in either dimension
+    if np.var(x_filtered) == 0:
+        raise ValueError("Cannot perform regression: all x values are identical (zero variance)")
+    if np.var(y_filtered) == 0:
+        raise ValueError("Cannot perform regression: all y values are identical (zero variance)")
+
+    return x_filtered, y_filtered
+
+
+def _validate_regression_data(
+    x_data: np.ndarray,
+    y_data: np.ndarray,
+    regression_type: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Validate and filter data for specific regression types.
+
+    Args:
+        x_data (np.ndarray): The x-axis data.
+        y_data (np.ndarray): The y-axis data.
+        regression_type (str): The regression type being used.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Filtered x and y data arrays.
+
+    Raises:
+        ValueError: If insufficient valid data remains after filtering.
+    """
+    min_regression_points = 2
+
+    if regression_type == "power":
+        # Power regression requires positive x AND y values for log transformation
+        positive_mask = (x_data > 0) & (y_data > 0)
+        if np.sum(positive_mask) < min_regression_points:
+            filtered_count = np.sum(positive_mask)
+            total_count = len(x_data)
+            error_msg = (
+                f"Power regression requires at least {min_regression_points} data points with positive x and y values. "
+                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+            )
+            raise ValueError(error_msg)
+        x_filtered = x_data[positive_mask]
+        y_filtered = y_data[positive_mask]
+        return x_filtered, y_filtered
+
+    if regression_type == "logarithmic":
+        # Logarithmic requires positive x values for log transformation
+        positive_x_mask = x_data > 0
+        if np.sum(positive_x_mask) < min_regression_points:
+            filtered_count = np.sum(positive_x_mask)
+            total_count = len(x_data)
+            error_msg = (
+                f"Logarithmic regression requires at least {min_regression_points} positive x values. "
+                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+            )
+            raise ValueError(error_msg)
+        x_filtered = x_data[positive_x_mask]
+        y_filtered = y_data[positive_x_mask]
+        return x_filtered, y_filtered
+
+    if regression_type == "exponential":
+        # Exponential requires positive y values for log transformation
+        positive_y_mask = y_data > 0
+        if np.sum(positive_y_mask) < min_regression_points:
+            filtered_count = np.sum(positive_y_mask)
+            total_count = len(y_data)
+            error_msg = (
+                f"Exponential regression requires at least {min_regression_points} positive y values. "
+                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+            )
+            raise ValueError(error_msg)
+        x_filtered = x_data[positive_y_mask]
+        y_filtered = y_data[positive_y_mask]
+        return x_filtered, y_filtered
+
+    # Linear regression uses all data
+    return x_data, y_data
 
 
 def add_regression_line(
     ax: Axes,
+    regression_type: Literal["linear", "power", "logarithmic", "exponential"] = "linear",
     color: str = "red",
     linestyle: str = "--",
     text_position: float = 0.6,
     show_equation: bool = True,
     show_r2: bool = True,
-    **kwargs: dict[str, any],
+    **kwargs: dict[str, Any],
 ) -> Axes:
-    """Add a regression line to a plot.
+    """Add a regression line with configurable algorithm to a matplotlib plot.
 
-    This function examines the data in a matplotlib Axes object and adds a linear
+    This function examines the data in a matplotlib Axes object and adds a
     regression line to it. It supports line plots, scatter plots, and bar charts
     (both vertical and horizontal), and can handle both numeric and datetime x-axis values.
 
@@ -527,6 +758,13 @@ def add_regression_line(
 
     Args:
         ax (Axes): The matplotlib axes object containing the plot (line, scatter, or bar).
+        regression_type (Literal["linear", "power", "logarithmic", "exponential"], optional):
+            Regression algorithm to use. Supported values:
+            - "linear": y = mx + b (default, OLS regression)
+            - "power": y = ax^b (elasticity analysis, log-log transformation)
+            - "logarithmic": y = a*ln(x) + b (diminishing returns analysis)
+            - "exponential": y = ae^(bx) (growth/decay patterns)
+            Defaults to "linear".
         color (str, optional): Color of the regression line. Defaults to "red".
         linestyle (str, optional): Style of the regression line. Defaults to "--".
         text_position (float, optional): Relative position (0-1) for the equation text. Defaults to 0.6.
@@ -538,27 +776,48 @@ def add_regression_line(
         Axes: The matplotlib axes with the regression line added.
 
     Raises:
-        ValueError: If the plot contains no visible lines, scatter points, or bar patches.
+        ValueError: If the plot contains no visible lines, scatter points, or bar patches, or if
+            regression_type is not supported.
+
+    Examples:
+        Basic linear regression (backward compatible):
+        >>> ax = data.plot.scatter(x='price', y='demand')
+        >>> gu.add_regression_line(ax)
+
+        Power law regression for price elasticity:
+        >>> gu.add_regression_line(ax, regression_type="power")
+
+        Bar chart with regression line:
+        >>> ax = df.plot.bar(x='category', y='sales')
+        >>> gu.add_regression_line(ax, regression_type="linear")
     """
+    # Validate regression type
+    supported_types = ["linear", "power", "logarithmic", "exponential"]
+    if regression_type not in supported_types:
+        error_msg = f"Unsupported regression_type '{regression_type}'. Supported types: {supported_types}"
+        raise ValueError(error_msg)
+
     # Extract data from the plot
     x_data, y_data = _extract_plot_data(ax)
 
     # Convert to numeric data and validate
     x_numeric, y_numeric = _prepare_numeric_data(x_data, y_data)
 
-    # Calculate linear regression using scipy.stats.linregress
-    slope, intercept, r_value, _, _ = stats.linregress(x_numeric, y_numeric)
-    r_squared = r_value**2
+    # Apply algorithm-specific data validation and filtering
+    x_filtered, y_filtered = _validate_regression_data(x_numeric, y_numeric, regression_type)
 
-    # Calculate the regression line endpoints
-    y_min = intercept + slope * min(x_numeric)
-    y_max = intercept + slope * max(x_numeric)
+    # Perform regression calculation
+    param1, param2, r_squared = _perform_regression_calculation(regression_type, x_filtered, y_filtered)
+
+    # Generate regression line points
+    x_min, x_max = ax.get_xlim()
+    data_size = len(x_filtered)
+    x_line, y_line = _generate_regression_line(regression_type, param1, param2, x_min, x_max, data_size)
 
     # Plot the regression line
-    x_min, x_max = ax.get_xlim()
-    ax.plot([x_min, x_max], [y_min, y_max], color=color, linestyle=linestyle, **kwargs)
+    ax.plot(x_line, y_line, color=color, linestyle=linestyle, **kwargs)
 
-    # Add equation and R² text if requested
-    _add_equation_text(ax, slope, intercept, r_squared, color, text_position, show_equation, show_r2)
+    # Add equation and R² text
+    _add_equation_text(ax, param1, param2, r_squared, color, text_position, show_equation, show_r2, regression_type)
 
     return ax
