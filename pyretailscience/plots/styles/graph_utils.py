@@ -429,8 +429,7 @@ def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
 
         # Sort by x-coordinate to ensure consistency with grouped/stacked bar charts
         bar_data.sort(key=lambda point: point[0])
-        x_data = np.array([point[0] for point in bar_data])
-        y_data = np.array([point[1] for point in bar_data])
+        x_data, y_data = np.array(bar_data).T
     # If no lines or bars, check for scatter plots (or other collections)
     elif hasattr(ax, "collections") and ax.collections:
         # Extract data from the first collection (e.g., scatter plot)
