@@ -673,10 +673,11 @@ def _validate_regression_data(
     Raises:
         ValueError: If insufficient valid data remains after filtering.
     """
+    min_regression_points = 2
+
     if regression_type == "power":
         # Power regression requires positive x AND y values for log transformation
         positive_mask = (x_data > 0) & (y_data > 0)
-        min_regression_points = 2
         if np.sum(positive_mask) < min_regression_points:
             raise ValueError("Power regression requires at least 2 data points with positive x and y values")
         x_filtered = x_data[positive_mask]
