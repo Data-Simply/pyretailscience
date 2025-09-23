@@ -353,7 +353,9 @@ def _calculate_r_squared_original_space(y_actual: np.ndarray, y_predicted: np.nd
 
 
 def _perform_regression_calculation(
-    regression_type: str, x_filtered: np.ndarray, y_filtered: np.ndarray
+    regression_type: str,
+    x_filtered: np.ndarray,
+    y_filtered: np.ndarray,
 ) -> tuple[float, float, float]:
     """Perform regression calculation and return coefficients and R² in original data space.
 
@@ -412,7 +414,12 @@ def _perform_regression_calculation(
 
 
 def _generate_regression_line(
-    regression_type: str, param1: float, param2: float, x_min: float, x_max: float, data_size: int = 50
+    regression_type: str,
+    param1: float,
+    param2: float,
+    x_min: float,
+    x_max: float,
+    data_size: int = 50,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Generate regression line points for plotting with adaptive point calculation.
 
@@ -649,7 +656,9 @@ def _prepare_numeric_data(x_data: np.ndarray, y_data: np.ndarray) -> tuple[np.nd
 
 
 def _validate_regression_data(
-    x_data: np.ndarray, y_data: np.ndarray, regression_type: str
+    x_data: np.ndarray,
+    y_data: np.ndarray,
+    regression_type: str,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Validate and filter data for specific regression types.
 
