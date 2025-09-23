@@ -4,7 +4,7 @@ import importlib.resources as pkg_resources
 from collections.abc import Generator
 from datetime import datetime
 from itertools import cycle
-from typing import Literal
+from typing import Any, Literal
 
 import matplotlib.ticker as mtick
 import numpy as np
@@ -652,7 +652,16 @@ def _prepare_numeric_data(x_data: np.ndarray, y_data: np.ndarray) -> tuple[np.nd
         error_msg = f"At least {min_points_for_regression} valid data points are required for regression analysis"
         raise ValueError(error_msg)
 
-    return x_numeric[valid_mask], y_numeric[valid_mask]
+    x_filtered = x_numeric[valid_mask]
+    y_filtered = y_numeric[valid_mask]
+
+    # Check for zero variance in either dimension
+    if np.var(x_filtered) == 0:
+        raise ValueError("Cannot perform regression: all x values are identical (zero variance)")
+    if np.var(y_filtered) == 0:
+        raise ValueError("Cannot perform regression: all y values are identical (zero variance)")
+
+    return x_filtered, y_filtered
 
 
 def _validate_regression_data(
@@ -679,7 +688,13 @@ def _validate_regression_data(
         # Power regression requires positive x AND y values for log transformation
         positive_mask = (x_data > 0) & (y_data > 0)
         if np.sum(positive_mask) < min_regression_points:
-            raise ValueError("Power regression requires at least 2 data points with positive x and y values")
+            filtered_count = np.sum(positive_mask)
+            total_count = len(x_data)
+            error_msg = (
+                f"Power regression requires at least {min_regression_points} data points with positive x and y values. "
+                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+            )
+            raise ValueError(error_msg)
         x_filtered = x_data[positive_mask]
         y_filtered = y_data[positive_mask]
         return x_filtered, y_filtered
@@ -688,7 +703,13 @@ def _validate_regression_data(
         # Logarithmic requires positive x values for log transformation
         positive_x_mask = x_data > 0
         if np.sum(positive_x_mask) < min_regression_points:
-            raise ValueError("Logarithmic regression requires at least 2 positive x values")
+            filtered_count = np.sum(positive_x_mask)
+            total_count = len(x_data)
+            error_msg = (
+                f"Logarithmic regression requires at least {min_regression_points} positive x values. "
+                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+            )
+            raise ValueError(error_msg)
         x_filtered = x_data[positive_x_mask]
         y_filtered = y_data[positive_x_mask]
         return x_filtered, y_filtered
@@ -697,7 +718,13 @@ def _validate_regression_data(
         # Exponential requires positive y values for log transformation
         positive_y_mask = y_data > 0
         if np.sum(positive_y_mask) < min_regression_points:
-            raise ValueError("Exponential regression requires at least 2 positive y values")
+            filtered_count = np.sum(positive_y_mask)
+            total_count = len(y_data)
+            error_msg = (
+                f"Exponential regression requires at least {min_regression_points} positive y values. "
+                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+            )
+            raise ValueError(error_msg)
         x_filtered = x_data[positive_y_mask]
         y_filtered = y_data[positive_y_mask]
         return x_filtered, y_filtered
@@ -714,7 +741,7 @@ def add_regression_line(
     text_position: float = 0.6,
     show_equation: bool = True,
     show_r2: bool = True,
-    **kwargs: dict[str, any],
+    **kwargs: dict[str, Any],
 ) -> Axes:
     """Add a regression line with configurable algorithm to a matplotlib plot.
 
@@ -731,7 +758,8 @@ def add_regression_line(
 
     Args:
         ax (Axes): The matplotlib axes object containing the plot (line, scatter, or bar).
-        regression_type (Literal[...], optional): Regression algorithm to use.
+        regression_type (Literal["linear", "power", "logarithmic", "exponential"], optional):
+            Regression algorithm to use. Supported values:
             - "linear": y = mx + b (default, OLS regression)
             - "power": y = ax^b (elasticity analysis, log-log transformation)
             - "logarithmic": y = a*ln(x) + b (diminishing returns analysis)

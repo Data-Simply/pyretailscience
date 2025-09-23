@@ -2,6 +2,9 @@
 
 import datetime
 
+import matplotlib as mpl
+
+mpl.use("Agg")  # Use non-interactive backend for testing
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import numpy as np
@@ -712,6 +715,34 @@ class TestRegressionLine:
 
         # Should raise error for insufficient data
         with pytest.raises(ValueError):
+            gu.add_regression_line(ax, regression_type=regression_type)
+
+    @pytest.mark.parametrize("regression_type", ["linear", "power", "logarithmic", "exponential"])
+    def test_zero_variance_x_values(self, regression_type):
+        """Test that all regression types handle zero variance in x values correctly."""
+        # All x values are identical
+        x = np.array([5, 5, 5, 5])
+        y = np.array([1, 2, 3, 4])
+
+        fig, ax = plt.subplots()
+        ax.scatter(x, y)
+
+        # Should raise error for zero variance in x
+        with pytest.raises(ValueError, match="all x values are identical"):
+            gu.add_regression_line(ax, regression_type=regression_type)
+
+    @pytest.mark.parametrize("regression_type", ["linear", "power", "logarithmic", "exponential"])
+    def test_zero_variance_y_values(self, regression_type):
+        """Test that all regression types handle zero variance in y values correctly."""
+        # All y values are identical
+        x = np.array([1, 2, 3, 4])
+        y = np.array([5, 5, 5, 5])
+
+        fig, ax = plt.subplots()
+        ax.scatter(x, y)
+
+        # Should raise error for zero variance in y
+        with pytest.raises(ValueError, match="all y values are identical"):
             gu.add_regression_line(ax, regression_type=regression_type)
 
 
