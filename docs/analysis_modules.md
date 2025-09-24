@@ -571,6 +571,57 @@ time.plot(
 )
 ```
 
+### Price Architecture Plot
+
+<div class="clear" markdown>
+
+![Price Plot](assets/images/analysis_modules/plots/price_plot.svg){ align=right loading=lazy width="50%"}
+
+Price architecture plots create bubble chart visualizations that display price distribution analysis across different
+categories. The chart shows price distribution as vertical layers (price bands) with bubble sizes representing the
+percentage of products in each price range for different groups like retailers, countries, or brands.
+
+This visualization is particularly useful for:
+
+- **Retailer Price Comparison**: Compare price distributions across different retailers to identify competitive
+  positioning
+- **Regional Price Analysis**: Analyze price positioning by country/region to understand market dynamics
+- **Competitive Pricing**: Identify pricing gaps and opportunities in the competitive landscape
+- **Price Architecture Visualization**: Visualize competitive pricing landscapes and market segments
+
+The plot supports both integer (equal-width bins) and custom boundary arrays for flexible price band analysis,
+with automatic percentage calculations and professional styling integration.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import price
+
+np.random.seed(42)
+df = pd.DataFrame({
+    "product_id": range(1, 101),
+    "unit_price": np.concatenate([np.random.uniform(*b, 25) for b in [(1,3),(2,5),(4,8),(1,10)]]),
+    "retailer": np.repeat(["Walmart","Target","Walgreens","CVS"], 25)
+})
+
+price.plot(
+    df=df,
+    value_col="unit_price",
+    group_col="retailer",
+    bins=10,
+    title="Price Distribution Analysis by Retailer",
+    x_label="Retailers",
+    y_label="Price Bands",
+    legend_title="Retailers",
+    source_text="Source: PyRetailScience",
+    move_legend_outside=True,
+)
+```
+
 ### Broken Timeline Plot
 
 <div class="clear" markdown>
