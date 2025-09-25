@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  spark:
+    image: python:3.11
+    container_name: pyspark-integration-tests
+    volumes:
+      - ../../../data:/app/data
+      - ../../..:/app/work
+    environment:
+      - SPARK_DRIVER_MEMORY=512m
+      - SPARK_EXECUTOR_MEMORY=512m
+    working_dir: /app/work
+    command: >
+      bash -c "
+      pip install pyspark==3.5.0 ibis-framework[pyspark] pytest loguru &&
+      tail -f /dev/null
+      "
