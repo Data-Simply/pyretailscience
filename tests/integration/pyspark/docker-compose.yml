@@ -9,9 +9,13 @@ services:
     environment:
       - SPARK_DRIVER_MEMORY=512m
       - SPARK_EXECUTOR_MEMORY=512m
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     working_dir: /app/work
     command: >
       bash -c "
-      pip install pyspark==3.5.0 ibis-framework[pyspark] pytest loguru &&
+      apt-get update &&
+      apt-get install -y openjdk-17-jdk &&
+      pip install uv &&
+      uv sync --group dev &&
       tail -f /dev/null
       "
