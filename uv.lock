@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -801,6 +800,15 @@ duckdb = [
     { name = "pyarrow-hotfix" },
     { name = "rich" },
 ]
+pyspark = [
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "pyarrow-hotfix" },
+    { name = "pyspark" },
+    { name = "rich" },
+]
 
 [[package]]
 name = "identify"
@@ -1182,19 +1190,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/e9/9c0de8e45fef3d63f85eed3b1757f9aa511065942866331ef8b99421f433/kiwisolver-1.4.5-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:88a2df29d4724b9237fc0c6eaf2a1adae0cdc0b3e9f4d8e7dc54b16812d2d81a", size = 1908464 },
     { url = "https://files.pythonhosted.org/packages/a3/60/4f0fd50b08f5be536ea0cef518ac7255d9dab43ca40f3b93b60e3ddf80dd/kiwisolver-1.4.5-cp312-cp312-win32.whl", hash = "sha256:72d40b33e834371fd330fb1472ca19d9b8327acb79a5821d4008391db8e29f20", size = 46473 },
     { url = "https://files.pythonhosted.org/packages/63/50/2746566bdf4a6a842d117367d05c90cfb87ac04e9e2845aa1fa21f071362/kiwisolver-1.4.5-cp312-cp312-win_amd64.whl", hash = "sha256:2c5674c4e74d939b9d91dda0fae10597ac7521768fec9e399c70a1f27e2ea2d9", size = 56004 },
-]
-
-[[package]]
-name = "loguru"
-version = "0.7.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/30/d87a423766b24db416a46e9335b9602b054a72b96a88a241f2b09b560fa8/loguru-0.7.2.tar.gz", hash = "sha256:e671a53522515f34fd406340ee968cb9ecafbc4b36c679da03c18fd8d0bd51ac", size = 145103 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/0a/4f6fed21aa246c6b49b561ca55facacc2a44b87d65b8b92362a8e99ba202/loguru-0.7.2-py3-none-any.whl", hash = "sha256:003d71e3d3ed35f0f8984898359d65b79e5b21943f78af86aa5491210429b8eb", size = 62549 },
 ]
 
 [[package]]
@@ -1883,6 +1878,15 @@ wheels = [
 ]
 
 [[package]]
+name = "py4j"
+version = "0.10.9.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/f2/b34255180c72c36ff7097f7c2cdca02abcbd89f5eebf7c7c41262a9a0637/py4j-0.10.9.7.tar.gz", hash = "sha256:0b6e5315bb3ada5cf62ac651d107bb2ebc02def3dee9d9548e3baac644ea8dbb", size = 1508234 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/30/a58b32568f1623aaad7db22aa9eafc4c6c194b429ff35bdc55ca2726da47/py4j-0.10.9.7-py2.py3-none-any.whl", hash = "sha256:85defdfd2b2376eb3abf5ca6474b51ab7e0de341c75a02f46dc9b5976f5a5c1b", size = 200481 },
+]
+
+[[package]]
 name = "pyarrow"
 version = "16.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1999,7 +2003,6 @@ dependencies = [
     { name = "duckdb" },
     { name = "graphviz" },
     { name = "ibis-framework", extra = ["duckdb"] },
-    { name = "loguru" },
     { name = "matplotlib" },
     { name = "matplotlib-set-diagrams" },
     { name = "numpy" },
@@ -2014,7 +2017,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "freezegun" },
-    { name = "ibis-framework", extra = ["bigquery"] },
+    { name = "ibis-framework", extra = ["bigquery", "pyspark"] },
     { name = "nbstripout" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -2040,7 +2043,6 @@ requires-dist = [
     { name = "duckdb", specifier = ">=1.0.0,<2" },
     { name = "graphviz", specifier = ">=0.20.3,<0.21" },
     { name = "ibis-framework", extras = ["duckdb"], specifier = ">=10.0.0,<11" },
-    { name = "loguru", specifier = ">=0.7.2,<0.8" },
     { name = "matplotlib", specifier = ">=3.9.1,<4" },
     { name = "matplotlib-set-diagrams", specifier = "~=0.0.2" },
     { name = "numpy", specifier = ">=1.26.3,<=2" },
@@ -2055,7 +2057,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "freezegun", specifier = ">=1.5.1,<2" },
-    { name = "ibis-framework", extras = ["bigquery"], specifier = ">=10.0.0,<11" },
+    { name = "ibis-framework", extras = ["bigquery", "pyspark"], specifier = ">=10.0.0,<11" },
     { name = "nbstripout", specifier = ">=0.7.1,<0.8" },
     { name = "pre-commit", specifier = ">=3.6.2,<4" },
     { name = "pytest", specifier = ">=8.0.0,<9" },
@@ -2075,6 +2077,15 @@ examples = [
     { name = "jupyterlab", specifier = ">=4.2.5,<5" },
     { name = "tqdm", specifier = ">=4.66.1,<5" },
 ]
+
+[[package]]
+name = "pyspark"
+version = "3.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "py4j" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/92/11/5c0f24537fa68624cb6271d2a8a8982e81bd05f5cb51e9d2d2a89baa0e1a/pyspark-3.5.0.tar.gz", hash = "sha256:d41a9b76bd2aca370a6100d075c029e22ba44c5940927877e9435a3a9c566558", size = 316890381 }
 
 [[package]]
 name = "pytest"
@@ -2804,15 +2815,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e6/30/fba0d96b4b5fbf5948ed3f4681f7da2f9f64512e1d303f94b4cc174c24a5/websocket_client-1.8.0.tar.gz", hash = "sha256:3239df9f44da632f96012472805d40a23281a991027ce11d2f45a6f24ac4c3da", size = 54648 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/84/44687a29792a70e111c5c477230a72c4b957d88d16141199bf9acb7537a3/websocket_client-1.8.0-py3-none-any.whl", hash = "sha256:17b44cc997f5c498e809b22cdf2d9c7a9e71c02c8cc2b6c56e7c2d1239bfa526", size = 58826 },
-]
-
-[[package]]
-name = "win32-setctime"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6b/dd/f95a13d2b235a28d613ba23ebad55191514550debb968b46aab99f2e3a30/win32_setctime-1.1.0.tar.gz", hash = "sha256:15cf5750465118d6929ae4de4eb46e8edae9a5634350c01ba582df868e932cb2", size = 3676 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/e6/a7d828fef907843b2a5773ebff47fb79ac0c1c88d60c0ca9530ee941e248/win32_setctime-1.1.0-py3-none-any.whl", hash = "sha256:231db239e959c2fe7eb1d7dc129f11172354f98361c4fa2d6d2d7e278baa8aad", size = 3604 },
 ]
 
 [[package]]
