@@ -8,6 +8,11 @@ import pytest
 from pyretailscience.analysis.cross_shop import CrossShop
 from pyretailscience.options import ColumnHelper, option_context
 
+# Test constants
+TWO_GROUPS = 2
+THREE_GROUPS = 3
+FLOATING_POINT_TOLERANCE = 0.001
+
 cols = ColumnHelper()
 
 
@@ -492,3 +497,230 @@ def test_generate_default_labels():
     """Test the _generate_default_labels static method."""
     assert CrossShop._generate_default_labels(2) == ["A", "B"]
     assert CrossShop._generate_default_labels(3) == ["A", "B", "C"]
+
+
+@pytest.mark.parametrize(
+    ("test_case", "kwargs", "expected_group_count"),
+    [
+        (
+            "group_2_col_defaults",
+            {
+                "group_1_col": "category_1_name",
+                "group_1_val": "Jeans",
+                "group_2_col": None,  # Should default to group_1_col
+                "group_2_val": "Shoes",
+            },
+            TWO_GROUPS,
+        ),
+        (
+            "group_3_col_defaults",
+            {
+                "group_1_col": "category_1_name",
+                "group_1_val": "Jeans",
+                "group_2_col": "category_1_name",
+                "group_2_val": "Shoes",
+                "group_3_col": None,  # Should default to group_1_col
+                "group_3_val": "Dresses",
+            },
+            THREE_GROUPS,
+        ),
+    ],
+)
+def test_group_col_defaults_to_group_1_col(sample_data, test_case, kwargs, expected_group_count):
+    """Test that group_2_col and group_3_col default to group_1_col when None is provided."""
+    # This test should fail initially until the feature is implemented
+    cross_shop = CrossShop(df=sample_data, **kwargs)
+
+    # Verify the analysis worked correctly
+    assert cross_shop.group_count == expected_group_count
+    assert len(cross_shop.labels) == expected_group_count
+    assert isinstance(cross_shop.cross_shop_df, pd.DataFrame)
+    assert not cross_shop.cross_shop_df.empty
+
+
+@pytest.mark.parametrize(
+    ("test_name", "custom_col", "use_option_context", "pass_group_col"),
+    [
+        ("explicit_group_col", "user_id", False, True),
+        ("option_context_default", "account_id", True, False),
+    ],
+)
+def test_custom_group_col_handling(sample_data, test_name, custom_col, use_option_context, pass_group_col):
+    """Test custom customer column handling through explicit parameter or option context."""
+    # Create test data with custom customer identifier
+    custom_data = sample_data.rename(columns={cols.customer_id: custom_col})
+
+    # Build kwargs for CrossShop
+    kwargs = {
+        "df": custom_data,
+        "group_1_col": "category_1_name",
+        "group_1_val": "Jeans",
+        "group_2_col": "category_1_name",
+        "group_2_val": "Shoes",
+    }
+
+    if pass_group_col:
+        kwargs["group_col"] = custom_col  # Explicit parameter
+
+    # This test should fail initially until the feature is implemented
+    if use_option_context:
+        with option_context("column.customer_id", custom_col):
+            cross_shop = CrossShop(**kwargs)
+    else:
+        cross_shop = CrossShop(**kwargs)
+
+    # Verify the analysis worked correctly
+    assert cross_shop.group_count == TWO_GROUPS
+    assert len(cross_shop.labels) == TWO_GROUPS
+    assert isinstance(cross_shop.cross_shop_df, pd.DataFrame)
+    assert not cross_shop.cross_shop_df.empty
+    # Verify it used the custom customer column
+    assert cross_shop.cross_shop_df.index.name == custom_col
+
+
+def test_backward_compatibility_explicit_params(sample_data):
+    """Test that existing code with explicit parameters continues to work exactly as before."""
+    # This test should pass both before and after implementation
+    # It ensures that existing explicit parameter usage is not broken
+    cross_shop = CrossShop(
+        df=sample_data,
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        group_2_col="category_1_name",  # Explicitly specified
+        group_2_val="Shoes",
+        group_3_col="category_1_name",  # Explicitly specified
+        group_3_val="Dresses",
+        labels=["Jeans", "Shoes", "Dresses"],
+        value_col=cols.unit_spend,
+        agg_func="sum",
+    )
+
+    # Verify the analysis worked correctly
+    assert cross_shop.group_count == THREE_GROUPS
+    assert cross_shop.labels == ["Jeans", "Shoes", "Dresses"]
+    assert isinstance(cross_shop.cross_shop_df, pd.DataFrame)
+    assert not cross_shop.cross_shop_df.empty
+    assert isinstance(cross_shop.cross_shop_table_df, pd.DataFrame)
+    assert not cross_shop.cross_shop_table_df.empty
+
+
+@pytest.mark.parametrize(
+    ("test_scenario", "groups", "expected_count", "expected_segments"),
+    [
+        (
+            "two_group_simplified",
+            {
+                "group_1_col": "category_1_name",
+                "group_1_val": "Jeans",
+                # group_2_col omitted - should use group_1_col
+                "group_2_val": "Shoes",
+            },
+            TWO_GROUPS,
+            ["(0, 0)", "(0, 1)", "(1, 0)", "(1, 1)"],  # Possible segment combinations
+        ),
+        (
+            "three_group_simplified",
+            {
+                "group_1_col": "category_1_name",
+                "group_1_val": "Jeans",
+                # group_2_col omitted - should use group_1_col
+                "group_2_val": "Shoes",
+                # group_3_col omitted - should use group_1_col
+                "group_3_val": "Dresses",
+            },
+            THREE_GROUPS,
+            [
+                "(0, 0, 0)",
+                "(0, 0, 1)",
+                "(0, 1, 0)",
+                "(0, 1, 1)",
+                "(1, 0, 0)",
+                "(1, 0, 1)",
+                "(1, 1, 0)",
+                "(1, 1, 1)",
+            ],  # All possible combinations
+        ),
+    ],
+)
+def test_simplified_interface_integration(sample_data, test_scenario, groups, expected_count, expected_segments):
+    """Integration test for simplified interface with real data scenarios."""
+    # This test should fail initially until the feature is implemented
+    cross_shop = CrossShop(df=sample_data, **groups)
+
+    # Verify the analysis worked correctly
+    assert cross_shop.group_count == expected_count
+    assert len(cross_shop.labels) == expected_count
+
+    # Check that the DataFrame has the expected structure
+    assert isinstance(cross_shop.cross_shop_df, pd.DataFrame)
+    assert not cross_shop.cross_shop_df.empty
+    assert "groups" in cross_shop.cross_shop_df.columns
+    assert "group_labels" in cross_shop.cross_shop_df.columns
+
+    # Verify that segments are properly identified
+    unique_groups = cross_shop.cross_shop_df["groups"].unique()
+    assert len(unique_groups) > 0  # Should have at least some segments
+
+    # Check the aggregated table
+    assert isinstance(cross_shop.cross_shop_table_df, pd.DataFrame)
+    assert not cross_shop.cross_shop_table_df.empty
+    assert "percent" in cross_shop.cross_shop_table_df.columns
+
+    # Verify percentages sum to 100%
+    total_percent = cross_shop.cross_shop_table_df["percent"].sum()
+    assert abs(total_percent - 1.0) < FLOATING_POINT_TOLERANCE  # Allow for small floating point errors
+
+
+def test_custom_customer_columns_integration(sample_data):
+    """Integration test for custom customer columns with various scenarios."""
+    # Test scenario 1: Explicit group_col with simplified interface
+    custom_data = sample_data.rename(columns={cols.customer_id: "shopper_id"})
+
+    # This test should fail initially until the feature is implemented
+    cross_shop = CrossShop(
+        df=custom_data,
+        group_1_col="category_1_name",
+        group_1_val="Jeans",
+        # group_2_col omitted - should use group_1_col
+        group_2_val="Shoes",
+        group_col="shopper_id",  # Explicit customer column
+    )
+
+    # Verify it worked with custom column
+    assert cross_shop.cross_shop_df.index.name == "shopper_id"
+    assert cross_shop.group_count == TWO_GROUPS
+
+    # Test scenario 2: Option context with simplified interface
+    custom_data2 = sample_data.rename(columns={cols.customer_id: "member_id"})
+
+    with option_context("column.customer_id", "member_id"):
+        cross_shop2 = CrossShop(
+            df=custom_data2,
+            group_1_col="category_1_name",
+            group_1_val="Jeans",
+            # Both group_2_col and group_col omitted
+            group_2_val="Shoes",
+            # group_3_col omitted
+            group_3_val="Dresses",
+        )
+
+        # Verify it used option context for customer column
+        assert cross_shop2.cross_shop_df.index.name == "member_id"
+        assert cross_shop2.group_count == THREE_GROUPS
+
+    # Test scenario 3: Explicit group_col overrides option context
+    custom_data3 = sample_data.copy()
+    custom_data3["buyer_id"] = custom_data3[cols.customer_id]
+
+    with option_context("column.customer_id", "wrong_column"):
+        cross_shop3 = CrossShop(
+            df=custom_data3,
+            group_1_col="category_1_name",
+            group_1_val="Jeans",
+            group_2_val="Shoes",  # group_2_col defaults to group_1_col
+            group_col="buyer_id",  # Should override option context
+        )
+
+        # Verify explicit parameter overrides option context
+        assert cross_shop3.cross_shop_df.index.name == "buyer_id"
+        assert cross_shop3.group_count == TWO_GROUPS

@@ -64,7 +64,7 @@ import ibis
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.options import get_option
 from pyretailscience.plots import venn
 
 
@@ -103,11 +103,12 @@ class CrossShop:
         df: pd.DataFrame | ibis.Table,
         group_1_col: str,
         group_1_val: str,
-        group_2_col: str,
         group_2_val: str,
+        group_2_col: str | None = None,
         group_3_col: str | None = None,
         group_3_val: str | None = None,
         labels: list[str] | None = None,
+        group_col: str | None = None,
         value_col: str | None = None,
         agg_func: str = "sum",
     ) -> None:
@@ -117,12 +118,13 @@ class CrossShop:
             df (pd.DataFrame | ibis.Table): Transaction data with customer purchases.
             group_1_col (str): Column identifying first segment (e.g., "category", "brand", "channel").
             group_1_val (str): Value to analyze for first segment (e.g., "organic", "Brand_A", "online").
-            group_2_col (str): Column identifying second segment.
             group_2_val (str): Value to analyze for second segment.
-            group_3_col (str, optional): Column for three-way analysis. Defaults to None.
+            group_2_col (str, optional): Column identifying second segment. Defaults to group_1_col.
+            group_3_col (str, optional): Column for three-way analysis. Defaults to group_1_col when group_3_val provided.
             group_3_val (str, optional): Value for third segment. Defaults to None.
             labels (list[str], optional): Custom labels for diagram (e.g., ["Organic", "Local"]).
                 Defaults to alphabetical labels [A, B, C].
+            group_col (str, optional): Grouping column (e.g., customer_id, store_id, segment_name). Defaults to customer_id from options.
             value_col (str, optional): Metric to analyze (sales, units, visits).
                 Defaults to spend column from options.
             agg_func (str, optional): How to combine customer values ("sum", "mean", "count").
@@ -140,25 +142,40 @@ class CrossShop:
             ...     df=transactions,
             ...     group_1_col="product_type",
             ...     group_1_val="organic",
-            ...     group_2_col="product_type",
             ...     group_2_val="conventional",
             ...     labels=["Organic", "Conventional"]
             ... )
             ...
-            >>> # Three-way analysis: Online vs Store vs Mobile
+            >>> # Three-way analysis
             >>> cross_shop = CrossShop(
             ...     df=transactions,
             ...     group_1_col="channel",
             ...     group_1_val="online",
-            ...     group_2_col="channel",
             ...     group_2_val="store",
-            ...     group_3_col="channel",
             ...     group_3_val="mobile",
             ...     labels=["Online", "Store", "Mobile"]
             ... )
+            ...
+            >>> # Custom customer column
+            >>> cross_shop = CrossShop(
+            ...     df=transactions,
+            ...     group_1_col="brand",
+            ...     group_1_val="Nike",
+            ...     group_2_val="Adidas",
+            ...     group_col="user_id"
+            ... )
         """
+        # Apply smart defaults for simplified interface
+        group_col = group_col or get_option("column.customer_id")
         value_col = value_col or get_option("column.unit_spend")
-        required_cols = [get_option("column.customer_id"), value_col]
+
+        # Default group_2_col and group_3_col to group_1_col when columns are not provided
+        if group_2_col is None:
+            group_2_col = group_1_col
+        if group_3_val is not None and group_3_col is None:
+            group_3_col = group_1_col
+
+        required_cols = [group_col, value_col]
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
@@ -179,6 +196,7 @@ class CrossShop:
             group_2_val=group_2_val,
             group_3_col=group_3_col,
             group_3_val=group_3_val,
+            group_col=group_col,
             value_col=value_col,
             agg_func=agg_func,
             labels=labels,
@@ -197,7 +215,8 @@ class CrossShop:
         group_2_val: str,
         group_3_col: str | None = None,
         group_3_val: str | None = None,
-        value_col: str = get_option("column.unit_spend"),
+        group_col: str | None = None,
+        value_col: str | None = None,
         agg_func: str = "sum",
         labels: list[str] | None = None,
     ) -> pd.DataFrame:
@@ -211,6 +230,7 @@ class CrossShop:
             group_2_val (str): Value to filter for the second group.
             group_3_col (str, optional): Column name for the third group. Defaults to None.
             group_3_val (str, optional): Value to filter for the third group. Defaults to None.
+            group_col (str, optional): Grouping column (e.g., customer_id, store_id, segment_name). Defaults to customer_id from options.
             value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
             labels (list[str], optional): The labels for the groups. Defaults to None.
@@ -221,14 +241,16 @@ class CrossShop:
         Raises:
             ValueError: If group_3_col or group_3_val is populated, then the other must be as well.
         """
-        cols = ColumnHelper()
-
         if isinstance(df, pd.DataFrame):
             df: ibis.Table = ibis.memtable(df)
         if (group_3_col is None) != (group_3_val is None):
             raise ValueError("If group_3_col or group_3_val is populated, then the other must be as well")
 
-        # Using a temporary value column to avoid duplicate column errors during selection. This happens when `value_col` has the same name as `customer_id`, causing conflicts in `.select()`.
+        # Apply defaults for group_col and value_col
+        group_col = group_col or get_option("column.customer_id")
+        value_col = value_col or get_option("column.unit_spend")
+
+        # Using a temporary value column to avoid duplicate column errors during selection. This happens when `value_col` has the same name as `group_col`, causing conflicts in `.select()`.
         temp_value_col = "temp_value_col"
         df = df.mutate(**{temp_value_col: df[value_col]})
 
@@ -237,19 +259,19 @@ class CrossShop:
         group_3 = (df[group_3_col] == group_3_val).cast("int32").name("group_3") if group_3_col else None
 
         group_cols = ["group_1", "group_2"]
-        select_cols = [df[cols.customer_id], group_1, group_2]
+        select_cols = [df[group_col], group_1, group_2]
         if group_3 is not None:
             group_cols.append("group_3")
             select_cols.append(group_3)
 
-        cs_df = df.select([*select_cols, df[temp_value_col]]).order_by(cols.customer_id)
+        cs_df = df.select([*select_cols, df[temp_value_col]]).order_by(group_col)
         cs_df = (
-            cs_df.group_by(cols.customer_id)
+            cs_df.group_by(group_col)
             .aggregate(
                 **{col: cs_df[col].max().name(col) for col in group_cols},
                 **{temp_value_col: getattr(cs_df[temp_value_col], agg_func)().name(temp_value_col)},
             )
-            .order_by(cols.customer_id)
+            .order_by(group_col)
         ).execute()
 
         cs_df["groups"] = cs_df[group_cols].apply(lambda x: tuple(x), axis=1)
@@ -264,9 +286,9 @@ class CrossShop:
         )
         cs_df["group_labels"] = group_label_series.map(lambda x: "No Groups" if len(x) == 0 else ", ".join(x))
 
-        column_order = [cols.customer_id, *group_cols, "groups", "group_labels", temp_value_col]
+        column_order = [group_col, *group_cols, "groups", "group_labels", temp_value_col]
         cs_df = cs_df[column_order]
-        cs_df.set_index(cols.customer_id, inplace=True)
+        cs_df.set_index(group_col, inplace=True)
         return cs_df.rename(columns={temp_value_col: value_col})
 
     @staticmethod

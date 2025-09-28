@@ -95,7 +95,13 @@ class SegTransactionStats:
                 - column_name is the name of the column to aggregate
                 - aggregation_function is a string name of an Ibis aggregation function (e.g., "nunique", "sum")
                 Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
-            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False.
+            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False. When True and
+                multiple segment columns are provided, the method generates subtotal rows for both:
+                - Prefix rollups: progressively aggregating left-to-right (e.g., [A, B, Total], [A, Total, Total]).
+                - Suffix rollups: progressively aggregating right-to-left (e.g., [Total, B, C], [Total, Total, C]).
+                A grand total row is also included when calc_total is True.
+                Performance: adds O(n) extra aggregation passes where n is the number of segment
+                columns. For large hierarchies, consider disabling rollups or reducing columns.
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
@@ -208,7 +214,11 @@ class SegTransactionStats:
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function).
-            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False.
+            calc_rollup (bool, optional): Whether to calculate rollup totals. Defaults to False. When True with
+                multiple segment columns, subtotal rows are added for all non-empty prefixes and suffixes of the
+                hierarchy. For example, with [A, B, C], prefixes include [A, B, Total], [A, Total, Total]; suffixes
+                include [Total, B, C], [Total, Total, C]. Performance: O(n) additional aggregation passes for suffixes,
+                where n is the number of segment columns.
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
@@ -252,18 +262,27 @@ class SegTransactionStats:
         if calc_rollup:
             rollup_metrics = []
 
-            # Generate all prefixes of segment_col (except the empty prefix which is the grand total)
-            # and excluding the full segment_col list which is already calculated
-            for i in range(1, len(segment_col)):
-                prefix = segment_col[:i]
+            # Configuration for rollups
+            rollup_configs = [
+                # Prefix rollups: always include when calc_rollup=True
+                (segment_col[:i], segment_col[i:], rollup_value[i:])
+                for i in range(1, len(segment_col))
+            ]
 
-                # Group by the prefix and aggregate
-                rollup_result = data.group_by(prefix).aggregate(**aggs)
+            # Only add suffix rollups when calc_total=True (to avoid "Total" in category when no grand total)
+            if calc_total:
+                rollup_configs.extend(
+                    # Suffix rollups: group by suffixes, mutate preceding columns
+                    [(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
+                )
 
-                # Add rollup values for the remaining columns with proper types
-                remaining_cols = segment_col[i:]
-                remaining_values = rollup_value[i:]
-                rollup_mutations = SegTransactionStats._create_typed_literals(data, remaining_cols, remaining_values)
+            # Process both prefix and suffix rollups with unified logic
+            for group_cols, mutation_cols, mutation_values in rollup_configs:
+                # Group by the specified columns and aggregate
+                rollup_result = data.group_by(group_cols).aggregate(**aggs)
+
+                # Add rollup values for mutation columns with proper types
+                rollup_mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
 
                 # Apply all mutations at once
                 rollup_result = rollup_result.mutate(**rollup_mutations)

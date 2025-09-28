@@ -134,8 +134,10 @@ def plot(
 
     color_gen_threshold = 4
     cmap = get_single_color_cmap() if len(value_col) < color_gen_threshold else get_multi_color_cmap()
+    default_colors = [next(cmap) for _ in range(len(value_col))]
 
     plot_kind = "bar" if orientation in ["vertical", "v"] else "barh"
+    color = kwargs.pop("color", default_colors)
 
     ax = df.plot(
         kind=plot_kind,
@@ -143,7 +145,7 @@ def plot(
         x=x_col,
         ax=ax,
         width=width,
-        color=[next(cmap) for _ in range(len(value_col))],
+        color=color,
         legend=(len(value_col) > 1),
         **kwargs,
     )

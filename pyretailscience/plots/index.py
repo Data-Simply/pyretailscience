@@ -288,7 +288,7 @@ def plot(  # noqa: C901, PLR0913
             filter_below=filter_below,
         )
 
-        colors = COLORS["green"][500]
+        default_colors = COLORS["green"][500]
         show_legend = False
         index_df = index_df[[group_col, "index"]].set_index(group_col)
         if sort_by in ["group", "value"]:
@@ -305,7 +305,7 @@ def plot(  # noqa: C901, PLR0913
 
     else:
         show_legend = True
-        colors = get_linear_cmap("green")(np.linspace(0, 1, df[series_col].nunique()))
+        default_colors = get_linear_cmap("green")(np.linspace(0, 1, df[series_col].nunique()))
 
         if sort_by == "group":
             index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
@@ -317,12 +317,14 @@ def plot(  # noqa: C901, PLR0913
             sort=False,
         )
 
+    width = kwargs.pop("width", 0.8)
+    color = kwargs.pop("color", default_colors)
     ax = index_df.plot.barh(
         left=100,
         legend=show_legend,
         ax=ax,
-        color=colors,
-        width=0.8,
+        color=color,
+        width=width,
         zorder=2,
         **kwargs,
     )

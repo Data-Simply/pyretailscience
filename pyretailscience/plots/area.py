@@ -89,13 +89,14 @@ def plot(
     color_gen_threshold = 4
     num_colors = len(pivot_df.columns) if is_multi_area else 1
     color_gen = get_single_color_cmap() if num_colors < color_gen_threshold else get_multi_color_cmap()
-    colors = [next(color_gen) for _ in range(num_colors)]
+    default_colors = [next(color_gen) for _ in range(num_colors)]
     alpha = kwargs.pop("alpha", 0.7)
+    color = kwargs.pop("color", default_colors)
     ax = pivot_df.plot(
         ax=ax,
         kind="area",
         alpha=alpha,
-        color=colors,
+        color=color,
         legend=is_multi_area,
         **kwargs,
     )

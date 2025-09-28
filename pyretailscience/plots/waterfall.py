@@ -100,23 +100,25 @@ def plot(
 
     amount_total = df["amounts"].sum()
 
-    colors = df["amounts"].apply(lambda x: COLORS["green"][500] if x > 0 else COLORS["red"][500]).to_list()
+    default_colors = df["amounts"].apply(lambda x: COLORS["green"][500] if x > 0 else COLORS["red"][500]).to_list()
     bottom = df["amounts"].cumsum().shift(1).fillna(0).to_list()
 
     if display_net_bar:
         # Append a row for the net amount
         df.loc[len(df)] = ["Net", amount_total]
-        colors.append(COLORS["blue"][500])
+        default_colors.append(COLORS["blue"][500])
         bottom.append(0)
 
     # Create the plot
+    width = kwargs.pop("width", 0.8)
+    color = kwargs.pop("color", default_colors)
     ax = df.plot.bar(
         x="labels",
         y="amounts",
         legend=None,
         bottom=bottom,
-        color=colors,
-        width=0.8,
+        color=color,
+        width=width,
         ax=ax,
         **kwargs,
     )
