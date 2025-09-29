@@ -12,13 +12,7 @@ import pytest
 @pytest.fixture(scope="session")
 def pyspark_connection():
     """Connect to PySpark for integration tests."""
-    try:
-        conn = ibis.pyspark.connect()
-    except Exception as e:
-        msg = f"Failed to connect to PySpark: {e}"
-        raise RuntimeError(msg) from e
-    else:
-        return conn
+    return ibis.pyspark.connect()
 
 
 @pytest.fixture(scope="session")
@@ -27,11 +21,10 @@ def transactions_table(pyspark_connection):
     # Determine data path (Docker vs local)
     data_path = "/app/data/transactions.parquet" if Path("/app/data").exists() else "data/transactions.parquet"
 
-    # Read parquet with pandas first to handle Arrow time types
+    # Use pandas to read the parquet file first to handle Arrow time types
     df = pd.read_parquet(data_path)
 
-    # Convert time columns to string format, then back to date format for PySpark
-    # PySpark can handle date strings in YYYY-MM-DD format
+    # Convert Arrow time types to PySpark-compatible formats
     df["transaction_date"] = pd.to_datetime(df["transaction_date"]).dt.date
     df["transaction_time"] = df["transaction_time"].astype(str)
 
@@ -48,5 +41,5 @@ def transactions_table(pyspark_connection):
 
     atexit.register(cleanup)
 
-    # Read the processed parquet file with PySpark
+    # Read the processed parquet file with PySpark through ibis
     return pyspark_connection.read_parquet(temp_path)
