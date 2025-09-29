@@ -50,7 +50,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          uv sync
+          uv sync --group dev
 
       - name: Setup Docker Compose
         uses: docker/setup-buildx-action@v3
@@ -58,14 +58,8 @@ jobs:
       - name: Start PySpark Container
         run: |
           cd tests/integration/pyspark
-          docker-compose up -d
+          docker-compose up --build -d
           sleep 30  # Wait for container startup
-          docker-compose exec -T spark pip install uv
-
-      - name: Install Dependencies in Container
-        run: |
-          cd tests/integration/pyspark
-          docker-compose exec -T spark bash -c "cd /app/work && uv sync"
 
       - name: Validate Input
         run: |

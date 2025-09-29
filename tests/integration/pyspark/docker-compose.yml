@@ -1,21 +1,22 @@
-version: '3.8'
 services:
   spark:
-    image: python:3.11
+    image: apache/spark-py:latest
     container_name: pyspark-integration-tests
+    user: root
     volumes:
       - ../../../data:/app/data
       - ../../..:/app/work
+    working_dir: /app/work
     environment:
       - SPARK_DRIVER_MEMORY=512m
       - SPARK_EXECUTOR_MEMORY=512m
-      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-    working_dir: /app/work
+      - UV_LINK_MODE=copy
+      - PYTHONPATH=/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
+      - SPARK_HOME=/opt/spark
     command: >
       bash -c "
-      apt-get update &&
-      apt-get install -y openjdk-17-jdk &&
-      pip install uv &&
-      uv sync --group dev &&
+      pip3 install py4j==0.10.9.7 uv==0.5.30 &&
+      cd /app/work &&
+      uv sync --group dev --link-mode=copy &&
       tail -f /dev/null
       "
