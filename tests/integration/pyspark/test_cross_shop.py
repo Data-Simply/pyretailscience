@@ -1,4 +1,4 @@
-"""Integration tests for Cross Shop Analysis with BigQuery."""
+"""Integration tests for Cross Shop Analysis with PySpark."""
 
 import pytest
 
@@ -12,11 +12,11 @@ from pyretailscience.analysis.cross_shop import CrossShop
         None,
     ],
 )
-def test_cross_shop_with_bigquery(transactions_table, group_3_col):
-    """Test CrossShop with data fetched from BigQuery.
+def test_cross_shop_with_pyspark(transactions_table, group_3_col):
+    """Test CrossShop with data fetched from PySpark.
 
     This parameterized test verifies that CrossShop can be initialized
-    and run with data from BigQuery using different combinations of group columns,
+    and run with data from PySpark using different combinations of group columns,
     value columns, and aggregation functions without throwing exceptions.
     """
     transactions = transactions_table.limit(5000)
