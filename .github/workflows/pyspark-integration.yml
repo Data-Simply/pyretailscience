@@ -52,5 +52,5 @@ jobs:
           if [ "$TEST_SUITE" == "all" ]; then
             docker run --rm pyspark-it
           else
-            docker run --rm pyspark-it uv run python -m pytest -v tests/integration/pyspark/test_${TEST_SUITE}.py
+            docker run --rm pyspark-it uv run pytest -v tests/integration/pyspark/test_${TEST_SUITE}.py
           fi

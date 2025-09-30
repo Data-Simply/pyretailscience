@@ -1,29 +1,30 @@
-FROM apache/spark-py:latest
+# Dockerfile
+FROM python:3.11
 
-# Switch to root to install packages
-USER root
+# Install OpenJDK 21
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-21-jdk procps \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install py4j and uv for fast dependency management
-RUN pip install py4j==0.10.9.7 uv==0.5.30
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+    SPARK_DRIVER_MEMORY=1g \
+    SPARK_EXECUTOR_MEMORY=1g
 
-# Set working directory
-WORKDIR /app/work
+WORKDIR /app
 
-# Copy project files
-COPY pyproject.toml ./
-COPY uv.lock ./
-COPY data/ /app/data/
+# Download the latest installer
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
-# Install dependencies
-RUN uv sync --group dev --link-mode=copy
+# Run the installer then remove it
+RUN sh /uv-installer.sh && rm /uv-installer.sh
 
-# Set Spark configurations for resource constraints
-ENV SPARK_DRIVER_MEMORY=512m
-ENV SPARK_EXECUTOR_MEMORY=512m
-ENV SPARK_LOCAL_DIRS=/tmp/spark
-ENV PYTHONPATH=/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
-ENV SPARK_HOME=/opt/spark
-ENV UV_LINK_MODE=copy
+# Ensure the installed binary is on the `PATH`
+ENV PATH="/root/.local/bin/:$PATH"
 
-# Run tests by default
-CMD ["uv", "run", "pytest", "tests/integration/pyspark", "-v", "--tb=short"]
+# Copy all files needed for installation
+COPY . .
+
+# Install deps with uv
+RUN uv sync --locked
+
+CMD ["uv", "run", "pytest", "-v", "tests/integration/pyspark"]

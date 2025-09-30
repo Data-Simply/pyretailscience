@@ -1,9 +1,5 @@
 """PySpark integration test fixtures."""
 
-import atexit
-import tempfile
-from pathlib import Path
-
 import ibis
 import pandas as pd
 import pytest
@@ -18,28 +14,14 @@ def pyspark_connection():
 @pytest.fixture(scope="session")
 def transactions_table(pyspark_connection):
     """Get the transactions table for testing."""
-    # Determine data path (Docker vs local)
-    data_path = "/app/data/transactions.parquet" if Path("/app/data").exists() else "data/transactions.parquet"
-
-    # Use pandas to read the parquet file first to handle Arrow time types
-    df = pd.read_parquet(data_path)
-
-    # Convert Arrow time types to PySpark-compatible formats
-    df["transaction_date"] = pd.to_datetime(df["transaction_date"]).dt.date
-    df["transaction_time"] = df["transaction_time"].astype(str)
-
-    # Save to temporary parquet file that PySpark can read
-    with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
-        df.to_parquet(tmp.name, engine="pyarrow")
-        temp_path = tmp.name
-
-    # Register cleanup function
-    def cleanup():
-        temp_file = Path(temp_path)
-        if temp_file.exists():
-            temp_file.unlink()
-
-    atexit.register(cleanup)
-
-    # Read the processed parquet file with PySpark through ibis
-    return pyspark_connection.read_parquet(temp_path)
+    # Use pandas to read the parquet file first, then convert to Spark
+    # This handles timestamp compatibility issues automatically
+    df = pd.read_parquet("data/transactions.parquet")
+    # # Pyspark has no time column so we have to convert it to a datetime
+    df["transaction_time"] = pd.to_datetime(
+        df["transaction_date"].astype(str) + " " + df["transaction_time"].astype(str),
+    )
+    spark_df = pyspark_connection._session.createDataFrame(df)
+    # Create a temporary view and read it back as an ibis table
+    spark_df.createOrReplaceTempView("transactions")
+    return pyspark_connection.table("transactions")
