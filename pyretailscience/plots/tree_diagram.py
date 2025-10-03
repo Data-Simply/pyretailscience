@@ -5,13 +5,11 @@ using Graphviz. The TreeDiagram class can be used by various analysis classes to
 reusable tree-based visualizations.
 """
 
-import platform
 import subprocess
 from textwrap import dedent
 
 import graphviz
 
-from pyretailscience.options import ColumnHelper
 from pyretailscience.plots.styles import graph_utils as gu
 from pyretailscience.plots.styles.tailwind import COLORS
 
@@ -31,9 +29,8 @@ class TreeDiagram:
         Returns:
             bool: True if Graphviz is installed, False otherwise.
         """
-        system = platform.system().lower()
         try:
-            subprocess.run(["dot", "-V"], check=True, stderr=subprocess.DEVNULL, shell=(system == "windows"))  # noqa: S603 S607
+            subprocess.run(["dot", "-V"], check=True, stderr=subprocess.DEVNULL)  # noqa: S603 S607
         except FileNotFoundError:
             return False
         except subprocess.CalledProcessError:
@@ -174,128 +171,3 @@ class TreeDiagram:
                 "https://github.com/xflr6/graphviz?tab=readme-ov-file#installation",
             )
         return self.graph
-
-    def draw_tree(
-        self,
-        graph_data: dict,
-        value_labels: tuple[str, str] | None = None,
-        unit_spend_label: str = "Revenue",
-        customer_id_label: str = "Customers",
-        spend_per_customer_label: str = "Spend / Customer",
-        transactions_per_customer_label: str = "Visits / Customer",
-        spend_per_transaction_label: str = "Spend / Visit",
-        units_per_transaction_label: str = "Units / Visit",
-        price_per_unit_label: str = "Price / Unit",
-        human_format: bool = False,
-    ) -> graphviz.Digraph:
-        """Draw the Revenue Tree graph as a Graphviz visualization.
-
-        Args:
-            graph_data (dict): Dictionary containing the tree data.
-            value_labels (tuple[str, str], optional): Labels for the value columns. Defaults to None. When None, the
-                default labels of Current Period and Previous Period are used for P1 and P2.
-            unit_spend_label (str, optional): Label for the Revenue column. Defaults to "Revenue".
-            customer_id_label (str, optional): Label for the Customers column. Defaults to "Customers".
-            spend_per_customer_label (str, optional): Label for the Spend / Customer column. Defaults to
-                "Spend / Customer".
-            transactions_per_customer_label (str, optional): Label for the Visits / Customer column. Defaults to
-                "Visits / Customer".
-            spend_per_transaction_label (str, optional): Label for the Spend / Visit column. Defaults to
-                "Spend / Visit".
-            units_per_transaction_label (str, optional): Label for the Units / Visit column. Defaults to
-                "Units / Visit".
-            price_per_unit_label (str, optional): Label for the Price / Unit column. Defaults to
-                "Price / Unit".
-            human_format (bool, optional): Whether to use human-readable formatting. Defaults to False.
-
-        Returns:
-            graphviz.Digraph: The Graphviz visualization of the Revenue Tree.
-        """
-        cols = ColumnHelper()
-
-        tree = TreeDiagram()
-
-        tree.add_node(
-            name="agg_unit_spend",
-            title=unit_spend_label,
-            p2_value=graph_data[cols.agg_unit_spend_p2],
-            p1_value=graph_data[cols.agg_unit_spend_p1],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        tree.add_node(
-            name="agg_customer_id",
-            title=customer_id_label,
-            p2_value=graph_data[cols.agg_customer_id_p2],
-            p1_value=graph_data[cols.agg_customer_id_p1],
-            contrib_value=graph_data[cols.agg_customer_id_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        # Spend / Cust
-        tree.add_node(
-            name="calc_spend_per_customer",
-            title=spend_per_customer_label,
-            p2_value=graph_data[cols.calc_spend_per_cust_p2],
-            p1_value=graph_data[cols.calc_spend_per_cust_p1],
-            contrib_value=graph_data[cols.calc_spend_per_cust_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        # Visits / Customer
-        tree.add_node(
-            name="calc_transactions_per_customer",
-            title=transactions_per_customer_label,
-            p2_value=graph_data[cols.calc_trans_per_cust_p2],
-            p1_value=graph_data[cols.calc_trans_per_cust_p1],
-            contrib_value=graph_data[cols.calc_trans_per_cust_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-        # Spend / Visit
-        tree.add_node(
-            name="calc_spend_per_transaction",
-            title=spend_per_transaction_label,
-            p2_value=graph_data[cols.calc_spend_per_trans_p2],
-            p1_value=graph_data[cols.calc_spend_per_trans_p1],
-            contrib_value=graph_data[cols.calc_spend_per_trans_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        tree.add_edge("agg_unit_spend", "calc_spend_per_customer")
-        tree.add_edge("agg_unit_spend", "agg_customer_id")
-
-        tree.add_edge("calc_spend_per_customer", "calc_transactions_per_customer")
-        tree.add_edge("calc_spend_per_customer", "calc_spend_per_transaction")
-
-        if cols.agg_unit_qty_p1 in graph_data:
-            # Units / Visit
-            tree.add_node(
-                name="calc_units_per_transaction",
-                title=units_per_transaction_label,
-                p2_value=graph_data[cols.calc_units_per_trans_p2],
-                p1_value=graph_data[cols.calc_units_per_trans_p1],
-                contrib_value=graph_data[cols.calc_units_per_trans_contrib],
-                value_labels=value_labels,
-                human_format=human_format,
-            )
-
-            # Price / Unit
-            tree.add_node(
-                name="calc_price_per_unit",
-                title=price_per_unit_label,
-                p2_value=graph_data[cols.calc_price_per_unit_p2],
-                p1_value=graph_data[cols.calc_price_per_unit_p1],
-                contrib_value=graph_data[cols.calc_price_per_unit_contrib],
-                value_labels=value_labels,
-                human_format=human_format,
-            )
-
-            tree.add_edge("calc_spend_per_transaction", "calc_units_per_transaction")
-            tree.add_edge("calc_spend_per_transaction", "calc_price_per_unit")
-
-        return tree.render()
