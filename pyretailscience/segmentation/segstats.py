@@ -425,7 +425,7 @@ class SegTransactionStats:
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
             unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
-                DNValue or expression identifying unknown customers for separate tracking. When provided,
+                Value or expression identifying unknown customers for separate tracking. When provided,
                 metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
                 ibis literals, or boolean expressions. Defaults to None.
 

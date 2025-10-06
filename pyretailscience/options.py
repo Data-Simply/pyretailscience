@@ -136,7 +136,7 @@ class Options:
                 "The suffix to use for period 2 columns. Often this could represent this year for instance."
             ),
             "column.suffix.unknown_customer": "The suffix to use for unknown customer columns.",
-            "column.suffix.total": "The suffix to use for total ITAcolumns.",
+            "column.suffix.total": "The suffix to use for total columns.",
         }
         self._default_options: dict[str, OptionTypes] = self._options.copy()
 
