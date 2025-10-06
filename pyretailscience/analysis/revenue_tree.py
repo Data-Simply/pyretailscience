@@ -25,17 +25,12 @@ for retail businesses, helping to identify key drivers of revenue changes and
 inform strategic decision-making.
 """
 
-import platform
-import subprocess
-from textwrap import dedent
-
 import graphviz
 import ibis
 import pandas as pd
 
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.plots.styles import graph_utils as gu
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.tree_diagram import TreeDiagram
 from pyretailscience.plugin import plugin_manager
 
 
@@ -79,7 +74,8 @@ def calc_tree_kpis(
     p2_df.columns = [col + "_" + get_option("column.suffix.period_2") for col in p2_df.columns]
 
     # When df only contains two periods than the indexes should be dropped for proper concatenation
-    if len(df.index) == 2:  # noqa: PLR2004
+    period_count = 2
+    if len(df.index) == period_count:
         p1_df = p1_df.reset_index(drop=True)
         p2_df = p2_df.reset_index(drop=True)
 
@@ -366,26 +362,8 @@ class RevenueTree:
 
         return col_order
 
-    @staticmethod
-    def _check_graphviz_installation() -> bool:
-        """Check if Graphviz is installed on the system.
-
-        Returns:
-            bool: True if Graphviz is installed, False otherwise.
-        """
-        system = platform.system().lower()
-        try:
-            subprocess.run(["dot", "-V"], check=True, stderr=subprocess.DEVNULL, shell=(system == "windows"))  # noqa: S603 S607
-        except FileNotFoundError:
-            return False
-        except subprocess.CalledProcessError:
-            return False
-
-        return True
-
     def draw_tree(
         self,
-        tree_index: int = 0,
         value_labels: tuple[str, str] | None = None,
         unit_spend_label: str = "Revenue",
         customer_id_label: str = "Customers",
@@ -394,13 +372,11 @@ class RevenueTree:
         spend_per_transaction_label: str = "Spend / Visit",
         units_per_transaction_label: str = "Units / Visit",
         price_per_unit_label: str = "Price / Unit",
-        humman_format: bool = False,
+        human_format: bool = False,
     ) -> graphviz.Digraph:
         """Draw the Revenue Tree graph as a Graphviz visualization.
 
         Args:
-            tree_index (int, optional): The index of the tree to draw. Defaults to 0. Used when the group_col is
-                specified and multiple trees are generated.
             value_labels (tuple[str, str], optional): Labels for the value columns. Defaults to None. When None, the
                 default labels of Current Period and Previous Period are used for P1 and P2.
             unit_spend_label (str, optional): Label for the Revenue column. Defaults to "Revenue".
@@ -415,207 +391,101 @@ class RevenueTree:
                 "Units / Visit".
             price_per_unit_label (str, optional): Label for the Price / Unit column. Defaults to
                 "Price / Unit".
-            humman_format (bool, optional): Whether to use human-readable formatting. Defaults to False.
+            human_format (bool, optional): Whether to use human-readable formatting. Defaults to False.
 
         Returns:
             graphviz.Digraph: The Graphviz visualization of the Revenue Tree.
         """
         cols = ColumnHelper()
+        graph_data = self.df.iloc[0].to_dict()
+        tree = TreeDiagram()
 
-        if not self._check_graphviz_installation():
-            raise ImportError(
-                "Graphviz is required to draw the Revenue Tree graph. See here for installation instructions: "
-                "https://github.com/xflr6/graphviz?tab=readme-ov-file#installation",
-            )
-        graph = graphviz.Digraph()
-        graph.attr("graph", bgcolor="transparent")
-
-        graph_data = self.df.to_dict(orient="records")[tree_index]
-
-        self.build_node(
-            graph,
-            title=unit_spend_label,
+        # Add Revenue node
+        tree.add_node(
             name="agg_unit_spend",
+            title=unit_spend_label,
             p2_value=graph_data[cols.agg_unit_spend_p2],
             p1_value=graph_data[cols.agg_unit_spend_p1],
             value_labels=value_labels,
-            humman_format=humman_format,
+            human_format=human_format,
         )
 
-        self.build_node(
-            graph,
-            title=customer_id_label,
+        # Add Customers node
+        tree.add_node(
             name="agg_customer_id",
+            title=customer_id_label,
             p2_value=graph_data[cols.agg_customer_id_p2],
             p1_value=graph_data[cols.agg_customer_id_p1],
             contrib_value=graph_data[cols.agg_customer_id_contrib],
             value_labels=value_labels,
-            humman_format=humman_format,
+            human_format=human_format,
         )
 
-        # Spend / Cust
-        self.build_node(
-            graph,
-            title=spend_per_customer_label,
+        # Add Spend / Customer node
+        tree.add_node(
             name="calc_spend_per_customer",
+            title=spend_per_customer_label,
             p2_value=graph_data[cols.calc_spend_per_cust_p2],
             p1_value=graph_data[cols.calc_spend_per_cust_p1],
             contrib_value=graph_data[cols.calc_spend_per_cust_contrib],
             value_labels=value_labels,
-            humman_format=humman_format,
+            human_format=human_format,
         )
 
-        # Visits / Customer
-        self.build_node(
-            graph,
-            title=transactions_per_customer_label,
+        # Add Visits / Customer node
+        tree.add_node(
             name="calc_transactions_per_customer",
+            title=transactions_per_customer_label,
             p2_value=graph_data[cols.calc_trans_per_cust_p2],
             p1_value=graph_data[cols.calc_trans_per_cust_p1],
             contrib_value=graph_data[cols.calc_trans_per_cust_contrib],
             value_labels=value_labels,
-            humman_format=humman_format,
+            human_format=human_format,
         )
-        # Spend / Visit
-        self.build_node(
-            graph,
-            title=spend_per_transaction_label,
+
+        # Add Spend / Visit node
+        tree.add_node(
             name="calc_spend_per_transaction",
+            title=spend_per_transaction_label,
             p2_value=graph_data[cols.calc_spend_per_trans_p2],
             p1_value=graph_data[cols.calc_spend_per_trans_p1],
             contrib_value=graph_data[cols.calc_spend_per_trans_contrib],
             value_labels=value_labels,
-            humman_format=humman_format,
+            human_format=human_format,
         )
 
-        graph.edge("agg_unit_spend", "calc_spend_per_customer")
-        graph.edge("agg_unit_spend", "agg_customer_id")
+        # Add edges for the main tree structure
+        tree.add_edge("agg_unit_spend", "calc_spend_per_customer")
+        tree.add_edge("agg_unit_spend", "agg_customer_id")
+        tree.add_edge("calc_spend_per_customer", "calc_transactions_per_customer")
+        tree.add_edge("calc_spend_per_customer", "calc_spend_per_transaction")
 
-        graph.edge("calc_spend_per_customer", "calc_transactions_per_customer")
-        graph.edge("calc_spend_per_customer", "calc_spend_per_transaction")
-
+        # Add quantity-related nodes if quantity data is available
         if cols.agg_unit_qty_p1 in graph_data:
-            # Units / Visit
-            self.build_node(
-                graph,
-                title=units_per_transaction_label,
+            # Add Units / Visit node
+            tree.add_node(
                 name="calc_units_per_transaction",
+                title=units_per_transaction_label,
                 p2_value=graph_data[cols.calc_units_per_trans_p2],
                 p1_value=graph_data[cols.calc_units_per_trans_p1],
                 contrib_value=graph_data[cols.calc_units_per_trans_contrib],
                 value_labels=value_labels,
-                humman_format=humman_format,
+                human_format=human_format,
             )
 
-            # Price / Unit
-            self.build_node(
-                graph,
-                title=price_per_unit_label,
+            # Add Price / Unit node
+            tree.add_node(
                 name="calc_price_per_unit",
+                title=price_per_unit_label,
                 p2_value=graph_data[cols.calc_price_per_unit_p2],
                 p1_value=graph_data[cols.calc_price_per_unit_p1],
                 contrib_value=graph_data[cols.calc_price_per_unit_contrib],
                 value_labels=value_labels,
-                humman_format=humman_format,
+                human_format=human_format,
             )
 
-            graph.edge("calc_spend_per_transaction", "calc_units_per_transaction")
-            graph.edge("calc_spend_per_transaction", "calc_price_per_unit")
+            # Add edges for quantity-related nodes
+            tree.add_edge("calc_spend_per_transaction", "calc_units_per_transaction")
+            tree.add_edge("calc_spend_per_transaction", "calc_price_per_unit")
 
-        return graph
-
-    def build_node(
-        self,
-        graph: graphviz.Digraph,
-        title: str,
-        p2_value: float,
-        p1_value: float,
-        contrib_value: float | None = None,
-        name: str | None = None,
-        value_decimal_places: int = 2,
-        diff_decimal_places: int = 2,
-        pct_decimal_places: int = 1,
-        value_labels: tuple[str, str] | None = None,
-        show_diff: bool = True,
-        value_suffix: str = "",
-        humman_format: bool = False,
-    ) -> None:
-        """Build a node for the Revenue Tree graph."""
-        if name is None:
-            name = title
-        if value_labels is None:
-            value_labels = ("Current Period", "Previous Period")
-
-        diff = p2_value - p1_value
-
-        if humman_format:
-            p2_value_str = (gu.human_format(p2_value, 0, decimals=value_decimal_places) + " " + value_suffix).strip()
-            p1_value_str = (gu.human_format(p1_value, 0, decimals=value_decimal_places) + " " + value_suffix).strip()
-            diff_str = (gu.human_format(diff, 0, decimals=diff_decimal_places) + " " + value_suffix).strip()
-        else:
-            style = "," if isinstance(p2_value, int) else f",.{value_decimal_places}f"
-            p2_value_str = f"{p2_value:{style}} {value_suffix}".strip()
-            p1_value_str = f"{p1_value:{style}} {value_suffix}".strip()
-            diff_str = f"{diff:{style}} {value_suffix}".strip()
-
-        pct_diff_str = "N/A - Divide By 0" if p1_value == 0 else f"{diff / p1_value * 100:,.{pct_decimal_places}f}%"
-
-        diff_color = "darkgreen" if diff >= 0 else "red"
-
-        height = 1.5
-        diff_html = ""
-        if show_diff:
-            diff_html = dedent(
-                f"""
-            <tr>
-                <td align="right"><font color="white" face="arial"><b>Diff&nbsp;</b></font></td>
-                <td bgcolor="white"><font color="{diff_color}" face="arial">{diff_str}</font></td>
-            </tr>
-            """,
-            )
-            height += 0.25
-
-        contrib_html = ""
-        if contrib_value is not None:
-            contrib_str = gu.human_format(contrib_value, 0, decimals=value_decimal_places)
-            contrib_color = "darkgreen" if diff >= 0 else "red"
-            contrib_html = dedent(
-                f"""
-            <tr>
-                <td align="right"><font color="white" face="arial"><b>Contribution&nbsp;</b></font></td>
-                <td bgcolor="white"><font color="{contrib_color}" face="arial">{contrib_str}</font></td>
-            </tr>
-            """,
-            )
-            height += 0.25
-
-        graph.node(
-            name=name,
-            shape="box",
-            style="filled, rounded",
-            color=COLORS["green"][500],
-            width="4",
-            height=str(height),
-            align="center",
-            label=dedent(
-                f"""<
-                <table border="0" align="center" width="100%">
-                    <tr><td colspan="2"><font point-size="18" color="white" face="arial"><b>{title}</b></font></td></tr>
-                    <tr>
-                        <td width="150%"><font color="white" face="arial"><b>{value_labels[0]}</b></font></td>
-                        <td width="150%"><font color="white" face="arial"><b>{value_labels[1]}</b></font></td>
-                    </tr>
-                    <tr>
-                        <td bgcolor="white"><font face="arial">{p2_value_str}</font></td>
-                        <td bgcolor="white"><font face="arial">{p1_value_str}</font></td>
-                    </tr>
-                    {diff_html}
-                    <tr>
-                        <td align="right"><font color="white" face="arial"><b>Pct Diff&nbsp;</b></font></td>
-                        <td bgcolor="white"><font color="{diff_color}" face="arial">{pct_diff_str}</font></td>
-                    </tr>
-                    {contrib_html}
-                </table>
-                >""",
-            ),
-        )
+        return tree.render()
