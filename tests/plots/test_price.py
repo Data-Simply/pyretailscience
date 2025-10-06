@@ -476,24 +476,29 @@ def test_percentages_sum_to_100_for_each_group(mocker):
 
 
 def test_individual_percentage_calculations_are_correct(mocker):
-    """Test that the plot function handles percentage calculations correctly with known data."""
-    # Create test data with known, predictable distribution
+    """Test that the plot function calculates exact proportions correctly with known data distribution.
+
+    Includes edge case testing with a third retailer having 100% in one band and 0% in others.
+    """
+    # Create test data with known, predictable distribution that includes edge cases
     df = pd.DataFrame(
         {
-            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],  # 10 items total
-            "retailer": ["Walmart"] * 4 + ["Target"] * 6,  # Walmart: 4 items, Target: 6 items
+            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.5],  # 9 items total
+            "retailer": ["Walmart"] * 4
+            + ["Target"] * 4
+            + ["Amazon"],  # Walmart: 4 items, Target: 4 items, Amazon: 1 item
         },
     )
 
-    # Mock scatter to capture the actual percentage values being plotted
+    # Mock scatter to capture the actual proportion values being plotted
     mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
 
-    # Call the actual plot function with known bins
+    # Call the actual plot function with bins that create predictable distributions
     price.plot(
         df=df,
         value_col="unit_price",
         group_col="retailer",
-        bins=[0.0, 3.0, 6.0, 11.0],  # 3 bins: [0-3], (3-6], (6-11]
+        bins=[0.0, 2.5, 6.5, 9.0, 10.0],  # 4 bins: [0-2.5], (2.5-6.5], (6.5-9], (9-10]
     )
 
     # Extract the actual data passed to scatter
@@ -501,104 +506,78 @@ def test_individual_percentage_calculations_are_correct(mocker):
     scatter_call = mock_scatter.call_args
     x_data = scatter_call[0][0]  # x coordinates (retailers)
     y_data = scatter_call[0][1]  # y coordinates (bins)
-    sizes = scatter_call.kwargs["s"]  # sizes (scaled percentages)
+    sizes = scatter_call.kwargs["s"]  # sizes (scaled proportions)
 
-    # Test that the percentage calculations produce the expected relative distribution
-    # Expected with our test data and bins [0.0, 3.0, 6.0, 11.0]:
-    # Walmart (4 items): [1,2,3,4] -> bin0: [1,2,3] (75%), bin1: [4] (25%), bin2: [] (0%)
-    # Target (6 items): [5,6,7,8,9,10] -> bin0: [] (0%), bin1: [5,6] (33.33%), bin2: [7,8,9,10] (66.67%)
+    # Expected distribution with bins [0.0, 2.5, 6.5, 9.0, 10.0]:
+    # Walmart [1,2,3,4]: bin0=[1,2] (2/4=50%), bin1=[3,4] (2/4=50%), bin2=[] (0%), bin3=[] (0%)
+    # Target [5,6,7,8]: bin0=[] (0%), bin1=[5,6] (2/4=50%), bin2=[7,8] (2/4=50%), bin3=[] (0%)
+    # Amazon [9.5]: bin0=[] (0%), bin1=[] (0%), bin2=[] (0%), bin3=[9.5] (1/1=100%)
 
     # Group the data by retailer and bin
-    walmart_data = {}
-    target_data = {}
+    retailer_data = {}
+    retailer_names = ["Amazon", "Target", "Walmart"]  # Alphabetical order (same as pandas groupby)
 
     for x, y, size in zip(x_data, y_data, sizes, strict=False):
-        if x == 0:  # Walmart
-            walmart_data[y] = size
-        elif x == 1:  # Target
-            target_data[y] = size
+        retailer_name = retailer_names[x]
+        if retailer_name not in retailer_data:
+            retailer_data[retailer_name] = {}
+        retailer_data[retailer_name][y] = size
 
-    # Test the fundamental behavior: relative distribution within each group
-    # Walmart should have largest bubble in bin 0 (prices 1-3), smaller in bin 1 (price 4)
-    if 0 in walmart_data and 1 in walmart_data:
-        assert walmart_data[0] > walmart_data[1], "Walmart should have more items in lower price bin than higher"
+    # Convert sizes back to proportions by dividing by scale factor
+    scale_factor = 800  # Default s_scale
 
-    # Target should have largest bubble in bin 2 (prices 7-10), smaller in bin 1 (prices 5-6)
-    bin_1 = 1
-    bin_2 = 2
-    if bin_1 in target_data and bin_2 in target_data:
-        assert target_data[bin_2] > target_data[bin_1], "Target should have more items in higher price bin than lower"
+    # Test the actual proportions we're getting
+    retailer_proportions = {}
+    for retailer, data in retailer_data.items():
+        retailer_proportions[retailer] = {bin_idx: size / scale_factor for bin_idx, size in data.items()}
 
-    # Test that we get sensible output structure
-    expected_retailers = 2
-    assert len(set(x_data)) == expected_retailers, "Should have data for exactly 2 retailers"
-    assert len(sizes) > 0, "Should have plotted some bubbles"
-    assert all(s > 0 for s in sizes), "All bubble sizes should be positive"
+    tolerance = 0.001  # 0.1% tolerance for floating point precision
 
-
-def test_percentage_calculations_edge_cases(mocker):
-    """Test that the plot function correctly handles extreme percentage distributions."""
-    # Mock scatter to capture the actual percentage calculations
-    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
-
-    # Test case: Single item per group - should result in 100% in one bin, 0% in others
-    df_single = pd.DataFrame(
-        {
-            "unit_price": [2.0, 8.0],
-            "retailer": ["Walmart", "Target"],
-        },
-    )
-
-    price.plot(
-        df=df_single,
-        value_col="unit_price",
-        group_col="retailer",
-        bins=[0.0, 5.0, 10.0],  # 2 bins: [0-5], (5-10]
-    )
-
-    # Get the first test results
-    first_call = mock_scatter.call_args
-    sizes_1 = first_call.kwargs["s"]
-
-    # Reset mock for second test
-    mock_scatter.reset_mock()
-
-    # Test case: Highly uneven distribution - 90% of items in one price range
-    df_uneven = pd.DataFrame(
-        {
-            "unit_price": [1.0] * 9 + [9.0],  # 9 items at 1.0, 1 item at 9.0
-            "retailer": ["Walmart"] * 10,
-        },
-    )
-
-    price.plot(
-        df=df_uneven,
-        value_col="unit_price",
-        group_col="retailer",
-        bins=[0.0, 5.0, 10.0],  # 2 bins: [0-5] gets 9 items, (5-10] gets 1 item
-    )
-
-    # Get the second test results
-    second_call = mock_scatter.call_args
-    sizes_2 = second_call.kwargs["s"]
-    y_data_2 = second_call[0][1]
-
-    # Test the fundamental behavior: uneven distribution should show extreme size differences
-    # With 90% vs 10% distribution, the larger bin should have a much bigger bubble
-    bin_sizes = dict(zip(y_data_2, sizes_2, strict=False))
-
-    # Find bins 0 and 1
-    if 0 in bin_sizes and 1 in bin_sizes:
-        larger_bin = bin_sizes[0]  # Should have 9 items (90%)
-        smaller_bin = bin_sizes[1]  # Should have 1 item (10%)
-
-        # The 90% bin should be significantly larger than the 10% bin
-        assert larger_bin > smaller_bin * 5, (
-            f"90% bin should be much larger than 10% bin: {larger_bin} vs {smaller_bin}"
+    # Test Walmart and Target: each should have exactly 2 bins with 50% each
+    for retailer in ["Walmart", "Target"]:
+        expected_bins_per_retailer = 2
+        assert len(retailer_proportions[retailer]) == expected_bins_per_retailer, (
+            f"{retailer} should have data in exactly 2 bins, got {len(retailer_proportions[retailer])}"
         )
 
-    # Verify both test cases completed and produced valid output
-    assert len(sizes_1) > 0, "Single item test should produce scatter data"
-    assert len(sizes_2) > 0, "Uneven distribution test should produce scatter data"
-    assert all(s > 0 for s in sizes_1), "All bubbles should have positive size"
-    assert all(s > 0 for s in sizes_2), "All bubbles should have positive size"
+        # Test that each proportion is 50% (0.5)
+        for bin_idx, proportion in retailer_proportions[retailer].items():
+            assert abs(proportion - 0.5) < tolerance, f"{retailer} bin {bin_idx} should be 0.5 (50%), got {proportion}"
+
+    # Test Amazon: should have exactly 1 bin with 100%
+    amazon_proportions = retailer_proportions["Amazon"]
+    assert len(amazon_proportions) == 1, f"Amazon should have data in exactly 1 bin, got {len(amazon_proportions)}"
+
+    # Test that Amazon's single proportion is 100% (1.0)
+    for bin_idx, proportion in amazon_proportions.items():
+        assert abs(proportion - 1.0) < tolerance, f"Amazon bin {bin_idx} should be 1.0 (100%), got {proportion}"
+
+    # Test that Walmart and Target share exactly one bin (the middle bin where both have 50%)
+    walmart_bins = set(retailer_proportions["Walmart"].keys())
+    target_bins = set(retailer_proportions["Target"].keys())
+    overlap = walmart_bins.intersection(target_bins)
+    assert len(overlap) == 1, (
+        f"Expected exactly 1 overlapping bin between Walmart and Target, got {len(overlap)}: {overlap}"
+    )
+
+    # Test that Amazon doesn't share bins with Walmart or Target (edge case isolation)
+    amazon_bins = set(retailer_proportions["Amazon"].keys())
+    walmart_amazon_overlap = walmart_bins.intersection(amazon_bins)
+    target_amazon_overlap = target_bins.intersection(amazon_bins)
+    assert len(walmart_amazon_overlap) == 0, (
+        f"Amazon and Walmart should not share bins, got overlap: {walmart_amazon_overlap}"
+    )
+    assert len(target_amazon_overlap) == 0, (
+        f"Amazon and Target should not share bins, got overlap: {target_amazon_overlap}"
+    )
+
+    # Verify that proportions sum to 1.0 for each retailer
+    for retailer, proportions in retailer_proportions.items():
+        total = sum(proportions.values())
+        assert abs(total - 1.0) < tolerance, f"{retailer} proportions should sum to 1.0, got {total}"
+
+    # Test that we get sensible output structure
+    expected_retailers = 3
+    assert len(set(x_data)) == expected_retailers, "Should have data for exactly 3 retailers"
+    assert len(sizes) > 0, "Should have plotted some bubbles"
+    assert all(s > 0 for s in sizes), "All bubble sizes should be positive"

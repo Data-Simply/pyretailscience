@@ -24,8 +24,6 @@ The bubble chart shows price distribution as vertical layers (price bands) with 
 - **Numeric Price Column**: Requires numeric price/value column for binning
 """
 
-from typing import Any
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
@@ -85,7 +83,7 @@ def _validate_inputs(
         msg = f"No valid data after removing missing values from {value_col} and {group_col}"
         raise ValueError(msg)
 
-    return df_clean.copy(), validated_bins
+    return df_clean, validated_bins
 
 
 def _validate_bins_parameter(bins: int | list[float]) -> int | list[float]:
@@ -128,7 +126,7 @@ def plot(
     ax: Axes | None = None,
     source_text: str | None = None,
     move_legend_outside: bool = False,
-    **kwargs: dict[str, Any],
+    **kwargs: dict[str, any],
 ) -> SubplotBase:
     """Creates a bubble chart visualization showing price distribution analysis across categories.
 
