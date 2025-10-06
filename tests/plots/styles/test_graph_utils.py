@@ -190,7 +190,7 @@ def test_truncate_to_x_digits_decimal_edge_cases():
 def test_set_axis_percent():
     """Test set_axis_percent function formats axis correctly."""
     # Create a test plot
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
 
     # Apply our function to the y-axis
@@ -205,7 +205,7 @@ def test_set_axis_percent():
     assert formatter._symbol == "%"
 
     # Test with custom parameters
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.plot([0, 25, 50, 75, 100], [0, 30, 50, 70, 100])
 
     # Define test values
@@ -230,10 +230,13 @@ class TestRegressionLine:
     # Constants to avoid magic numbers
     ORIGINAL_LINE_COUNT = 1
     EXPECTED_LINE_COUNT_AFTER_REGRESSION = 2
+    STACKED_PATCH_COUNT = 8  # 4 bars + 4 stacked bars
+    GROUPED_PATCH_COUNT = 8  # 4 bars + 4 grouped bars
+    REGRESSION_LINE_POINTS = 2  # Regression line has 2 endpoints
 
     def test_line_plot_with_numeric_data(self):
         """Test regression line with a standard line plot and numeric data."""
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([2, 3, 5, 7, 11])  # Not a perfect line to test regression
         ax.plot(x, y)
@@ -284,6 +287,34 @@ class TestRegressionLine:
         # Check that a line was added
         assert len(ax.get_lines()) == self.EXPECTED_LINE_COUNT_AFTER_REGRESSION
 
+    def test_bar_plot(self):
+        """Test regression line with a vertical bar chart."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([2, 4, 3, 5, 6])
+        ax.bar(x, y)
+
+        gu.add_regression_line(ax, color="orange", show_equation=True, show_r2=True)
+
+        # Check that a regression line was added (bar plots start with 0 lines)
+        assert len(ax.get_lines()) == 1
+        # Check that we still have the bar patches
+        assert len(ax.patches) == len(x)
+
+    def test_barh_plot(self):
+        """Test regression line with a horizontal bar chart."""
+        _, ax = plt.subplots()
+        y = np.array([1, 2, 3, 4, 5])
+        x = np.array([2, 4, 3, 5, 6])
+        ax.barh(y, x)
+
+        gu.add_regression_line(ax, color="green", show_equation=True, show_r2=True)
+
+        # Check that a regression line was added
+        assert len(ax.get_lines()) == 1
+        # Check that we still have the bar patches
+        assert len(ax.patches) == len(x)
+
     def test_single_data_point(self):
         """Test that regression line raises ValueError with a single data point."""
         _, ax = plt.subplots()
@@ -295,6 +326,149 @@ class TestRegressionLine:
 
         # Check for appropriate error message
         assert "regression" in str(excinfo.value).lower()
+
+    def test_bar_plot_negative_values(self):
+        """Test regression line correctly handles negative bar values."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([-2, 4, -1, 3, -5])  # Mix of positive and negative values
+        ax.bar(x, y)
+
+        gu.add_regression_line(ax, color="red")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Get the regression line data
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+        line_y = line.get_ydata()
+
+        # Verify the line spans a reasonable range (uses axis limits, not exact data range)
+        assert line_x[0] < min(x)  # Line starts before first bar
+        assert line_x[1] > max(x)  # Line ends after last bar
+
+        # Verify line handles negative values (should not be all zeros)
+        assert not all(val == 0 for val in line_y)
+
+    def test_barh_plot_negative_values(self):
+        """Test regression line correctly handles negative horizontal bar values."""
+        _, ax = plt.subplots()
+        y = np.array([1, 2, 3, 4, 5])
+        x = np.array([-2, 4, -1, 3, -5])  # Mix of positive and negative values
+        ax.barh(y, x)
+
+        gu.add_regression_line(ax, color="purple")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Get the regression line data
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+        line_y = line.get_ydata()
+
+        # For horizontal bars, verify the line spans the value range reasonably
+        # Line should encompass the data range (may extend beyond due to axis limits)
+        assert min(line_x) <= max(x)  # Line should reach at least the max value
+        assert max(line_x) >= min(x)  # Line should reach at least the min value
+
+        # Verify line handles negative values (should not be all zeros)
+        assert not all(val == 0 for val in line_y)
+
+    def test_bar_plot_stacked(self):
+        """Test regression line with stacked bar chart uses correct data ordering."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3, 4])
+        y1 = np.array([2, 3, 4, 1])
+        y2 = np.array([1, 2, 1, 3])
+
+        # Create stacked bars
+        ax.bar(x, y1, label="Series 1")
+        ax.bar(x, y2, bottom=y1, label="Series 2")
+
+        gu.add_regression_line(ax, color="blue")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Verify we have patches for both series (8 total: 4 + 4)
+        assert len(ax.patches) == self.STACKED_PATCH_COUNT
+
+        # Get the regression line to ensure it was calculated
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+
+        # Verify line spans the x range of the bars
+        assert min(line_x) <= min(x)
+        assert max(line_x) >= max(x)
+
+    def test_bar_plot_grouped(self):
+        """Test regression line with grouped bar chart handles data ordering correctly."""
+        _, ax = plt.subplots()
+
+        # Create grouped bars with different x positions
+        x1 = np.array([1, 2, 3, 4])
+        x2 = np.array([1.3, 2.3, 3.3, 4.3])  # Offset for grouping
+        y1 = np.array([2, 3, 4, 1])
+        y2 = np.array([3, 1, 2, 4])
+
+        width = 0.3
+        ax.bar(x1, y1, width, label="Group 1")
+        ax.bar(x2, y2, width, label="Group 2")
+
+        gu.add_regression_line(ax, color="orange")
+
+        # Verify regression line was added
+        assert len(ax.get_lines()) == 1
+
+        # Verify we have patches for both groups (8 total: 4 + 4)
+        assert len(ax.patches) == self.GROUPED_PATCH_COUNT
+
+        # Get the regression line
+        line = ax.get_lines()[0]
+        line_x = line.get_xdata()
+        line_y = line.get_ydata()
+
+        # Verify line data exists and spans a reasonable range
+        assert len(line_x) == self.REGRESSION_LINE_POINTS  # Regression line should have 2 points
+        assert len(line_y) == self.REGRESSION_LINE_POINTS
+
+        # Verify line spans across the grouped bars
+        all_x_positions = np.concatenate([x1, x2])
+        assert min(line_x) <= min(all_x_positions)
+        assert max(line_x) >= max(all_x_positions)
+
+    def test_bar_plot_container_no_orientation_attr(self):
+        """Test regression line with container lacking orientation attribute."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3])
+        y = np.array([2, 4, 3])
+        ax.bar(x, y)
+
+        # Add a mock container without orientation to test the hasattr branch
+        class MockContainer:
+            pass
+
+        mock_container = MockContainer()
+        ax.containers.insert(0, mock_container)  # Insert at beginning
+
+        gu.add_regression_line(ax, color="red")
+        # Should still work by falling back to default (vertical)
+        assert len(ax.get_lines()) == 1
+
+    def test_bar_plot_container_none_orientation(self):
+        """Test regression line with container having None orientation."""
+        _, ax = plt.subplots()
+        x = np.array([1, 2, 3])
+        y = np.array([2, 4, 3])
+        ax.bar(x, y)
+
+        ax.containers[0].orientation = None
+
+        gu.add_regression_line(ax, color="blue")
+        # Should still work by falling back to default (vertical)
+        assert len(ax.get_lines()) == 1
 
 
 class TestVisualRegression:
@@ -387,44 +561,3 @@ class TestVisualRegression:
         assert source_text.get_color() == "dimgray"
 
         plt.close(fig)
-
-
-class TestImportPaths:
-    """Test all new import paths work correctly."""
-
-    def test_graph_utils_import(self):
-        """Test graph_utils can be imported from new location."""
-        try:
-            from pyretailscience.plots.styles.graph_utils import add_source_text, human_format, standard_graph_styles
-
-            assert callable(standard_graph_styles)
-            assert callable(human_format)
-            assert callable(add_source_text)
-        except ImportError as e:
-            pytest.fail(f"Failed to import from new graph_utils location: {e}")
-
-    def test_styling_helpers_import(self):
-        """Test styling_helpers can be imported."""
-        try:
-            from pyretailscience.plots.styles.styling_helpers import PlotStyler
-
-            assert PlotStyler is not None
-        except ImportError as e:
-            pytest.fail(f"Failed to import PlotStyler: {e}")
-
-    def test_styling_context_import(self):
-        """Test styling_context can be imported."""
-        try:
-            from pyretailscience.plots.styles.styling_context import (
-                FontConfig,
-                StylingContext,
-                get_styling_context,
-                update_styling_context,
-            )
-
-            assert StylingContext is not None
-            assert FontConfig is not None
-            assert callable(get_styling_context)
-            assert callable(update_styling_context)
-        except ImportError as e:
-            pytest.fail(f"Failed to import styling_context components: {e}")

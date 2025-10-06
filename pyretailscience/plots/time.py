@@ -96,12 +96,12 @@ def plot(
     )
 
     if group_col is None:
-        colors = COLORS["green"][500]
+        default_colors = COLORS["green"][500]
         df = df.groupby("transaction_period")[value_col].agg(agg_func)
         default_title = "Total Sales"
         show_legend = False
     else:
-        colors = get_linear_cmap("green")(
+        default_colors = get_linear_cmap("green")(
             np.linspace(0, 1, df[group_col].nunique()),
         )
         df = (
@@ -113,9 +113,11 @@ def plot(
         default_title = f"{value_col.title()} by {group_col.title()}"
         show_legend = True
 
+    linewidth = kwargs.pop("linewidth", 3)
+    color = kwargs.pop("color", default_colors)
     ax = df.plot(
-        linewidth=3,
-        color=colors,
+        linewidth=linewidth,
+        color=color,
         legend=show_legend,
         ax=ax,
         **kwargs,
