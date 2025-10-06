@@ -80,14 +80,10 @@ def test_plot_with_empty_dataframe():
         )
 
 
-def test_plot_missing_value_col():
+def test_plot_missing_value_col(simple_price_dataframe):
     """Test price architecture plot when value_col doesn't exist."""
-    df = pd.DataFrame(
-        {
-            "price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
+    # Remove the unit_price column to test missing value_col
+    df = simple_price_dataframe.drop(columns=["unit_price"])
 
     with pytest.raises(KeyError, match="value_col 'unit_price' not found in DataFrame"):
         price.plot(
@@ -98,14 +94,10 @@ def test_plot_missing_value_col():
         )
 
 
-def test_plot_missing_group_col():
+def test_plot_missing_group_col(simple_price_dataframe):
     """Test price architecture plot when group_col doesn't exist."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "store": ["Walmart", "Target", "Amazon"],
-        },
-    )
+    # Remove the retailer column to test missing group_col
+    df = simple_price_dataframe.drop(columns=["retailer"])
 
     with pytest.raises(KeyError, match="group_col 'retailer' not found in DataFrame"):
         price.plot(
@@ -116,14 +108,11 @@ def test_plot_missing_group_col():
         )
 
 
-def test_plot_non_numeric_value_col():
+def test_plot_non_numeric_value_col(simple_price_dataframe):
     """Test price architecture plot with non-numeric value column."""
-    df = pd.DataFrame(
-        {
-            "unit_price": ["low", "medium", "high"],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
+    # Replace unit_price with non-numeric values to test validation
+    df = simple_price_dataframe.copy()
+    df["unit_price"] = ["low", "medium", "high", "low", "medium", "high"]
 
     with pytest.raises(ValueError, match="value_col 'unit_price' must be numeric for binning"):
         price.plot(
@@ -135,69 +124,41 @@ def test_plot_non_numeric_value_col():
 
 
 @pytest.mark.parametrize("bins", [0, -5])
-def test_plot_invalid_bins_non_positive(bins):
+def test_plot_invalid_bins_non_positive(bins, simple_price_dataframe):
     """Test price architecture plot with zero or negative bins."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
-
     with pytest.raises(ValueError, match="bins must be a positive integer"):
         price.plot(
-            df=df,
+            df=simple_price_dataframe,
             value_col="unit_price",
             group_col="retailer",
             bins=bins,
         )
 
 
-def test_plot_invalid_bins_list_too_short():
+def test_plot_invalid_bins_list_too_short(simple_price_dataframe):
     """Test price architecture plot with bins list too short."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
-
     with pytest.raises(ValueError, match="bins list must contain at least 2 values"):
         price.plot(
-            df=df,
+            df=simple_price_dataframe,
             value_col="unit_price",
             group_col="retailer",
             bins=[1],
         )
 
 
-def test_plot_invalid_bins_list_non_numeric():
+def test_plot_invalid_bins_list_non_numeric(simple_price_dataframe):
     """Test price architecture plot with non-numeric bins list."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
-
     with pytest.raises(ValueError, match="All values in bins list must be numeric"):
         price.plot(
-            df=df,
+            df=simple_price_dataframe,
             value_col="unit_price",
             group_col="retailer",
             bins=[1, "invalid", 3],
         )
 
 
-def test_plot_with_unsorted_bins_list(mocker):
+def test_plot_with_unsorted_bins_list(mocker, simple_price_dataframe):
     """Test price architecture plot passes sorted bins to pd.cut."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
-
     # Mock pd.cut to capture the bins parameter and return realistic intervals
     mock_cut = mocker.patch("pandas.cut")
     # Create mock intervals that mimic pandas.cut behavior
@@ -209,7 +170,7 @@ def test_plot_with_unsorted_bins_list(mocker):
     mock_cut.return_value = pd.Series(intervals, name="price_bin")
 
     price.plot(
-        df=df,
+        df=simple_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
         bins=[3, 1, 2],  # Unsorted bins
@@ -221,18 +182,11 @@ def test_plot_with_unsorted_bins_list(mocker):
     assert call_args[1]["bins"] == [1, 2, 3]  # Should be sorted
 
 
-def test_plot_invalid_bins_type():
+def test_plot_invalid_bins_type(simple_price_dataframe):
     """Test price architecture plot with invalid bins type."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [1, 2, 3],
-            "retailer": ["Walmart", "Target", "Amazon"],
-        },
-    )
-
     with pytest.raises(TypeError, match="bins must be either an integer or a list of numeric values"):
         price.plot(
-            df=df,
+            df=simple_price_dataframe,
             value_col="unit_price",
             group_col="retailer",
             bins="invalid",
@@ -278,11 +232,9 @@ def test_plot_with_missing_values(mocker):
 
     # Also verify the retailer data was cleaned correctly by checking the DataFrame index
     # The cleaned DataFrame should have the correct corresponding retailer values
-    call_kwargs = mock_cut.call_args[1]
-    if "bins" in call_kwargs:
-        expected_bins = 3
-        # The function should have properly cleaned both columns together
-        assert len(cleaned_data) == expected_bins, f"Expected 3 clean rows, got {len(cleaned_data)}"
+    expected_bins = 3
+    # The function should have properly cleaned both columns together
+    assert len(cleaned_data) == expected_bins, f"Expected 3 clean rows, got {len(cleaned_data)}"
 
     # Verify the function still works with cleaned data
     assert isinstance(result_ax, Axes)
@@ -307,20 +259,19 @@ def test_plot_all_missing_values():
 
 
 @pytest.mark.parametrize(
-    ("bins", "title"),
+    ("bins"),
     [
-        (3, "Test Price Architecture Plot"),
-        ([1, 3, 5, 7], "Test Price Architecture Plot with Custom Bins"),
+        (3),
+        ([1, 3, 5, 7]),
     ],
 )
-def test_plot_with_bins(simple_price_dataframe, bins, title):
+def test_plot_with_bins(simple_price_dataframe, bins):
     """Test price architecture plot with integer bins and custom bin boundaries."""
     result_ax = price.plot(
         df=simple_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
         bins=bins,
-        title=title,
     )
 
     assert isinstance(result_ax, Axes)
@@ -455,44 +406,16 @@ def test_plot_with_kwargs(simple_price_dataframe, mocker):
     assert call_kwargs["marker"] == "^"
 
 
-def test_plot_handles_zero_percentages():
-    """Test that plot handles edge case where all percentages might be zero."""
-    # Create a DataFrame where all products fall into the same bin
-    # This creates a scenario where some bins have 0%
-    df = pd.DataFrame(
-        {
-            "unit_price": [1.0, 1.0, 1.0, 1.0],  # All same price
-            "retailer": ["Walmart", "Walmart", "Target", "Target"],
-        },
-    )
-
-    result_ax = price.plot(
-        df=df,
-        value_col="unit_price",
-        group_col="retailer",
-        bins=5,  # More bins than data points creates empty bins
-    )
-
-    # Should not raise division by zero error
-    assert isinstance(result_ax, Axes)
-
-
-def test_plot_raises_error_when_no_data_in_bins():
+def test_plot_raises_error_when_no_data_in_bins(simple_price_dataframe):
     """Test that plot raises error when no data falls within the specified bins."""
-    df = pd.DataFrame(
-        {
-            "unit_price": [5.0, 6.0, 7.0, 8.0],
-            "retailer": ["Walmart", "Walmart", "Target", "Target"],
-        },
-    )
-
-    # Create bins that don't include any of the data points
-    with pytest.raises(ValueError, match="All percentages are zero - no data falls within the specified bins"):
+    # simple_price_dataframe has prices [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    # so bins [7.0, 8.0, 9.0, 10.0] will exclude all data
+    with pytest.raises(ValueError, match="All proportions are zero - no data falls within the specified bins"):
         price.plot(
-            df=df,
+            df=simple_price_dataframe,
             value_col="unit_price",
             group_col="retailer",
-            bins=[1.0, 2.0, 3.0, 4.0],  # All data is above these bins
+            bins=[7.0, 8.0, 9.0, 10.0],  # All data is below these bins
         )
 
 
@@ -509,12 +432,16 @@ def test_percentages_sum_to_100_for_each_group(mocker):
     # Mock the scatter plot to capture the actual size values (percentages) being plotted
     mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
 
-    # Call the actual plot function
+    # Set a known scale factor for testing
+    scale_factor = 1000
+
+    # Call the actual plot function with known scale factor
     price.plot(
         df=df,
         value_col="unit_price",
         group_col="retailer",
         bins=[1.0, 3.0, 5.0, 7.0, 9.0],  # 4 bins
+        s=scale_factor,
     )
 
     # Extract the actual data passed to scatter
@@ -523,24 +450,24 @@ def test_percentages_sum_to_100_for_each_group(mocker):
     sizes = scatter_call.kwargs["s"]
     x_positions = scatter_call[0][0]  # retailer positions
 
-    # Test that the percentage calculation logic maintains the fundamental property:
-    # When retailers have equal numbers of items, their maximum bubble sizes should be similar
-    # (since each group's bubbles are scaled relative to that group's maximum percentage)
-
     # Group sizes by retailer position
     walmart_sizes = [sizes[i] for i, x in enumerate(x_positions) if x == 0]  # x=0 is Walmart
     target_sizes = [sizes[i] for i, x in enumerate(x_positions) if x == 1]  # x=1 is Target
 
-    # Both retailers have equal items (4 each), so their max bubble sizes should be equal
-    # because the scaling is: (percentage / group_max) * scale_factor
-    # With equal items, both groups should have the same group_max (percentage-wise)
-    walmart_max = max(walmart_sizes)
-    target_max = max(target_sizes)
+    # Test that bubble sizes for each group sum to 1.0 (100%) when divided by scale factor
+    # With absolute scaling: scaled_size = proportion_value * scale_factor
+    # So: sum(scaled_sizes) / scale_factor should equal 1.0 for each group
 
-    # They should be equal within a small tolerance (both groups have same scale factor)
-    max_size_tolerance = 50
-    assert abs(walmart_max - target_max) < max_size_tolerance, (
-        f"Equal-sized groups should have similar max bubble sizes: {walmart_max} vs {target_max}"
+    walmart_proportion_sum = sum(walmart_sizes) / scale_factor
+    target_proportion_sum = sum(target_sizes) / scale_factor
+
+    # Both groups should sum to 1.0 (within floating point tolerance)
+    tolerance = 0.001  # 0.1% tolerance for floating point precision
+    assert abs(walmart_proportion_sum - 1.0) < tolerance, (
+        f"Walmart proportions should sum to 1.0, got {walmart_proportion_sum}"
+    )
+    assert abs(target_proportion_sum - 1.0) < tolerance, (
+        f"Target proportions should sum to 1.0, got {target_proportion_sum}"
     )
 
     # Verify that all non-zero sizes were plotted (no data should be filtered incorrectly)

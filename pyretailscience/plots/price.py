@@ -167,14 +167,14 @@ def plot(
     group_totals = df_clean.groupby(group_col, observed=True).size()
     bin_counts = df_clean.groupby([group_col, "price_bin"], observed=True).size().unstack(fill_value=0)
 
-    # Convert to percentages
-    percentages = bin_counts.div(group_totals, axis=0) * 100
+    # Convert to proportions (0-1 range)
+    proportions = bin_counts.div(group_totals, axis=0)
 
     ax = ax or plt.gca()
 
     # Get unique groups and bins
-    groups = percentages.index.tolist()
-    price_bins = percentages.columns.tolist()
+    groups = proportions.index.tolist()
+    price_bins = proportions.columns.tolist()
 
     # Set up color mapping
     color_gen_threshold = 4
@@ -188,23 +188,22 @@ def plot(
     line_width = kwargs.pop("linewidth", 1.5)  # Stroke width
 
     # Validate that we have some data
-    if percentages.max().max() == 0 or pd.isna(percentages.max().max()):
-        raise ValueError("All percentages are zero - no data falls within the specified bins")
+    if proportions.max().max() == 0 or pd.isna(proportions.max().max()):
+        raise ValueError("All proportions are zero - no data falls within the specified bins")
 
-    # Stack to get all (group, price_bin) combinations with their percentages
-    stacked = percentages.stack()
-    # Filter out zero percentages to avoid invisible bubbles
+    # Stack to get all (group, price_bin) combinations with their proportions
+    stacked = proportions.stack()
+    # Filter out zero proportions to avoid invisible bubbles
     stacked = stacked[stacked > 0]
 
-    if len(stacked) > 0:  # Only plot if there are non-zero percentages
+    if len(stacked) > 0:  # Only plot if there are non-zero proportions
         x_positions = [groups.index(group) for group, _ in stacked.index]
         y_positions = [price_bins.index(price_bin) for _, price_bin in stacked.index]
-        # Calculate bubble sizes using per-group maximum for consistent scaling across columns
+        # Calculate bubble sizes using absolute proportion values for cross-group comparison
         bubble_sizes = []
         for group, price_bin in stacked.index:
-            group_max = percentages.loc[group].max()  # Max percentage within this group
-            percentage_value = stacked.loc[(group, price_bin)]
-            scaled_size = (percentage_value / group_max) * s_scale
+            proportion_value = stacked.loc[(group, price_bin)]
+            scaled_size = proportion_value * s_scale
             bubble_sizes.append(scaled_size)
         bubble_colors = [colors[groups.index(group)] for group, _ in stacked.index]
 
