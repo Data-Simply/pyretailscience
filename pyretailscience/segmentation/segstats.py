@@ -52,7 +52,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.options import ColumnHelper
+from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.plots.styles.tailwind import COLORS
 
 
@@ -78,6 +78,7 @@ class SegTransactionStats:
         extra_aggs: dict[str, tuple[str, str]] | None = None,
         calc_rollup: bool = False,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
+        unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
 
@@ -105,6 +106,11 @@ class SegTransactionStats:
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
+            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
+                Value or expression identifying unknown customers for separate tracking. When provided,
+                metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
+                ibis literals, or boolean expressions (e.g., data["customer_id"] < 0). Requires customer_id column.
+                Defaults to None.
         """
         # Convert data to ibis.Table if it's a pandas DataFrame
         if isinstance(data, pd.DataFrame):
@@ -144,16 +150,26 @@ class SegTransactionStats:
         self.extra_aggs = {} if extra_aggs is None else extra_aggs
         self.calc_rollup = calc_rollup
         self.rollup_value = rollup_value
+        self.unknown_customer_value = unknown_customer_value
 
-        self.table = self._calc_seg_stats(data, segment_col, calc_total, self.extra_aggs, calc_rollup, rollup_value)
+        self.table = self._calc_seg_stats(
+            data,
+            segment_col,
+            calc_total,
+            self.extra_aggs,
+            calc_rollup,
+            rollup_value,
+            unknown_customer_value,
+        )
 
     @staticmethod
-    def _get_col_order(include_quantity: bool, include_customer: bool) -> list[str]:
+    def _get_col_order(include_quantity: bool, include_customer: bool, include_unknown: bool = False) -> list[str]:
         """Returns the default column order.
 
         Args:
             include_quantity (bool): Whether to include the columns related to quantity.
             include_customer (bool): Whether to include customer-based columns.
+            include_unknown (bool): Whether to include unknown customer columns. Defaults to False.
 
         Returns:
             list[str]: The default column order.
@@ -164,13 +180,36 @@ class SegTransactionStats:
             (cols.agg_unit_spend, True),
             (cols.agg_transaction_id, True),
             (cols.agg_customer_id, include_customer),
-            ("units", include_quantity),
+            (cols.agg_unit_qty, include_quantity),
             (cols.calc_spend_per_cust, include_customer),
             (cols.calc_spend_per_trans, True),
             (cols.calc_trans_per_cust, include_customer),
             (cols.calc_price_per_unit, include_quantity),
             (cols.calc_units_per_trans, include_quantity),
         ]
+
+        # Add unknown customer columns if tracking unknown customers
+        if include_unknown:
+            unknown_configs = [
+                (cols.agg_unit_spend_unknown, True),
+                (cols.agg_transaction_id_unknown, True),
+                (cols.agg_unit_qty_unknown, include_quantity),
+                (cols.calc_spend_per_trans_unknown, True),
+                (cols.calc_price_per_unit_unknown, include_quantity),
+                (cols.calc_units_per_trans_unknown, include_quantity),
+            ]
+            column_configs.extend(unknown_configs)
+
+            # Add total columns
+            total_configs = [
+                (cols.agg_unit_spend_total, True),
+                (cols.agg_transaction_id_total, True),
+                (cols.agg_unit_qty_total, include_quantity),
+                (cols.calc_spend_per_trans_total, True),
+                (cols.calc_price_per_unit_total, include_quantity),
+                (cols.calc_units_per_trans_total, include_quantity),
+            ]
+            column_configs.extend(total_configs)
 
         return [col for col, condition in column_configs if condition]
 
@@ -197,6 +236,168 @@ class SegTransactionStats:
         return mutations
 
     @staticmethod
+    def _add_rollup_metrics(
+        data: ibis.Table,
+        segment_metrics: ibis.Table,
+        segment_col: list[str],
+        rollup_value: list[Any],
+        aggs: dict[str, Any],
+        calc_total: bool,
+    ) -> ibis.Table:
+        """Add rollup metrics to segment metrics.
+
+        Args:
+            data (ibis.Table): The data table
+            segment_metrics (ibis.Table): The segment metrics table
+            segment_col (list[str]): The segment columns
+            rollup_value (list[Any]): The rollup values
+            aggs (dict[str, Any]): The aggregation specifications
+            calc_total (bool): Whether to include suffix rollups
+
+        Returns:
+            ibis.Table: Metrics with rollups added
+        """
+        rollup_metrics = []
+
+        # Configuration for rollups
+        rollup_configs = [
+            # Prefix rollups: always include when calc_rollup=True
+            (segment_col[:i], segment_col[i:], rollup_value[i:])
+            for i in range(1, len(segment_col))
+        ]
+
+        # Only add suffix rollups when calc_total=True (to avoid "Total" in category when no grand total)
+        if calc_total:
+            rollup_configs.extend(
+                # Suffix rollups: group by suffixes, mutate preceding columns
+                [(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
+            )
+
+        # Process both prefix and suffix rollups with unified logic
+        for group_cols, mutation_cols, mutation_values in rollup_configs:
+            # Group by the specified columns and aggregate
+            rollup_result = data.group_by(group_cols).aggregate(**aggs)
+
+            # Add rollup values for mutation columns with proper types
+            rollup_mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
+
+            # Apply all mutations at once
+            rollup_result = rollup_result.mutate(**rollup_mutations)
+            rollup_metrics.append(rollup_result)
+
+        # Union all rollup results
+        return segment_metrics.union(*rollup_metrics) if rollup_metrics else segment_metrics
+
+    @staticmethod
+    def _create_unknown_flag(
+        data: ibis.Table,
+        unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn,
+    ) -> ibis.expr.types.BooleanColumn:
+        """Create a boolean flag identifying unknown customers.
+
+        Args:
+            data (ibis.Table): The data table
+            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn):
+                The value or expression identifying unknown customers
+
+        Returns:
+            ibis.expr.types.BooleanColumn: Boolean expression identifying unknown customers
+        """
+        cols = ColumnHelper()
+
+        if isinstance(unknown_customer_value, ibis.expr.types.BooleanColumn):
+            return unknown_customer_value
+        if isinstance(unknown_customer_value, ibis.expr.types.Scalar):
+            return data[cols.customer_id] == unknown_customer_value
+        # Simple value (int/str)
+        return data[cols.customer_id] == ibis.literal(unknown_customer_value)
+
+    @staticmethod
+    def _build_standard_aggs(
+        data: ibis.Table,
+        extra_aggs: dict[str, tuple[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        """Build standard aggregations without unknown customer tracking.
+
+        Args:
+            data (ibis.Table): The data table
+            extra_aggs (dict[str, tuple[str, str]] | None): Additional aggregations
+
+        Returns:
+            dict[str, Any]: Aggregation specifications
+        """
+        cols = ColumnHelper()
+        agg_specs = [
+            (cols.agg_unit_spend, cols.unit_spend, "sum"),
+            (cols.agg_transaction_id, cols.transaction_id, "nunique"),
+            (cols.agg_unit_qty, cols.unit_qty, "sum"),
+            (cols.agg_customer_id, cols.customer_id, "nunique"),
+        ]
+
+        aggs = {agg_name: getattr(data[col], func)() for agg_name, col, func in agg_specs if col in data.columns}
+
+        # Add extra aggregations if provided
+        if extra_aggs:
+            aggs.update({agg_name: getattr(data[col], func)() for agg_name, (col, func) in extra_aggs.items()})
+
+        return aggs
+
+    @staticmethod
+    def _build_unknown_aggs(
+        data: ibis.Table,
+        unknown_flag: ibis.expr.types.BooleanColumn,
+        extra_aggs: dict[str, tuple[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        """Build aggregations with unknown customer tracking.
+
+        Args:
+            data (ibis.Table): The data table
+            unknown_flag (ibis.expr.types.BooleanColumn): Boolean flag identifying unknown customers
+            extra_aggs (dict[str, tuple[str, str]] | None): Additional aggregations
+
+        Returns:
+            dict[str, Any]: Aggregation specifications for identified, unknown, and total variants
+        """
+        cols = ColumnHelper()
+        aggs = {}
+
+        # Identified customers only (where NOT unknown)
+        # Use coalesce to ensure proper types: int for counts, float for sums
+        aggs[cols.agg_unit_spend] = data[cols.unit_spend].sum(where=~unknown_flag).coalesce(0.0)
+        aggs[cols.agg_transaction_id] = data[cols.transaction_id].nunique(where=~unknown_flag).coalesce(0)
+        aggs[cols.agg_customer_id] = data[cols.customer_id].nunique(where=~unknown_flag).coalesce(0)
+        if cols.unit_qty in data.columns:
+            aggs[cols.agg_unit_qty] = data[cols.unit_qty].sum(where=~unknown_flag).coalesce(0)
+
+        # Unknown customers (where unknown)
+        # Use coalesce to ensure proper types: int for counts, float for sums
+        aggs[cols.agg_unit_spend_unknown] = data[cols.unit_spend].sum(where=unknown_flag).coalesce(0.0)
+        aggs[cols.agg_transaction_id_unknown] = data[cols.transaction_id].nunique(where=unknown_flag).coalesce(0)
+        if cols.unit_qty in data.columns:
+            aggs[cols.agg_unit_qty_unknown] = data[cols.unit_qty].sum(where=unknown_flag).coalesce(0)
+
+        # Total (all customers)
+        aggs[cols.agg_unit_spend_total] = data[cols.unit_spend].sum()
+        aggs[cols.agg_transaction_id_total] = data[cols.transaction_id].nunique()
+        if cols.unit_qty in data.columns:
+            aggs[cols.agg_unit_qty_total] = data[cols.unit_qty].sum()
+
+        # Add extra aggregations with three variants
+        if extra_aggs:
+            suffix_unknown = get_option("column.suffix.unknown_customer")
+            suffix_total = get_option("column.suffix.total")
+            for agg_name, (col, func) in extra_aggs.items():
+                # Use coalesce with 0 for count functions, 0.0 for others
+                coalesce_value = 0 if func in ("nunique", "count") else 0.0
+                aggs[agg_name] = getattr(data[col], func)(where=~unknown_flag).coalesce(coalesce_value)
+                aggs[f"{agg_name}_{suffix_unknown}"] = getattr(data[col], func)(where=unknown_flag).coalesce(
+                    coalesce_value,
+                )
+                aggs[f"{agg_name}_{suffix_total}"] = getattr(data[col], func)()
+
+        return aggs
+
+    @staticmethod
     def _calc_seg_stats(
         data: ibis.Table,
         segment_col: str | list[str],
@@ -204,6 +405,7 @@ class SegTransactionStats:
         extra_aggs: dict[str, tuple[str, str]] | None = None,
         calc_rollup: bool = False,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
+        unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
@@ -222,6 +424,10 @@ class SegTransactionStats:
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
+            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
+                DNValue or expression identifying unknown customers for separate tracking. When provided,
+                metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
+                ibis literals, or boolean expressions. Defaults to None.
 
         Returns:
             pd.DataFrame: The transaction statistics by segment.
@@ -240,57 +446,30 @@ class SegTransactionStats:
             msg = f"If rollup_value is a list, its length must match the number of segment columns. Expected {len(segment_col)}, got {len(rollup_value)}"
             raise ValueError(msg)
 
-        # Base aggregations for segments
-        agg_specs = [
-            (cols.agg_unit_spend, cols.unit_spend, "sum"),
-            (cols.agg_transaction_id, cols.transaction_id, "nunique"),
-            (cols.agg_unit_qty, cols.unit_qty, "sum"),
-            (cols.agg_customer_id, cols.customer_id, "nunique"),
-        ]
+        # Validate and create unknown flag if unknown_customer_value is provided
+        unknown_flag = None
+        if unknown_customer_value is not None:
+            if cols.customer_id not in data.columns:
+                msg = f"Column '{cols.customer_id}' is required when unknown_customer_value parameter is specified"
+                raise ValueError(msg)
+            unknown_flag = SegTransactionStats._create_unknown_flag(data, unknown_customer_value)
 
-        aggs = {agg_name: getattr(data[col], func)() for agg_name, col, func in agg_specs if col in data.columns}
-
-        # Add extra aggregations if provided
-        if extra_aggs:
-            aggs.update({agg_name: getattr(data[col], func)() for agg_name, (col, func) in extra_aggs.items()})
+        # Build aggregations based on unknown customer tracking
+        aggs = (
+            SegTransactionStats._build_unknown_aggs(data, unknown_flag, extra_aggs)
+            if unknown_flag is not None
+            else SegTransactionStats._build_standard_aggs(data, extra_aggs)
+        )
 
         # Calculate metrics for segments
         segment_metrics = data.group_by(segment_col).aggregate(**aggs)
-        final_metrics = segment_metrics
 
-        # Calculate rollup totals if requested
-        if calc_rollup:
-            rollup_metrics = []
-
-            # Configuration for rollups
-            rollup_configs = [
-                # Prefix rollups: always include when calc_rollup=True
-                (segment_col[:i], segment_col[i:], rollup_value[i:])
-                for i in range(1, len(segment_col))
-            ]
-
-            # Only add suffix rollups when calc_total=True (to avoid "Total" in category when no grand total)
-            if calc_total:
-                rollup_configs.extend(
-                    # Suffix rollups: group by suffixes, mutate preceding columns
-                    [(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
-                )
-
-            # Process both prefix and suffix rollups with unified logic
-            for group_cols, mutation_cols, mutation_values in rollup_configs:
-                # Group by the specified columns and aggregate
-                rollup_result = data.group_by(group_cols).aggregate(**aggs)
-
-                # Add rollup values for mutation columns with proper types
-                rollup_mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
-
-                # Apply all mutations at once
-                rollup_result = rollup_result.mutate(**rollup_mutations)
-                rollup_metrics.append(rollup_result)
-
-            # Union all rollup results
-            if rollup_metrics:
-                final_metrics = final_metrics.union(*rollup_metrics)
+        # Add rollups if requested
+        final_metrics = (
+            SegTransactionStats._add_rollup_metrics(data, segment_metrics, segment_col, rollup_value, aggs, calc_total)
+            if calc_rollup
+            else segment_metrics
+        )
 
         # Add grand total row if requested
         if calc_total:
@@ -326,6 +505,39 @@ class SegTransactionStats:
                 },
             )
 
+        # Add derived metrics for unknown and total when tracking unknown customers
+        if unknown_flag is not None:
+            # Unknown customer derived metrics
+            final_metrics = final_metrics.mutate(
+                **{
+                    cols.calc_spend_per_trans_unknown: ibis._[cols.agg_unit_spend_unknown]
+                    / ibis._[cols.agg_transaction_id_unknown],
+                },
+            )
+
+            # Total derived metrics
+            final_metrics = final_metrics.mutate(
+                **{
+                    cols.calc_spend_per_trans_total: ibis._[cols.agg_unit_spend_total]
+                    / ibis._[cols.agg_transaction_id_total],
+                },
+            )
+
+            # Quantity-based derived metrics for unknown and total
+            if cols.unit_qty in data.columns:
+                final_metrics = final_metrics.mutate(
+                    **{
+                        cols.calc_price_per_unit_unknown: ibis._[cols.agg_unit_spend_unknown]
+                        / ibis._[cols.agg_unit_qty_unknown].nullif(0),
+                        cols.calc_units_per_trans_unknown: ibis._[cols.agg_unit_qty_unknown]
+                        / ibis._[cols.agg_transaction_id_unknown].cast("float"),
+                        cols.calc_price_per_unit_total: ibis._[cols.agg_unit_spend_total]
+                        / ibis._[cols.agg_unit_qty_total].nullif(0),
+                        cols.calc_units_per_trans_total: ibis._[cols.agg_unit_qty_total]
+                        / ibis._[cols.agg_transaction_id_total].cast("float"),
+                    },
+                )
+
         return final_metrics
 
     @property
@@ -335,17 +547,28 @@ class SegTransactionStats:
             cols = ColumnHelper()
             include_quantity = cols.agg_unit_qty in self.table.columns
             include_customer = cols.agg_customer_id in self.table.columns
+            include_unknown = self.unknown_customer_value is not None
             col_order = [
                 *self.segment_col,
                 *SegTransactionStats._get_col_order(
                     include_quantity=include_quantity,
                     include_customer=include_customer,
+                    include_unknown=include_unknown,
                 ),
             ]
 
             # Add any extra aggregation columns to the column order
             if hasattr(self, "extra_aggs") and self.extra_aggs:
-                col_order.extend(self.extra_aggs.keys())
+                if include_unknown:
+                    # Add identified, unknown, and total variants for each extra agg
+                    suffix_unknown = get_option("column.suffix.unknown_customer")
+                    suffix_total = get_option("column.suffix.total")
+                    for agg_name in self.extra_aggs:
+                        col_order.append(agg_name)
+                        col_order.append(f"{agg_name}_{suffix_unknown}")
+                        col_order.append(f"{agg_name}_{suffix_total}")
+                else:
+                    col_order.extend(self.extra_aggs.keys())
 
             self._df = self.table.execute()[col_order]
         return self._df
