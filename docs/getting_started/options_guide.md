@@ -185,8 +185,8 @@ PyRetailScience automatically searches for `pyretailscience.toml`:
 
 ### Template File
 
-Use `options_template.toml` in the PyRetailScience repository root as a starting point. It shows all
-available options with their default values.
+Use `options_template.toml` in the [PyRetailScience repository](https://github.com/Data-Simply/pyretailscience/blob/main/options_template.toml)
+as a starting point. It shows all available options with their default values.
 
 ## Available Option Categories
 
