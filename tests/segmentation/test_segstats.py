@@ -1,5 +1,6 @@
 """Tests for the SegTransactionStats class."""
 
+import ibis
 import numpy as np
 import pandas as pd
 import pytest
@@ -714,3 +715,243 @@ class TestSegTransactionStats:
         # Verify all rows are detail rows (no "Total" values)
         assert "Total" not in result_df["category"].values
         assert "Total" not in result_df["subcategory"].values
+
+
+class TestUnknownCustomerTracking:
+    """Tests for unknown customer tracking functionality."""
+
+    @pytest.mark.parametrize(
+        ("unknown_value", "customer_ids"),
+        [
+            (-1, [1, 2, -1, 3]),  # int value
+            ("UNKNOWN", ["C1", "C2", "UNKNOWN", "C3"]),  # string value
+        ],
+    )
+    def test_unknown_customer_input_types(self, unknown_value, customer_ids):
+        """Test unknown customer tracking with different input value types."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: customer_ids,
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "segment_name": ["A", "A", "A", "B"],
+            },
+        )
+
+        seg_stats = SegTransactionStats(df, "segment_name", unknown_customer_value=unknown_value)
+        result_df = seg_stats.df.sort_values("segment_name").reset_index(drop=True)
+
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B", "Total"],
+                cols.agg_unit_spend: [300.0, 300.0, 600.0],
+                cols.agg_transaction_id: [2, 1, 3],
+                cols.agg_customer_id: [2, 1, 3],
+                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg_unit_spend_unknown: [150.0, 0.0, 150.0],
+                cols.agg_transaction_id_unknown: [1, 0, 1],
+                cols.calc_spend_per_trans_unknown: [150.0, np.nan, 150.0],
+                cols.agg_unit_spend_total: [450.0, 300.0, 750.0],
+                cols.agg_transaction_id_total: [3, 1, 4],
+                cols.calc_spend_per_trans_total: [150.0, 300.0, 187.5],
+            },
+        )
+
+        pd.testing.assert_frame_equal(result_df, expected_output)
+
+    def test_unknown_customer_with_ibis_literal(self):
+        """Test unknown customer tracking with ibis literal."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, -1, 3],
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "segment_name": ["A", "A", "A", "B"],
+            },
+        )
+
+        seg_stats = SegTransactionStats(df, "segment_name", unknown_customer_value=ibis.literal(-1))
+        result_df = seg_stats.df.sort_values("segment_name").reset_index(drop=True)
+
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B", "Total"],
+                cols.agg_unit_spend: [300.0, 300.0, 600.0],
+                cols.agg_transaction_id: [2, 1, 3],
+                cols.agg_customer_id: [2, 1, 3],
+                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg_unit_spend_unknown: [150.0, 0.0, 150.0],
+                cols.agg_transaction_id_unknown: [1, 0, 1],
+                cols.calc_spend_per_trans_unknown: [150.0, np.nan, 150.0],
+                cols.agg_unit_spend_total: [450.0, 300.0, 750.0],
+                cols.agg_transaction_id_total: [3, 1, 4],
+                cols.calc_spend_per_trans_total: [150.0, 300.0, 187.5],
+            },
+        )
+
+        pd.testing.assert_frame_equal(result_df, expected_output)
+
+    def test_unknown_customer_with_boolean_expression(self):
+        """Test unknown customer tracking with boolean expression."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, -1, -2, 3],
+                cols.unit_spend: [100.0, 200.0, 150.0, 250.0, 300.0],
+                cols.transaction_id: [101, 102, 103, 104, 105],
+                "segment_name": ["A", "A", "A", "A", "B"],
+            },
+        )
+
+        data_table = ibis.memtable(df)
+        seg_stats = SegTransactionStats(
+            data_table,
+            "segment_name",
+            unknown_customer_value=data_table[cols.customer_id] < 0,
+        )
+        result_df = seg_stats.df.sort_values("segment_name").reset_index(drop=True)
+
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B", "Total"],
+                cols.agg_unit_spend: [300.0, 300.0, 600.0],
+                cols.agg_transaction_id: [2, 1, 3],
+                cols.agg_customer_id: [2, 1, 3],
+                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg_unit_spend_unknown: [400.0, 0.0, 400.0],
+                cols.agg_transaction_id_unknown: [2, 0, 2],
+                cols.calc_spend_per_trans_unknown: [200.0, np.nan, 200.0],
+                cols.agg_unit_spend_total: [700.0, 300.0, 1000.0],
+                cols.agg_transaction_id_total: [4, 1, 5],
+                cols.calc_spend_per_trans_total: [175.0, 300.0, 200.0],
+            },
+        )
+
+        pd.testing.assert_frame_equal(result_df, expected_output)
+
+    def test_unknown_customer_with_quantity(self):
+        """Test unknown customer tracking with quantity columns."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, -1, 3],
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                cols.unit_qty: [10, 20, 15, 30],
+                "segment_name": ["A", "A", "A", "B"],
+            },
+        )
+
+        seg_stats = SegTransactionStats(df, "segment_name", unknown_customer_value=-1)
+        result_df = seg_stats.df.sort_values("segment_name").reset_index(drop=True)
+
+        expected_output = pd.DataFrame(
+            {
+                "segment_name": ["A", "B", "Total"],
+                cols.agg_unit_spend: [300.0, 300.0, 600.0],
+                cols.agg_transaction_id: [2, 1, 3],
+                cols.agg_customer_id: [2, 1, 3],
+                cols.agg_unit_qty: [30, 30, 60],
+                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
+                cols.calc_price_per_unit: [10.0, 10.0, 10.0],
+                cols.calc_units_per_trans: [15.0, 30.0, 20.0],
+                cols.agg_unit_spend_unknown: [150.0, 0.0, 150.0],
+                cols.agg_transaction_id_unknown: [1, 0, 1],
+                cols.agg_unit_qty_unknown: [15, 0, 15],
+                cols.calc_spend_per_trans_unknown: [150.0, np.nan, 150.0],
+                cols.calc_price_per_unit_unknown: [10.0, np.nan, 10.0],
+                cols.calc_units_per_trans_unknown: [15.0, np.nan, 15.0],
+                cols.agg_unit_spend_total: [450.0, 300.0, 750.0],
+                cols.agg_transaction_id_total: [3, 1, 4],
+                cols.agg_unit_qty_total: [45, 30, 75],
+                cols.calc_spend_per_trans_total: [150.0, 300.0, 187.5],
+                cols.calc_price_per_unit_total: [10.0, 10.0, 10.0],
+                cols.calc_units_per_trans_total: [15.0, 30.0, 18.75],
+            },
+        )
+
+        pd.testing.assert_frame_equal(result_df, expected_output)
+
+    def test_unknown_customer_error_when_customer_id_missing(self):
+        """Test that error is raised when customer_id column is missing."""
+        df = pd.DataFrame(
+            {
+                cols.unit_spend: [100.0, 200.0],
+                cols.transaction_id: [101, 102],
+                "segment_name": ["A", "B"],
+            },
+        )
+
+        with pytest.raises(ValueError) as excinfo:
+            SegTransactionStats(df, "segment_name", unknown_customer_value=-1)
+
+        assert "required when unknown_customer_value parameter is specified" in str(excinfo.value)
+
+    def test_unknown_customer_with_rollups(self):
+        """Test unknown customer tracking with rollups enabled."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, -1, 2, -1],
+                cols.unit_spend: [100.0, 150.0, 200.0, 250.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "category": ["Clothing", "Clothing", "Footwear", "Footwear"],
+                "subcategory": ["Jeans", "Shirts", "Sneakers", "Boots"],
+            },
+        )
+
+        seg_stats = SegTransactionStats(
+            df,
+            segment_col=["category", "subcategory"],
+            calc_rollup=True,
+            unknown_customer_value=-1,
+        )
+        result_df = seg_stats.df
+
+        # Check that rollup rows include unknown and total columns
+        total_row = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Total")]
+        assert len(total_row) == 1
+        assert cols.agg_unit_spend_unknown in total_row.columns
+        assert cols.agg_unit_spend_total in total_row.columns
+        expected_unknown_spend = 400.0
+        expected_total_spend = 700.0
+        assert total_row[cols.agg_unit_spend_unknown].iloc[0] == expected_unknown_spend
+        assert total_row[cols.agg_unit_spend_total].iloc[0] == expected_total_spend
+
+    def test_unknown_customer_with_extra_aggs(self):
+        """Test unknown customer tracking with extra aggregations."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1, -1, 2, -1],
+                cols.unit_spend: [100.0, 150.0, 200.0, 250.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "segment_name": ["A", "A", "B", "B"],
+                "store_id": [1, 2, 1, 3],
+            },
+        )
+
+        seg_stats = SegTransactionStats(
+            df,
+            "segment_name",
+            unknown_customer_value=-1,
+            extra_aggs={"stores": ("store_id", "nunique")},
+        )
+        result_df = seg_stats.df.sort_values("segment_name").reset_index(drop=True)
+
+        # Check that extra agg has three variants
+        assert "stores" in result_df.columns
+        assert "stores_unknown" in result_df.columns
+        assert "stores_total" in result_df.columns
+
+        # Verify values for segment A
+        expected_identified_stores = 1  # Segment A identified: store 1
+        expected_unknown_stores = 1  # Segment A unknown: store 2
+        expected_total_stores = 2  # Segment A total: stores 1, 2
+        assert result_df.loc[0, "stores"] == expected_identified_stores
+        assert result_df.loc[0, "stores_unknown"] == expected_unknown_stores
+        assert result_df.loc[0, "stores_total"] == expected_total_stores

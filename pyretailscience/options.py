@@ -72,6 +72,8 @@ class Options:
             "column.suffix.contribution": "contrib",
             "column.suffix.period_1": "p1",
             "column.suffix.period_2": "p2",
+            "column.suffix.unknown_customer": "unknown",
+            "column.suffix.total": "total",
         }
         self._descriptions: dict[str, str] = {
             # Database columns
@@ -133,6 +135,8 @@ class Options:
             "column.suffix.period_2": (
                 "The suffix to use for period 2 columns. Often this could represent this year for instance."
             ),
+            "column.suffix.unknown_customer": "The suffix to use for unknown customer columns.",
+            "column.suffix.total": "The suffix to use for total columns.",
         }
         self._default_options: dict[str, OptionTypes] = self._options.copy()
 
@@ -408,7 +412,7 @@ def option_context(*args: OptionTypes) -> Generator[None, None, None]:
 class ColumnHelper:
     """A class to help with column naming conventions."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # noqa: PLR0915 - Fix with issue #332
         """A class to help with column naming conventions."""
         # Date/Time
         self.transaction_date = get_option("column.transaction_date")
@@ -553,6 +557,31 @@ class ColumnHelper:
         # Elasticity
         self.calc_price_elasticity = get_option("column.calc.price_elasticity")
         self.calc_frequency_elasticity = get_option("column.calc.frequency_elasticity")
+        # Unknown customer and total suffixes
+        self.agg_unit_spend_unknown = self.join_options("column.agg.unit_spend", "column.suffix.unknown_customer")
+        self.agg_unit_spend_total = self.join_options("column.agg.unit_spend", "column.suffix.total")
+        self.agg_transaction_id_unknown = self.join_options(
+            "column.agg.transaction_id",
+            "column.suffix.unknown_customer",
+        )
+        self.agg_transaction_id_total = self.join_options("column.agg.transaction_id", "column.suffix.total")
+        self.agg_unit_qty_unknown = self.join_options("column.agg.unit_quantity", "column.suffix.unknown_customer")
+        self.agg_unit_qty_total = self.join_options("column.agg.unit_quantity", "column.suffix.total")
+        self.calc_spend_per_trans_unknown = self.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.unknown_customer",
+        )
+        self.calc_spend_per_trans_total = self.join_options("column.calc.spend_per_transaction", "column.suffix.total")
+        self.calc_price_per_unit_unknown = self.join_options(
+            "column.calc.price_per_unit",
+            "column.suffix.unknown_customer",
+        )
+        self.calc_price_per_unit_total = self.join_options("column.calc.price_per_unit", "column.suffix.total")
+        self.calc_units_per_trans_unknown = self.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.unknown_customer",
+        )
+        self.calc_units_per_trans_total = self.join_options("column.calc.units_per_transaction", "column.suffix.total")
 
     @staticmethod
     def join_options(*args: str, sep: str = "_") -> str:

@@ -36,3 +36,29 @@ def test_seg_transaction_stats_with_bigquery(
 
     df = result.df
     assert df is not None
+
+
+def test_seg_transaction_stats_with_unknown_customer_bigquery(transactions_table):
+    """Test SegTransactionStats with unknown_customer_value using BigQuery.
+
+    This test verifies that the unknown customer tracking feature works correctly
+    with BigQuery backend.
+    """
+    limited_table = transactions_table.limit(10000)
+
+    result = SegTransactionStats(
+        data=limited_table,
+        segment_col=["category_0_name", "category_1_name"],
+        calc_total=True,
+        unknown_customer_value=-1,
+    )
+    assert result is not None
+
+    df = result.df
+    assert df is not None
+
+    # Verify unknown customer columns exist
+    assert "spend_unknown" in df.columns
+    assert "transactions_unknown" in df.columns
+    assert "spend_total" in df.columns
+    assert "transactions_total" in df.columns

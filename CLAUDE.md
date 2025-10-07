@@ -22,13 +22,20 @@
 - Max line length: 120 characters
 - Error handling: validate inputs early, use specific exceptions with descriptive messages
 - File naming: Module names should be lowercase with underscores
-- Test files should follow pattern: `test_*.py` with test functions `test_*`
 - Using double quotes when quoting strings
 - When checking for None values use `if my_var is not None` rather than `if my_var:`
 - When checking for empty lists values use `if len(my_list) > 0` rather than `if my_list:`
 - Always create "conventional commit" commit messages
-- Prefer test classes for modules or classes
 - Do not stage files or commit unless asked to
 - Docstrings should specify argument and return types
 - Type annotations should use Python 3.11 formats
 - Remove unnecessary trailing whitespace
+
+## Test Writing Guidelines
+
+- Prefer test classes for modules or classes
+- Always put imports at the top of the module (never import inside test methods)
+- Where possible prefer pandas `assert_frame_equal` to asserting individual values of the dataframe
+    - This may require creating an expected dataframe to compare against
+- Use `pytest.mark.parametrize` when testing multiple input variations of the same behavior
+- Test files should follow pattern: `test_*.py` with test functions `test_*`
