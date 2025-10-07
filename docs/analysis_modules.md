@@ -1162,8 +1162,6 @@ segment_stats.df
 
 <div class="clear" markdown>
 
-![RFM Segmentation Distribution](assets/images/analysis_modules/rfm_segmentation.svg){ align=right loading=lazy width="50%"}
-
 **Recency, Frequency, Monetary (RFM) segmentation** categorizes customers based on their purchasing behavior:
 
 - **Recency (R)**: How recently a customer made a purchase
