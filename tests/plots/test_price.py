@@ -489,6 +489,7 @@ def test_individual_percentage_calculations_are_correct(mocker):
             + ["Amazon"],  # Walmart: 4 items, Target: 4 items, Amazon: 1 item
         },
     )
+    scale_factor = 800  # Default s_scale
 
     # Mock scatter to capture the actual proportion values being plotted
     mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
@@ -499,6 +500,7 @@ def test_individual_percentage_calculations_are_correct(mocker):
         value_col="unit_price",
         group_col="retailer",
         bins=[0.0, 2.5, 6.5, 9.0, 10.0],  # 4 bins: [0-2.5], (2.5-6.5], (6.5-9], (9-10]
+        s=scale_factor,
     )
 
     # Extract the actual data passed to scatter
@@ -513,71 +515,32 @@ def test_individual_percentage_calculations_are_correct(mocker):
     # Target [5,6,7,8]: bin0=[] (0%), bin1=[5,6] (2/4=50%), bin2=[7,8] (2/4=50%), bin3=[] (0%)
     # Amazon [9.5]: bin0=[] (0%), bin1=[] (0%), bin2=[] (0%), bin3=[9.5] (1/1=100%)
 
-    # Group the data by retailer and bin
-    retailer_data = {}
-    retailer_names = ["Amazon", "Target", "Walmart"]  # Alphabetical order (same as pandas groupby)
-
-    for x, y, size in zip(x_data, y_data, sizes, strict=False):
-        retailer_name = retailer_names[x]
-        if retailer_name not in retailer_data:
-            retailer_data[retailer_name] = {}
-        retailer_data[retailer_name][y] = size
-
-    # Convert sizes back to proportions by dividing by scale factor
-    scale_factor = 800  # Default s_scale
-
-    # Test the actual proportions we're getting
-    retailer_proportions = {}
-    for retailer, data in retailer_data.items():
-        retailer_proportions[retailer] = {bin_idx: size / scale_factor for bin_idx, size in data.items()}
-
-    tolerance = 0.001  # 0.1% tolerance for floating point precision
-
-    # Test Walmart and Target: each should have exactly 2 bins with 50% each
-    for retailer in ["Walmart", "Target"]:
-        expected_bins_per_retailer = 2
-        assert len(retailer_proportions[retailer]) == expected_bins_per_retailer, (
-            f"{retailer} should have data in exactly 2 bins, got {len(retailer_proportions[retailer])}"
+    # Retailer names in alphabetical order (same as pandas groupby)
+    # Amazon=0, Target=1, Walmart=2
+    expected_data = (
+        pd.DataFrame(
+            {
+                "x": [2, 2, 1, 1, 0],  # Walmart, Walmart, Target, Target, Amazon
+                "y": [0, 1, 1, 2, 3],  # bin indices
+                "size": np.array([0.5, 0.5, 0.5, 0.5, 1.0]) * scale_factor,
+            },
         )
-
-        # Test that each proportion is 50% (0.5)
-        for bin_idx, proportion in retailer_proportions[retailer].items():
-            assert abs(proportion - 0.5) < tolerance, f"{retailer} bin {bin_idx} should be 0.5 (50%), got {proportion}"
-
-    # Test Amazon: should have exactly 1 bin with 100%
-    amazon_proportions = retailer_proportions["Amazon"]
-    assert len(amazon_proportions) == 1, f"Amazon should have data in exactly 1 bin, got {len(amazon_proportions)}"
-
-    # Test that Amazon's single proportion is 100% (1.0)
-    for bin_idx, proportion in amazon_proportions.items():
-        assert abs(proportion - 1.0) < tolerance, f"Amazon bin {bin_idx} should be 1.0 (100%), got {proportion}"
-
-    # Test that Walmart and Target share exactly one bin (the middle bin where both have 50%)
-    walmart_bins = set(retailer_proportions["Walmart"].keys())
-    target_bins = set(retailer_proportions["Target"].keys())
-    overlap = walmart_bins.intersection(target_bins)
-    assert len(overlap) == 1, (
-        f"Expected exactly 1 overlapping bin between Walmart and Target, got {len(overlap)}: {overlap}"
+        .sort_values(["x", "y"])
+        .reset_index(drop=True)
     )
 
-    # Test that Amazon doesn't share bins with Walmart or Target (edge case isolation)
-    amazon_bins = set(retailer_proportions["Amazon"].keys())
-    walmart_amazon_overlap = walmart_bins.intersection(amazon_bins)
-    target_amazon_overlap = target_bins.intersection(amazon_bins)
-    assert len(walmart_amazon_overlap) == 0, (
-        f"Amazon and Walmart should not share bins, got overlap: {walmart_amazon_overlap}"
-    )
-    assert len(target_amazon_overlap) == 0, (
-        f"Amazon and Target should not share bins, got overlap: {target_amazon_overlap}"
+    # Reconstruct actual data from scatter call
+    actual_data = (
+        pd.DataFrame(
+            {
+                "x": x_data,
+                "y": y_data,
+                "size": sizes,
+            },
+        )
+        .sort_values(["x", "y"])
+        .reset_index(drop=True)
     )
 
-    # Verify that proportions sum to 1.0 for each retailer
-    for retailer, proportions in retailer_proportions.items():
-        total = sum(proportions.values())
-        assert abs(total - 1.0) < tolerance, f"{retailer} proportions should sum to 1.0, got {total}"
-
-    # Test that we get sensible output structure
-    expected_retailers = 3
-    assert len(set(x_data)) == expected_retailers, "Should have data for exactly 3 retailers"
-    assert len(sizes) > 0, "Should have plotted some bubbles"
-    assert all(s > 0 for s in sizes), "All bubble sizes should be positive"
+    # Compare expected vs actual
+    pd.testing.assert_frame_equal(actual_data, expected_data)
