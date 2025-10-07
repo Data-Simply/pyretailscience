@@ -45,6 +45,7 @@ nav:
           - Period On Period Plot: api/plots/period_on_period.md
           - Scatter Plot: api/plots/scatter.md
           - Time Plot: api/plots/time.md
+          - Price Plot: api/plots/price.md
           - Venn Diagram: api/plots/venn.md
           - Waterfall Plot: api/plots/waterfall.md
           - Styles:
