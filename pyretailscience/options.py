@@ -54,7 +54,7 @@ class Options:
             "column.agg.unit_spend": "spend",
             "column.agg.unit_cost": "costs",
             "column.agg.promo_unit_spend": "promo_spend",
-            "column.agg.promo_unit_quantity": "promo_quantity",
+            "column.agg.promo_unit_quantity": "promo_units",
             "column.agg.store_id": "stores",
             # Calculated columns
             "column.calc.price_per_unit": "price_per_unit",
