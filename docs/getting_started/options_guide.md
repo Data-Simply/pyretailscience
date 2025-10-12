@@ -20,6 +20,12 @@ Options can be set:
 
 You have three ways to handle this mismatch:
 
+!!! warning "Avoid Mixing Configuration Methods"
+    If you use multiple configuration methods (TOML + `option_context()` + `set_option()`), the last setting
+    wins. For example, `set_option()` calls will override TOML values. See
+    [Conflicting Configurations](#conflicting-configurations) for details.<br><br>
+    **Best practice:** Choose one method per project for consistency.
+
 ### Option 1: Rename Columns When Loading Data
 
 !!! info "Best for"
@@ -56,7 +62,8 @@ df = df.rename(columns={
 !!! info "Best for"
     Scripts where you want to keep your original column names throughout.
 
-Tell PyRetailScience your column names temporarily using `option_context()`:
+Tell PyRetailScience what your column names are using `option_context()`. This doesn't rename your columns - it
+configures PyRetailScience's internal settings to look for your column names instead of the defaults:
 
 ```python
 from pyretailscience.options import option_context
@@ -78,7 +85,7 @@ with option_context(
         focus_group_name="Brand A",
         comparison_group_index=brand_b,
         comparison_group_name="Brand B",
-        value_col="revenue"
+        value_col="revenue"  # Uses your column name
     )
     gl.plot()
 
@@ -94,7 +101,9 @@ with option_context(
 !!! success "Best for"
     Projects with consistent column naming, team collaboration, and avoiding repetitive configuration.
 
-Create a `pyretailscience.toml` file in your project root for automatic, project-wide configuration:
+Create a `pyretailscience.toml` file in your project root to tell PyRetailScience what your column names are. This
+doesn't rename your columns - it configures PyRetailScience's internal settings to automatically use your column names
+throughout the project:
 
 ```toml
 # pyretailscience.toml
@@ -254,7 +263,7 @@ Standard suffixes for period comparisons and calculations:
 
 !!! warning "Internal API"
     The `ColumnHelper` class is designed for **internal use within PyRetailScience modules**. End users
-    typically don't need to use it directly.
+    shouldn't use it directly.
 
 The `ColumnHelper` class is used internally by PyRetailScience modules to construct consistent column names in a less
 verbose way than combining many `get_option` calls:
