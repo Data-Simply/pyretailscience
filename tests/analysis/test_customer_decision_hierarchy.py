@@ -13,6 +13,65 @@ cols = ColumnHelper()
 class TestCustomerDecisionHierarchy:
     """Tests for the CustomerDecisionHierarchy class."""
 
+    # ========================================================================
+    # FIXTURES - Reusable test data
+    # ========================================================================
+
+    @pytest.fixture
+    def simple_transaction_data(self):
+        """Simple transaction data for basic Yule's Q tests."""
+        return pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3],
+                cols.transaction_id: [1, 1, 2, 3, 3, 4, 5, 6],
+                "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
+            },
+        )
+
+    @pytest.fixture
+    def aids_test_data(self):
+        """Standard test data for AIDS method with price and quantity."""
+        return pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5],
+                cols.transaction_id: [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5],
+                "product": ["A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C", "A", "B", "C"],
+                "price": [1.0, 1.2, 0.9, 1.1, 1.15, 0.95, 0.95, 1.25, 0.85, 1.05, 1.18, 0.92, 1.02, 1.22, 0.88],
+                "quantity": [10, 8, 12, 9, 7, 11, 11, 9, 13, 8, 6, 10, 10, 8, 12],
+            },
+        )
+
+    @pytest.fixture
+    def aids_hierarchy(self, aids_test_data):
+        """Pre-initialized AIDS hierarchy for testing."""
+        return rp.CustomerDecisionHierarchy(
+            df=aids_test_data,
+            product_col="product",
+            method="aids",
+            price_col="price",
+            quantity_col="quantity",
+        )
+
+    # ========================================================================
+    # HELPER METHODS - Reusable assertions
+    # ========================================================================
+
+    def assert_valid_distance_matrix(self, distances, n_products):
+        """Assert distance matrix has expected properties.
+
+        Args:
+            distances (np.ndarray): Distance matrix to validate.
+            n_products (int): Expected number of products.
+        """
+        assert distances.shape == (n_products, n_products), "Distance matrix should be square"
+        assert np.all(np.diag(distances) == 0), "Diagonal should be zero (distance to self)"
+        assert np.all(distances >= 0), "All distances should be non-negative"
+        assert np.all(distances <= 1), "All distances should be normalized to [0, 1]"
+
+    # ========================================================================
+    # YULE'S Q CALCULATION TESTS
+    # ========================================================================
+
     def test_calculate_yules_q_identical_arrays(self):
         """Test that the function returns 1.0 when the arrays are identical."""
         bought_product_1 = np.array([1, 0, 1, 0, 1], dtype=bool)
@@ -53,30 +112,20 @@ class TestCustomerDecisionHierarchy:
 
         assert rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2) == expected_q
 
-    def test_init_invalid_dataframe(self):
+    # ========================================================================
+    # INITIALIZATION AND BASIC FUNCTIONALITY TESTS
+    # ========================================================================
+
+    def test_init_invalid_dataframe(self, simple_transaction_data):
         """Test that the function raises a ValueError when the dataframe is invalid."""
-        df = pd.DataFrame(
-            {cols.customer_id: [1, 2, 3], cols.transaction_id: [1, 2, 3], "product_name": ["A", "B", "C"]},
-        )
-        exclude_same_transaction_products = True
-
         with pytest.raises(ValueError):
-            rp.CustomerDecisionHierarchy(df, "invalid_product_col", exclude_same_transaction_products)
+            rp.CustomerDecisionHierarchy(simple_transaction_data, "invalid_product_col", True)
 
-    def test_init_exclude_same_transaction_products_true(self):
+    def test_init_exclude_same_transaction_products_true(self, simple_transaction_data):
         """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is True."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3],
-                cols.transaction_id: [1, 1, 2, 3, 3, 4, 5, 6],
-                "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
-            },
-        )
-        exclude_same_transaction_products = True
-
         pairs_df = rp.CustomerDecisionHierarchy._get_pairs(
-            df,
-            exclude_same_transaction_products,
+            simple_transaction_data,
+            exclude_same_transaction_products=True,
             product_col="product_name",
         )
 
@@ -84,20 +133,11 @@ class TestCustomerDecisionHierarchy:
 
         assert pairs_df.equals(expected_pairs_df)
 
-    def test_init_exclude_same_transaction_products_false(self):
+    def test_init_exclude_same_transaction_products_false(self, simple_transaction_data):
         """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is False."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3],
-                cols.transaction_id: [1, 1, 2, 3, 3, 4, 5, 6],
-                "product_name": ["A", "B", "C", "D", "E", "E", "E", "E"],
-            },
-        )
-        exclude_same_transaction_products = False
-
         pairs_df = rp.CustomerDecisionHierarchy._get_pairs(
-            df,
-            exclude_same_transaction_products,
+            simple_transaction_data,
+            exclude_same_transaction_products=False,
             product_col="product_name",
         )
 
@@ -130,3 +170,74 @@ class TestCustomerDecisionHierarchy:
 
             assert "cust_identifier" in hierarchy.pairs_df.columns, "Should handle custom customer_id column name"
             assert "product_name" in hierarchy.pairs_df.columns, "Should handle product column"
+
+    # ========================================================================
+    # AIDS METHOD TESTS
+    # ========================================================================
+
+    def test_aids_method_initialization(self, aids_test_data):
+        """Test that CustomerDecisionHierarchy can be initialized with AIDS method."""
+        hierarchy = rp.CustomerDecisionHierarchy(
+            df=aids_test_data,
+            product_col="product",
+            method="aids",
+            price_col="price",
+            quantity_col="quantity",
+        )
+
+        assert hasattr(hierarchy, "aids_estimator"), "Should create AIDS estimator"
+        assert hierarchy.aids_estimator is not None, "AIDS estimator should be fitted"
+        assert hierarchy.aids_estimator.fitted, "AIDS estimator should be fitted"
+        assert hasattr(hierarchy, "distances"), "Should calculate distances"
+        assert hierarchy.distances is not None, "Distances should not be None"
+
+    def test_aids_method_missing_price_column(self, aids_test_data):
+        """Test that AIDS method raises error when price column is missing."""
+        df_no_price = aids_test_data.drop(columns=["price"])
+
+        with pytest.raises(ValueError, match="price_col"):
+            rp.CustomerDecisionHierarchy(
+                df=df_no_price,
+                product_col="product",
+                method="aids",
+                quantity_col="quantity",
+            )
+
+    def test_aids_method_missing_quantity_column(self, aids_test_data):
+        """Test that AIDS method raises error when quantity column is missing."""
+        df_no_quantity = aids_test_data.drop(columns=["quantity"])
+
+        with pytest.raises(ValueError, match="quantity_col"):
+            rp.CustomerDecisionHierarchy(
+                df=df_no_quantity,
+                product_col="product",
+                method="aids",
+                price_col="price",
+            )
+
+    def test_aids_method_distances_shape(self, aids_hierarchy, aids_test_data):
+        """Test that AIDS method produces correct distance matrix shape."""
+        n_products = aids_test_data["product"].nunique()
+        self.assert_valid_distance_matrix(aids_hierarchy.distances, n_products)
+
+    def test_aids_method_distances_normalized(self, aids_hierarchy):
+        """Test that AIDS method produces normalized distances in [0, 1] range."""
+        assert np.all(aids_hierarchy.distances >= 0), "All distances should be >= 0"
+        assert np.all(aids_hierarchy.distances <= 1), "All distances should be <= 1"
+
+    def test_aids_method_elasticities_computed(self, aids_hierarchy):
+        """Test that AIDS method computes elasticities correctly."""
+        elasticities = aids_hierarchy.aids_estimator.get_elasticities()
+
+        assert elasticities is not None, "Elasticities should be computed"
+        assert len(elasticities) == 3, "Should have elasticities for 3 products"
+        assert "expenditure" in elasticities.columns, "Should include expenditure elasticity"
+
+        # Check own-price elasticities are negative (law of demand)
+        own_price_elasticities = np.diag(elasticities.iloc[:, :3].values)
+        assert np.all(own_price_elasticities < 0), "Own-price elasticities should be negative"
+
+    def test_aids_method_works_independently(self, aids_hierarchy):
+        """Test that AIDS method works and produces valid results."""
+        # Comprehensive validation using helper method
+        self.assert_valid_distance_matrix(aids_hierarchy.distances, 3)
