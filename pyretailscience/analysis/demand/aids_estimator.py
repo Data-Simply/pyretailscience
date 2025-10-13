@@ -513,13 +513,58 @@ class AIDSEstimator:
         # Average with transpose to enforce symmetry
         return 0.5 * (gamma + gamma.T)
 
+    def _enforce_constraints_iterative(
+        self,
+        alpha: np.ndarray,
+        beta: np.ndarray,
+        gamma: np.ndarray,
+        max_constraint_iterations: int = 10,
+        constraint_tolerance: float = 1e-6,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Enforce all constraints using iterative projection.
+
+        This method addresses the sequential constraint enforcement problem by
+        iteratively projecting parameters onto each constraint until all are
+        simultaneously satisfied within tolerance.
+
+        Args:
+            alpha (np.ndarray): Intercept parameters.
+            beta (np.ndarray): Expenditure coefficients.
+            gamma (np.ndarray): Price slope matrix.
+            max_constraint_iterations (int): Maximum constraint projection iterations.
+            constraint_tolerance (float): Tolerance for constraint satisfaction.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray, np.ndarray]: Constrained parameters.
+        """
+        for _ in range(max_constraint_iterations):
+            # Store parameters to check convergence
+            alpha_prev = alpha.copy()
+            beta_prev = beta.copy()
+            gamma_prev = gamma.copy()
+
+            # Apply each constraint sequentially
+            gamma = self._enforce_symmetry(gamma)
+            gamma, beta = self._enforce_homogeneity(gamma, beta)
+            alpha, beta, gamma = self._enforce_adding_up(alpha, beta, gamma)
+
+            # Check if constraints are satisfied (parameters stopped changing)
+            alpha_change = np.max(np.abs(alpha - alpha_prev))
+            beta_change = np.max(np.abs(beta - beta_prev))
+            gamma_change = np.max(np.abs(gamma - gamma_prev))
+
+            if max(alpha_change, beta_change, gamma_change) < constraint_tolerance:
+                break
+
+        return alpha, beta, gamma
+
     def fit(self) -> "AIDSEstimator":
         """Estimate AIDS model using Iterative Linear Least Squares (ILLE).
 
         The ILLE algorithm:
         1. Initialize price index
         2. Estimate unrestricted model via OLS
-        3. Enforce constraints (if enabled)
+        3. Enforce constraints (if enabled) using iterative projection
         4. Update price index with new parameters
         5. Check convergence; if not converged, repeat from step 2
 
@@ -543,14 +588,13 @@ class AIDSEstimator:
             # Estimate unrestricted model
             self.alpha, self.beta, self.gamma = self._estimate_unrestricted()
 
-            # Enforce constraints if required
+            # Enforce constraints if required using iterative projection
             if self.enforce_constraints:
-                # Enforce symmetry first
-                self.gamma = self._enforce_symmetry(self.gamma)
-                # Then enforce homogeneity (which adjusts beta based on gamma)
-                self.gamma, self.beta = self._enforce_homogeneity(self.gamma, self.beta)
-                # Finally enforce adding-up
-                self.alpha, self.beta, self.gamma = self._enforce_adding_up(self.alpha, self.beta, self.gamma)
+                self.alpha, self.beta, self.gamma = self._enforce_constraints_iterative(
+                    self.alpha,
+                    self.beta,
+                    self.gamma,
+                )
 
             # Check convergence
             alpha_change = np.max(np.abs(self.alpha - alpha_old))
