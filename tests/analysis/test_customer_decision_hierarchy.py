@@ -228,13 +228,14 @@ class TestCustomerDecisionHierarchy:
     def test_aids_method_elasticities_computed(self, aids_hierarchy):
         """Test that AIDS method computes elasticities correctly."""
         elasticities = aids_hierarchy.aids_estimator.get_elasticities()
+        n_products = 3  # Test data has 3 products (A, B, C)
 
         assert elasticities is not None, "Elasticities should be computed"
-        assert len(elasticities) == 3, "Should have elasticities for 3 products"
+        assert len(elasticities) == n_products, f"Should have elasticities for {n_products} products"
         assert "expenditure" in elasticities.columns, "Should include expenditure elasticity"
 
         # Check own-price elasticities are negative (law of demand)
-        own_price_elasticities = np.diag(elasticities.iloc[:, :3].values)
+        own_price_elasticities = np.diag(elasticities.iloc[:, :n_products].values)
         assert np.all(own_price_elasticities < 0), "Own-price elasticities should be negative"
 
     def test_aids_method_works_independently(self, aids_hierarchy):

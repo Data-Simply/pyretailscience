@@ -10,6 +10,11 @@ from pyretailscience.analysis.demand.aids_estimator import AIDSEstimator
 class TestAIDSEstimator:
     """Tests for the AIDSEstimator class."""
 
+    # Test constants
+    N_PRODUCTS = 3
+    MAX_ITERATIONS = 100
+    MAX_ASYMMETRY_TOLERANCE = 0.5
+
     @pytest.fixture
     def simple_demand_data(self) -> pd.DataFrame:
         """Create simple synthetic demand data for testing.
@@ -17,7 +22,7 @@ class TestAIDSEstimator:
         Returns:
             pd.DataFrame: Synthetic demand data with 3 products and 50 observations.
         """
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         n_obs = 50
         n_products = 3
 
@@ -26,18 +31,20 @@ class TestAIDSEstimator:
         price_data = []
 
         for _ in range(n_obs):
-            prices = base_prices * (1 + np.random.normal(0, 0.1, n_products))
-            quantities = 100 / prices + np.random.normal(0, 5, n_products)
+            prices = base_prices * (1 + rng.normal(0, 0.1, n_products))
+            quantities = 100 / prices + rng.normal(0, 5, n_products)
             quantities = np.maximum(quantities, 1.0)
 
-            for prod_idx in range(n_products):
-                price_data.append(
+            price_data.extend(
+                [
                     {
                         "product": f"Product_{prod_idx}",
                         "price": prices[prod_idx],
                         "quantity": quantities[prod_idx],
-                    },
-                )
+                    }
+                    for prod_idx in range(n_products)
+                ],
+            )
 
         return pd.DataFrame(price_data)
 
@@ -48,27 +55,27 @@ class TestAIDSEstimator:
         Returns:
             pd.DataFrame: Realistic demand data with substitutes and complements.
         """
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         n_obs = 100
 
         data = []
         for _obs in range(n_obs):
             # Three products: two substitutes (coffee brands) and one complement (milk)
-            price_coffee_a = 8.0 + np.random.normal(0, 0.5)
-            price_coffee_b = 9.0 + np.random.normal(0, 0.5)
-            price_milk = 4.0 + np.random.normal(0, 0.3)
+            price_coffee_a = 8.0 + rng.normal(0, 0.5)
+            price_coffee_b = 9.0 + rng.normal(0, 0.5)
+            price_milk = 4.0 + rng.normal(0, 0.3)
 
             # Budget constraint
-            100.0 + np.random.normal(0, 10)
+            100.0 + rng.normal(0, 10)
 
             # Demand functions with substitution and complementarity
             # Coffee A and B are substitutes (negative cross-price effect)
-            qty_coffee_a = max(20 - 1.5 * price_coffee_a + 0.8 * price_coffee_b + np.random.normal(0, 2), 1)
-            qty_coffee_b = max(18 - 1.3 * price_coffee_b + 0.7 * price_coffee_a + np.random.normal(0, 2), 1)
+            qty_coffee_a = max(20 - 1.5 * price_coffee_a + 0.8 * price_coffee_b + rng.normal(0, 2), 1)
+            qty_coffee_b = max(18 - 1.3 * price_coffee_b + 0.7 * price_coffee_a + rng.normal(0, 2), 1)
 
             # Milk is complement to coffee (positive cross-price effect with budget)
             avg_coffee_qty = (qty_coffee_a + qty_coffee_b) / 2
-            qty_milk = max(15 - 0.8 * price_milk + 0.3 * avg_coffee_qty + np.random.normal(0, 1.5), 1)
+            qty_milk = max(15 - 0.8 * price_milk + 0.3 * avg_coffee_qty + rng.normal(0, 1.5), 1)
 
             data.extend(
                 [
@@ -89,7 +96,7 @@ class TestAIDSEstimator:
             quantity_col="quantity",
         )
 
-        assert estimator.n_products == 3
+        assert estimator.n_products == self.N_PRODUCTS
         assert estimator.product_col == "product"
         assert estimator.price_col == "price"
         assert estimator.quantity_col == "quantity"
@@ -209,7 +216,7 @@ class TestAIDSEstimator:
         assert estimator.fitted is True
         assert estimator.converged is True
         assert estimator.iterations > 0
-        assert estimator.iterations <= 100
+        assert estimator.iterations <= self.MAX_ITERATIONS
 
     def test_fit_parameters_shape(self, simple_demand_data):
         """Test that fitted parameters have correct shapes."""
@@ -222,9 +229,9 @@ class TestAIDSEstimator:
 
         estimator.fit()
 
-        assert estimator.alpha.shape == (3,)
-        assert estimator.beta.shape == (3,)
-        assert estimator.gamma.shape == (3, 3)
+        assert estimator.alpha.shape == (self.N_PRODUCTS,)
+        assert estimator.beta.shape == (self.N_PRODUCTS,)
+        assert estimator.gamma.shape == (self.N_PRODUCTS, self.N_PRODUCTS)
 
     def test_constraints_adding_up(self, simple_demand_data):
         """Test that adding-up constraint is approximately enforced."""
@@ -277,7 +284,9 @@ class TestAIDSEstimator:
         # Test symmetry constraint (may not be exact after iterations due to sequential enforcement)
         # Check that it's approximately symmetric
         max_asymmetry = np.max(np.abs(estimator.gamma - estimator.gamma.T))
-        assert max_asymmetry < 0.5, f"Maximum asymmetry {max_asymmetry} should be reasonably small"
+        assert max_asymmetry < self.MAX_ASYMMETRY_TOLERANCE, (
+            f"Maximum asymmetry {max_asymmetry} should be reasonably small"
+        )
 
     def test_fit_without_constraints(self, simple_demand_data):
         """Test fitting without enforcing constraints."""
@@ -322,8 +331,9 @@ class TestAIDSEstimator:
         estimator.fit()
         elasticities = estimator.get_elasticities()
 
-        assert elasticities.shape == (3, 4)  # 3 products x (3 price + 1 expenditure)
-        assert len(elasticities.index) == 3
+        n_elasticity_cols = self.N_PRODUCTS + 1  # N price columns + 1 expenditure column
+        assert elasticities.shape == (self.N_PRODUCTS, n_elasticity_cols)
+        assert len(elasticities.index) == self.N_PRODUCTS
         assert "expenditure" in elasticities.columns
 
     def test_own_price_elasticity_negative(self, realistic_demand_data):
@@ -400,10 +410,10 @@ class TestAIDSEstimator:
         assert "wald_tests" in diagnostics
 
         # R-squared should exist for each product
-        assert len(diagnostics["r_squared"]) == 3
+        assert len(diagnostics["r_squared"]) == self.N_PRODUCTS
 
         # Wald tests should have three constraints
-        assert len(diagnostics["wald_tests"]) == 3
+        assert len(diagnostics["wald_tests"]) == self.N_PRODUCTS
         assert "adding_up" in diagnostics["wald_tests"]
         assert "homogeneity" in diagnostics["wald_tests"]
         assert "symmetry" in diagnostics["wald_tests"]
