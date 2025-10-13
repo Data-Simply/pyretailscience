@@ -14,6 +14,11 @@ It is designed to visualize data distributions using color-coded heatmaps, helpi
 - **Cohort Analysis**: Visualize how different groups behave over time.
 - **Category-Based Heatmaps**: Compare values across different categories.
 
+### Default Behavior
+
+- **Percentage Display**: By default, values are displayed as percentages (e.g., "50%").
+  Set `percentage=False` for raw number display (e.g., "0.50").
+
 ### Limitations and Warnings
 
 - **Data Aggregation Required**: The module does not perform data aggregation; data should be pre-aggregated before being passed to the function.
@@ -49,7 +54,7 @@ def plot(
         title (str, optional): Title of the plot.
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): Additional source text annotation.
-        percentage (bool, optional): If True, displays cohort values as percentages. Defaults to True.
+        percentage (bool, optional): If True, displays cohort values as percentages. Defaults to False.
         figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
         **kwargs: Additional keyword arguments for cohort styling.
 
