@@ -14,10 +14,17 @@ It is designed to visualize data distributions using color-coded heatmaps, helpi
 - **Cohort Analysis**: Visualize how different groups behave over time.
 - **Category-Based Heatmaps**: Compare values across different categories.
 
+### Default Behavior
+
+- **Raw Value Display**: By default, values are displayed as raw numbers (e.g., "0.50").
+  Set `percentage=True` for percentage display (e.g., "50%").
+- **Horizontal Line**: Adds a white horizontal line at y=2.5 position for visual separation.
+
 ### Limitations and Warnings
 
 - **Data Aggregation Required**: The module does not perform data aggregation; data should be pre-aggregated before being passed to the function.
 - **Fixed Color Mapping**: The module uses a predefined colormap without dynamic adjustments.
+- **Hardcoded Line Position**: The horizontal line is positioned at y=2.5 regardless of DataFrame size.
 """
 
 import pandas as pd
@@ -35,7 +42,7 @@ def plot(
     title: str | None = None,
     ax: Axes | None = None,
     source_text: str | None = None,
-    percentage: bool = True,
+    percentage: bool = False,
     figsize: tuple[int, int] | None = None,
     **kwargs: dict,
 ) -> SubplotBase:
@@ -49,7 +56,7 @@ def plot(
         title (str, optional): Title of the plot.
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): Additional source text annotation.
-        percentage (bool, optional): If True, displays cohort values as percentages. Defaults to True.
+        percentage (bool, optional): If True, displays cohort values as percentages. Defaults to False.
         figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
         **kwargs: Additional keyword arguments for cohort styling.
 

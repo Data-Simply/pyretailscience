@@ -172,6 +172,18 @@ def test_plot_all_zeros():
     assert all(text.get_text() == "0.00" for text in texts)
 
 
+def test_plot_all_identical_values():
+    """Test heatmap with all identical non-zero values."""
+    data = np.full((2, 2), 5.0)
+    df = pd.DataFrame(data, columns=["A", "B"], index=["X", "Y"])
+
+    result_ax = heatmap.plot(df=df, cbar_label="Value")
+
+    # Verify all text shows "5.00"
+    texts = result_ax.texts
+    assert all(text.get_text() == "5.00" for text in texts)
+
+
 @pytest.mark.parametrize("label_length", ["short", "very_long_column_name_that_exceeds_threshold"])
 def test_plot_label_rotation(label_length):
     """Test automatic label rotation based on label length."""
@@ -184,9 +196,109 @@ def test_plot_label_rotation(label_length):
     x_tick_labels = result_ax.get_xticklabels()
     if x_tick_labels:
         rotation = x_tick_labels[0].get_rotation()
-        long_label_threshold = 10
-        rotation_angle = 45
-        if len(label_length) > long_label_threshold:
-            assert rotation == rotation_angle, "Long labels should be rotated"
+        threshold = 10
+        expected_rotation = 45
+        if len(label_length) > threshold:
+            assert rotation == expected_rotation, "Long labels should be rotated"
         else:
             assert rotation == 0, "Short labels should not be rotated"
+
+
+def test_plot_label_alignment():
+    """Test horizontal alignment of x-axis labels based on rotation."""
+    short_cols = ["A", "B", "C"]
+    data = np.ones((2, 3))
+    df_short = pd.DataFrame(data, columns=short_cols, index=["Row1", "Row2"])
+
+    result_ax = heatmap.plot(df=df_short, cbar_label="Value")
+    x_tick_labels = result_ax.get_xticklabels()
+
+    if x_tick_labels:
+        alignment = x_tick_labels[0].get_horizontalalignment()
+        assert alignment == "center", "Short labels should be center-aligned"
+
+    # Test with long labels (rotated)
+    long_cols = ["very_long_column_name_1", "very_long_column_name_2", "very_long_column_name_3"]
+    df_long = pd.DataFrame(data, columns=long_cols, index=["Row1", "Row2"])
+
+    result_ax = heatmap.plot(df=df_long, cbar_label="Value")
+    x_tick_labels = result_ax.get_xticklabels()
+
+    if x_tick_labels:
+        alignment = x_tick_labels[0].get_horizontalalignment()
+        assert alignment == "right", "Long rotated labels should be right-aligned"
+
+
+def test_colorbar_label_set(sample_heatmap_dataframe):
+    """Verify colorbar label is set correctly."""
+    label = "Test Colorbar Label"
+    result_ax = heatmap.plot(df=sample_heatmap_dataframe, cbar_label=label)
+
+    # Get colorbar axes (should be the last axes in figure)
+    cbar_ax = result_ax.figure.axes[-1]
+    # Check ylabel
+    ylabel = cbar_ax.get_ylabel()
+    assert ylabel == label, f"Expected colorbar label '{label}', got '{ylabel}'"
+
+
+def test_axis_labels_applied(sample_heatmap_dataframe):
+    """Verify axis labels and title are applied correctly."""
+    result_ax = heatmap.plot(
+        df=sample_heatmap_dataframe,
+        cbar_label="Value",
+        x_label="X Axis Label",
+        y_label="Y Axis Label",
+        title="Test Title",
+    )
+
+    assert result_ax.get_xlabel() == "X Axis Label"
+    assert result_ax.get_ylabel() == "Y Axis Label"
+    assert result_ax.get_title() == "Test Title"
+
+
+def test_text_color_contrast():
+    """Verify text color switches based on cell background intensity."""
+    # Create data with known light and dark cells
+    data = np.array([[0.0, 1.0]])  # Dark cell, light cell
+    df = pd.DataFrame(data, columns=["A", "B"], index=["X"])
+
+    result_ax = heatmap.plot(df=df, cbar_label="Value")
+
+    texts = result_ax.texts
+    expected_text_count = 2
+    assert len(texts) == expected_text_count
+
+    # Get text colors
+    text_0_color = texts[0].get_color()
+    text_1_color = texts[1].get_color()
+
+    # Verify colors are different (contrast based on background intensity)
+    assert text_0_color != text_1_color, "Text colors should differ for different background intensities"
+
+
+def test_grid_lines_present(sample_heatmap_dataframe):
+    """Verify grid lines are drawn between cells."""
+    result_ax = heatmap.plot(df=sample_heatmap_dataframe, cbar_label="Value")
+
+    # Check that minor ticks are set (grid lines are drawn on minor ticks)
+    minor_x_ticks = result_ax.get_xticks(minor=True)
+    minor_y_ticks = result_ax.get_yticks(minor=True)
+
+    # Should have minor ticks at cell boundaries (n+1 ticks for n cells)
+    expected_x_ticks = len(sample_heatmap_dataframe.columns) + 1
+    expected_y_ticks = len(sample_heatmap_dataframe.index) + 1
+
+    assert len(minor_x_ticks) == expected_x_ticks, (
+        f"Expected {expected_x_ticks} minor x-ticks, got {len(minor_x_ticks)}"
+    )
+    assert len(minor_y_ticks) == expected_y_ticks, (
+        f"Expected {expected_y_ticks} minor y-ticks, got {len(minor_y_ticks)}"
+    )
+
+
+def test_plot_large_dataframe():
+    """Test heatmap handles large DataFrames efficiently."""
+    data = RNG.uniform(0, 1, size=(50, 50))
+    df = pd.DataFrame(data)
+    result_ax = heatmap.plot(df=df, cbar_label="Value")
+    assert isinstance(result_ax, Axes)

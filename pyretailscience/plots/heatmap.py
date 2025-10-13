@@ -36,6 +36,9 @@ from matplotlib.axes import Axes, SubplotBase
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.tailwind import get_listed_cmap
 
+_LABEL_ROTATION_THRESHOLD = 10
+_DECIMAL_PLACES = 2
+
 
 def plot(
     df: pd.DataFrame,
@@ -75,7 +78,7 @@ def plot(
     im = ax.imshow(df, cmap=cmap, **kwargs)
 
     # Create colorbar with simple decimal formatting
-    cbar = ax.figure.colorbar(im, ax=ax, format="{x:.2f}")
+    cbar = ax.figure.colorbar(im, ax=ax, format=f"{{x:.{_DECIMAL_PLACES}f}}")
     cbar.ax.set_ylabel(cbar_label, rotation=-90, va="bottom", fontsize="x-large")
 
     # Set up ticks and labels
@@ -88,16 +91,15 @@ def plot(
 
     # Determine if we need rotation based on label length
     max_x_label_length = max(len(label) for label in x_labels) if x_labels else 0
-    label_length = 10
-    rotation_angle = 45 if max_x_label_length > label_length else 0
+    rotation_angle = 45 if max_x_label_length > _LABEL_ROTATION_THRESHOLD else 0
 
-    ax.set_xticklabels(x_labels, rotation=rotation_angle, ha="left" if rotation_angle > 0 else "center")
+    ax.set_xticklabels(x_labels, rotation=rotation_angle, ha="right" if rotation_angle > 0 else "center")
     ax.set_yticklabels(y_labels)
 
-    # Position x-axis labels on top with extra padding for rotated labels
-    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
+    # Position x-axis labels on bottom with extra padding for rotated labels
+    ax.tick_params(top=False, bottom=True, labeltop=False, labelbottom=True)
 
-    # Add extra padding at top if labels are rotated
+    # Add extra padding at bottom if labels are rotated
     if rotation_angle > 0:
         ax.tick_params(axis="x", which="major", pad=10)
 
@@ -116,7 +118,7 @@ def plot(
         for j in range(df.shape[1]):
             value = df.iloc[i, j]
             color = textcolors[int(im.norm(value) > threshold)]
-            ax.text(j, i, f"{value:.2f}", ha="center", va="center", color=color, fontsize=7)
+            ax.text(j, i, f"{value:.{_DECIMAL_PLACES}f}", ha="center", va="center", color=color, fontsize=7)
 
     ax = gu.standard_graph_styles(
         ax=ax,
