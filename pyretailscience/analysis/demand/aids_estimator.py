@@ -385,28 +385,28 @@ class AIDSEstimator:
             y = budget_shares_wide[product].rename("budget_share_y")
 
             # Independent variables: all log prices and real expenditure
-            X = pd.concat([log_prices_wide, log_real_expenditure], axis=1)
-            X.columns = [*self.products, "log_real_expenditure"]
+            x = pd.concat([log_prices_wide, log_real_expenditure], axis=1)
+            x.columns = [*self.products, "log_real_expenditure"]
 
             # Add intercept
-            X["intercept"] = 1.0
+            x["intercept"] = 1.0
 
             # Combine and drop any rows with missing values to ensure alignment
-            data_for_regression = pd.concat([y, X], axis=1).dropna()
+            data_for_regression = pd.concat([y, x], axis=1).dropna()
 
             # If no complete observations exist for this product, skip it.
             if data_for_regression.empty:
                 continue
 
             y_fit = data_for_regression["budget_share_y"]
-            X_fit = data_for_regression.drop("budget_share_y", axis=1)
+            x_fit = data_for_regression.drop("budget_share_y", axis=1)
 
             # Reorder columns for coefficient extraction
-            X_fit = X_fit[["intercept", *self.products, "log_real_expenditure"]]
+            x_fit = x_fit[["intercept", *self.products, "log_real_expenditure"]]
 
             # OLS estimation
             model = LinearRegression(fit_intercept=False)
-            model.fit(X_fit, y_fit)
+            model.fit(x_fit, y_fit)
 
             # Extract parameters
             alpha[i] = model.coef_[0]
@@ -471,6 +471,9 @@ class AIDSEstimator:
         Homogeneity requires:
         - sum(gamma_ij) + beta_i = 0 for all i
 
+        This implementation adjusts both gamma and beta proportionally to satisfy
+        the constraint while preserving sign patterns from OLS estimates.
+
         Args:
             gamma (np.ndarray): Price slope matrix.
             beta (np.ndarray): Expenditure coefficients.
@@ -478,11 +481,22 @@ class AIDSEstimator:
         Returns:
             tuple[np.ndarray, np.ndarray]: Constrained gamma and beta.
         """
-        # Adjust beta to satisfy homogeneity
+        # Calculate current violation of homogeneity constraint
         gamma_row_sum = gamma.sum(axis=1)
-        beta = -gamma_row_sum
+        violation = gamma_row_sum + beta
 
-        return gamma, beta
+        # Adjust both gamma and beta proportionally to satisfy constraint
+        # Split the violation adjustment between gamma rows and beta
+        # This preserves signs better than forcing beta = -sum(gamma)
+        adjustment_share = 0.5  # Split adjustment 50-50 between gamma and beta
+
+        # Adjust gamma rows by subtracting proportional share of violation
+        gamma_adjusted = gamma - (violation[:, np.newaxis] * adjustment_share) / self.n_products
+
+        # Adjust beta by subtracting remaining share of violation
+        beta_adjusted = beta - violation * (1 - adjustment_share)
+
+        return gamma_adjusted, beta_adjusted
 
     def _enforce_symmetry(self, gamma: np.ndarray) -> np.ndarray:
         """Enforce Slutsky symmetry constraint.
