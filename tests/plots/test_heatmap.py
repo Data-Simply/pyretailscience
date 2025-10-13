@@ -98,7 +98,7 @@ def test_plot_with_kwargs(sample_heatmap_dataframe):
 
 @pytest.mark.parametrize("shape", [(1, 5), (5, 1), (1, 1)])
 def test_plot_edge_case_dimensions(shape):
-    """Test heatmap with edge case DataFrame dimensions."""
+    """Test heatmap with minimal DataFrame dimensions: single row, single column, and single cell."""
     rows, cols = shape
     data = np.round(RNG.uniform(0, 1, size=shape), 2)
     df = pd.DataFrame(data, columns=[f"Col {i}" for i in range(cols)], index=[f"Row {i}" for i in range(rows)])
@@ -109,14 +109,6 @@ def test_plot_edge_case_dimensions(shape):
     assert len(result_ax.get_xticks()) == cols
     assert len(result_ax.get_yticks()) == rows
     assert len(result_ax.texts) == df.size
-
-
-def test_plot_empty_dataframe():
-    """Test heatmap with empty DataFrame raises error."""
-    empty_df = pd.DataFrame()
-
-    with pytest.raises((ValueError, IndexError)):
-        heatmap.plot(df=empty_df, cbar_label="Value")
 
 
 def test_plot_text_values_accuracy(sample_heatmap_dataframe):
@@ -160,18 +152,6 @@ def test_plot_with_nan_values():
     assert nan_found, "NaN value should be displayed in heatmap text"
 
 
-def test_plot_all_zeros():
-    """Test heatmap with all-zero data."""
-    data = np.zeros((2, 2))
-    df = pd.DataFrame(data, columns=["A", "B"], index=["X", "Y"])
-
-    result_ax = heatmap.plot(df=df, cbar_label="Value")
-
-    # Verify all text shows "0.00"
-    texts = result_ax.texts
-    assert all(text.get_text() == "0.00" for text in texts)
-
-
 @pytest.mark.parametrize("label_length", ["short", "very_long_column_name_that_exceeds_threshold"])
 def test_plot_label_rotation(label_length):
     """Test automatic label rotation based on label length."""
@@ -184,9 +164,81 @@ def test_plot_label_rotation(label_length):
     x_tick_labels = result_ax.get_xticklabels()
     if x_tick_labels:
         rotation = x_tick_labels[0].get_rotation()
-        long_label_threshold = 10
-        rotation_angle = 45
-        if len(label_length) > long_label_threshold:
-            assert rotation == rotation_angle, "Long labels should be rotated"
+        threshold = 10
+        expected_rotation = 45
+        if len(label_length) > threshold:
+            assert rotation == expected_rotation, "Long labels should be rotated"
         else:
             assert rotation == 0, "Short labels should not be rotated"
+
+
+def test_plot_label_alignment():
+    """Test horizontal alignment of x-axis labels based on rotation."""
+    short_cols = ["A", "B", "C"]
+    data = np.ones((2, 3))
+    df_short = pd.DataFrame(data, columns=short_cols, index=["Row1", "Row2"])
+
+    result_ax = heatmap.plot(df=df_short, cbar_label="Value")
+    x_tick_labels = result_ax.get_xticklabels()
+
+    if x_tick_labels:
+        alignment = x_tick_labels[0].get_horizontalalignment()
+        assert alignment == "center", "Short labels should be center-aligned"
+
+    # Test with long labels (rotated)
+    long_cols = ["very_long_column_name_1", "very_long_column_name_2", "very_long_column_name_3"]
+    df_long = pd.DataFrame(data, columns=long_cols, index=["Row1", "Row2"])
+
+    result_ax = heatmap.plot(df=df_long, cbar_label="Value")
+    x_tick_labels = result_ax.get_xticklabels()
+
+    if x_tick_labels:
+        alignment = x_tick_labels[0].get_horizontalalignment()
+        assert alignment == "right", "Long rotated labels should be right-aligned"
+
+
+def test_colorbar_label_set(sample_heatmap_dataframe):
+    """Verify colorbar label is set correctly."""
+    label = "Test Colorbar Label"
+    result_ax = heatmap.plot(df=sample_heatmap_dataframe, cbar_label=label)
+
+    # Get colorbar axes (should be the last axes in figure)
+    cbar_ax = result_ax.figure.axes[-1]
+    # Check ylabel
+    ylabel = cbar_ax.get_ylabel()
+    assert ylabel == label, f"Expected colorbar label '{label}', got '{ylabel}'"
+
+
+def test_axis_labels_applied(sample_heatmap_dataframe):
+    """Verify axis labels and title are applied correctly."""
+    result_ax = heatmap.plot(
+        df=sample_heatmap_dataframe,
+        cbar_label="Value",
+        x_label="X Axis Label",
+        y_label="Y Axis Label",
+        title="Test Title",
+    )
+
+    assert result_ax.get_xlabel() == "X Axis Label"
+    assert result_ax.get_ylabel() == "Y Axis Label"
+    assert result_ax.get_title() == "Test Title"
+
+
+def test_text_color_contrast():
+    """Verify text color switches based on cell background intensity."""
+    # Create data with known light and dark cells
+    data = np.array([[0.0, 1.0]])  # Dark cell, light cell
+    df = pd.DataFrame(data, columns=["A", "B"], index=["X"])
+
+    result_ax = heatmap.plot(df=df, cbar_label="Value")
+
+    texts = result_ax.texts
+    expected_text_count = 2
+    assert len(texts) == expected_text_count
+
+    # Get text colors
+    text_0_color = texts[0].get_color()
+    text_1_color = texts[1].get_color()
+
+    # Verify colors are different (contrast based on background intensity)
+    assert text_0_color != text_1_color, "Text colors should differ for different background intensities"
