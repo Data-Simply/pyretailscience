@@ -36,6 +36,9 @@ from matplotlib.axes import Axes, SubplotBase
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.tailwind import get_listed_cmap
 
+_LABEL_ROTATION_THRESHOLD = 10
+_DECIMAL_PLACES = 2
+
 
 def plot(
     df: pd.DataFrame,
@@ -46,6 +49,7 @@ def plot(
     ax: Axes | None = None,
     source_text: str | None = None,
     figsize: tuple[int, int] | None = None,
+    cbar_format: str | None = None,
     **kwargs: dict,
 ) -> SubplotBase:
     """Creates a generic heatmap visualization from a pandas DataFrame.
@@ -63,6 +67,7 @@ def plot(
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): Additional source text annotation.
         figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
+        cbar_format (str, optional): Format string for colorbar values. Defaults to "{x:.2f}".
         **kwargs: Additional keyword arguments passed to matplotlib's imshow function.
 
     Returns:
@@ -74,8 +79,10 @@ def plot(
     cmap = get_listed_cmap("green")
     im = ax.imshow(df, cmap=cmap, **kwargs)
 
-    # Create colorbar with simple decimal formatting
-    cbar = ax.figure.colorbar(im, ax=ax, format="{x:.2f}")
+    # Create colorbar with configurable formatting
+    if cbar_format is None:
+        cbar_format = f"{{x:.{_DECIMAL_PLACES}f}}"
+    cbar = ax.figure.colorbar(im, ax=ax, format=cbar_format)
     cbar.ax.set_ylabel(cbar_label, rotation=-90, va="bottom", fontsize="x-large")
 
     # Set up ticks and labels
@@ -83,21 +90,20 @@ def plot(
     ax.set_yticks(np.arange(df.shape[0]))
 
     # Handle long labels with rotation and proper alignment
-    x_labels = [str(label) for label in df.columns]
-    y_labels = [str(label) for label in df.index]
+    x_labels = df.columns.astype(str).to_list()
+    y_labels = df.index.astype(str).to_list()
 
     # Determine if we need rotation based on label length
     max_x_label_length = max(len(label) for label in x_labels) if x_labels else 0
-    label_length = 10
-    rotation_angle = 45 if max_x_label_length > label_length else 0
+    rotation_angle = 45 if max_x_label_length > _LABEL_ROTATION_THRESHOLD else 0
 
-    ax.set_xticklabels(x_labels, rotation=rotation_angle, ha="left" if rotation_angle > 0 else "center")
+    ax.set_xticklabels(x_labels, rotation=rotation_angle, ha="right" if rotation_angle > 0 else "center")
     ax.set_yticklabels(y_labels)
 
-    # Position x-axis labels on top with extra padding for rotated labels
-    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
+    # Position x-axis labels on bottom with extra padding for rotated labels
+    ax.tick_params(top=False, bottom=True, labeltop=False, labelbottom=True)
 
-    # Add extra padding at top if labels are rotated
+    # Add extra padding at bottom if labels are rotated
     if rotation_angle > 0:
         ax.tick_params(axis="x", which="major", pad=10)
 
@@ -116,7 +122,7 @@ def plot(
         for j in range(df.shape[1]):
             value = df.iloc[i, j]
             color = textcolors[int(im.norm(value) > threshold)]
-            ax.text(j, i, f"{value:.2f}", ha="center", va="center", color=color, fontsize=7)
+            ax.text(j, i, f"{value:.{_DECIMAL_PLACES}f}", ha="center", va="center", color=color, fontsize=7)
 
     ax = gu.standard_graph_styles(
         ax=ax,

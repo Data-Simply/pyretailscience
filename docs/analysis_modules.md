@@ -565,7 +565,7 @@ heatmap.plot(
     y_label="Previous Quarter Segment",
     title="Customer Segment Migration Analysis (Quarterly)",
     figsize=(12, 8),
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: PyRetailScience",
 )
 ```
 
