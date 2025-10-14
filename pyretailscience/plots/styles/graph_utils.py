@@ -494,9 +494,6 @@ def _add_equation_text(
         show_r2 (bool): Whether to display the R² value.
         regression_type (str): The type of regression for equation formatting.
     """
-    if not (show_equation or show_r2):
-        return
-
     plot_styler = PlotStyler()
 
     equation_parts = []
@@ -512,8 +509,6 @@ def _add_equation_text(
             equation = f"y = {param1:.3f}ln(x) {sign} {abs(param2):.3f}"
         elif regression_type == "exponential":
             equation = f"y = {param1:.3f}e^({param2:.3f}x)"
-        else:
-            equation = f"y = {param1:.3f}x + {param2:.3f}"  # Fallback
 
         equation_parts.append(equation)
 
@@ -669,7 +664,7 @@ def _validate_regression_data(
     y_data: np.ndarray,
     regression_type: str,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Validate and filter data for specific regression types.
+    """Validate data for specific regression types.
 
     Args:
         x_data (np.ndarray): The x-axis data.
@@ -677,57 +672,59 @@ def _validate_regression_data(
         regression_type (str): The regression type being used.
 
     Returns:
-        tuple[np.ndarray, np.ndarray]: Filtered x and y data arrays.
+        tuple[np.ndarray, np.ndarray]: Validated x and y data arrays.
 
     Raises:
-        ValueError: If insufficient valid data remains after filtering.
+        ValueError: If data contains values incompatible with the regression type.
     """
-    min_regression_points = 2
-
     if regression_type == "power":
         # Power regression requires positive x AND y values for log transformation
-        positive_mask = (x_data > 0) & (y_data > 0)
-        if np.sum(positive_mask) < min_regression_points:
-            filtered_count = np.sum(positive_mask)
-            total_count = len(x_data)
+        negative_or_zero_x = np.sum(x_data <= 0)
+        negative_or_zero_y = np.sum(y_data <= 0)
+
+        if negative_or_zero_x > 0 or negative_or_zero_y > 0:
+            error_parts = []
+            if negative_or_zero_x > 0:
+                error_parts.append(f"{negative_or_zero_x} non-positive x value(s)")
+            if negative_or_zero_y > 0:
+                error_parts.append(f"{negative_or_zero_y} non-positive y value(s)")
+
             error_msg = (
-                f"Power regression requires at least {min_regression_points} data points with positive x and y values. "
-                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+                f"Power regression requires all x and y values to be positive. "
+                f"Found {' and '.join(error_parts)}. "
+                f"Please remove or transform these values before applying power regression."
             )
             raise ValueError(error_msg)
-        x_filtered = x_data[positive_mask]
-        y_filtered = y_data[positive_mask]
-        return x_filtered, y_filtered
+
+        return x_data, y_data
 
     if regression_type == "logarithmic":
         # Logarithmic requires positive x values for log transformation
-        positive_x_mask = x_data > 0
-        if np.sum(positive_x_mask) < min_regression_points:
-            filtered_count = np.sum(positive_x_mask)
-            total_count = len(x_data)
+        negative_or_zero_x = np.sum(x_data <= 0)
+
+        if negative_or_zero_x > 0:
             error_msg = (
-                f"Logarithmic regression requires at least {min_regression_points} positive x values. "
-                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+                f"Logarithmic regression requires all x values to be positive. "
+                f"Found {negative_or_zero_x} non-positive x value(s). "
+                f"Please remove or transform these values before applying logarithmic regression."
             )
             raise ValueError(error_msg)
-        x_filtered = x_data[positive_x_mask]
-        y_filtered = y_data[positive_x_mask]
-        return x_filtered, y_filtered
+
+        return x_data, y_data
 
     if regression_type == "exponential":
         # Exponential requires positive y values for log transformation
-        positive_y_mask = y_data > 0
-        if np.sum(positive_y_mask) < min_regression_points:
-            filtered_count = np.sum(positive_y_mask)
-            total_count = len(y_data)
+        negative_or_zero_y = np.sum(y_data <= 0)
+
+        if negative_or_zero_y > 0:
             error_msg = (
-                f"Exponential regression requires at least {min_regression_points} positive y values. "
-                f"After filtering, only {filtered_count} of {total_count} points remain valid."
+                f"Exponential regression requires all y values to be positive. "
+                f"Found {negative_or_zero_y} non-positive y value(s). "
+                f"Please remove or transform these values before applying exponential regression."
             )
             raise ValueError(error_msg)
-        x_filtered = x_data[positive_y_mask]
-        y_filtered = y_data[positive_y_mask]
-        return x_filtered, y_filtered
+
+        return x_data, y_data
 
     # Linear regression uses all data
     return x_data, y_data
@@ -817,7 +814,8 @@ def add_regression_line(
     # Plot the regression line
     ax.plot(x_line, y_line, color=color, linestyle=linestyle, **kwargs)
 
-    # Add equation and R² text
-    _add_equation_text(ax, param1, param2, r_squared, color, text_position, show_equation, show_r2, regression_type)
+    # Add equation and R² text if either is requested
+    if show_equation or show_r2:
+        _add_equation_text(ax, param1, param2, r_squared, color, text_position, show_equation, show_r2, regression_type)
 
     return ax

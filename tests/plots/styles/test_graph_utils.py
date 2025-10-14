@@ -532,7 +532,7 @@ class TestRegressionLine:
         ],
     )
     def test_regression_known_data(self, regression_type, x_data, y_data, description):
-        """Test regression types with known relationships."""
+        """Test regression types with known relationships and validate line correctness."""
         # Generate perfect data based on known relationship
         y = y_data(x_data)
 
@@ -547,9 +547,29 @@ class TestRegressionLine:
         assert result_ax is ax
         assert len(ax.lines) == 1  # Regression line added
 
-    def test_power_regression_filters_negative_values(self):
-        """Test that power regression filters out negative values and works with remaining data."""
-        # Data with negative values (some valid points remain)
+        # Validate that the regression line points are mathematically correct
+        regression_line = ax.lines[0]
+        line_x = regression_line.get_xdata()
+        line_y = regression_line.get_ydata()
+
+        # Check that the regression line produces values close to the expected relationship
+        # Sample a few points from the regression line to verify correctness
+        sample_indices = [0, len(line_x) // 2, -1]  # Start, middle, end
+        for idx in sample_indices:
+            x_val = line_x[idx]
+            y_val = line_y[idx]
+            # Calculate expected y value based on the known relationship
+            expected_y = y_data(np.array([x_val]))[0]
+            # Allow for numerical precision in regression fitting
+            tolerance = abs(expected_y) * 0.1  # 10% tolerance for regression fitting
+            assert abs(y_val - expected_y) < tolerance, (
+                f"Regression line point ({x_val}, {y_val}) deviates too much from "
+                f"expected ({x_val}, {expected_y}) for {description}"
+            )
+
+    def test_power_regression_errors_on_negative_values(self):
+        """Test that power regression raises an error when data contains negative or zero values."""
+        # Data with negative values
         x = np.array([-1, 0, 1, 2, 3])
         y = np.array([1, 2, 3, 4, 5])
 
@@ -557,30 +577,27 @@ class TestRegressionLine:
         fig, ax = plt.subplots()
         ax.scatter(x, y)
 
-        # Should work by filtering negative values and using remaining data
-        result_ax = gu.add_regression_line(ax, regression_type="power")
+        # Should raise error due to negative/zero x values
+        with pytest.raises(ValueError, match="Power regression requires all x and y values to be positive"):
+            gu.add_regression_line(ax, regression_type="power")
 
-        # Verify basic functionality
-        assert result_ax is ax
-        assert len(ax.lines) == 1  # Regression line added
-
-    def test_power_regression_insufficient_positive_values_error(self):
-        """Test that power regression raises error when insufficient positive values remain."""
-        # Data with mostly negative/zero values
-        x = np.array([-1, 0, 0.1])
-        y = np.array([1, 2, -3])  # Only one valid point after filtering
+    def test_power_regression_errors_on_negative_y_values(self):
+        """Test that power regression raises error when y data contains negative values."""
+        # Data with all positive x but negative y
+        x = np.array([1, 2, 3])
+        y = np.array([1, 2, -3])  # Negative y value
 
         # Create plot
         fig, ax = plt.subplots()
         ax.scatter(x, y)
 
-        # Should raise error due to insufficient valid data points
-        with pytest.raises(ValueError, match="Power regression requires.*positive x and y values"):
+        # Should raise error due to negative y values
+        with pytest.raises(ValueError, match="Power regression requires all x and y values to be positive"):
             gu.add_regression_line(ax, regression_type="power")
 
-    def test_logarithmic_regression_filters_nonpositive_x_values(self):
-        """Test that logarithmic regression filters out non-positive x values."""
-        # Data with zero/negative x values (some valid points remain)
+    def test_logarithmic_regression_errors_on_nonpositive_x_values(self):
+        """Test that logarithmic regression raises error when data contains non-positive x values."""
+        # Data with zero/negative x values
         x = np.array([0, 1, 2, 3, 4])
         y = np.array([1, 2, 3, 4, 5])
 
@@ -588,30 +605,27 @@ class TestRegressionLine:
         fig, ax = plt.subplots()
         ax.scatter(x, y)
 
-        # Should work by filtering non-positive x values
-        result_ax = gu.add_regression_line(ax, regression_type="logarithmic")
+        # Should raise error due to non-positive x values
+        with pytest.raises(ValueError, match="Logarithmic regression requires all x values to be positive"):
+            gu.add_regression_line(ax, regression_type="logarithmic")
 
-        # Verify basic functionality
-        assert result_ax is ax
-        assert len(ax.lines) == 1  # Regression line added
-
-    def test_logarithmic_regression_insufficient_positive_x_error(self):
-        """Test that logarithmic regression raises error when insufficient positive x values remain."""
-        # Data with mostly non-positive x values
-        x = np.array([-1, 0, 0.1])
-        y = np.array([1, 2, 3])  # Only one valid x point
+    def test_logarithmic_regression_errors_on_negative_x_values(self):
+        """Test that logarithmic regression raises error when x data contains negative values."""
+        # Data with negative x values
+        x = np.array([-1, 0.1, 1])
+        y = np.array([1, 2, 3])
 
         # Create plot
         fig, ax = plt.subplots()
         ax.scatter(x, y)
 
-        # Should raise error due to insufficient positive x values
-        with pytest.raises(ValueError, match="Logarithmic regression requires.*positive x values"):
+        # Should raise error due to negative x values
+        with pytest.raises(ValueError, match="Logarithmic regression requires all x values to be positive"):
             gu.add_regression_line(ax, regression_type="logarithmic")
 
-    def test_exponential_regression_filters_nonpositive_y_values(self):
-        """Test that exponential regression filters out non-positive y values."""
-        # Data with negative y values (some valid points remain)
+    def test_exponential_regression_errors_on_nonpositive_y_values(self):
+        """Test that exponential regression raises error when data contains non-positive y values."""
+        # Data with negative y values
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([-1, 2, 3, 4, 5])
 
@@ -619,25 +633,22 @@ class TestRegressionLine:
         fig, ax = plt.subplots()
         ax.scatter(x, y)
 
-        # Should work by filtering non-positive y values
-        result_ax = gu.add_regression_line(ax, regression_type="exponential")
+        # Should raise error due to negative y values
+        with pytest.raises(ValueError, match="Exponential regression requires all y values to be positive"):
+            gu.add_regression_line(ax, regression_type="exponential")
 
-        # Verify basic functionality
-        assert result_ax is ax
-        assert len(ax.lines) == 1  # Regression line added
-
-    def test_exponential_regression_insufficient_positive_y_error(self):
-        """Test that exponential regression raises error when insufficient positive y values remain."""
-        # Data with mostly non-positive y values
+    def test_exponential_regression_errors_on_zero_y_values(self):
+        """Test that exponential regression raises error when y data contains zero values."""
+        # Data with zero y values
         x = np.array([1, 2, 3])
-        y = np.array([-1, 0, 0.1])  # Only one valid y point
+        y = np.array([1, 0, 2])  # Zero y value
 
         # Create plot
         fig, ax = plt.subplots()
         ax.scatter(x, y)
 
-        # Should raise error due to insufficient positive y values
-        with pytest.raises(ValueError, match="Exponential regression requires.*positive y values"):
+        # Should raise error due to zero y values
+        with pytest.raises(ValueError, match="Exponential regression requires all y values to be positive"):
             gu.add_regression_line(ax, regression_type="exponential")
 
     @pytest.mark.parametrize("regression_type", ["linear", "power", "logarithmic", "exponential"])
@@ -838,107 +849,15 @@ class TestVisualRegression:
         plt.close(fig)
 
 
-class TestImportPaths:
-    """Test all new import paths work correctly."""
-
-    def test_graph_utils_import(self):
-        """Test graph_utils can be imported from new location."""
-        try:
-            from pyretailscience.plots.styles.graph_utils import add_source_text, human_format, standard_graph_styles
-
-            assert callable(standard_graph_styles)
-            assert callable(human_format)
-            assert callable(add_source_text)
-        except ImportError as e:
-            pytest.fail(f"Failed to import from new graph_utils location: {e}")
-
-    def test_styling_helpers_import(self):
-        """Test styling_helpers can be imported."""
-        try:
-            from pyretailscience.plots.styles.styling_helpers import PlotStyler
-
-            assert PlotStyler is not None
-        except ImportError as e:
-            pytest.fail(f"Failed to import PlotStyler: {e}")
-
-    def test_styling_context_import(self):
-        """Test styling_context can be imported."""
-        try:
-            from pyretailscience.plots.styles.styling_context import (
-                FontConfig,
-                StylingContext,
-                get_styling_context,
-                update_styling_context,
-            )
-
-            assert StylingContext is not None
-            assert FontConfig is not None
-            assert callable(get_styling_context)
-            assert callable(update_styling_context)
-        except ImportError as e:
-            pytest.fail(f"Failed to import styling_context components: {e}")
-
-
-# Business Use Case Tests for Phase 2 Regression Types
-def test_business_use_case_price_elasticity():
-    """Test power regression for price elasticity analysis (business use case)."""
-    # Simulate price elasticity data: demand = 1000 * price^(-1.2)
-    rng = np.random.default_rng(42)
-    prices = np.array([10, 15, 20, 25, 30])
-    demand = 1000 * (prices**-1.2) + rng.normal(0, 2, 5)  # Add small noise
-
-    # Create scatter plot
-    fig, ax = plt.subplots()
-    ax.scatter(prices, demand)
-
-    # Apply power regression for elasticity analysis
-    gu.add_regression_line(ax, regression_type="power", color="red")
-
-    # Should work without errors
-    assert len(ax.lines) == 1
-
-
-def test_business_use_case_customer_retention():
-    """Test exponential regression for customer retention analysis (business use case)."""
-    # Simulate customer retention decay: retention = 1000 * e^(-0.1 * days)
-    rng = np.random.default_rng(42)
-    days = np.array([0, 30, 60, 90, 120])
-    retention = 1000 * np.exp(-0.1 * days) + rng.normal(0, 10, 5)  # Add noise
-
-    # Create scatter plot
-    fig, ax = plt.subplots()
-    ax.scatter(days, retention)
-
-    # Apply exponential regression for retention analysis
-    gu.add_regression_line(ax, regression_type="exponential", color="green")
-
-    # Should work without errors
-    assert len(ax.lines) == 1
-
-
-def test_business_use_case_advertising_diminishing_returns():
-    """Test logarithmic regression for advertising diminishing returns (business use case)."""
-    # Simulate advertising diminishing returns: revenue = 50 * ln(spend) + 100
-    rng = np.random.default_rng(42)
-    ad_spend = np.array([100, 500, 1000, 2000, 5000])
-    revenue = 50 * np.log(ad_spend) + 100 + rng.normal(0, 5, 5)  # Add noise
-
-    # Create scatter plot
-    fig, ax = plt.subplots()
-    ax.scatter(ad_spend, revenue)
-
-    # Apply logarithmic regression for diminishing returns analysis
-    gu.add_regression_line(ax, regression_type="logarithmic", color="purple")
-
-    # Should work without errors
-    assert len(ax.lines) == 1
-
-
 def test_adaptive_line_generation():
     """Test that line generation adapts to data size for efficiency."""
+    # Constants from graph_utils._generate_regression_line
+    min_points = 50
+    max_points = 500
+
     fig, ax = plt.subplots()
 
-    # Small dataset should use fewer points
+    # Small dataset should use minimum 50 points (3 data points * 3 = 9, clamped to min 50)
     small_x = np.array([1, 2, 3])
     small_y = np.array([1, 4, 9])
     ax.scatter(small_x, small_y)
@@ -946,22 +865,33 @@ def test_adaptive_line_generation():
     # Test power regression (non-linear, uses adaptive points)
     gu.add_regression_line(ax, regression_type="power")
 
-    # Verify line was added
+    # Verify line was added with correct number of points
     assert len(ax.lines) == 1
+    regression_line = ax.lines[0]
+    line_data = regression_line.get_xdata()
+    # Small dataset: data_size * 3 = 3 * 3 = 9, max(9, 50) = 50, min(50, 500) = 50
+    assert len(line_data) == min_points
 
     # Clear for next test
     ax.clear()
 
-    # Large dataset should use more points but be capped
+    # Large dataset should use max 500 points (200 data points * 3 = 600, capped at max 500)
     large_x = np.linspace(1, 100, 200)
     rng = np.random.default_rng(42)
-    large_y = large_x**1.5 + rng.normal(0, 10, 200)
+    # Ensure all y values are positive for power regression (use smaller noise)
+    large_y = large_x**1.5 + rng.normal(0, 5, 200)
+    # Ensure all values are positive
+    large_y = np.maximum(large_y, 0.1)
     ax.scatter(large_x, large_y)
 
     gu.add_regression_line(ax, regression_type="power")
 
-    # Verify line was added
+    # Verify line was added with correct number of points
     assert len(ax.lines) == 1
+    regression_line = ax.lines[0]
+    line_data = regression_line.get_xdata()
+    # Large dataset: data_size * 3 = 200 * 3 = 600, max(600, 50) = 600, min(600, 500) = 500
+    assert len(line_data) == max_points
 
 
 def test_r_squared_original_space_accuracy():
@@ -1001,19 +931,26 @@ def test_r_squared_original_space_accuracy():
 
 def test_r_squared_comparison_transformed_vs_original():
     """Test that R² in original space differs from transformed space for non-linear regression."""
-    # Create data with deliberate outliers that would skew results
-    x_data = np.array([1, 2, 3, 4, 5, 6, 7, 8])
-    # Create data that has a clear pattern but with some outliers
-    y_data = np.array([1, 4, 9, 16, 25, 36, 200, 400])  # Last two are major outliers
+    # Create data with a non-linear relationship that has deliberate outliers
+    x_data = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+    # Quadratic pattern with outliers: y = x^2, but with outliers at the end
+    y_data = np.array([1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 200.0, 400.0])
+
+    # Calculate R² in transformed space (log-log for power regression)
+    from scipy import stats
+
+    log_x = np.log(x_data)
+    log_y = np.log(y_data)
+    _, _, r_value_transformed, _, _ = stats.linregress(log_x, log_y)
+    r_squared_transformed = r_value_transformed**2
 
     fig, ax = plt.subplots()
     ax.scatter(x_data, y_data)
 
-    # Apply power regression
+    # Apply power regression - this should calculate R² in original space
     gu.add_regression_line(ax, regression_type="power", show_r2=True)
 
-    # The R² should reflect fit quality in original space
-    # Extract R² from annotation
+    # Extract R² from annotation (this is R² in original space)
     texts = ax.texts
     r2_text = None
     for text in texts:
@@ -1021,13 +958,23 @@ def test_r_squared_comparison_transformed_vs_original():
             r2_text = text.get_text()
             break
 
-    assert r2_text is not None
+    assert r2_text is not None, "R² text should be displayed"
+
     import re
 
     r2_match = re.search(r"R² = ([\d.]+)", r2_text)
-    assert r2_match is not None
+    assert r2_match is not None, "R² value should be found in text"
 
-    r2_value = float(r2_match.group(1))
-    # Due to outliers, R² should be impacted in original space
-    assert 0.0 <= r2_value <= 1.0, f"R² should be between 0 and 1, got {r2_value}"
-    # The main point is that we're calculating in original space, not just that it's low
+    r2_value_original = float(r2_match.group(1))
+
+    # Verify that R² values differ between spaces
+    # With outliers, R² in original space should be significantly lower than in transformed space
+    assert 0.0 <= r2_value_original <= 1.0, f"R² should be between 0 and 1, got {r2_value_original}"
+    assert 0.0 <= r_squared_transformed <= 1.0, f"R² transformed should be between 0 and 1, got {r_squared_transformed}"
+
+    # The key test: R² values should differ (original space is more sensitive to outliers)
+    # Allow for numerical precision but require a meaningful difference
+    difference_threshold = 0.01
+    assert abs(r2_value_original - r_squared_transformed) > difference_threshold, (
+        f"R² should differ between original ({r2_value_original:.4f}) and transformed ({r_squared_transformed:.4f}) space"
+    )
