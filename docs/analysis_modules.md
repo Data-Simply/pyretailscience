@@ -162,7 +162,7 @@ area.plot(
 
 <div class="clear" markdown>
 
-![Scatter Plot](assets/images/analysis_modules/plots/scatter.svg){ align=right loading=lazy width="50%"}
+![Scatter Plot](assets/images/analysis_modules/plots/scatter_with_labels.svg){ align=right loading=lazy width="50%"}
 
 Scatter plots are useful for visualizing **relationships** between two numerical variables, detecting **patterns**, and
 identifying **outliers**. They are often used for:
@@ -170,9 +170,16 @@ identifying **outliers**. They are often used for:
 - Exploring **correlations** between variables
 - Identifying **clusters** in data
 - Spotting **trends** and **outliers**
+- **Labeling individual points** to identify specific data points (e.g., product names, store IDs)
 
 Scatter plots are particularly useful when analyzing **distributions** and understanding how one variable influences
-another. They can also be enhanced with **colors** and **sizes** to represent additional dimensions in the data.
+another. They can also be enhanced with **colors**, **sizes**, and **point labels** to represent additional
+dimensions in the data.
+
+**Point Labels**: The scatter plot supports adding text labels to individual points using the `label_col`
+parameter.
+Labels are automatically positioned to avoid overlaps using the adjustText library, making it easy to identify
+specific data points like products, stores, or customer segments.
 
 </div>
 
@@ -211,6 +218,52 @@ scatter.plot(
     alpha=0.8,
 )
 ```
+
+Example with Point Labels:
+
+<div class="clear" markdown>
+
+![Scatter Plot with Labels](assets/images/analysis_modules/plots/scatter_with_labels.svg){ align=right loading=lazy width="50%"}
+
+</div>
+
+```python
+import pandas as pd
+from pyretailscience.plots import scatter
+
+store_df = pd.DataFrame({
+    'revenue': [50000, 75000, 45000, 90000, 65000, 55000],
+    'customer_count': [1200, 1800, 1000, 2200, 1500, 1300],
+    'store_id': ['S001', 'S002', 'S003', 'S004', 'S005', 'S006'],
+    'region': ['North', 'North', 'South', 'South', 'East', 'East']
+})
+
+scatter.plot(
+    df=store_df,
+    x_col='customer_count',
+    value_col='revenue',
+    group_col='region',
+    label_col='store_id',
+    title='Store Performance by Region',
+    x_label='Customer Count',
+    y_label='Revenue ($)',
+    legend_title='Region',
+    move_legend_outside=True,
+    source_text="Source: PyRetailScience - 2024",
+)
+```
+
+**Label Parameters:**
+
+- **`label_col`** (str, optional): Column name containing text labels for each point. Not supported when `value_col`
+  is a list.
+- **`label_kwargs`** (dict, optional): Keyword arguments passed to adjustText for custom label positioning and styling.
+
+**Label Limitations:**
+
+- Labels are not supported when `value_col` is a list (raises ValueError)
+- Requires the adjustText library for automatic label positioning
+- Points with NaN values in either `value_col` or `label_col` are automatically filtered out
 
 ### Venn Diagram
 
