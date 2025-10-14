@@ -21,6 +21,8 @@ class FontConfig:
     tick_size: float = 10
     source_font: str = "poppins_light_italic"
     source_size: float = 10
+    data_label_font: str = "poppins_regular"
+    data_label_size: float = 8
 
 
 class StylingContext:
