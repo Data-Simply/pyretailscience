@@ -115,6 +115,7 @@ class CompositeRank:
         rank_cols: list[tuple[str, str] | str],
         agg_func: str,
         ignore_ties: bool = False,
+        group_col: str | None = None,
     ) -> None:
         """Initialize the CompositeRank class for multi-criteria retail analysis.
 
@@ -135,13 +136,21 @@ class CompositeRank:
             ignore_ties (bool, optional): How to handle identical values:
                 - False (default): Products with same sales get same rank (fair comparison)
                 - True: Force unique ranks even for ties (strict ordering needed)
+            group_col (str, optional): Column to partition rankings by group.
+                - None (default): Rank across entire dataset (current behavior)
+                - If specified: Calculate ranks independently within each group
+                Examples for group-based ranking:
+                - "product_category": Rank products within each category
+                - "store_region": Rank stores within their regions
+                - "supplier_type": Rank suppliers within their specialization
 
         Raises:
             ValueError: If specified metrics are not in the data or sort order is invalid.
             ValueError: If aggregation function is not supported.
+            ValueError: If group_col is specified but doesn't exist in the data.
 
-        Example:
-            >>> # Rank products for quarterly range review
+        Examples:
+            >>> # Global ranking: Rank all products together (current behavior)
             >>> ranker = CompositeRank(
             ...     df=product_data,
             ...     rank_cols=[
@@ -153,9 +162,28 @@ class CompositeRank:
             ...     agg_func="mean"
             ... )
             >>> # Products with lowest composite_rank should be reviewed for delisting
+
+            >>> # Group-based ranking: Rank products within each category
+            >>> ranker = CompositeRank(
+            ...     df=product_data,
+            ...     rank_cols=[
+            ...         ("weekly_sales", "desc"),
+            ...         ("margin_percentage", "desc"),
+            ...         ("stock_cover_days", "asc")
+            ...     ],
+            ...     agg_func="mean",
+            ...     group_col="product_category"
+            ... )
+            >>> # Electronics products ranked against other electronics
+            >>> # Apparel products ranked against other apparel
         """
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
+
+        # Validate group_col if specified
+        if group_col is not None and group_col not in df.columns:
+            msg = f"Group column '{group_col}' not found in the DataFrame."
+            raise ValueError(msg)
 
         # Validate columns and sort orders
         valid_sort_orders = ["asc", "ascending", "desc", "descending"]
@@ -182,11 +210,16 @@ class CompositeRank:
                 raise ValueError(msg)
 
             order_by = ibis.asc(df[col_name]) if sort_order in ["asc", "ascending"] else ibis.desc(df[col_name])
-            window = ibis.window(order_by=order_by)
+
+            # Create window with or without grouping
+            if group_col is not None:
+                window = ibis.window(group_by=df[group_col], order_by=order_by)
+            else:
+                window = ibis.window(order_by=order_by)
 
             # Calculate rank based on ignore_ties parameter (using 1-based ranks)
-            # ibis.row_number() is 1-based, ibis.rank() is 0-based so we add 1
-            rank_col = ibis.row_number().over(window) if ignore_ties else ibis.rank().over(window) + 1
+            # Both ibis.row_number() and ibis.rank() can be 0-based, so we add 1 for consistency
+            rank_col = ibis.row_number().over(window) + 1 if ignore_ties else ibis.rank().over(window) + 1
 
             # Add the rank column to the result table
             rank_mutates[f"{col_name}_rank"] = rank_col
