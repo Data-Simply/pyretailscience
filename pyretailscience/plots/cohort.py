@@ -14,20 +14,24 @@ It is designed to visualize data distributions using color-coded heatmaps, helpi
 - **Cohort Analysis**: Visualize how different groups behave over time.
 - **Category-Based Heatmaps**: Compare values across different categories.
 
+### Default Behavior
+
+- **Raw Value Display**: By default, values are displayed as raw numbers (e.g., "0.50").
+  Set `percentage=True` for percentage display (e.g., "50%").
+- **Horizontal Line**: Adds a white horizontal line at y=2.5 position for visual separation.
+
 ### Limitations and Warnings
 
 - **Data Aggregation Required**: The module does not perform data aggregation; data should be pre-aggregated before being passed to the function.
 - **Fixed Color Mapping**: The module uses a predefined colormap without dynamic adjustments.
+- **Hardcoded Line Position**: The horizontal line is positioned at y=2.5 regardless of DataFrame size.
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from matplotlib import ticker
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_listed_cmap
+from pyretailscience.plots import heatmap
 
 
 def plot(
@@ -38,7 +42,7 @@ def plot(
     title: str | None = None,
     ax: Axes | None = None,
     source_text: str | None = None,
-    percentage: bool = True,
+    percentage: bool = False,
     figsize: tuple[int, int] | None = None,
     **kwargs: dict,
 ) -> SubplotBase:
@@ -59,41 +63,32 @@ def plot(
     Returns:
         SubplotBase: The matplotlib axes object.
     """
-    if ax is None:
-        _, ax = plt.subplots(figsize=figsize)
-    cmap = get_listed_cmap("green")
-    im = ax.imshow(df, cmap=cmap, **kwargs)
-    cbar = ax.figure.colorbar(im, ax=ax, format=ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}"))
-    cbar.ax.set_ylabel(cbar_label, rotation=-90, va="bottom", fontsize="x-large")
-
-    ax.set_xticks(np.arange(df.shape[1]))
-    ax.set_yticks(np.arange(df.shape[0]))
-    ax.set_xticklabels(df.columns, rotation_mode="anchor")
-    ax.set_yticklabels(df.index.astype(str))
-
-    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
-    ax.set_xticks(np.arange(df.shape[1] + 1) - 0.5, minor=True)
-    ax.set_yticks(np.arange(df.shape[0] + 1) - 0.5, minor=True)
-    ax.grid(which="minor", color="w", linestyle="-", linewidth=3)
-    ax.tick_params(which="minor", bottom=False, left=False)
-    threshold = im.norm(1.0) / 2.0 if percentage else im.norm(df.to_numpy().max()) / 2.0
-    valfmt = ticker.StrMethodFormatter("{x:.0%}" if percentage else "{x:,.0f}")
-    textcolors = ("black", "white")
-    for i in range(df.shape[0]):
-        for j in range(df.shape[1]):
-            color = textcolors[int(im.norm(df.iloc[i, j]) > threshold)]
-            ax.text(j, i, valfmt(df.iloc[i, j], None), ha="center", va="center", color=color, fontsize=7)
-
-    ax = gu.standard_graph_styles(
-        ax=ax,
-        title=title,
+    # Use generic heatmap
+    ax = heatmap.plot(
+        df=df,
+        cbar_label=cbar_label,
         x_label=x_label,
         y_label=y_label,
+        title=title,
+        ax=ax,
+        source_text=source_text,
+        figsize=figsize,
+        **kwargs,
     )
-    ax.grid(False)
+
+    # Add cohort-specific styling
+    if percentage:
+        # 1. Update colorbar format for percentages
+        cbar = ax.figure.axes[-1]  # Get the colorbar axes
+        cbar.yaxis.set_major_formatter(ticker.PercentFormatter(1.0))
+
+        # 2. Update cell text to show percentages
+        for text in ax.texts:
+            # Re-format text as percentage
+            value = float(text.get_text())
+            text.set_text(f"{value:.0%}")
+
+    # 3. Add cohort-specific horizontal line
     ax.hlines(y=3 - 0.5, xmin=-0.5, xmax=df.shape[1] - 0.5, color="white", linewidth=4)
 
-    if source_text:
-        gu.add_source_text(ax=ax, source_text=source_text)
-
-    return gu.standard_tick_styles(ax)
+    return ax

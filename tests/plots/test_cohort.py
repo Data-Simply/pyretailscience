@@ -107,3 +107,80 @@ def test_plot_cohort_with_figsize(sample_cohort_dataframe):
     assert isinstance(result_ax, Axes)
     assert result_ax.figure.get_size_inches()[0] == width
     assert result_ax.figure.get_size_inches()[1] == height
+
+
+@pytest.mark.parametrize("percentage", [True, False])
+def test_plot_cohort_percentage_formatting(percentage):
+    """Test cohort plot percentage formatting comprehensively."""
+    data = np.array([[0.5, 0.3], [0.8, 0.6]])
+    df = pd.DataFrame(data, columns=["Month 1", "Month 2"], index=["Cohort A", "Cohort B"])
+
+    result_ax = cohort.plot(df=df, cbar_label="Retention Rate", percentage=percentage)
+
+    assert len(result_ax.texts) > 0, "Should have cell text elements"
+    texts = result_ax.texts
+
+    if percentage:
+        assert any("%" in text.get_text() for text in texts), "Should have percentage formatting"
+        # Check specific formatting (50% not 0.50)
+        text_values = [text.get_text() for text in texts]
+        # At least one should be a proper percentage format like "50%" not "0.50"
+        proper_percentage_found = any("%" in val and not val.startswith("0.") for val in text_values)
+        assert proper_percentage_found, f"Expected proper percentage format, got: {text_values}"
+    else:
+        assert all("%" not in text.get_text() for text in texts), "Should not have percentage formatting"
+
+
+def test_cohort_horizontal_line_exists(sample_cohort_dataframe):
+    """Verify cohort-specific horizontal line is drawn."""
+    result_ax = cohort.plot(df=sample_cohort_dataframe, cbar_label="Retention Rate")
+
+    # Check that horizontal lines exist
+    # hlines() creates LineCollections, not Line2D objects
+    collections = result_ax.collections
+    line_collections = [col for col in collections if hasattr(col, "get_segments")]
+    assert len(line_collections) > 0, "Cohort plot should have horizontal line collection"
+
+
+@pytest.mark.parametrize(
+    ("shape", "description"),
+    [
+        ((2, 4), "line outside data"),
+        ((3, 4), "line at hardcoded position"),
+        ((10, 4), "line in middle of data"),
+    ],
+)
+def test_cohort_with_different_row_counts(shape, description):
+    """Test cohort horizontal line with DataFrames of different sizes."""
+    rows, cols = shape
+    df = pd.DataFrame(
+        np.ones(shape),
+        columns=[f"M{i + 1}" for i in range(cols)],
+        index=[f"C{i + 1}" for i in range(rows)],
+    )
+    result_ax = cohort.plot(df=df, cbar_label="Rate")
+
+    assert isinstance(result_ax, Axes), f"Should create valid plot for {description}"
+    # Should always have horizontal line (even if outside visible area)
+    collections = result_ax.collections
+    line_collections = [col for col in collections if hasattr(col, "get_segments")]
+    assert len(line_collections) > 0, f"Should have horizontal line for {description}"
+
+
+def test_cohort_horizontal_line_position():
+    """Verify horizontal line is at correct y-position."""
+    df = pd.DataFrame(np.ones((6, 4)))
+    result_ax = cohort.plot(df=df, cbar_label="Rate")
+
+    # Get line collections
+    line_collections = [col for col in result_ax.collections if hasattr(col, "get_segments")]
+    assert len(line_collections) > 0
+
+    # Verify line position (should be at y=2.5 for hardcoded value 3)
+    segments = line_collections[0].get_segments()
+    assert len(segments) > 0, "Line collection should have segments"
+
+    # Check that line y-coordinate is 2.5 (hardcoded as y=3-0.5 in cohort.py:85)
+    y_position = segments[0][0][1]  # First segment, first point, y-coordinate
+    expected_y_position = 2.5
+    assert y_position == expected_y_position, f"Expected line at y={expected_y_position}, got y={y_position}"
