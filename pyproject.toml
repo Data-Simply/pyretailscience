@@ -1,5 +1,6 @@
 [project]
 dependencies = [
+    "adjustText>=1.0.0,<2",
     "duckdb>=1.0.0,<2",
     "graphviz>=0.20.3,<0.21",
     "ibis-framework[duckdb]>=10.0.0,<11",
@@ -10,6 +11,7 @@ dependencies = [
     "pyarrow>=16.0.0,<17",
     "scikit-learn>=1.4.2,<2",
     "scipy>=1.13.0,<2",
+    "textalloc>=1.2.1",
     "toml>=0.10.2,<0.11",
     "tqdm>=4.66.1,<5",
 ]
