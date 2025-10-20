@@ -176,6 +176,9 @@ class AIDSEstimator:
             enforce_constraints (bool, optional): Whether to enforce adding-up, homogeneity,
                 and symmetry constraints. Should always be True for valid economic interpretation.
                 Defaults to True.
+            restricted (bool, optional): Whether to use restricted estimation (drop-one equation
+                with price differences) that enforces homogeneity by construction. If False, uses
+                unrestricted OLS. Defaults to True.
 
         Raises:
             ValueError: If required columns are missing from the dataframe.
@@ -366,7 +369,7 @@ class AIDSEstimator:
         pred_shares += self.alpha.reshape(1, -1)
 
         # Add gamma * log_prices term
-        pred_shares += (log_prices_wide.values @ self.gamma.T)
+        pred_shares += log_prices_wide.values @ self.gamma.T
 
         # Add beta * log_real_expenditure term
         pred_shares += log_real_expenditure.values.reshape(-1, 1) @ self.beta.reshape(1, -1)
@@ -391,8 +394,7 @@ class AIDSEstimator:
                 weights = self._weights_override.loc[shares_wide.index, self.products]
             else:
                 weights = shares_wide
-            result = (weights * log_prices_wide).sum(axis=1)
-            return result
+            return (weights * log_prices_wide).sum(axis=1)
 
         if self.price_index_method == "laspeyres":
             # Laspeyres price index: base period weighted
@@ -420,8 +422,7 @@ class AIDSEstimator:
 
             # Tornqvist: weighted average of log prices using budget shares
             # P = exp(sum_k w_k * log p_k) where w_k are the share weights
-            result = (weights * log_prices_wide).sum(axis=1)
-            return result
+            return (weights * log_prices_wide).sum(axis=1)
 
         msg = f"Invalid price index method: {self.price_index_method}"
         raise ValueError(msg)
@@ -524,7 +525,7 @@ class AIDSEstimator:
         gamma = np.zeros((n, n))
 
         # For each kept equation i, regress share_i on price differences (log p_j - log p_base) for j != base, and log_real_expenditure
-        for i, product in enumerate(kept_products):
+        for _i, product in enumerate(kept_products):
             y = shares_wide[product].rename("budget_share_y")
             # Compute price differences with index alignment: log p_j - log p_base
             price_diffs = log_prices_wide[kept_products].sub(log_prices_wide[base_product], axis=0)
@@ -560,7 +561,7 @@ class AIDSEstimator:
         alpha[base_row] = 1.0 - np.sum(alpha[[self.products.index(p) for p in kept_products]])
         beta[base_row] = -np.sum(beta[[self.products.index(p) for p in kept_products]])
         # Use symmetry to fill base row from base column for off-diagonals
-        for j, prod_j in enumerate(kept_products):
+        for _j, prod_j in enumerate(kept_products):
             j_idx = self.products.index(prod_j)
             gamma[base_row, j_idx] = gamma[j_idx, base_row]
         # Final element to satisfy homogeneity in base row
@@ -602,7 +603,6 @@ class AIDSEstimator:
 
         # For gamma: enforce both row and column sums equal zero exactly
         # while preserving symmetry via double-centering.
-        # gamma_dc = gamma - rowMean - colMean + overallMean
         row_mean = gamma.mean(axis=1, keepdims=True)
         col_mean = gamma.mean(axis=0, keepdims=True)
         overall_mean = gamma.mean()
@@ -627,8 +627,7 @@ class AIDSEstimator:
         """
         row_sums = gamma.sum(axis=1, keepdims=True)
         # Subtract equal share of the row sum across each row to enforce zero sum
-        gamma_adjusted = gamma - row_sums / self.n_products
-        return gamma_adjusted
+        return gamma - row_sums / self.n_products
 
     def _enforce_symmetry(self, gamma: np.ndarray) -> np.ndarray:
         """Enforce Slutsky symmetry constraint.
@@ -702,7 +701,7 @@ class AIDSEstimator:
 
         return alpha, beta, gamma
 
-    def fit(self, verbose: bool = False) -> "AIDSEstimator":
+    def fit(self, verbose: bool = False) -> "AIDSEstimator":  # noqa: C901
         """Estimate AIDS model using Iterative Linear Least Squares (ILLE).
 
         The ILLE algorithm:
@@ -727,14 +726,16 @@ class AIDSEstimator:
         self.gamma = np.zeros((self.n_products, self.n_products))
 
         if verbose:
-            print(f"\n{'='*80}")
-            print(f"AIDS ESTIMATION: {self.price_index_method.upper()} INDEX, {'RESTRICTED' if self.restricted else 'UNRESTRICTED'}")
-            print(f"{'='*80}\n")
+            print(f"\n{'=' * 80}")  # noqa: T201
+            print(  # noqa: T201
+                f"AIDS ESTIMATION: {self.price_index_method.upper()} INDEX, {'RESTRICTED' if self.restricted else 'UNRESTRICTED'}",
+            )
+            print(f"{'=' * 80}\n")  # noqa: T201
 
         for iteration in range(self.max_iterations):
             if verbose:
-                print(f"Iteration {iteration + 1}/{self.max_iterations}")
-                print(f"{'-'*80}")
+                print(f"Iteration {iteration + 1}/{self.max_iterations}")  # noqa: T201
+                print(f"{'-' * 80}")  # noqa: T201
 
             # Store previous parameters for convergence check
             alpha_old = self.alpha.copy()
@@ -748,11 +749,11 @@ class AIDSEstimator:
                 self.alpha, self.beta, self.gamma = self._estimate_unrestricted()
 
             if verbose:
-                print(f"  After estimation (before constraints):")
-                print(f"    Alpha: {self.alpha}")
-                print(f"    Beta: {self.beta}")
-                print(f"    Gamma row sums: {self.gamma.sum(axis=1)}")
-                print(f"    Gamma symmetry max diff: {np.max(np.abs(self.gamma - self.gamma.T)):.6e}")
+                print("  After estimation (before constraints):")  # noqa: T201
+                print(f"    Alpha: {self.alpha}")  # noqa: T201
+                print(f"    Beta: {self.beta}")  # noqa: T201
+                print(f"    Gamma row sums: {self.gamma.sum(axis=1)}")  # noqa: T201
+                print(f"    Gamma symmetry max diff: {np.max(np.abs(self.gamma - self.gamma.T)):.6e}")  # noqa: T201
 
             # Update price index weights with fitted shares for IL methods
             if self.price_index_method in ("stone", "tornqvist"):
@@ -768,7 +769,7 @@ class AIDSEstimator:
                 self.df["log_real_expenditure"] = self.df["log_expenditure"] - self.df["log_price_index"]
 
                 if verbose and self.price_index_method == "tornqvist":
-                    print(f"  Tornqvist IL: Updated weights with fitted shares")
+                    print("  Tornqvist IL: Updated weights with fitted shares")  # noqa: T201
 
             # Enforce constraints if required using iterative projection
             if self.enforce_constraints:
@@ -779,12 +780,12 @@ class AIDSEstimator:
                 )
 
                 if verbose:
-                    print(f"  After constraint enforcement:")
-                    print(f"    Alpha sum: {self.alpha.sum():.6f} (should be 1.0)")
-                    print(f"    Beta sum: {self.beta.sum():.6e} (should be 0.0)")
-                    print(f"    Gamma col sums: {self.gamma.sum(axis=0)}")
-                    print(f"    Gamma row sums: {self.gamma.sum(axis=1)}")
-                    print(f"    Gamma symmetry max diff: {np.max(np.abs(self.gamma - self.gamma.T)):.6e}")
+                    print("  After constraint enforcement:")  # noqa: T201
+                    print(f"    Alpha sum: {self.alpha.sum():.6f} (should be 1.0)")  # noqa: T201
+                    print(f"    Beta sum: {self.beta.sum():.6e} (should be 0.0)")  # noqa: T201
+                    print(f"    Gamma col sums: {self.gamma.sum(axis=0)}")  # noqa: T201
+                    print(f"    Gamma row sums: {self.gamma.sum(axis=1)}")  # noqa: T201
+                    print(f"    Gamma symmetry max diff: {np.max(np.abs(self.gamma - self.gamma.T)):.6e}")  # noqa: T201
 
             # Check convergence
             alpha_change = np.max(np.abs(self.alpha - alpha_old))
@@ -795,17 +796,17 @@ class AIDSEstimator:
             self.iterations = iteration + 1
 
             if verbose:
-                print(f"  Parameter changes:")
-                print(f"    Alpha: {alpha_change:.6e}")
-                print(f"    Beta: {beta_change:.6e}")
-                print(f"    Gamma: {gamma_change:.6e}")
-                print(f"    Max change: {max_change:.6e} (tolerance: {self.convergence_tolerance:.6e})")
-                print()
+                print("  Parameter changes:")  # noqa: T201
+                print(f"    Alpha: {alpha_change:.6e}")  # noqa: T201
+                print(f"    Beta: {beta_change:.6e}")  # noqa: T201
+                print(f"    Gamma: {gamma_change:.6e}")  # noqa: T201
+                print(f"    Max change: {max_change:.6e} (tolerance: {self.convergence_tolerance:.6e})")  # noqa: T201
+                print()  # noqa: T201
 
             if max_change < self.convergence_tolerance:
                 self.converged = True
                 if verbose:
-                    print(f"[CONVERGED] in {self.iterations} iterations\n")
+                    print(f"[CONVERGED] in {self.iterations} iterations\n")  # noqa: T201
                 break
 
         if not self.converged:
