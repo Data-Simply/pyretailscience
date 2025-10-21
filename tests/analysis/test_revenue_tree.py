@@ -43,6 +43,23 @@ class TestRevenueTree:
             RevenueTree(df=df, period_col="period", p1_value="P1", p2_value="P2", group_col="group_id")
         assert "The following columns are required but missing:" in str(excinfo.value)
 
+    def test_dataframe_missing_group_cols_list(self, cols: ColumnHelper):
+        """Test that an error is raised when the DataFrame is missing group_col columns from a list."""
+        data = {
+            cols.customer_id: [1, 2, 3],
+            cols.transaction_id: [1, 2, 3],
+            cols.unit_spend: [100, 200, 300],
+            cols.transaction_date: ["2023-01-01", "2023-06-02", "2023-01-03"],
+            "period": ["P1", "P2", "P1"],
+            "region": ["North", "South", "North"],
+        }
+        df = pd.DataFrame(data)
+
+        with pytest.raises(ValueError) as excinfo:
+            RevenueTree(df=df, period_col="period", p1_value="P1", p2_value="P2", group_col=["region", "store"])
+        assert "The following columns are required but missing:" in str(excinfo.value)
+        assert "store" in str(excinfo.value)
+
     @pytest.mark.parametrize("include_quantity", [True, False])
     def test_agg_data_no_group(self, cols: ColumnHelper, include_quantity: bool):
         """Test the _agg_data method with no group_col."""
@@ -127,7 +144,7 @@ class TestRevenueTree:
             period_col="period",
             p1_value="P1",
             p2_value="P2",
-            group_col="group_id",
+            group_col=["group_id"],
         )
 
         pd.testing.assert_frame_equal(result_df, expected_df)
@@ -253,7 +270,7 @@ class TestRevenueTree:
             period_col="period",
             p1_value="P1",
             p2_value="P2",
-            group_col="group_id",
+            group_col=["group_id"],
         )
 
         pd.testing.assert_frame_equal(result_df, expected_df)
@@ -437,3 +454,89 @@ class TestRevenueTree:
 
             for col in expected_columns:
                 assert col in rt.df.columns, f"Expected column {col} missing from output"
+
+    @pytest.mark.parametrize("include_quantity", [True, False])
+    def test_agg_data_with_multi_group_cols(self, cols: ColumnHelper, include_quantity: bool):
+        """Test the _agg_data method with multiple group columns."""
+        df = pd.DataFrame(
+            {
+                "region": ["North", "North", "North", "South", "South", "South"],
+                "store": ["A", "A", "A", "B", "B", "B"],
+                cols.customer_id: [1, 2, 3, 4, 5, 6],
+                cols.transaction_id: [1, 2, 3, 4, 5, 6],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+                cols.transaction_date: [
+                    "2023-01-01",
+                    "2023-01-05",
+                    "2023-01-03",
+                    "2023-01-06",
+                    "2023-01-02",
+                    "2023-01-04",
+                ],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2"],
+            },
+        )
+
+        if include_quantity:
+            df[cols.unit_qty] = [1, 2, 3, 4, 5, 6]
+
+        result_df, new_p1_index, new_p2_index = RevenueTree._agg_data(
+            df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col=["region", "store"],
+        )
+
+        # Verify MultiIndex structure
+        assert isinstance(result_df.index, pd.MultiIndex)
+        assert result_df.index.names == ["region", "store"]
+        expected_num_index_levels = 2
+        assert len(result_df.index.levels) == expected_num_index_levels
+
+        # Verify data
+        expected_num_rows = 4  # 2 groups * 2 periods
+        assert len(result_df) == expected_num_rows
+        assert new_p1_index == [True, True, False, False]
+        assert new_p2_index == [False, False, True, True]
+
+        # Verify aggregations are correct
+        assert result_df[cols.agg_customer_id].tolist() == [2, 1, 1, 2]
+        assert result_df[cols.agg_transaction_id].tolist() == [2, 1, 1, 2]
+        assert result_df[cols.agg_unit_spend].tolist() == [400.0, 500.0, 200.0, 1000.0]
+
+        if include_quantity:
+            assert result_df[cols.agg_unit_qty].tolist() == [4, 5, 2, 10]
+
+    def test_revenue_tree_with_multi_group_cols(self, cols: ColumnHelper):
+        """Test RevenueTree end-to-end with multiple group columns."""
+        df = pd.DataFrame(
+            {
+                "region": ["North", "North", "South", "South"],
+                "store": ["A", "A", "B", "B"],
+                cols.customer_id: [1, 2, 3, 4],
+                cols.transaction_id: [1, 2, 3, 4],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0],
+                "period": ["P1", "P2", "P1", "P2"],
+            },
+        )
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col=["region", "store"],
+        )
+
+        # Verify MultiIndex
+        assert isinstance(rt.df.index, pd.MultiIndex)
+        assert rt.df.index.names == ["region", "store"]
+        expected_num_combinations = 2
+        assert len(rt.df) == expected_num_combinations  # 2 unique combinations
+
+        # Verify we have all the expected columns
+        assert cols.agg_customer_id_p1 in rt.df.columns
+        assert cols.agg_customer_id_p2 in rt.df.columns
+        assert cols.agg_unit_spend_p1 in rt.df.columns
+        assert cols.agg_unit_spend_p2 in rt.df.columns
