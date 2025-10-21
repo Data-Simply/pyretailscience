@@ -147,6 +147,10 @@ class TestRevenueTree:
             group_col=["group_id"],
         )
 
+        # Verify single column produces CategoricalIndex, not MultiIndex
+        assert isinstance(result_df.index, pd.CategoricalIndex)
+        assert not isinstance(result_df.index, pd.MultiIndex)
+
         pd.testing.assert_frame_equal(result_df, expected_df)
         assert new_p1_index == [True, True, False, False]
         assert new_p2_index == [False, False, True, True]
