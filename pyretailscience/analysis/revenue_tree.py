@@ -211,7 +211,7 @@ class RevenueTree:
         period_col: str,
         p1_value: str,
         p2_value: str,
-        group_col: str | None = None,
+        group_col: str | list[str] | None = None,
     ) -> None:
         """Initialize the Revenue Tree Analysis Class.
 
@@ -220,12 +220,25 @@ class RevenueTree:
             period_col (str): The column representing the period.
             p1_value (str): The value representing the first period.
             p2_value (str): The value representing the second period.
-            group_col (str, optional): The column to group the data by. Defaults to None.
+            group_col (str | list[str] | None, optional): The column(s) to group the data by. Can be a single
+                column name (str) or a list of column names (list[str]). Defaults to None.
 
         Raises:
             ValueError: If the required columns are not present in the DataFrame.
+
+        Examples:
+            Single column grouping:
+                tree = RevenueTree(df, period_col="year", p1_value="2023", p2_value="2024", group_col="store")
+
+            Multi-column grouping:
+                tree = RevenueTree(df, period_col="year", p1_value="2023", p2_value="2024",
+                                   group_col=["region", "store"])
         """
         cols = ColumnHelper()
+
+        # Normalize group_col: str -> list[str], None -> None, list[str] -> list[str]
+        if isinstance(group_col, str):
+            group_col = [group_col]
 
         required_cols = [
             cols.customer_id,
@@ -236,7 +249,7 @@ class RevenueTree:
             required_cols.append(cols.unit_qty)
 
         if group_col is not None:
-            required_cols.append(group_col)
+            required_cols.extend(group_col)
 
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
@@ -257,8 +270,20 @@ class RevenueTree:
         period_col: str,
         p1_value: str,
         p2_value: str,
-        group_col: str | None = None,
+        group_col: list[str] | None = None,
     ) -> tuple[pd.DataFrame, list[bool], list[bool]]:
+        """Aggregate data by period and optional grouping columns.
+
+        Args:
+            df (pd.DataFrame | ibis.Table): Input DataFrame or ibis Table.
+            period_col (str): Column name for the period.
+            p1_value (str): Value representing period 1.
+            p2_value (str): Value representing period 2.
+            group_col (list[str] | None, optional): List of column names to group by. Defaults to None.
+
+        Returns:
+            tuple[pd.DataFrame, list[bool], list[bool]]: Aggregated DataFrame and boolean indices for p1 and p2.
+        """
         cols = ColumnHelper()
 
         if isinstance(df, pd.DataFrame):
@@ -272,7 +297,7 @@ class RevenueTree:
         if cols.unit_qty in df.columns:
             aggs[cols.agg_unit_qty] = df[cols.unit_qty].sum()
 
-        group_by_cols = [group_col, period_col] if group_col else [period_col]
+        group_by_cols = [*group_col, period_col] if group_col else [period_col]
         df = pd.DataFrame(df.group_by(group_by_cols).aggregate(**aggs).execute())
         p1_df = df[df[period_col] == p1_value].drop(columns=[period_col])
         p2_df = df[df[period_col] == p2_value].drop(columns=[period_col])
@@ -290,7 +315,9 @@ class RevenueTree:
             result_df.index = ["p1", "p2"]
         else:
             result_df.set_index(group_col, inplace=True)
-            result_df.index = pd.CategoricalIndex(result_df.index)
+            if len(group_col) == 1:
+                result_df.index = pd.CategoricalIndex(result_df.index)
+            # else: MultiIndex created automatically by set_index
         return result_df, new_p1_index, new_p2_index
 
     @staticmethod
