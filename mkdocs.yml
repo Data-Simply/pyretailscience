@@ -41,6 +41,7 @@ nav:
           - Broken Timeline Plot: api/plots/broken_timeline.md
           - Cohort Plot: api/plots/cohort.md
           - Histogram Plot: api/plots/histogram.md
+          - Heatmap Plot: api/plots/heatmap.md
           - Index Plot: api/plots/index.md
           - Line Plot: api/plots/line.md
           - Period On Period Plot: api/plots/period_on_period.md
