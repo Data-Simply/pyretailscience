@@ -203,7 +203,7 @@ def reduce_dimensions(
     max_components = min(n_samples, n_features) - 1
 
     if n_components > max_components:
-        msg = f"n_components ({n_components}) must be less than or equal to min(n_samples, n_features) - 1 ({max_components})"
+        msg = f"n_components ({n_components}) must be at most min(n_samples, n_features) - 1 ({max_components})"
         raise ValueError(msg)
 
     svd = TruncatedSVD(n_components=n_components, random_state=random_state)
