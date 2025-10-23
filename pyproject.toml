@@ -10,6 +10,7 @@ dependencies = [
     "pyarrow>=16.0.0,<17",
     "scikit-learn>=1.4.2,<2",
     "scipy>=1.13.0,<2",
+    "textalloc>=1.2.1",
     "toml>=0.10.2,<0.11",
     "tqdm>=4.66.1,<5",
 ]
@@ -27,7 +28,6 @@ name  = "Murray Vanwyk"
 dev = [
     "freezegun>=1.5.1,<2",
     "ibis-framework[bigquery,pyspark]>=10.0.0,<11",
-
     "nbstripout>=0.7.1,<0.8",
     "pre-commit>=3.6.2,<4",
     "pytest-cov>=4.1.0,<5",
