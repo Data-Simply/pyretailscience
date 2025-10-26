@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pytest
 
 from pyretailscience.plots.styles.tailwind import COLORS
-from pyretailscience.plots.tree_diagram import BaseRoundedBox, SimpleTreeNode, TreeNode
+from pyretailscience.plots.tree_diagram import BaseRoundedBox, SimpleTreeNode, TreeGrid, TreeNode
 
 
 @pytest.fixture(autouse=True)
@@ -311,3 +311,158 @@ class TestSimpleTreeNodeIntegration:
             facecolor = data_box.get_facecolor()
             hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
             assert hex_color == expected_colors[i]
+
+
+class TestTreeGrid:
+    """Test the TreeGrid class."""
+
+    def test_complete_tree_rendering(self):
+        """Test rendering a complete 5-node tree with connections."""
+        # Create a 5-node tree: root with 2 children, each with 1 child
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "position": (1, 2),
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "position": (0, 1),
+                "children": ["grandchild1"],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "position": (2, 1),
+                "children": ["grandchild2"],
+            },
+            "grandchild1": {
+                "header": "Grandchild 1",
+                "percent": 2.0,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "position": (0, 0),
+                "children": [],
+            },
+            "grandchild2": {
+                "header": "Grandchild 2",
+                "percent": 4.0,
+                "value1": "$25K",
+                "value2": "$24K",
+                "position": (2, 0),
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=3,
+            num_cols=3,
+            node_class=SimpleTreeNode,
+        )
+
+        ax = grid.render()
+
+        # 5 nodes * 2 patches per SimpleTreeNode = 10 patches + 4 connection lines
+        patches_per_node = 2
+        num_nodes = 5
+        num_connections = 4
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
+
+    def test_axes_management_with_provided_ax(self, ax):
+        """Test that TreeGrid uses provided axes."""
+        tree_structure = {
+            "node1": {
+                "header": "Node 1",
+                "percent": 1.0,
+                "value1": "$10K",
+                "value2": "$9.9K",
+                "position": (0, 0),
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=1,
+            num_cols=1,
+            node_class=SimpleTreeNode,
+        )
+
+        returned_ax = grid.render(ax=ax)
+        assert returned_ax is ax
+
+    def test_single_node_tree(self):
+        """Test rendering a single node tree with no connections."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "position": (0, 0),
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=1,
+            num_cols=1,
+            node_class=SimpleTreeNode,
+        )
+
+        ax = grid.render()
+
+        # 1 node * 2 patches = 2 patches, no connection lines
+        patches_per_node = 2
+        assert len(ax.patches) == patches_per_node
+
+    def test_wide_tree(self):
+        """Test rendering a wide tree with 1 parent and 5 children."""
+        tree_structure = {
+            "parent": {
+                "header": "Parent",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "position": (2, 1),
+                "children": ["child0", "child1", "child2", "child3", "child4"],
+            },
+        }
+
+        # Add 5 children
+        for i in range(5):
+            tree_structure[f"child{i}"] = {
+                "header": f"Child {i}",
+                "percent": 2.0,
+                "value1": "$20K",
+                "value2": "$19.6K",
+                "position": (i, 0),
+                "children": [],
+            }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=2,
+            num_cols=5,
+            node_class=SimpleTreeNode,
+        )
+
+        ax = grid.render()
+
+        # 6 nodes * 2 patches = 12 patches + 5 connection lines
+        patches_per_node = 2
+        num_nodes = 6
+        num_connections = 5
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches

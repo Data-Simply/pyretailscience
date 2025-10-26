@@ -12,6 +12,7 @@ from typing import Any
 
 import graphviz
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.path import Path
@@ -488,3 +489,185 @@ class SimpleTreeNode(TreeNode):
             fontsize=styling_context.fonts.label_size,
             color=text_color,
         )
+
+
+class TreeGrid:
+    """Grid-based tree diagram renderer with configurable node types."""
+
+    def __init__(
+        self,
+        tree_structure: dict[str, dict],
+        num_rows: int,
+        num_cols: int,
+        node_class: type[TreeNode],
+        vertical_spacing: float | None = None,
+        horizontal_spacing: float | None = None,
+    ) -> None:
+        """Initialize the tree grid.
+
+        Args:
+            tree_structure: Dictionary mapping node IDs to node data with required keys
+                depending on the node_class being used.
+            num_rows: Number of rows in the grid.
+            num_cols: Number of columns in the grid.
+            node_class: The TreeNode subclass to use for rendering nodes.
+            vertical_spacing: Vertical spacing between rows. If None, automatically calculated as
+                node_height + 0.6 gap.
+            horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
+                node_width - 1.0 overlap for compact layout.
+
+        """
+        self.tree_structure = tree_structure
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.node_class = node_class
+
+        # Get node dimensions from the node class
+        self.node_width = node_class.NODE_WIDTH
+        self.node_height = node_class.NODE_HEIGHT
+
+        # Auto-calculate spacing if not provided
+        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
+        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width - 1.0
+
+        # Generate row and column positions
+        self.row = {i: i * self.vertical_spacing for i in range(num_rows)}
+        self.col = {i: i * self.horizontal_spacing for i in range(num_cols)}
+
+    def render(self, ax: Axes | None = None) -> Axes:
+        """Render the tree diagram.
+
+        Args:
+            ax: Optional matplotlib axes object. If None, creates a new figure and axes.
+
+        Returns:
+            The matplotlib axes object.
+
+        """
+        if ax is None:
+            # Calculate plot dimensions based on layout
+            plot_width = self.col[self.num_cols - 1] + self.node_width
+            plot_height = self.row[self.num_rows - 1] + self.node_height
+
+            _, ax = plt.subplots(figsize=(plot_width, plot_height))
+            ax.set_xlim(0, plot_width)
+            ax.set_ylim(0, plot_height)
+            ax.axis("off")
+
+        # First pass: create all nodes and store their centers
+        node_centers = {}
+        for node_id, node_data in self.tree_structure.items():
+            # Convert grid coordinates to absolute positions
+            col_idx, row_idx = node_data["position"]
+            x = self.col[col_idx]
+            y = self.row[row_idx]
+
+            # Extract data for the node (exclude position and children which are structural)
+            data_dict = {k: v for k, v in node_data.items() if k not in ("position", "children")}
+
+            # Create and render the node
+            node = self.node_class(
+                data=data_dict,
+                x=x,
+                y=y,
+            )
+            node.render(ax)
+
+            # Store center positions for connections
+            node_centers[node_id] = {
+                "x": x + self.node_width / 2,
+                "y_bottom": y,
+                "y_top": y + self.node_height,
+            }
+
+        # Second pass: draw connections
+        for node_id, node_data in self.tree_structure.items():
+            if "children" in node_data and len(node_data["children"]) > 0:
+                parent = node_centers[node_id]
+                for child_id in node_data["children"]:
+                    child = node_centers[child_id]
+                    self._draw_connection(
+                        ax=ax,
+                        x1=parent["x"],
+                        y1=parent["y_bottom"],
+                        x2=child["x"],
+                        y2=child["y_top"],
+                    )
+
+        return ax
+
+    @staticmethod
+    def _add_curve(
+        verts: list[tuple[float, float]],
+        codes: list[int],
+        x: float,
+        y: float,
+        x_offset: float,
+        y_offset: float,
+    ) -> None:
+        """Add Bezier curve control points to the path.
+
+        Args:
+            verts: List of vertices to append to.
+            codes: List of path codes to append to.
+            x: X-coordinate of the curve start point.
+            y: Y-coordinate of the curve start point.
+            x_offset: X offset for the curve end point.
+            y_offset: Y offset for the curve end point.
+
+        """
+        verts.append((x, y))
+        codes.append(Path.CURVE3)
+        verts.append((x + x_offset, y + y_offset))
+        codes.append(Path.CURVE3)
+
+    @staticmethod
+    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float) -> None:
+        """Draw connection line between nodes with curved corners.
+
+        Args:
+            ax: Matplotlib axes object.
+            x1: X-coordinate of first point.
+            y1: Y-coordinate of first point.
+            x2: X-coordinate of second point.
+            y2: Y-coordinate of second point.
+
+        """
+        # Connection styling constants
+        curve_radius = 0.15
+        line_width = 2
+        line_color = "black"
+
+        mid_y = (y1 + y2) / 2
+        curve_sign = 1 if x2 > x1 else -1
+
+        # Create path with curved corners using Bezier curves
+        verts = []
+        codes = []
+
+        # Start point (bottom of parent node)
+        verts.append((x1, y1))
+        codes.append(Path.MOVETO)
+
+        # Vertical line down to curve start
+        verts.append((x1, mid_y + curve_radius))
+        codes.append(Path.LINETO)
+
+        # Curve from vertical to horizontal (first corner)
+        TreeGrid._add_curve(verts, codes, x1, mid_y, curve_sign * curve_radius, 0)
+
+        # Horizontal line
+        verts.append((x2 - (curve_sign * curve_radius), mid_y))
+        codes.append(Path.LINETO)
+
+        # Curve from horizontal to vertical (second corner)
+        TreeGrid._add_curve(verts, codes, x2, mid_y, 0, -curve_radius)
+
+        # Vertical line up to child node
+        verts.append((x2, y2))
+        codes.append(Path.LINETO)
+
+        # Create and draw the path
+        path = Path(verts, codes)
+        patch = mpatches.PathPatch(path, facecolor="none", edgecolor=line_color, linewidth=line_width)
+        ax.add_patch(patch)
