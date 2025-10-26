@@ -31,13 +31,15 @@ class TestBaseRoundedBox:
 
     def test_box_creation_with_dimensions(self, ax):
         """Test that box is created with correct dimensions."""
-        box = BaseRoundedBox(xy=(0, 0), width=3.0, height=2.0)
+        x, y = 0.5, 1.0
+        width, height = 3.0, 2.0
+        box = BaseRoundedBox(xy=(x, y), width=width, height=height)
         ax.add_patch(box)
 
-        # Verify the box was created
-        assert box is not None
-        # Verify it's a patch
-        assert hasattr(box, "get_path")
+        # Verify the box dimensions via bounding box
+        bbox = box.get_path().get_extents()
+        assert bbox.width == pytest.approx(width, abs=0.01)
+        assert bbox.height == pytest.approx(height, abs=0.01)
 
     def test_box_positioning(self, ax):
         """Test that box is positioned at correct coordinates and bbox covers expected area."""
@@ -65,31 +67,22 @@ class TestBaseRoundedBox:
         assert box.get_linewidth() == linewidth
 
     def test_border_radius_top(self, ax):
-        """Test that top_radius affects the path correctly."""
-        box_with_radius = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.5, bottom_radius=0.0)
-        box_no_radius = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.0)
-
-        # Boxes with different radii should have different paths
-        assert len(box_with_radius.get_path().vertices) != len(box_no_radius.get_path().vertices)
-
-    def test_border_radius_bottom(self, ax):
-        """Test that bottom_radius affects the path correctly."""
-        box_with_radius = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.5)
-        box_no_radius = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.0)
-
-        # Boxes with different radii should have different paths
-        assert len(box_with_radius.get_path().vertices) != len(box_no_radius.get_path().vertices)
-
-    def test_rendering_to_axes(self, ax):
-        """Test that patch is added to axes.patches collection."""
-        initial_patch_count = len(ax.patches)
-
-        box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0)
+        """Test that top_radius creates correct number of vertices for rounded top corners."""
+        box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.5, bottom_radius=0.0)
         ax.add_patch(box)
 
-        # Verify the patch was added to the axes
-        assert len(ax.patches) == initial_patch_count + 1
-        assert box in ax.patches
+        # Top rounded (2 corners), bottom square (2 corners): 2 * 10 arc points + 2 straight points + 1 close
+        expected_vertices = 2 * self.ARC_POINTS_PER_CORNER + 2 + 1
+        assert len(box.get_path().vertices) == expected_vertices
+
+    def test_border_radius_bottom(self, ax):
+        """Test that bottom_radius creates correct number of vertices for rounded bottom corners."""
+        box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.5)
+        ax.add_patch(box)
+
+        # Bottom rounded (2 corners), top square (2 corners): 2 * 10 arc points + 2 straight points + 1 close
+        expected_vertices = 2 * self.ARC_POINTS_PER_CORNER + 2 + 1
+        assert len(box.get_path().vertices) == expected_vertices
 
     def test_zero_radius_creates_square_corners(self, ax):
         """Test that zero radius creates a box with square corners."""
