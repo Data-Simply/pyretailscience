@@ -7,8 +7,12 @@ reusable tree-based visualizations.
 
 import subprocess
 from textwrap import dedent
+from typing import Any
 
 import graphviz
+import matplotlib.patches as mpatches
+import numpy as np
+from matplotlib.path import Path
 
 from pyretailscience.plots.styles import graph_utils as gu
 from pyretailscience.plots.styles.tailwind import COLORS
@@ -171,3 +175,113 @@ class TreeDiagram:
                 "https://github.com/xflr6/graphviz?tab=readme-ov-file#installation",
             )
         return self.graph
+
+
+class BaseRoundedBox(mpatches.PathPatch):
+    """Base patch with independent corner rounding for top and bottom."""
+
+    def __init__(
+        self,
+        xy: tuple[float, float],
+        width: float,
+        height: float,
+        top_radius: float = 0.3,
+        bottom_radius: float = 0.3,
+        **kwargs: Any,  # noqa: ANN401
+    ) -> None:
+        """Initialize the custom rounded box.
+
+        Args:
+            xy: Bottom-left corner coordinates (x, y).
+            width: Width of the box.
+            height: Height of the box.
+            top_radius: Radius for top corners.
+            bottom_radius: Radius for bottom corners.
+            **kwargs: Additional keyword arguments for PathPatch.
+
+        """
+        x, y = xy
+
+        # Define the path with different corner radii
+        verts = []
+        codes = []
+
+        # Define corner configurations: (center_x, center_y, radius, start_angle, end_angle, fallback_point, is_first)
+        corners = [
+            # Bottom left corner
+            (x + bottom_radius, y + bottom_radius, bottom_radius, np.pi, 3 * np.pi / 2, (x, y), True),
+            # Bottom right corner
+            (
+                x + width - bottom_radius,
+                y + bottom_radius,
+                bottom_radius,
+                3 * np.pi / 2,
+                2 * np.pi,
+                (x + width, y),
+                False,
+            ),
+            # Top right corner
+            (x + width - top_radius, y + height - top_radius, top_radius, 0, np.pi / 2, (x + width, y + height), False),
+            # Top left corner
+            (x + top_radius, y + height - top_radius, top_radius, np.pi / 2, np.pi, (x, y + height), False),
+        ]
+
+        # Generate all corners
+        for center_x, center_y, radius, start_angle, end_angle, fallback_point, is_first in corners:
+            corner_verts, corner_codes = self._generate_corner(
+                center_x=center_x,
+                center_y=center_y,
+                radius=radius,
+                start_angle=start_angle,
+                end_angle=end_angle,
+                fallback_point=fallback_point,
+                is_first=is_first,
+            )
+            verts.extend(corner_verts)
+            codes.extend(corner_codes)
+
+        codes.append(Path.CLOSEPOLY)
+        verts.append((0, 0))
+
+        path = Path(verts, codes)
+        super().__init__(path, **kwargs)
+
+    @staticmethod
+    def _generate_corner(
+        center_x: float,
+        center_y: float,
+        radius: float,
+        start_angle: float,
+        end_angle: float,
+        fallback_point: tuple[float, float],
+        is_first: bool,
+    ) -> tuple[list[tuple[float, float]], list[int]]:
+        """Generate vertices and codes for a single corner.
+
+        Args:
+            center_x: X-coordinate of the corner's center.
+            center_y: Y-coordinate of the corner's center.
+            radius: Radius of the corner.
+            start_angle: Starting angle for the corner arc (in radians).
+            end_angle: Ending angle for the corner arc (in radians).
+            fallback_point: Point to use if radius is 0.
+            is_first: Whether this is the first corner (uses MOVETO instead of LINETO).
+
+        Returns:
+            Tuple of (vertices, codes) for this corner.
+
+        """
+        arc_points = 10  # Number of points to use for the corner arc
+
+        if radius > 0:
+            theta = np.linspace(start_angle, end_angle, arc_points)
+
+            verts = [(center_x + radius * np.cos(t), center_y + radius * np.sin(t)) for t in theta]
+            codes = [Path.MOVETO] + [Path.LINETO] * (arc_points - 1) if is_first else [Path.LINETO] * arc_points
+
+            return verts, codes
+
+        verts = [fallback_point]
+        codes = [Path.MOVETO if is_first else Path.LINETO]
+
+        return verts, codes
