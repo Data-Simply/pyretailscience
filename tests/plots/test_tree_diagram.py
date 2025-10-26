@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pytest
 
 from pyretailscience.plots.styles.tailwind import COLORS
-from pyretailscience.plots.tree_diagram import BaseRoundedBox, SimpleTreeNode, TreeGrid, TreeNode
+from pyretailscience.plots.tree_diagram import BaseRoundedBox, DetailedTreeNode, SimpleTreeNode, TreeGrid, TreeNode
 
 
 @pytest.fixture(autouse=True)
@@ -607,3 +607,188 @@ class TestTreeGrid:
                 num_cols=1,
                 node_class=SimpleTreeNode,
             )
+
+
+class TestDetailedTreeNode:
+    """Test the DetailedTreeNode class."""
+
+    def test_rendering_with_complete_data(self, ax):
+        """Test that DetailedTreeNode renders correctly with all required fields and default labels."""
+        node = DetailedTreeNode(
+            data={
+                "header": "Total Revenue",
+                "percent": 25.3,
+                "current_period": "£1,250,000",
+                "previous_period": "£998,400",
+                "diff": "+£251,600",
+                "contribution": "45.5%",
+            },
+            x=0.5,
+            y=0.8,
+        )
+        node.render(ax)
+
+        # DetailedTreeNode creates patches and separator lines
+        patches_per_node = 2  # Title box + data box
+        separator_lines = 2  # Title-data separator + divider line
+        assert len(ax.patches) == patches_per_node
+        assert len(ax.lines) == separator_lines
+
+        # Verify text content includes all data fields
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Total Revenue" in text_strings
+        assert "£1,250,000" in text_strings
+        assert "£998,400" in text_strings
+        assert "+£251,600" in text_strings
+        assert "45.5%" in text_strings
+        assert "25.3%" in text_strings  # Pct Diff row shows percent with formatting
+
+        # Verify default period labels are used when not provided
+        assert "Current Period" in text_strings
+        assert "Previous Period" in text_strings
+
+    @pytest.mark.parametrize(
+        ("percent", "expected_color_name"),
+        [
+            (25.3, "green"),  # Significant growth (percent >= 1.0)
+            (-15.7, "red"),  # Significant decline (percent <= -1.0)
+            (1.0, "green"),  # At green threshold
+            (-1.0, "red"),  # At red threshold
+            (0.5, "gray"),  # Neutral (between thresholds)
+        ],
+    )
+    def test_header_color_selection(self, ax, percent, expected_color_name):
+        """Test that header color is selected correctly based on percent change thresholds."""
+        node = DetailedTreeNode(
+            data={
+                "header": "Revenue Growth",
+                "percent": percent,
+                "current_period": "£850,000",
+                "previous_period": "£750,000",
+                "diff": "+£100,000",
+                "contribution": "32.1%",
+            },
+            x=0,
+            y=0,
+        )
+        node.render(ax)
+
+        # The title box (first patch) should have the color based on percent
+        title_box = ax.patches[0]
+        expected_color = COLORS[expected_color_name][500]
+
+        # Convert RGBA to hex for comparison
+        facecolor = title_box.get_facecolor()
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == expected_color
+
+    def test_period_label_customization(self, ax):
+        """Test that custom period labels override defaults when provided."""
+        node = DetailedTreeNode(
+            data={
+                "header": "Annual Sales",
+                "percent": 12.4,
+                "current_period": "£2.5M",
+                "previous_period": "£2.2M",
+                "diff": "+£300K",
+                "contribution": "55.2%",
+                "current_label": "2024",
+                "previous_label": "2023",
+            },
+            x=0,
+            y=0,
+        )
+        node.render(ax)
+
+        # Verify custom labels are present and defaults are not
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "2024" in text_strings
+        assert "2023" in text_strings
+        assert "Current Period" not in text_strings
+        assert "Previous Period" not in text_strings
+
+    @pytest.mark.parametrize(
+        "missing_key",
+        ["header", "percent", "current_period", "previous_period", "diff", "contribution"],
+    )
+    def test_missing_required_keys(self, ax, missing_key):
+        """Test that KeyError is raised when required keys are missing."""
+        data = {
+            "header": "Transaction Value",
+            "percent": 6.8,
+            "current_period": "£45.80",
+            "previous_period": "£42.90",
+            "diff": "+£2.90",
+            "contribution": "22.5%",
+        }
+        del data[missing_key]
+
+        node = DetailedTreeNode(data=data, x=0, y=0)
+
+        with pytest.raises(KeyError):
+            node.render(ax)
+
+
+class TestDetailedTreeNodeIntegration:
+    """Integration tests for DetailedTreeNode with TreeGrid."""
+
+    def test_tree_with_detailed_nodes(self):
+        """Test rendering a complete tree with DetailedTreeNode instances."""
+        tree_structure = {
+            "revenue": {
+                "header": "Total Revenue",
+                "percent": 15.3,
+                "current_period": "£1.2M",
+                "previous_period": "£1.04M",
+                "diff": "+£160K",
+                "contribution": "100%",
+                "position": (1, 2),
+                "children": ["customers", "avg_value"],
+            },
+            "customers": {
+                "header": "Customer Count",
+                "percent": -7.2,
+                "current_period": "8,540",
+                "previous_period": "9,200",
+                "diff": "-660",
+                "contribution": "35.8%",
+                "position": (0, 1),
+                "children": [],
+            },
+            "avg_value": {
+                "header": "Avg Customer Value",
+                "percent": 0.8,
+                "current_period": "£142.35",
+                "previous_period": "£141.22",
+                "diff": "+£1.13",
+                "contribution": "64.2%",
+                "position": (2, 1),
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=3,
+            num_cols=3,
+            node_class=DetailedTreeNode,
+        )
+
+        ax = grid.render()
+
+        # 3 nodes * 2 patches per DetailedTreeNode = 6 patches + 2 connection lines
+        patches_per_node = 2
+        num_nodes = 3
+        num_connections = 2
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
+
+        # Verify header colors: green (15.3%), red (-7.2%), gray (0.8%)
+        expected_color_names = ["green", "red", "gray"]
+        expected_colors = [COLORS[name][500] for name in expected_color_names]
+        title_boxes = [ax.patches[0], ax.patches[2], ax.patches[4]]  # Every other patch is a title box
+
+        for i, title_box in enumerate(title_boxes):
+            facecolor = title_box.get_facecolor()
+            hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+            assert hex_color == expected_colors[i]
