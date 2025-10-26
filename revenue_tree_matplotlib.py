@@ -1,8 +1,5 @@
 """Module for creating revenue tree diagrams using matplotlib."""
 
-from abc import ABC, abstractmethod
-from typing import Any
-
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -11,181 +8,7 @@ from matplotlib.path import Path
 
 from pyretailscience.plots.styles.styling_context import get_styling_context
 from pyretailscience.plots.styles.tailwind import COLORS
-from pyretailscience.plots.tree_diagram import BaseRoundedBox
-
-
-class TreeNode(ABC):
-    """Abstract base class for tree nodes."""
-
-    # Subclasses must define these class attributes
-    NODE_WIDTH: float
-    NODE_HEIGHT: float
-
-    def __init__(
-        self,
-        x: float,
-        y: float,
-        data: dict[str, Any],
-    ) -> None:
-        """Initialize the tree node.
-
-        Args:
-            x: X-coordinate of bottom-left corner.
-            y: Y-coordinate of bottom-left corner.
-            data: Dictionary containing node data. Each subclass defines required keys.
-
-        """
-        self.x = x
-        self.y = y
-        self._data = data
-
-    @abstractmethod
-    def render(self, ax: Axes) -> None:
-        """Render the node on the given axes.
-
-        Args:
-            ax: Matplotlib axes object to render on.
-
-        """
-        ...
-
-
-class SimpleTreeNode(TreeNode):
-    """Simple tree node implementation with header and data sections.
-
-    Required data keys:
-        header: str - The header text
-        percent: float - Percentage change value
-        value1: str - First value text
-        value2: str - Second value text
-    """
-
-    NODE_WIDTH = 3.0
-    NODE_HEIGHT = 1.2
-
-    @staticmethod
-    def _get_color(percent_change: float) -> str:
-        """Return color based on percent change thresholds.
-
-        Green if > 1%, Red if < -1%, Grey if between -1% and 1%.
-
-        Args:
-            percent_change: Percentage change value.
-
-        Returns:
-            Hex color code as string.
-
-        """
-        if percent_change > 1:
-            return COLORS["green"][500]
-        if percent_change < -1:
-            return COLORS["red"][500]
-        return COLORS["gray"][500]
-
-    def render(self, ax: Axes) -> None:
-        """Render the node on the given axes.
-
-        Args:
-            ax: Matplotlib axes object to render on.
-
-        """
-        # Extract data from the data dict
-        header = self._data["header"]
-        percent = self._data["percent"]
-        value1 = self._data["value1"]
-        value2 = self._data["value2"]
-
-        # Styling constants
-        corner_radius = 0.15
-        header_height_ratio = 0.4
-        header_color = COLORS["blue"][800]  # "#1E3A8A"
-        text_color = "white"
-        value_vertical_offset = 0.1
-
-        # Positioning fractions
-        header_text_x_fraction = 1 / 2
-        percent_text_x_fraction = 4 / 16
-        value_text_x_fraction = 11 / 16
-
-        styling_context = get_styling_context()
-
-        # Get standard font properties
-        semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
-        regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
-
-        # Determine color based on percent change
-        color = self._get_color(percent)
-
-        # Header section
-        header_height = self.NODE_HEIGHT * header_height_ratio
-        header_box = BaseRoundedBox(
-            (self.x, self.y + self.NODE_HEIGHT - header_height),
-            self.NODE_WIDTH,
-            header_height,
-            top_radius=corner_radius,
-            bottom_radius=0,
-            facecolor=header_color,
-            edgecolor="none",
-            linewidth=0,
-        )
-        ax.add_patch(header_box)
-
-        # Data section
-        data_height = self.NODE_HEIGHT - header_height
-        data_box = BaseRoundedBox(
-            (self.x, self.y),
-            self.NODE_WIDTH,
-            data_height,
-            top_radius=0,
-            bottom_radius=corner_radius,
-            facecolor=color,
-            edgecolor="none",
-            linewidth=0,
-        )
-        ax.add_patch(data_box)
-
-        ax.text(
-            self.x + self.NODE_WIDTH * header_text_x_fraction,
-            self.y + self.NODE_HEIGHT - header_height / 2,
-            header,
-            ha="center",
-            va="center",
-            fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
-            color=text_color,
-        )
-
-        ax.text(
-            self.x + self.NODE_WIDTH * percent_text_x_fraction,
-            self.y + data_height / 2,
-            f"{percent:+.1f}%",
-            ha="center",
-            va="center",
-            fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.title_size,
-            color=text_color,
-        )
-
-        ax.text(
-            self.x + self.NODE_WIDTH * value_text_x_fraction,
-            self.y + data_height / 2 + value_vertical_offset,
-            value1,
-            ha="left",
-            va="center",
-            fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
-            color=text_color,
-        )
-        ax.text(
-            self.x + self.NODE_WIDTH * value_text_x_fraction,
-            self.y + data_height / 2 - value_vertical_offset,
-            value2,
-            ha="left",
-            va="center",
-            fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
-            color=text_color,
-        )
+from pyretailscience.plots.tree_diagram import BaseRoundedBox, SimpleTreeNode, TreeNode
 
 
 class DetailedTreeNode(TreeNode):
@@ -518,9 +341,9 @@ class TreeGrid:
 
             # Create and render the node
             node = self.node_class(
+                data=data_dict,
                 x=x,
                 y=y,
-                data=data_dict,
             )
             node.render(ax)
 

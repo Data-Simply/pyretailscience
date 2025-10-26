@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from pyretailscience.plots.tree_diagram import BaseRoundedBox
+from pyretailscience.plots.tree_diagram import BaseRoundedBox, SimpleTreeNode, TreeNode
 
 
 @pytest.fixture(autouse=True)
@@ -155,3 +155,123 @@ class TestBaseRoundedBox:
         assert box.get_edgecolor() == pytest.approx((0.0, 0.0, 0.0, expected_alpha))  # black with alpha
         assert box.get_linewidth() == expected_linewidth
         assert box.get_alpha() == expected_alpha
+
+
+class TestTreeNode:
+    """Test the TreeNode abstract base class."""
+
+    def test_cannot_instantiate_abstract_class(self):
+        """Test that TreeNode abstract class cannot be instantiated."""
+        with pytest.raises(TypeError):
+            TreeNode(data={}, x=0, y=0)
+
+
+class TestSimpleTreeNode:
+    """Test the SimpleTreeNode class."""
+
+    def test_rendering_with_valid_data(self, ax):
+        """Test that SimpleTreeNode renders correctly with valid data."""
+        node = SimpleTreeNode(
+            data={"header": "Total Sales", "percent": 5.0, "value1": "$100K", "value2": "$95K"},
+            x=0.5,
+            y=0.8,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and data box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (header, percent, value1, value2)
+        assert len(ax.texts) == initial_text_count + 4
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Total Sales" in text_strings
+        assert "+5.0%" in text_strings
+        assert "$100K" in text_strings
+        assert "$95K" in text_strings
+
+    @pytest.mark.parametrize(
+        ("percent", "expected_color"),
+        [
+            (5.0, "#22c55e"),  # green (percent > 1)
+            (-5.0, "#ef4444"),  # red (percent < -1)
+            (0.5, "#6b7280"),  # gray (-1 <= percent <= 1)
+        ],
+    )
+    def test_color_selection_based_on_percent(self, ax, percent, expected_color):
+        """Test that header color is selected correctly based on percent value."""
+        node = SimpleTreeNode(
+            data={"header": "Test", "percent": percent, "value1": "100", "value2": "95"},
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # The data box (second patch added) should have the color based on percent
+        data_box = ax.patches[-1]
+        # Convert RGBA to hex for comparison
+        facecolor = data_box.get_facecolor()
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == expected_color
+
+    @pytest.mark.parametrize(
+        "missing_key",
+        ["header", "percent", "value1", "value2"],
+    )
+    def test_missing_required_keys(self, ax, missing_key):
+        """Test that KeyError is raised when required keys are missing."""
+        data = {"header": "Test", "percent": 5.0, "value1": "100", "value2": "95"}
+        del data[missing_key]
+
+        node = SimpleTreeNode(data=data, x=0, y=0)
+
+        with pytest.raises(KeyError):
+            node.render(ax)
+
+
+class TestSimpleTreeNodeIntegration:
+    """Integration tests for SimpleTreeNode."""
+
+    def test_multiple_nodes_on_same_axes(self, ax):
+        """Test rendering multiple SimpleTreeNodes on the same axes."""
+        # Create 3 nodes at different positions with different percent values
+        node1 = SimpleTreeNode(
+            data={"header": "Sales", "percent": 10.0, "value1": "$110K", "value2": "$100K"},
+            x=0,
+            y=2,
+        )
+        node2 = SimpleTreeNode(
+            data={"header": "Cost", "percent": -5.0, "value1": "$95K", "value2": "$100K"},
+            x=4,
+            y=2,
+        )
+        node3 = SimpleTreeNode(
+            data={"header": "Margin", "percent": 0.5, "value1": "$15K", "value2": "$14.9K"},
+            x=2,
+            y=0,
+        )
+
+        node1.render(ax)
+        node2.render(ax)
+        node3.render(ax)
+
+        # Should have 6 patches total (2 per node)
+        patches_per_node = 2
+        num_nodes = 3
+        expected_patches = num_nodes * patches_per_node
+        assert len(ax.patches) == expected_patches
+
+        # Verify colors: green, red, gray
+        expected_colors = ["#22c55e", "#ef4444", "#6b7280"]
+        data_boxes = [ax.patches[1], ax.patches[3], ax.patches[5]]  # Every second patch is a data box
+
+        for i, data_box in enumerate(data_boxes):
+            facecolor = data_box.get_facecolor()
+            hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+            assert hex_color == expected_colors[i]
