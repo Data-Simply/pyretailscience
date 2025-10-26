@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import pytest
 
+from pyretailscience.plots.styles.tailwind import COLORS
 from pyretailscience.plots.tree_diagram import BaseRoundedBox, SimpleTreeNode, TreeNode
 
 
@@ -172,7 +173,12 @@ class TestSimpleTreeNode:
     def test_rendering_with_valid_data(self, ax):
         """Test that SimpleTreeNode renders correctly with valid data."""
         node = SimpleTreeNode(
-            data={"header": "Total Sales", "percent": 5.0, "value1": "$100K", "value2": "$95K"},
+            data={
+                "header": "Total Revenue",
+                "percent": 12.5,
+                "value1": "£1.2M",
+                "value2": "£1.07M",
+            },
             x=0.5,
             y=0.8,
         )
@@ -190,23 +196,30 @@ class TestSimpleTreeNode:
 
         # Verify text content
         text_strings = [t.get_text() for t in ax.texts]
-        assert "Total Sales" in text_strings
-        assert "+5.0%" in text_strings
-        assert "$100K" in text_strings
-        assert "$95K" in text_strings
+        assert "Total Revenue" in text_strings
+        assert "+12.5%" in text_strings
+        assert "£1.2M" in text_strings
+        assert "£1.07M" in text_strings
 
     @pytest.mark.parametrize(
-        ("percent", "expected_color"),
+        ("percent", "expected_color_name"),
         [
-            (5.0, "#22c55e"),  # green (percent > 1)
-            (-5.0, "#ef4444"),  # red (percent < -1)
-            (0.5, "#6b7280"),  # gray (-1 <= percent <= 1)
+            (12.5, "green"),  # Significant growth (percent >= 1.0)
+            (-8.3, "red"),  # Significant decline (percent <= -1.0)
+            (1.0, "green"),  # At green threshold (percent == 1.0)
+            (-1.0, "red"),  # At red threshold (percent == -1.0)
+            (0.5, "gray"),  # Neutral (between thresholds)
         ],
     )
-    def test_color_selection_based_on_percent(self, ax, percent, expected_color):
-        """Test that header color is selected correctly based on percent value."""
+    def test_color_selection_based_on_percent(self, ax, percent, expected_color_name):
+        """Test that data box color is selected correctly based on percent change thresholds."""
         node = SimpleTreeNode(
-            data={"header": "Test", "percent": percent, "value1": "100", "value2": "95"},
+            data={
+                "header": "Customer Frequency",
+                "percent": percent,
+                "value1": "£125.5K",
+                "value2": "£115.0K",
+            },
             x=0,
             y=0,
         )
@@ -215,6 +228,8 @@ class TestSimpleTreeNode:
 
         # The data box (second patch added) should have the color based on percent
         data_box = ax.patches[-1]
+        expected_color = COLORS[expected_color_name][500]
+
         # Convert RGBA to hex for comparison
         facecolor = data_box.get_facecolor()
         hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
@@ -226,7 +241,12 @@ class TestSimpleTreeNode:
     )
     def test_missing_required_keys(self, ax, missing_key):
         """Test that KeyError is raised when required keys are missing."""
-        data = {"header": "Test", "percent": 5.0, "value1": "100", "value2": "95"}
+        data = {
+            "header": "Average Basket Value",
+            "percent": 5.2,
+            "value1": "£45.80",
+            "value2": "£43.50",
+        }
         del data[missing_key]
 
         node = SimpleTreeNode(data=data, x=0, y=0)
@@ -239,20 +259,35 @@ class TestSimpleTreeNodeIntegration:
     """Integration tests for SimpleTreeNode."""
 
     def test_multiple_nodes_on_same_axes(self, ax):
-        """Test rendering multiple SimpleTreeNodes on the same axes."""
-        # Create 3 nodes at different positions with different percent values
+        """Test rendering multiple SimpleTreeNodes on the same axes with varied metrics."""
+        # Create 3 nodes representing a revenue tree hierarchy
         node1 = SimpleTreeNode(
-            data={"header": "Sales", "percent": 10.0, "value1": "$110K", "value2": "$100K"},
+            data={
+                "header": "Total Revenue",
+                "percent": 15.3,
+                "value1": "£1.2M",
+                "value2": "£1.04M",
+            },
             x=0,
             y=2,
         )
         node2 = SimpleTreeNode(
-            data={"header": "Cost", "percent": -5.0, "value1": "$95K", "value2": "$100K"},
+            data={
+                "header": "Customer Count",
+                "percent": -7.2,
+                "value1": "8,540",
+                "value2": "9,200",
+            },
             x=4,
             y=2,
         )
         node3 = SimpleTreeNode(
-            data={"header": "Margin", "percent": 0.5, "value1": "$15K", "value2": "$14.9K"},
+            data={
+                "header": "Avg Transaction",
+                "percent": 0.8,
+                "value1": "£42.35",
+                "value2": "£42.01",
+            },
             x=2,
             y=0,
         )
@@ -267,8 +302,9 @@ class TestSimpleTreeNodeIntegration:
         expected_patches = num_nodes * patches_per_node
         assert len(ax.patches) == expected_patches
 
-        # Verify colors: green, red, gray
-        expected_colors = ["#22c55e", "#ef4444", "#6b7280"]
+        # Verify colors: green (>= 1.0), red (<= -1.0), gray (between)
+        expected_color_names = ["green", "red", "gray"]
+        expected_colors = [COLORS[name][500] for name in expected_color_names]
         data_boxes = [ax.patches[1], ax.patches[3], ax.patches[5]]  # Every second patch is a data box
 
         for i, data_box in enumerate(data_boxes):

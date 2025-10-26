@@ -361,11 +361,15 @@ class SimpleTreeNode(TreeNode):
     NODE_WIDTH = 3.0
     NODE_HEIGHT = 1.2
 
+    # Color thresholds for percent change
+    GREEN_THRESHOLD = 1.0  # Percent change at or above this shows green
+    RED_THRESHOLD = -1.0  # Percent change at or below this shows red
+
     @staticmethod
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if > 1%, Red if < -1%, Grey if between -1% and 1%.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -374,9 +378,9 @@ class SimpleTreeNode(TreeNode):
             str: Hex color code as string.
 
         """
-        if percent_change > 1:
+        if percent_change >= SimpleTreeNode.GREEN_THRESHOLD:
             return COLORS["green"][500]
-        if percent_change < -1:
+        if percent_change <= SimpleTreeNode.RED_THRESHOLD:
             return COLORS["red"][500]
         return COLORS["gray"][500]
 
