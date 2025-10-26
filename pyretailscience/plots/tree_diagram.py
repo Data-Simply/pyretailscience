@@ -494,6 +494,11 @@ class SimpleTreeNode(TreeNode):
 class TreeGrid:
     """Grid-based tree diagram renderer with configurable node types."""
 
+    # Connection styling constants
+    CONNECTION_CURVE_RADIUS = 0.15
+    CONNECTION_LINE_WIDTH = 2
+    CONNECTION_LINE_COLOR = "black"
+
     def __init__(
         self,
         tree_structure: dict[str, dict],
@@ -516,7 +521,26 @@ class TreeGrid:
             horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
                 node_width - 1.0 overlap for compact layout.
 
+        Raises:
+            ValueError: If grid dimensions are not positive, if tree_structure is empty,
+                or if node positions are out of bounds.
+            TypeError: If node_class is not a TreeNode subclass.
+
         """
+        # Validate grid dimensions
+        if num_rows <= 0 or num_cols <= 0:
+            error_msg = f"Grid dimensions must be positive: num_rows={num_rows}, num_cols={num_cols}"
+            raise ValueError(error_msg)
+
+        # Validate node_class is a TreeNode subclass
+        if not issubclass(node_class, TreeNode):
+            error_msg = f"node_class must be a TreeNode subclass, got {node_class}"
+            raise TypeError(error_msg)
+
+        # Validate tree_structure is not empty
+        if not tree_structure:
+            raise ValueError("tree_structure cannot be empty")
+
         self.tree_structure = tree_structure
         self.num_rows = num_rows
         self.num_cols = num_cols
@@ -529,6 +553,20 @@ class TreeGrid:
         # Auto-calculate spacing if not provided
         self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
         self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width - 1.0
+
+        # Validate positions are within grid bounds
+        for node_id, node_data in tree_structure.items():
+            if "position" not in node_data:
+                error_msg = f"Node '{node_id}' is missing required 'position' key"
+                raise ValueError(error_msg)
+
+            col_idx, row_idx = node_data["position"]
+            if not (0 <= col_idx < num_cols):
+                error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
+                raise ValueError(error_msg)
+            if not (0 <= row_idx < num_rows):
+                error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
+                raise ValueError(error_msg)
 
         # Generate row and column positions
         self.row = {i: i * self.vertical_spacing for i in range(num_rows)}
@@ -585,6 +623,13 @@ class TreeGrid:
             if "children" in node_data and len(node_data["children"]) > 0:
                 parent = node_centers[node_id]
                 for child_id in node_data["children"]:
+                    if child_id not in node_centers:
+                        available_nodes = list(node_centers.keys())
+                        error_msg = (
+                            f"Child node '{child_id}' referenced by '{node_id}' not found in tree_structure. "
+                            f"Available nodes: {available_nodes}"
+                        )
+                        raise ValueError(error_msg)
                     child = node_centers[child_id]
                     self._draw_connection(
                         ax=ax,
@@ -633,10 +678,10 @@ class TreeGrid:
             y2: Y-coordinate of second point.
 
         """
-        # Connection styling constants
-        curve_radius = 0.15
-        line_width = 2
-        line_color = "black"
+        # Use class constants for connection styling
+        curve_radius = TreeGrid.CONNECTION_CURVE_RADIUS
+        line_width = TreeGrid.CONNECTION_LINE_WIDTH
+        line_color = TreeGrid.CONNECTION_LINE_COLOR
 
         mid_y = (y1 + y2) / 2
         curve_sign = 1 if x2 > x1 else -1

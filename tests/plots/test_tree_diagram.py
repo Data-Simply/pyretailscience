@@ -466,3 +466,151 @@ class TestTreeGrid:
         num_connections = 5
         expected_patches = num_nodes * patches_per_node + num_connections
         assert len(ax.patches) == expected_patches
+
+    def test_invalid_child_reference(self):
+        """Test that referencing a non-existent child raises ValueError."""
+        tree_structure = {
+            "total_revenue": {
+                "header": "Total Revenue",
+                "percent": 15.3,
+                "value1": "£1.2M",
+                "value2": "£1.04M",
+                "position": (0, 0),
+                "children": ["nonexistent_child"],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=1,
+            num_cols=1,
+            node_class=SimpleTreeNode,
+        )
+
+        with pytest.raises(ValueError, match="not found in tree_structure"):
+            grid.render()
+
+    def test_invalid_grid_dimensions(self):
+        """Test that invalid grid dimensions raise ValueError."""
+        tree_structure = {
+            "total_revenue": {
+                "header": "Total Revenue",
+                "percent": 8.5,
+                "value1": "£850K",
+                "value2": "£784K",
+                "position": (0, 0),
+                "children": [],
+            },
+        }
+
+        # Test negative rows
+        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                num_rows=-1,
+                num_cols=1,
+                node_class=SimpleTreeNode,
+            )
+
+        # Test zero columns
+        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                num_rows=1,
+                num_cols=0,
+                node_class=SimpleTreeNode,
+            )
+
+    def test_invalid_node_class(self):
+        """Test that invalid node_class raises TypeError."""
+        tree_structure = {
+            "customer_count": {
+                "header": "Customer Count",
+                "percent": 12.4,
+                "value1": "25,450",
+                "value2": "22,640",
+                "position": (0, 0),
+                "children": [],
+            },
+        }
+
+        with pytest.raises(TypeError, match="must be a TreeNode subclass"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                num_rows=1,
+                num_cols=1,
+                node_class=str,  # Not a TreeNode subclass
+            )
+
+    def test_empty_tree_structure(self):
+        """Test that empty tree_structure raises ValueError."""
+        with pytest.raises(ValueError, match="tree_structure cannot be empty"):
+            TreeGrid(
+                tree_structure={},
+                num_rows=1,
+                num_cols=1,
+                node_class=SimpleTreeNode,
+            )
+
+    def test_missing_position_key(self):
+        """Test that missing position key raises ValueError."""
+        tree_structure = {
+            "avg_basket": {
+                "header": "Average Basket Value",
+                "percent": 6.2,
+                "value1": "£45.80",
+                "value2": "£43.12",
+                # Missing 'position' key
+                "children": [],
+            },
+        }
+
+        with pytest.raises(ValueError, match="missing required 'position' key"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                num_rows=1,
+                num_cols=1,
+                node_class=SimpleTreeNode,
+            )
+
+    def test_out_of_bounds_position(self):
+        """Test that out of bounds positions raise ValueError."""
+        # Test column out of bounds (trying to use column 1 when only column 0 exists)
+        tree_structure = {
+            "transaction_freq": {
+                "header": "Transaction Frequency",
+                "percent": 4.8,
+                "value1": "3.2",
+                "value2": "3.05",
+                "position": (1, 0),  # Column 1 is out of bounds for 1 column grid (0-indexed)
+                "children": [],
+            },
+        }
+
+        with pytest.raises(ValueError, match="column index .* is out of bounds"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                num_rows=1,
+                num_cols=1,
+                node_class=SimpleTreeNode,
+            )
+
+        # Test row out of bounds (trying to use row 1 when only row 0 exists)
+        tree_structure = {
+            "items_per_basket": {
+                "header": "Items per Basket",
+                "percent": -2.3,
+                "value1": "4.8",
+                "value2": "4.9",
+                "position": (0, 1),  # Row 1 is out of bounds for 1 row grid (0-indexed)
+                "children": [],
+            },
+        }
+
+        with pytest.raises(ValueError, match="row index .* is out of bounds"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                num_rows=1,
+                num_cols=1,
+                node_class=SimpleTreeNode,
+            )
