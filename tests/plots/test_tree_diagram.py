@@ -613,7 +613,8 @@ class TestDetailedTreeNode:
     """Test the DetailedTreeNode class."""
 
     def test_rendering_with_complete_data(self, ax):
-        """Test that DetailedTreeNode renders correctly with all required fields and default labels."""
+        """Test rendering with all required fields and verify default period labels are used."""
+        x, y = 0.5, 0.8
         node = DetailedTreeNode(
             data={
                 "header": "Total Revenue",
@@ -623,8 +624,8 @@ class TestDetailedTreeNode:
                 "diff": "+£251,600",
                 "contribution": "45.5%",
             },
-            x=0.5,
-            y=0.8,
+            x=x,
+            y=y,
         )
         node.render(ax)
 
@@ -633,6 +634,22 @@ class TestDetailedTreeNode:
         separator_lines = 2  # Title-data separator + divider line
         assert len(ax.patches) == patches_per_node
         assert len(ax.lines) == separator_lines
+
+        # Verify separator line positions
+        node_height = DetailedTreeNode.NODE_HEIGHT
+        header_height_ratio = 0.25
+        data_section_height = node_height * (1 - header_height_ratio)
+
+        # Title-data separator should be at the boundary between sections
+        title_data_line = ax.lines[0]
+        expected_title_data_y = y + data_section_height
+        assert title_data_line.get_ydata()[0] == pytest.approx(expected_title_data_y, abs=0.01)
+
+        # Divider line should be below the period subsection
+        divider_line = ax.lines[1]
+        # Divider is positioned based on layout configuration (complex calculation)
+        # Just verify it exists and is horizontal (same y for both points)
+        assert divider_line.get_ydata()[0] == divider_line.get_ydata()[1]
 
         # Verify text content includes all data fields
         text_strings = [t.get_text() for t in ax.texts]
