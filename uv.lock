@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -658,15 +657,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/39/24/33db22342cf4a2ea27c9955e6713140fedd51e8b141b5ce5260897020f1a/googleapis_common_protos-1.70.0.tar.gz", hash = "sha256:0e1b44e0ea153e6594f9f394fef15193a68aaaea2d843f83e2742717ca753257", size = 145903 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/86/f1/62a193f0227cf15a920390abe675f386dec35f7ae3ffe6da582d3ade42c7/googleapis_common_protos-1.70.0-py3-none-any.whl", hash = "sha256:b8bfcca8c25a2bb253e0e0b0adaf8c00773e5e6af6fd92397576680b807e0fd8", size = 294530 },
-]
-
-[[package]]
-name = "graphviz"
-version = "0.20.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fa/83/5a40d19b8347f017e417710907f824915fba411a9befd092e52746b63e9f/graphviz-0.20.3.zip", hash = "sha256:09d6bc81e6a9fa392e7ba52135a9d49f1ed62526f96499325930e87ca1b5925d", size = 256455 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/be/d59db2d1d52697c6adc9eacaf50e8965b6345cc143f671e1ed068818d5cf/graphviz-0.20.3-py3-none-any.whl", hash = "sha256:81f848f2904515d8cd359cc611faba817598d2feaac4027b266aa3eda7b3dde5", size = 47126 },
 ]
 
 [[package]]
@@ -2002,7 +1992,6 @@ version = "0.39.0"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
-    { name = "graphviz" },
     { name = "ibis-framework", extra = ["duckdb"] },
     { name = "matplotlib" },
     { name = "matplotlib-set-diagrams" },
@@ -2042,7 +2031,6 @@ examples = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb", specifier = ">=1.0.0,<2" },
-    { name = "graphviz", specifier = ">=0.20.3,<0.21" },
     { name = "ibis-framework", extras = ["duckdb"], specifier = ">=10.0.0,<11" },
     { name = "matplotlib", specifier = ">=3.9.1,<4" },
     { name = "matplotlib-set-diagrams", specifier = "~=0.0.2" },
