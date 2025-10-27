@@ -14,29 +14,30 @@ def create_revenue_tree() -> Axes:
 
     """
     # Define tree structure with grid coordinates (col, row)
+    # Grid positions use (col, row) with (0,0) at top-left
     tree_structure = {
         "total_sales": {
-            "header": "£££ Total Sales (TISP)",
+            "header": "Total Sales (TISP)",
             "percent": -31.5,
             "value1": "£889.5k",
             "value2": "£1.3m",
-            "position": (1, 4),
+            "position": (1, 0),
             "children": ["non_card_sales", "ad_card_sales"],
         },
         "non_card_sales": {
-            "header": "£££ Non-Card Sales (TISP)",
+            "header": "Non-Card Sales (TISP)",
             "percent": -37.4,
             "value1": "£241.7k",
             "value2": "£385.8k",
-            "position": (0, 3),
+            "position": (0, 1),
             "children": [],
         },
         "ad_card_sales": {
-            "header": "£££ Ad Card Sales (TISP)",
+            "header": "Ad Card Sales (TISP)",
             "percent": 15.0,
             "value1": "£647.8k",
             "value2": "£912.7k",
-            "position": (2, 3),
+            "position": (2, 1),
             "children": ["num_customers", "av_customer_value"],
         },
         "num_customers": {
@@ -60,7 +61,7 @@ def create_revenue_tree() -> Axes:
             "percent": -8.8,
             "value1": "1.17",
             "value2": "1.29",
-            "position": (2, 1),
+            "position": (2, 3),
             "children": [],
         },
         "av_transaction_value": {
@@ -68,7 +69,7 @@ def create_revenue_tree() -> Axes:
             "percent": -8.5,
             "value1": "£8.44",
             "value2": "£9.22",
-            "position": (4, 1),
+            "position": (4, 3),
             "children": ["items_per_transaction", "av_item_value"],
         },
         "items_per_transaction": {
@@ -76,7 +77,7 @@ def create_revenue_tree() -> Axes:
             "percent": -0.9,
             "value1": "1.55",
             "value2": "1.56",
-            "position": (3, 0),
+            "position": (3, 4),
             "children": [],
         },
         "av_item_value": {
@@ -84,7 +85,7 @@ def create_revenue_tree() -> Axes:
             "percent": -7.6,
             "value1": "£5.45",
             "value2": "£5.90",
-            "position": (5, 0),
+            "position": (5, 4),
             "children": [],
         },
     }
@@ -113,6 +114,7 @@ def create_detailed_revenue_tree() -> Axes:
 
     """
     # Define tree structure with detailed information
+    # Grid positions use (col, row) with (0,0) at top-left
     tree_structure = {
         "revenue": {
             "header": "Revenue",
@@ -120,8 +122,8 @@ def create_detailed_revenue_tree() -> Axes:
             "current_period": "15,705.00",
             "previous_period": "12,922.92",
             "diff": "2,782.08",
-            "contribution": "8.68M",
-            "position": (1, 3),
+            # Contribution omitted for root node (would be same as diff)
+            "position": (1, 0),
             "children": ["customers", "spend_per_customer"],
         },
         "customers": {
@@ -131,7 +133,7 @@ def create_detailed_revenue_tree() -> Axes:
             "previous_period": "3.80",
             "diff": "0.32",
             "contribution": "4.23M",
-            "position": (0, 2),
+            "position": (0, 1),
             "children": [],
         },
         "spend_per_customer": {
@@ -141,7 +143,7 @@ def create_detailed_revenue_tree() -> Axes:
             "previous_period": "3,400.76",
             "diff": "410.16",
             "contribution": "4.45M",
-            "position": (2, 2),
+            "position": (2, 1),
             "children": ["visits_per_customer", "spend_per_visit"],
         },
         "visits_per_customer": {
@@ -151,7 +153,7 @@ def create_detailed_revenue_tree() -> Axes:
             "previous_period": "13.1",
             "diff": "-0.7",
             "contribution": "-1.82M",
-            "position": (1, 1),
+            "position": (1, 2),
             "children": [],
         },
         "spend_per_visit": {
@@ -161,7 +163,7 @@ def create_detailed_revenue_tree() -> Axes:
             "previous_period": "259.68",
             "diff": "47.65",
             "contribution": "6.27M",
-            "position": (3, 1),
+            "position": (3, 2),
             "children": ["units_per_visit", "price_per_unit"],
         },
         "units_per_visit": {
@@ -171,7 +173,7 @@ def create_detailed_revenue_tree() -> Axes:
             "previous_period": "246.22",
             "diff": "38.90",
             "contribution": "5.12M",
-            "position": (2, 0),
+            "position": (2, 3),
             "children": [],
         },
         "price_per_unit": {
@@ -181,7 +183,7 @@ def create_detailed_revenue_tree() -> Axes:
             "previous_period": "21.73",
             "diff": "0.48",
             "contribution": "1.15M",
-            "position": (4, 0),
+            "position": (4, 3),
             "children": [],
         },
     }

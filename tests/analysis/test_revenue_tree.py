@@ -2,8 +2,10 @@
 
 import math
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from matplotlib.axes import Axes
 
 from pyretailscience.analysis.revenue_tree import RevenueTree, calc_tree_kpis
 from pyretailscience.options import ColumnHelper, option_context
@@ -544,3 +546,51 @@ class TestRevenueTree:
         assert cols.agg_customer_id_p2 in rt.df.columns
         assert cols.agg_unit_spend_p1 in rt.df.columns
         assert cols.agg_unit_spend_p2 in rt.df.columns
+
+    @pytest.mark.parametrize("include_qty", [True, False])
+    def test_draw_tree_matplotlib(self, cols: ColumnHelper, include_qty: bool):
+        """Test that draw_tree() returns a matplotlib Axes and renders correctly."""
+        data = {
+            cols.customer_id: [1, 2, 3, 1, 2, 3],
+            cols.transaction_id: [1, 2, 3, 4, 5, 6],
+            cols.unit_spend: [100.0, 150.0, 200.0, 120.0, 180.0, 240.0],
+            "period": ["P1", "P1", "P1", "P2", "P2", "P2"],
+        }
+
+        if include_qty:
+            data[cols.unit_qty] = [10, 15, 20, 12, 18, 24]
+
+        df = pd.DataFrame(data)
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+        )
+
+        # Test with default parameters
+        ax = rt.draw_tree()
+        assert isinstance(ax, Axes)
+        assert ax.get_title() == ""  # TreeGrid doesn't set a title by default
+
+        # Clean up
+        plt.close()
+
+        # Test with custom value labels
+        ax = rt.draw_tree(value_labels=("Current", "Previous"))
+        assert isinstance(ax, Axes)
+        plt.close()
+
+        # Test with custom node labels
+        ax = rt.draw_tree(
+            unit_spend_label="Sales",
+            customer_id_label="Shoppers",
+            spend_per_customer_label="Sales / Shopper",
+            transactions_per_customer_label="Trips / Shopper",
+            spend_per_transaction_label="Sales / Trip",
+            units_per_transaction_label="Items / Trip",
+            price_per_unit_label="Price / Item",
+        )
+        assert isinstance(ax, Axes)
+        plt.close()

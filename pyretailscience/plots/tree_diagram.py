@@ -569,7 +569,8 @@ class TreeGrid:
                 raise ValueError(error_msg)
 
         # Generate row and column positions
-        self.row = {i: i * self.vertical_spacing for i in range(num_rows)}
+        # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
+        self.row = {i: (num_rows - 1 - i) * self.vertical_spacing for i in range(num_rows)}
         self.col = {i: i * self.horizontal_spacing for i in range(num_cols)}
 
     def render(self, ax: Axes | None = None) -> Axes:
@@ -585,7 +586,8 @@ class TreeGrid:
         if ax is None:
             # Calculate plot dimensions based on layout
             plot_width = self.col[self.num_cols - 1] + self.node_width
-            plot_height = self.row[self.num_rows - 1] + self.node_height
+            # Row 0 is at the top with the highest y-value after coordinate inversion
+            plot_height = self.row[0] + self.node_height
 
             _, ax = plt.subplots(figsize=(plot_width, plot_height))
             ax.set_xlim(0, plot_width)
@@ -727,15 +729,15 @@ class DetailedTreeNode(TreeNode):
         current_period: str - Current period value text
         previous_period: str - Previous period value text
         diff: str - Absolute difference text
-        contribution: str - Contribution value text
 
     Optional data keys:
+        contribution: str - Contribution value text (if not provided, row is left blank)
         current_label: str - Label for current period (default: "Current Period")
         previous_label: str - Label for previous period (default: "Previous Period")
     """
 
     NODE_WIDTH = 3.0
-    NODE_HEIGHT = 1.9
+    NODE_HEIGHT = 2
 
     # Color thresholds for percent change
     GREEN_THRESHOLD = 1.0  # Percent change at or above this shows green
@@ -773,7 +775,7 @@ class DetailedTreeNode(TreeNode):
         current_period = self._data["current_period"]
         previous_period = self._data["previous_period"]
         diff = self._data["diff"]
-        contribution = self._data["contribution"]
+        contribution = self._data.get("contribution")
         # Styling constants
         corner_radius = 0.15
         header_height_ratio = 0.25
@@ -797,20 +799,20 @@ class DetailedTreeNode(TreeNode):
         # Layout configuration based on visual structure (all values are fixed/absolute)
         layout = {
             "node": {
-                "padding_left": 0.225,
-                "padding_right": 0.225,
+                "padding_left": 0.2,
+                "padding_right": 0.2,
             },
             "data_section": {
-                "padding_top": 0.21,  # Space above period labels
-                "padding_bottom": 0.14,  # Space below last info row
+                "padding_top": 0.2,  # Space above period labels
+                "padding_bottom": 0.1,  # Space below last info row
                 "period_subsection": {
                     "previous_period_x": 1.65,  # X position for "Previous Period" column
                     "label_row_gap": 0.21,  # Vertical gap from labels to metrics
                     "bottom_margin": 0.21,  # Space below period metrics before divider
                 },
                 "divider": {
-                    "horizontal_inset": 0.225,  # Padding on left/right of divider line
-                    "vertical_offset": 0.05,  # Fine-tune vertical position
+                    "horizontal_inset": 0.2,  # Padding on left/right of divider line
+                    "vertical_offset": 0.025,  # Fine-tune vertical position
                 },
                 "info_subsection": {
                     "row_count": 3,  # Number of info rows
@@ -941,8 +943,10 @@ class DetailedTreeNode(TreeNode):
         info_rows = [
             ("Diff", diff),
             ("Pct Diff", f"{percent:.1f}%"),
-            ("Contribution", contribution),
         ]
+        # Only add contribution row if it's provided
+        if contribution is not None:
+            info_rows.append(("Contribution", contribution))
 
         for i, (label, metric) in enumerate(info_rows):
             info_row_y = divider_y - info_row_height * (
