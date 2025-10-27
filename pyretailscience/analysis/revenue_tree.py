@@ -322,7 +322,16 @@ class RevenueTree:
         return result_df, new_p1_index, new_p2_index
 
     @staticmethod
-    def _get_final_col_order(include_quantity: bool) -> str:
+    def _get_final_col_order(include_quantity: bool) -> list[str]:
+        """Get the final column order for the RevenueTree DataFrame.
+
+        Args:
+            include_quantity: Whether to include quantity-related columns.
+
+        Returns:
+            list[str]: Ordered list of column names for the final DataFrame.
+
+        """
         cols = ColumnHelper()
         col_order = [
             # Customers
