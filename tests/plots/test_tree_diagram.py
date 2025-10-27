@@ -726,10 +726,10 @@ class TestDetailedTreeNode:
 
     @pytest.mark.parametrize(
         "missing_key",
-        ["header", "percent", "current_period", "previous_period", "diff", "contribution"],
+        ["header", "percent", "current_period", "previous_period", "diff"],
     )
     def test_missing_required_keys(self, ax, missing_key):
-        """Test that KeyError is raised when required keys are missing."""
+        """Test that KeyError is raised when required keys are missing (contribution is optional)."""
         data = {
             "header": "Transaction Value",
             "percent": 6.8,

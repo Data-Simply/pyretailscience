@@ -25,12 +25,13 @@ for retail businesses, helping to identify key drivers of revenue changes and
 inform strategic decision-making.
 """
 
-import graphviz
 import ibis
 import pandas as pd
+from matplotlib.axes import Axes
 
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.plots.tree_diagram import TreeDiagram
+from pyretailscience.plots.styles import graph_utils as gu
+from pyretailscience.plots.tree_diagram import DetailedTreeNode, TreeGrid
 from pyretailscience.plugin import plugin_manager
 
 
@@ -399,120 +400,134 @@ class RevenueTree:
         spend_per_transaction_label: str = "Spend / Visit",
         units_per_transaction_label: str = "Units / Visit",
         price_per_unit_label: str = "Price / Unit",
-        human_format: bool = False,
-    ) -> graphviz.Digraph:
-        """Draw the Revenue Tree graph as a Graphviz visualization.
+    ) -> Axes:
+        """Draw the Revenue Tree graph as a matplotlib visualization.
 
         Args:
-            value_labels (tuple[str, str], optional): Labels for the value columns. Defaults to None. When None, the
-                default labels of Current Period and Previous Period are used for P1 and P2.
-            unit_spend_label (str, optional): Label for the Revenue column. Defaults to "Revenue".
-            customer_id_label (str, optional): Label for the Customers column. Defaults to "Customers".
-            spend_per_customer_label (str, optional): Label for the Spend / Customer column. Defaults to
-                "Spend / Customer".
-            transactions_per_customer_label (str, optional): Label for the Visits / Customer column. Defaults to
-                "Visits / Customer".
-            spend_per_transaction_label (str, optional): Label for the Spend / Visit column. Defaults to
-                "Spend / Visit".
-            units_per_transaction_label (str, optional): Label for the Units / Visit column. Defaults to
-                "Units / Visit".
-            price_per_unit_label (str, optional): Label for the Price / Unit column. Defaults to
-                "Price / Unit".
-            human_format (bool, optional): Whether to use human-readable formatting. Defaults to False.
+            value_labels: Labels for period columns. If None, uses "Current Period" and "Previous Period".
+                If provided, should be a tuple of (current_label, previous_label).
+            unit_spend_label: Label for the Revenue node. Defaults to "Revenue".
+            customer_id_label: Label for the Customers node. Defaults to "Customers".
+            spend_per_customer_label: Label for the Spend / Customer node. Defaults to "Spend / Customer".
+            transactions_per_customer_label: Label for the Visits / Customer node. Defaults to "Visits / Customer".
+            spend_per_transaction_label: Label for the Spend / Visit node. Defaults to "Spend / Visit".
+            units_per_transaction_label: Label for the Units / Visit node. Defaults to "Units / Visit".
+            price_per_unit_label: Label for the Price / Unit node. Defaults to "Price / Unit".
 
         Returns:
-            graphviz.Digraph: The Graphviz visualization of the Revenue Tree.
+            matplotlib.axes.Axes: The matplotlib axes containing the tree visualization.
+
         """
         cols = ColumnHelper()
         graph_data = self.df.iloc[0].to_dict()
-        tree = TreeDiagram()
 
-        # Add Revenue node
-        tree.add_node(
-            name="agg_unit_spend",
-            title=unit_spend_label,
-            p2_value=graph_data[cols.agg_unit_spend_p2],
-            p1_value=graph_data[cols.agg_unit_spend_p1],
-            value_labels=value_labels,
-            human_format=human_format,
+        # Set period labels
+        current_label, previous_label = value_labels if value_labels else ("Current Period", "Previous Period")
+
+        # Build tree structure - always include base 5 nodes
+        tree_structure = {
+            "revenue": {
+                "header": unit_spend_label,
+                "percent": graph_data[cols.agg_unit_spend_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.agg_unit_spend_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.agg_unit_spend_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.agg_unit_spend_diff], decimals=2),
+                # Contribution omitted for root node (would be same as diff)
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (1, 0),
+                "children": ["customers", "spend_per_customer"],
+            },
+            "customers": {
+                "header": customer_id_label,
+                "percent": graph_data[cols.agg_customer_id_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.agg_customer_id_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.agg_customer_id_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.agg_customer_id_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.agg_customer_id_contrib], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (0, 1),
+                "children": [],
+            },
+            "spend_per_customer": {
+                "header": spend_per_customer_label,
+                "percent": graph_data[cols.calc_spend_per_cust_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc_spend_per_cust_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc_spend_per_cust_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc_spend_per_cust_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc_spend_per_cust_contrib], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (2, 1),
+                "children": ["visits_per_customer", "spend_per_visit"],
+            },
+            "visits_per_customer": {
+                "header": transactions_per_customer_label,
+                "percent": graph_data[cols.calc_trans_per_cust_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc_trans_per_cust_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc_trans_per_cust_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc_trans_per_cust_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc_trans_per_cust_contrib], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (1, 2),
+                "children": [],
+            },
+            "spend_per_visit": {
+                "header": spend_per_transaction_label,
+                "percent": graph_data[cols.calc_spend_per_trans_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc_spend_per_trans_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc_spend_per_trans_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc_spend_per_trans_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc_spend_per_trans_contrib], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (3, 2),
+                "children": [],
+            },
+        }
+
+        grid_rows = 3
+        grid_cols = 4
+
+        # Add quantity-related nodes if data is available
+        has_quantity = cols.agg_unit_qty_p1 in graph_data
+        if has_quantity:
+            grid_rows = 4
+            grid_cols = 5
+            tree_structure["spend_per_visit"]["children"] = ["units_per_visit", "price_per_unit"]
+            tree_structure["units_per_visit"] = {
+                "header": units_per_transaction_label,
+                "percent": graph_data[cols.calc_units_per_trans_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc_units_per_trans_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc_units_per_trans_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc_units_per_trans_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc_units_per_trans_contrib], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (2, 3),
+                "children": [],
+            }
+            tree_structure["price_per_unit"] = {
+                "header": price_per_unit_label,
+                "percent": graph_data[cols.calc_price_per_unit_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc_price_per_unit_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc_price_per_unit_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc_price_per_unit_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc_price_per_unit_contrib], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "position": (4, 3),
+                "children": [],
+            }
+
+        # Create and render the tree grid
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=grid_rows,
+            num_cols=grid_cols,
+            node_class=DetailedTreeNode,
         )
 
-        # Add Customers node
-        tree.add_node(
-            name="agg_customer_id",
-            title=customer_id_label,
-            p2_value=graph_data[cols.agg_customer_id_p2],
-            p1_value=graph_data[cols.agg_customer_id_p1],
-            contrib_value=graph_data[cols.agg_customer_id_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        # Add Spend / Customer node
-        tree.add_node(
-            name="calc_spend_per_customer",
-            title=spend_per_customer_label,
-            p2_value=graph_data[cols.calc_spend_per_cust_p2],
-            p1_value=graph_data[cols.calc_spend_per_cust_p1],
-            contrib_value=graph_data[cols.calc_spend_per_cust_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        # Add Visits / Customer node
-        tree.add_node(
-            name="calc_transactions_per_customer",
-            title=transactions_per_customer_label,
-            p2_value=graph_data[cols.calc_trans_per_cust_p2],
-            p1_value=graph_data[cols.calc_trans_per_cust_p1],
-            contrib_value=graph_data[cols.calc_trans_per_cust_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        # Add Spend / Visit node
-        tree.add_node(
-            name="calc_spend_per_transaction",
-            title=spend_per_transaction_label,
-            p2_value=graph_data[cols.calc_spend_per_trans_p2],
-            p1_value=graph_data[cols.calc_spend_per_trans_p1],
-            contrib_value=graph_data[cols.calc_spend_per_trans_contrib],
-            value_labels=value_labels,
-            human_format=human_format,
-        )
-
-        # Add edges for the main tree structure
-        tree.add_edge("agg_unit_spend", "calc_spend_per_customer")
-        tree.add_edge("agg_unit_spend", "agg_customer_id")
-        tree.add_edge("calc_spend_per_customer", "calc_transactions_per_customer")
-        tree.add_edge("calc_spend_per_customer", "calc_spend_per_transaction")
-
-        # Add quantity-related nodes if quantity data is available
-        if cols.agg_unit_qty_p1 in graph_data:
-            # Add Units / Visit node
-            tree.add_node(
-                name="calc_units_per_transaction",
-                title=units_per_transaction_label,
-                p2_value=graph_data[cols.calc_units_per_trans_p2],
-                p1_value=graph_data[cols.calc_units_per_trans_p1],
-                contrib_value=graph_data[cols.calc_units_per_trans_contrib],
-                value_labels=value_labels,
-                human_format=human_format,
-            )
-
-            # Add Price / Unit node
-            tree.add_node(
-                name="calc_price_per_unit",
-                title=price_per_unit_label,
-                p2_value=graph_data[cols.calc_price_per_unit_p2],
-                p1_value=graph_data[cols.calc_price_per_unit_p1],
-                contrib_value=graph_data[cols.calc_price_per_unit_contrib],
-                value_labels=value_labels,
-                human_format=human_format,
-            )
-
-            # Add edges for quantity-related nodes
-            tree.add_edge("calc_spend_per_transaction", "calc_units_per_transaction")
-            tree.add_edge("calc_spend_per_transaction", "calc_price_per_unit")
-
-        return tree.render()
+        return grid.render()
