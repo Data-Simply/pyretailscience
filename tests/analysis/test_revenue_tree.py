@@ -594,3 +594,51 @@ class TestRevenueTree:
         )
         assert isinstance(ax, Axes)
         plt.close()
+
+    def test_draw_tree_with_row_index(self, cols: ColumnHelper):
+        """Test that draw_tree() can visualize a specific row from a multi-group RevenueTree."""
+        data = {
+            "region": ["North", "North", "North", "South", "South", "South"],
+            cols.customer_id: [1, 2, 1, 3, 4, 3],
+            cols.transaction_id: [1, 2, 3, 4, 5, 6],
+            cols.unit_spend: [100.0, 150.0, 120.0, 200.0, 250.0, 220.0],
+            cols.unit_qty: [10, 15, 12, 20, 25, 22],
+            "period": ["P1", "P1", "P2", "P1", "P1", "P2"],
+        }
+
+        df = pd.DataFrame(data)
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col="region",
+        )
+
+        # Should have 2 rows (North and South)
+        expected_regions = ["North", "South"]
+        assert len(rt.df) == len(expected_regions)
+        assert rt.df.index.tolist() == expected_regions
+
+        # Draw first row (North region)
+        ax = rt.draw_tree(row_index=0)
+        assert isinstance(ax, Axes)
+        # Check that the North region's revenue value appears in the plot
+        text_strings = [t.get_text() for t in ax.texts]
+        # North P2 revenue is 120, P1 revenue is 250 (100 + 150)
+        # The formatted values should appear in the text
+        assert any("120" in s for s in text_strings), "North region P2 revenue should appear"
+        plt.close()
+
+        # Draw second row (South region)
+        ax = rt.draw_tree(row_index=1)
+        assert isinstance(ax, Axes)
+        text_strings = [t.get_text() for t in ax.texts]
+        # South P2 revenue is 220, P1 revenue is 450 (200 + 250)
+        assert any("220" in s for s in text_strings), "South region P2 revenue should appear"
+        plt.close()
+
+        # Test that out of bounds raises IndexError
+        with pytest.raises(IndexError):
+            rt.draw_tree(row_index=2)

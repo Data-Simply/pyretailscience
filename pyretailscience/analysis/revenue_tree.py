@@ -392,6 +392,7 @@ class RevenueTree:
 
     def draw_tree(
         self,
+        row_index: int = 0,
         value_labels: tuple[str, str] | None = None,
         unit_spend_label: str = "Revenue",
         customer_id_label: str = "Customers",
@@ -404,6 +405,8 @@ class RevenueTree:
         """Draw the Revenue Tree graph as a matplotlib visualization.
 
         Args:
+            row_index: Index of the row to visualize from the RevenueTree DataFrame. Defaults to 0.
+                Useful when the RevenueTree has multiple groups (e.g., by region, store, etc.).
             value_labels: Labels for period columns. If None, uses "Current Period" and "Previous Period".
                 If provided, should be a tuple of (current_label, previous_label).
             unit_spend_label: Label for the Revenue node. Defaults to "Revenue".
@@ -417,9 +420,12 @@ class RevenueTree:
         Returns:
             matplotlib.axes.Axes: The matplotlib axes containing the tree visualization.
 
+        Raises:
+            IndexError: If row_index is out of bounds for the DataFrame.
+
         """
         cols = ColumnHelper()
-        graph_data = self.df.iloc[0].to_dict()
+        graph_data = self.df.iloc[row_index].to_dict()
 
         # Set period labels
         current_label, previous_label = value_labels if value_labels else ("Current Period", "Previous Period")
