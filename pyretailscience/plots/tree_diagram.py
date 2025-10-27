@@ -6,15 +6,18 @@ reusable tree-based visualizations.
 """
 
 import subprocess
+from abc import ABC, abstractmethod
 from textwrap import dedent
 from typing import Any
 
 import graphviz
 import matplotlib.patches as mpatches
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.path import Path
 
 from pyretailscience.plots.styles import graph_utils as gu
+from pyretailscience.plots.styles.styling_context import get_styling_context
 from pyretailscience.plots.styles.tailwind import COLORS
 
 
@@ -285,3 +288,203 @@ class BaseRoundedBox(mpatches.PathPatch):
         codes = [Path.MOVETO if is_first else Path.LINETO]
 
         return verts, codes
+
+
+class TreeNode(ABC):
+    """Abstract base class for tree nodes.
+
+    All TreeNode subclasses must define NODE_WIDTH and NODE_HEIGHT class attributes
+    and implement the render() method.
+    """
+
+    # Subclasses must define these class attributes
+    NODE_WIDTH: float
+    NODE_HEIGHT: float
+
+    def __init__(
+        self,
+        data: dict[str, Any],
+        x: float,
+        y: float,
+    ) -> None:
+        """Initialize the tree node.
+
+        Args:
+            data: Dictionary containing node data. Each subclass defines required keys.
+            x: X-coordinate of bottom-left corner.
+            y: Y-coordinate of bottom-left corner.
+
+        """
+        self._data = data
+        self.x = x
+        self.y = y
+
+    @abstractmethod
+    def render(self, ax: Axes) -> None:
+        """Render the node on the given axes.
+
+        Args:
+            ax: Matplotlib axes object to render on.
+
+        """
+        ...
+
+    def get_width(self) -> float:
+        """Return the node width.
+
+        Returns:
+            float: Node width.
+
+        """
+        return self.NODE_WIDTH
+
+    def get_height(self) -> float:
+        """Return the node height.
+
+        Returns:
+            float: Node height.
+
+        """
+        return self.NODE_HEIGHT
+
+
+class SimpleTreeNode(TreeNode):
+    """Simple tree node implementation with header and data sections.
+
+    Required data keys:
+        header (str): The header text
+        percent (float): Percentage change value
+        value1 (str): First value text
+        value2 (str): Second value text
+    """
+
+    NODE_WIDTH = 3.0
+    NODE_HEIGHT = 1.2
+
+    # Color thresholds for percent change
+    GREEN_THRESHOLD = 1.0  # Percent change at or above this shows green
+    RED_THRESHOLD = -1.0  # Percent change at or below this shows red
+
+    @staticmethod
+    def _get_color(percent_change: float) -> str:
+        """Return color based on percent change thresholds.
+
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+
+        Args:
+            percent_change: Percentage change value.
+
+        Returns:
+            str: Hex color code as string.
+
+        """
+        if percent_change >= SimpleTreeNode.GREEN_THRESHOLD:
+            return COLORS["green"][500]
+        if percent_change <= SimpleTreeNode.RED_THRESHOLD:
+            return COLORS["red"][500]
+        return COLORS["gray"][500]
+
+    def render(self, ax: Axes) -> None:
+        """Render the node on the given axes.
+
+        Args:
+            ax: Matplotlib axes object to render on.
+
+        """
+        # Extract data from the data dict
+        header = self._data["header"]
+        percent = self._data["percent"]
+        value1 = self._data["value1"]
+        value2 = self._data["value2"]
+
+        # Styling constants
+        corner_radius = 0.15
+        header_height_ratio = 0.4
+        header_color = COLORS["blue"][800]  # "#1E3A8A"
+        text_color = "white"
+        value_vertical_offset = 0.1
+
+        # Positioning fractions
+        header_text_x_fraction = 1 / 2
+        percent_text_x_fraction = 4 / 16
+        value_text_x_fraction = 11 / 16
+
+        styling_context = get_styling_context()
+
+        # Get standard font properties
+        semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
+        regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+
+        # Determine color based on percent change
+        color = self._get_color(percent)
+
+        # Header section
+        header_height = self.NODE_HEIGHT * header_height_ratio
+        header_box = BaseRoundedBox(
+            (self.x, self.y + self.NODE_HEIGHT - header_height),
+            self.NODE_WIDTH,
+            header_height,
+            top_radius=corner_radius,
+            bottom_radius=0,
+            facecolor=header_color,
+            edgecolor="none",
+            linewidth=0,
+        )
+        ax.add_patch(header_box)
+
+        # Data section
+        data_height = self.NODE_HEIGHT - header_height
+        data_box = BaseRoundedBox(
+            (self.x, self.y),
+            self.NODE_WIDTH,
+            data_height,
+            top_radius=0,
+            bottom_radius=corner_radius,
+            facecolor=color,
+            edgecolor="none",
+            linewidth=0,
+        )
+        ax.add_patch(data_box)
+
+        ax.text(
+            self.x + self.NODE_WIDTH * header_text_x_fraction,
+            self.y + self.NODE_HEIGHT - header_height / 2,
+            header,
+            ha="center",
+            va="center",
+            fontproperties=semi_bold_font,
+            fontsize=styling_context.fonts.label_size,
+            color=text_color,
+        )
+
+        ax.text(
+            self.x + self.NODE_WIDTH * percent_text_x_fraction,
+            self.y + data_height / 2,
+            f"{percent:+.1f}%",
+            ha="center",
+            va="center",
+            fontproperties=semi_bold_font,
+            fontsize=styling_context.fonts.title_size,
+            color=text_color,
+        )
+
+        ax.text(
+            self.x + self.NODE_WIDTH * value_text_x_fraction,
+            self.y + data_height / 2 + value_vertical_offset,
+            value1,
+            ha="left",
+            va="center",
+            fontproperties=regular_font,
+            fontsize=styling_context.fonts.label_size,
+            color=text_color,
+        )
+        ax.text(
+            self.x + self.NODE_WIDTH * value_text_x_fraction,
+            self.y + data_height / 2 - value_vertical_offset,
+            value2,
+            ha="left",
+            va="center",
+            fontproperties=regular_font,
+            fontsize=styling_context.fonts.label_size,
+            color=text_color,
+        )
