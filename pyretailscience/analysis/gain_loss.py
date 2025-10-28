@@ -14,8 +14,58 @@ This analysis helps marketers:
 - Identify trends in customer behavior
 - Evaluate the effectiveness of marketing strategies
 - Understand competitive dynamics in the market
+
+The GainLoss class supports both pandas DataFrames and Ibis tables for high-performance analysis:
+
+Example with pandas DataFrame (backward compatible):
+    ```python
+    import pandas as pd
+    from pyretailscience.analysis.gain_loss import GainLoss
+
+    # Traditional usage with pandas
+    gl = GainLoss(
+        df=transactions_df,  # Auto-converted to ibis.memtable
+        p1_index=transactions_df['date'].between('2024-01-01', '2024-01-31'),
+        p2_index=transactions_df['date'].between('2024-02-01', '2024-02-29'),
+        focus_group_index=transactions_df['brand'] == 'Brand A',
+        focus_group_name='Brand A',
+        comparison_group_index=transactions_df['brand'] == 'Brand B',
+        comparison_group_name='Brand B',
+    )
+
+    # Results available via lazy evaluation
+    result = gl.df  # Computed on first access, cached
+    ```
+
+Example with Ibis tables (new capability):
+    ```python
+    import ibis
+    from pyretailscience.analysis.gain_loss import GainLoss
+
+    # Connect to database
+    conn = ibis.duckdb.connect('retail.db')
+    transactions_table = conn.table('transactions')
+
+    gl = GainLoss(
+        df=transactions_table,  # Direct Ibis table
+        p1_index=transactions_table['date'].between('2024-01-01', '2024-01-31').to_pandas(),
+        p2_index=transactions_table['date'].between('2024-02-01', '2024-02-29').to_pandas(),
+        focus_group_index=(transactions_table['brand'] == 'Brand A').to_pandas(),
+        focus_group_name='Brand A',
+        comparison_group_index=(transactions_table['brand'] == 'Brand B').to_pandas(),
+        comparison_group_name='Brand B',
+    )
+
+    # Inspect the generated SQL query
+    print(gl.table.compile())
+
+    # Query executed in database, not pandas
+    result = gl.df
+    ```
 """
 
+import ibis
+import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
@@ -28,9 +78,11 @@ from pyretailscience.plots.styles.tailwind import COLORS
 class GainLoss:
     """A class to perform gain loss analysis on a DataFrame to assess customer movement between brands or products over time."""
 
+    _df: pd.DataFrame | None = None
+
     def __init__(
         self,
-        df: pd.DataFrame,
+        df: pd.DataFrame | ibis.Table,
         p1_index: list[bool] | pd.Series,
         p2_index: list[bool] | pd.Series,
         focus_group_index: list[bool] | pd.Series,
@@ -44,7 +96,7 @@ class GainLoss:
         """Calculate the gain loss table for a given DataFrame at the customer level.
 
         Args:
-            df (pd.DataFrame): The DataFrame to calculate the gain loss table from.
+            df (pd.DataFrame | ibis.Table): The DataFrame or Ibis table to calculate the gain loss table from.
             p1_index (list[bool]): The index for the first time period.
             p2_index (list[bool]): The index for the second time period.
             focus_group_index (list[bool]): The index for the focus group.
@@ -55,17 +107,24 @@ class GainLoss:
             value_col (str, optional): The column to calculate the gain loss from. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function to use. Defaults to "sum".
         """
-        # # Ensure no overlap between p1 and p2
-        if not df[p1_index].index.intersection(df[p2_index].index).empty:
-            raise ValueError("p1_index and p2_index should not overlap")
+        if isinstance(df, pd.DataFrame):
+            df = ibis.memtable(df)
+        elif not isinstance(df, ibis.Table):
+            raise TypeError("df must be either a pandas DataFrame or an ibis Table")
 
-        if not df[focus_group_index].index.intersection(df[comparison_group_index].index).empty:
-            raise ValueError("focus_group_index and comparison_group_index should not overlap")
-
+        # Validate index lengths
         if not len(p1_index) == len(p2_index) == len(focus_group_index) == len(comparison_group_index):
             raise ValueError(
                 "p1_index, p2_index, focus_group_index, and comparison_group_index should have the same length",
             )
+
+        # Validate no overlap between time periods
+        if any(p1 and p2 for p1, p2 in zip(p1_index, p2_index, strict=False)):
+            raise ValueError("p1_index and p2_index should not overlap")
+
+        # Validate no overlap between focus and comparison groups
+        if any(focus and comp for focus, comp in zip(focus_group_index, comparison_group_index, strict=False)):
+            raise ValueError("focus_group_index and comparison_group_index should not overlap")
 
         required_cols = [get_option("column.customer_id"), value_col] + ([group_col] if group_col is not None else [])
         missing_cols = set(required_cols) - set(df.columns)
@@ -78,7 +137,8 @@ class GainLoss:
         self.group_col = group_col
         self.value_col = value_col
 
-        self.gain_loss_df = self._calc_gain_loss(
+        # Calculate the gain loss table using Ibis
+        gain_loss_table_ibis = self._calc_gain_loss(
             df=df,
             p1_index=p1_index,
             p2_index=p2_index,
@@ -88,10 +148,40 @@ class GainLoss:
             value_col=value_col,
             agg_func=agg_func,
         )
-        self.gain_loss_table_df = self._calc_gains_loss_table(
-            gain_loss_df=self.gain_loss_df,
+        # Store the final Ibis table
+        self.table = self._calc_gains_loss_table(
+            gain_loss_table=gain_loss_table_ibis,
             group_col=group_col,
         )
+
+        # Store intermediate Ibis table for backward compatibility lazy properties
+        self._gain_loss_table_ibis = gain_loss_table_ibis
+
+    @property
+    def df(self) -> pd.DataFrame:
+        """Returns the gain/loss analysis as a pandas DataFrame.
+
+        Lazily evaluates the Ibis expression on first access.
+
+        Returns:
+            pd.DataFrame: The gain/loss analysis results
+        """
+        if self._df is None:
+            self._df = self.table.execute()
+        return self._df
+
+    @property
+    def gain_loss_df(self) -> pd.DataFrame:
+        """Returns the customer-level gain/loss analysis as a pandas DataFrame.
+
+        Backward compatibility property. Lazily evaluates the Ibis expression on first access.
+
+        Returns:
+            pd.DataFrame: The customer-level gain/loss analysis results
+        """
+        if not hasattr(self, "_gain_loss_df"):
+            self._gain_loss_df = self._gain_loss_table_ibis.execute()
+        return self._gain_loss_df
 
     @staticmethod
     def process_customer_group(
@@ -103,6 +193,13 @@ class GainLoss:
         comparison_diff: float,
     ) -> tuple[float, float, float, float, float, float]:
         """Process the gain loss for a customer group.
+
+        Note:
+            This method is kept for backward compatibility, testing, and as a reference
+            implementation of the business logic. The main Ibis implementation uses
+            vectorized expressions in _apply_business_logic_ibis() for performance.
+            This method is primarily used in test cases via parametrization to verify
+            the core business logic implementation.
 
         Args:
             focus_p1 (float | int): The focus group total in the first time period.
@@ -138,19 +235,19 @@ class GainLoss:
 
     @staticmethod
     def _calc_gain_loss(
-        df: pd.DataFrame,
+        df: ibis.Table,
         p1_index: list[bool],
         p2_index: list[bool],
         focus_group_index: list[bool],
-        comparison_group_index: list,
+        comparison_group_index: list[bool],
         group_col: str | None = None,
         value_col: str = get_option("column.unit_spend"),
         agg_func: str = "sum",
-    ) -> pd.DataFrame:
+    ) -> ibis.Table:
         """Calculate the gain loss table for a given DataFrame at the customer level.
 
         Args:
-            df (pd.DataFrame): The DataFrame to calculate the gain loss table from.
+            df (ibis.Table): The Ibis table to calculate the gain loss table from.
             p1_index (list[bool]): The index for the first time period.
             p2_index (list[bool]): The index for the second time period.
             focus_group_index (list[bool]): The index for the focus group.
@@ -160,89 +257,163 @@ class GainLoss:
             agg_func (str, optional): The aggregation function to use. Defaults to "sum".
 
         Returns:
-            pd.DataFrame: The gain loss table.
+            ibis.Table: The gain loss table.
         """
         cols = ColumnHelper()
-        df = df[p1_index | p2_index].copy()
-        df[cols.customer_id] = df[cols.customer_id].astype("category")
 
+        # Convert boolean indices to integer indices for filtering (optimized with numpy)
+        p1_indices = np.where(p1_index)[0].tolist()
+        p2_indices = np.where(p2_index)[0].tolist()
+        focus_indices = np.where(focus_group_index)[0].tolist()
+        comparison_indices = np.where(comparison_group_index)[0].tolist()
+
+        # Add row numbers to enable filtering
+        df = df.mutate(_row_num=ibis.row_number())
+
+        # Create boolean columns for filtering
+        df = df.mutate(
+            _is_p1=df._row_num.isin(p1_indices),
+            _is_p2=df._row_num.isin(p2_indices),
+            _is_focus=df._row_num.isin(focus_indices),
+            _is_comparison=df._row_num.isin(comparison_indices),
+        )
+
+        # Filter to only rows in either period
+        df_filtered = df.filter(df._is_p1 | df._is_p2)
+
+        # Determine grouping columns
         grp_cols = [cols.customer_id] if group_col is None else [group_col, cols.customer_id]
 
-        p1_df = pd.concat(
-            [
-                df[focus_group_index & p1_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
-                df[comparison_group_index & p1_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
-                df[(focus_group_index | comparison_group_index) & p1_index]
-                .groupby(grp_cols, observed=False)[value_col]
-                .agg(agg_func),
-            ],
-            axis=1,
-        )
-        p1_df.columns = ["focus", "comparison", "total"]
+        # Define aggregation function
+        agg_func_attr = getattr(df_filtered[value_col], agg_func, None)
+        if agg_func_attr is None:
+            msg = f"Aggregation function '{agg_func}' not supported"
+            raise ValueError(msg)
 
-        p2_df = pd.concat(
-            [
-                df[focus_group_index & p2_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
-                df[comparison_group_index & p2_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
-                df[(focus_group_index | comparison_group_index) & p2_index]
-                .groupby(grp_cols, observed=False)[value_col]
-                .agg(agg_func),
-            ],
-            axis=1,
-        )
-        p2_df.columns = ["focus", "comparison", "total"]
-
-        gl_df = p1_df.merge(p2_df, on=grp_cols, how="outer", suffixes=("_p1", "_p2")).fillna(0)
-
-        # Remove rows that are all 0 due to grouping by customer_id as a categorical with observed=False
-        gl_df = gl_df[~(gl_df == 0).all(axis=1)]
-
-        gl_df["focus_diff"] = gl_df["focus_p2"] - gl_df["focus_p1"]
-        gl_df["comparison_diff"] = gl_df["comparison_p2"] - gl_df["comparison_p1"]
-        gl_df["total_diff"] = gl_df["total_p2"] - gl_df["total_p1"]
-
-        (
-            gl_df["new"],
-            gl_df["lost"],
-            gl_df["increased_focus"],
-            gl_df["decreased_focus"],
-            gl_df["switch_from_comparison"],
-            gl_df["switch_to_comparison"],
-        ) = zip(
-            *gl_df.apply(
-                lambda x: GainLoss.process_customer_group(
-                    focus_p1=x["focus_p1"],
-                    comparison_p1=x["comparison_p1"],
-                    focus_p2=x["focus_p2"],
-                    comparison_p2=x["comparison_p2"],
-                    focus_diff=x["focus_diff"],
-                    comparison_diff=x["comparison_diff"],
-                ),
-                axis=1,
-            ),
-            strict=False,
+        # Create all aggregations in a single operation to avoid join issues
+        result = df_filtered.group_by(grp_cols).aggregate(
+            focus_p1=ibis.cases((df_filtered._is_focus & df_filtered._is_p1, df_filtered[value_col]), else_=0).sum(),
+            comparison_p1=ibis.cases(
+                (df_filtered._is_comparison & df_filtered._is_p1, df_filtered[value_col]),
+                else_=0,
+            ).sum(),
+            total_p1=ibis.cases(
+                ((df_filtered._is_focus | df_filtered._is_comparison) & df_filtered._is_p1, df_filtered[value_col]),
+                else_=0,
+            ).sum(),
+            focus_p2=ibis.cases((df_filtered._is_focus & df_filtered._is_p2, df_filtered[value_col]), else_=0).sum(),
+            comparison_p2=ibis.cases(
+                (df_filtered._is_comparison & df_filtered._is_p2, df_filtered[value_col]),
+                else_=0,
+            ).sum(),
+            total_p2=ibis.cases(
+                ((df_filtered._is_focus | df_filtered._is_comparison) & df_filtered._is_p2, df_filtered[value_col]),
+                else_=0,
+            ).sum(),
         )
 
-        return gl_df
+        # Calculate differences
+        result = result.mutate(
+            focus_diff=result.focus_p2 - result.focus_p1,
+            comparison_diff=result.comparison_p2 - result.comparison_p1,
+            total_diff=result.total_p2 - result.total_p1,
+        )
+
+        # Apply business logic using Ibis case expressions
+        return GainLoss._apply_business_logic_ibis(result)
+
+    @staticmethod
+    def _apply_business_logic_ibis(table: ibis.Table) -> ibis.Table:
+        """Apply the process_customer_group business logic using Ibis case expressions.
+
+        Args:
+            table: Ibis table with focus_p1, comparison_p1, focus_p2, comparison_p2, focus_diff, comparison_diff columns
+
+        Returns:
+            ibis.Table: Table with new, lost, increased_focus, decreased_focus, switch_from_comparison, switch_to_comparison columns
+        """
+        # Handle edge cases first: new customers (no p1 activity) and lost customers (no p2 activity)
+        new_customers = (table.focus_p1 == 0) & (table.comparison_p1 == 0)
+        lost_customers = (table.focus_p2 == 0) & (table.comparison_p2 == 0)
+
+        # For new customers, all focus_p2 is "new"
+        new = ibis.cases((new_customers, table.focus_p2), else_=0)
+
+        # For lost customers, all focus_p1 is "lost" (negative)
+        lost = ibis.cases((lost_customers, -1 * table.focus_p1), else_=0)
+
+        # For existing customers (not new or lost), apply the complex logic
+        existing_customers = ~new_customers & ~lost_customers
+
+        # Calculate focus_inc_dec following the original logic
+        focus_inc_dec = ibis.cases(
+            (existing_customers & (table.focus_diff > 0) & (table.comparison_diff > 0), table.focus_diff),
+            (existing_customers & (table.focus_diff > 0), ibis.greatest(0, table.comparison_diff + table.focus_diff)),
+            (existing_customers & (table.comparison_diff < 0), table.focus_diff),
+            (existing_customers, ibis.least(0, table.comparison_diff + table.focus_diff)),
+            else_=0,
+        )
+
+        # Split focus_inc_dec into positive (increased) and negative (decreased) components
+        increased_focus = ibis.greatest(0, focus_inc_dec)
+        decreased_focus = ibis.least(0, focus_inc_dec)
+
+        # Calculate transfer amounts (switching between groups)
+        transfer = table.focus_diff - focus_inc_dec
+        switch_from_comparison = ibis.greatest(0, transfer)
+        switch_to_comparison = ibis.least(0, transfer)
+
+        # Add all the calculated columns to the table
+        return table.mutate(
+            new=new,
+            lost=lost,
+            increased_focus=increased_focus,
+            decreased_focus=decreased_focus,
+            switch_from_comparison=switch_from_comparison,
+            switch_to_comparison=switch_to_comparison,
+        )
 
     @staticmethod
     def _calc_gains_loss_table(
-        gain_loss_df: pd.DataFrame,
+        gain_loss_table: ibis.Table,
         group_col: str | None = None,
-    ) -> pd.DataFrame:
+    ) -> ibis.Table:
         """Aggregates the gain loss table to show the total gains and losses across customers.
 
         Args:
-            gain_loss_df (pd.DataFrame): The gain loss table at customer level to aggregate.
+            gain_loss_table (ibis.Table): The gain loss table at customer level to aggregate.
             group_col (str | None, optional): The column to group by. Defaults to None.
 
         Returns:
-            pd.DataFrame: The aggregated gain loss table
+            ibis.Table: The aggregated gain loss table
         """
-        if group_col is None:
-            return gain_loss_df.sum().to_frame("").T
+        # Define columns to aggregate
+        agg_cols = [
+            "focus_p1",
+            "comparison_p1",
+            "total_p1",
+            "focus_p2",
+            "comparison_p2",
+            "total_p2",
+            "focus_diff",
+            "comparison_diff",
+            "total_diff",
+            "new",
+            "lost",
+            "increased_focus",
+            "decreased_focus",
+            "switch_from_comparison",
+            "switch_to_comparison",
+        ]
 
-        return gain_loss_df.groupby(level=0).sum()
+        # Create aggregation dictionary
+        aggs = {col: gain_loss_table[col].sum() for col in agg_cols if col in gain_loss_table.columns}
+
+        if group_col is None:
+            # Aggregate across all rows
+            return gain_loss_table.aggregate(**aggs)
+        # Group by the specified column and aggregate
+        return gain_loss_table.group_by(group_col).aggregate(**aggs)
 
     def plot(
         self,
@@ -275,7 +446,7 @@ class GainLoss:
         decrease_cols = ["lost", "decreased_focus", "switch_to_comparison"]
         all_cols = increase_cols + decrease_cols
 
-        plot_df = self.gain_loss_table_df.copy()
+        plot_df = self.df.copy()
         default_y_label = self.focus_group_name if self.group_col is None else self.group_col
         plot_data = plot_df.copy()
 
