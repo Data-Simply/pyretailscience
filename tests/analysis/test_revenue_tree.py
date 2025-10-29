@@ -577,6 +577,32 @@ class TestRevenueTree:
         # Clean up
         plt.close()
 
+    @pytest.mark.parametrize("include_qty", [True, False])
+    def test_draw_tree_auto_layout(self, cols: ColumnHelper, include_qty: bool):
+        """draw_tree should render with auto-layout without errors."""
+        data = {
+            cols.customer_id: [1, 2, 3, 1, 2, 3],
+            cols.transaction_id: [1, 2, 3, 4, 5, 6],
+            cols.unit_spend: [100.0, 150.0, 200.0, 120.0, 180.0, 240.0],
+            "period": ["P1", "P1", "P1", "P2", "P2", "P2"],
+        }
+
+        if include_qty:
+            data[cols.unit_qty] = [10, 15, 20, 12, 18, 24]
+
+        df = pd.DataFrame(data)
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+        )
+
+        ax = rt.draw_tree(use_auto_layout=True)
+        assert isinstance(ax, Axes)
+        plt.close()
+
         # Test with custom value labels
         ax = rt.draw_tree(value_labels=("Current", "Previous"))
         assert isinstance(ax, Axes)

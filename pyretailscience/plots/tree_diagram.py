@@ -343,6 +343,7 @@ class TreeGrid:
         node_class: type[TreeNode],
         vertical_spacing: float | None = None,
         horizontal_spacing: float | None = None,
+        use_auto_layout: bool = False,
     ) -> None:
         """Initialize the tree grid.
 
@@ -356,6 +357,8 @@ class TreeGrid:
                 node_height + 0.6 gap.
             horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
                 node_width - 1.0 overlap for compact layout.
+            use_auto_layout: When True (or when any node lacks a `position`), compute positions automatically
+                from the parent→children structure and override provided grid size.
 
         Raises:
             ValueError: If grid dimensions are not positive, if tree_structure is empty,
@@ -390,24 +393,36 @@ class TreeGrid:
         self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
         self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width - 1.0
 
-        # Validate positions are within grid bounds
-        for node_id, node_data in tree_structure.items():
-            if "position" not in node_data:
-                error_msg = f"Node '{node_id}' is missing required 'position' key"
-                raise ValueError(error_msg)
+        # Determine whether to auto-compute positions
+        self.use_auto_layout = use_auto_layout or any("position" not in nd for nd in tree_structure.values())
 
-            col_idx, row_idx = node_data["position"]
-            if not (0 <= col_idx < num_cols):
-                error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
-                raise ValueError(error_msg)
-            if not (0 <= row_idx < num_rows):
-                error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
-                raise ValueError(error_msg)
+        if self.use_auto_layout:
+            positions, computed_rows, computed_cols = self._compute_positions()
+            # Inject computed positions into structure (non-destructive copy)
+            for node_id, pos in positions.items():
+                self.tree_structure[node_id]["position"] = pos
+            # Override grid size based on computed layout
+            self.num_rows = computed_rows
+            self.num_cols = computed_cols
+        else:
+            # Validate positions are within grid bounds
+            for node_id, node_data in tree_structure.items():
+                if "position" not in node_data:
+                    error_msg = f"Node '{node_id}' is missing required 'position' key"
+                    raise ValueError(error_msg)
+
+                col_idx, row_idx = node_data["position"]
+                if not (0 <= col_idx < num_cols):
+                    error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
+                    raise ValueError(error_msg)
+                if not (0 <= row_idx < num_rows):
+                    error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
+                    raise ValueError(error_msg)
 
         # Generate row and column positions
         # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
-        self.row = {i: (num_rows - 1 - i) * self.vertical_spacing for i in range(num_rows)}
-        self.col = {i: i * self.horizontal_spacing for i in range(num_cols)}
+        self.row = {i: (self.num_rows - 1 - i) * self.vertical_spacing for i in range(self.num_rows)}
+        self.col = {i: i * self.horizontal_spacing for i in range(self.num_cols)}
 
     def render(self, ax: Axes | None = None) -> Axes:
         """Render the tree diagram.
@@ -478,6 +493,77 @@ class TreeGrid:
                     )
 
         return ax
+
+    def _compute_positions(self) -> tuple[dict[str, tuple[int, int]], int, int]:
+        """Compute grid positions (col,row) using a layered tree auto-layout.
+
+        Returns:
+            positions: mapping of node_id -> (col, row)
+            num_rows: total number of rows required
+            num_cols: maximum number of columns across rows
+        """
+        # Build child adjacency and in-degree to find roots
+        children_map: dict[str, list[str]] = {}
+        referenced_as_child: set[str] = set()
+        for node_id, node_data in self.tree_structure.items():
+            children = node_data.get("children", []) or []
+            children_map[node_id] = list(children)
+            for c in children:
+                referenced_as_child.add(c)
+        # Root candidates are nodes never referenced as a child
+        roots = [nid for nid in self.tree_structure if nid not in referenced_as_child]
+        if not roots:
+            # Fallback: choose deterministic root
+            roots = [sorted(self.tree_structure.keys())[0]]
+
+        # Level-order traversal to assign rows
+        from collections import defaultdict, deque
+
+        level_of: dict[str, int] = {}
+        queue: deque[tuple[str, int]] = deque()
+        for r in roots:
+            queue.append((r, 0))
+        visited: set[str] = set()
+
+        while queue:
+            nid, lvl = queue.popleft()
+            if nid in visited:
+                continue
+            visited.add(nid)
+            level_of[nid] = lvl
+            for child in children_map.get(nid, []):
+                queue.append((child, lvl + 1))
+
+        # Group nodes by level with stable ordering and assign columns
+        nodes_in_level = self._group_nodes_by_level(level_of)
+        positions, max_cols = self._assign_columns(nodes_in_level)
+
+        num_rows = len(nodes_in_level.keys()) if nodes_in_level else 1
+        num_cols = max_cols if max_cols > 0 else 1
+
+        return positions, num_rows, num_cols
+
+    def _group_nodes_by_level(self, level_of: dict[str, int]) -> dict[int, list[str]]:
+        """Group node ids by their computed level (row), preserving input order per level."""
+        from collections import defaultdict
+
+        nodes_in_level: dict[int, list[str]] = defaultdict(list)
+        for nid in self.tree_structure:
+            lvl = level_of.get(nid, 0)
+            nodes_in_level[lvl].append(nid)
+        return nodes_in_level
+
+    @staticmethod
+    def _assign_columns(nodes_in_level: dict[int, list[str]]) -> tuple[dict[str, tuple[int, int]], int]:
+        """Assign increasing column indices per level and return positions and max width."""
+        positions: dict[str, tuple[int, int]] = {}
+        max_cols = 0
+        for lvl in sorted(nodes_in_level.keys()):
+            row_nodes = nodes_in_level[lvl]
+            for col_idx, nid in enumerate(row_nodes):
+                positions[nid] = (col_idx, lvl)
+            max_cols = max(max_cols, len(row_nodes))
+        return positions, max_cols
 
     @staticmethod
     def _add_curve(

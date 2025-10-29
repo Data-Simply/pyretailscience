@@ -410,6 +410,9 @@ class RevenueTree:
         spend_per_transaction_label: str = "Spend / Visit",
         units_per_transaction_label: str = "Units / Visit",
         price_per_unit_label: str = "Price / Unit",
+        use_auto_layout: bool = False,
+        vertical_spacing: float | None = None,
+        horizontal_spacing: float | None = None,
     ) -> Axes:
         """Draw the Revenue Tree graph as a matplotlib visualization.
 
@@ -425,6 +428,10 @@ class RevenueTree:
             spend_per_transaction_label: Label for the Spend / Visit node. Defaults to "Spend / Visit".
             units_per_transaction_label: Label for the Units / Visit node. Defaults to "Units / Visit".
             price_per_unit_label: Label for the Price / Unit node. Defaults to "Price / Unit".
+            use_auto_layout: When True, compute node positions automatically from the tree structure
+                (ignores the hardcoded grid positions). Defaults to False.
+            vertical_spacing: Optional override for vertical spacing between rows. Defaults to None (auto).
+            horizontal_spacing: Optional override for horizontal spacing between columns. Defaults to None (auto).
 
         Returns:
             matplotlib.axes.Axes: The matplotlib axes containing the tree visualization.
@@ -537,12 +544,20 @@ class RevenueTree:
                 "children": [],
             }
 
+        # If auto-layout is requested, drop explicit positions to allow the renderer to compute them
+        if use_auto_layout:
+            for nd in tree_structure.values():
+                nd.pop("position", None)
+
         # Create and render the tree grid
         grid = TreeGrid(
             tree_structure=tree_structure,
             num_rows=grid_rows,
             num_cols=grid_cols,
             node_class=DetailedTreeNode,
+            vertical_spacing=vertical_spacing,
+            horizontal_spacing=horizontal_spacing,
+            use_auto_layout=use_auto_layout,
         )
 
         return grid.render()

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for branch in feature/shopping-missions feature/shopping-missions-tfidf feature/shopping-missions-sppmi)",
+      "Bash(do echo \"=== $branch ===\")",
+      "Bash(done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

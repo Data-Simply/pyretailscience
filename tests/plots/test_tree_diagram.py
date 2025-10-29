@@ -371,6 +371,49 @@ class TestTreeGrid:
         expected_patches = num_nodes * patches_per_node + num_connections
         assert len(ax.patches) == expected_patches
 
+    def test_auto_layout_without_positions(self):
+        """TreeGrid should compute positions when use_auto_layout=True and no positions are provided."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                # no position
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                # no position
+                "children": [],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                # no position
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            num_rows=1,  # will be overridden by auto-layout
+            num_cols=1,  # will be overridden by auto-layout
+            node_class=SimpleTreeNode,
+            use_auto_layout=True,
+        )
+
+        ax = grid.render()
+
+        # 3 nodes * 2 patches = 6 patches + 2 connections
+        expected_patches = 3 * 2 + 2
+        assert len(ax.patches) == expected_patches
+
     def test_axes_management_with_provided_ax(self, ax):
         """Test that TreeGrid uses provided axes."""
         tree_structure = {
