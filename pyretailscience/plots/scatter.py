@@ -75,11 +75,6 @@ def _add_point_labels(
     # Get x-values (either from x_col or use index)
     x_values = data_with_labels_df[x_col] if x_col is not None else data_with_labels_df.index
 
-    # Collect all x, y coordinates and labels for textalloc
-    all_x_coords = []
-    all_y_coords = []
-    all_labels = []
-
     if group_col is None:
         # Single series - vectorized approach
         all_x_coords = x_values.tolist()
