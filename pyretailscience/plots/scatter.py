@@ -87,20 +87,12 @@ def _add_point_labels(
         all_labels = data_with_labels_df[label_col].astype(str).tolist()
     else:
         # Multi-series with groups - vectorized approach
-        all_x_coords = []
-        all_y_coords = []
-        all_labels = []
-
-        for group_name in data_with_labels_df[group_col].unique():
-            group_data = data_with_labels_df[data_with_labels_df[group_col] == group_name]
-            group_x_values = group_data[x_col] if x_col is not None else group_data.index
-
-            all_x_coords.extend(group_x_values.tolist())
-            all_y_coords.extend(group_data[value_col].tolist())
-            all_labels.extend(group_data[label_col].astype(str).tolist())
+        all_x_coords = data_with_labels_df.index.to_numpy() if x_col is None else data_with_labels_df[x_col].to_numpy()
+        all_y_coords = data_with_labels_df[value_col].to_numpy()
+        all_labels = data_with_labels_df[label_col].astype(str).to_numpy()
 
     # Apply textalloc to avoid overlaps
-    if all_x_coords and all_y_coords and all_labels:
+    if len(all_x_coords) > 0 and len(all_y_coords) > 0 and len(all_labels) > 0:
         # Set default textalloc parameters
         allocate_kwargs = {
             "textsize": styling_context.fonts.data_label_size,
