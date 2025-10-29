@@ -42,7 +42,7 @@ def plot(
     source_text: str | None = None,
     percentage: bool = True,
     figsize: tuple[int, int] | None = None,
-    **kwargs: dict,
+    **kwargs: dict[str, any],
 ) -> SubplotBase:
     """Plots a cohort plot for the given DataFrame.
 
@@ -54,7 +54,7 @@ def plot(
         title (str, optional): Title of the plot.
         ax (Axes, optional): Matplotlib axes object to plot on.
         source_text (str, optional): Additional source text annotation.
-        percentage (bool, optional): If True, displays cohort values as percentages. Defaults to False.
+        percentage (bool, optional): If True, displays cohort values as percentages. Defaults to True.
         figsize (tuple[int, int], optional): The size of the plot. Defaults to None.
         **kwargs: Additional keyword arguments for cohort styling.
 

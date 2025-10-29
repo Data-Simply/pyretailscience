@@ -37,7 +37,6 @@ import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.tailwind import get_listed_cmap
 
 _LABEL_ROTATION_THRESHOLD = 10
-_DECIMAL_PLACES = 2
 
 
 def plot(
@@ -49,8 +48,8 @@ def plot(
     ax: Axes | None = None,
     source_text: str | None = None,
     figsize: tuple[int, int] | None = None,
-    cbar_format: str | None = None,
-    **kwargs: dict,
+    cbar_format: str = "{x:.2f}",
+    **kwargs: dict[str, any],
 ) -> SubplotBase:
     """Creates a generic heatmap visualization from a pandas DataFrame.
 
@@ -79,9 +78,6 @@ def plot(
     cmap = get_listed_cmap("green")
     im = ax.imshow(df, cmap=cmap, **kwargs)
 
-    # Create colorbar with configurable formatting
-    if cbar_format is None:
-        cbar_format = f"{{x:.{_DECIMAL_PLACES}f}}"
     cbar = ax.figure.colorbar(im, ax=ax, format=cbar_format)
     cbar.ax.set_ylabel(cbar_label, rotation=-90, va="bottom", fontsize="x-large")
 
@@ -122,7 +118,7 @@ def plot(
         for j in range(df.shape[1]):
             value = df.iloc[i, j]
             color = textcolors[int(im.norm(value) > threshold)]
-            ax.text(j, i, f"{value:.{_DECIMAL_PLACES}f}", ha="center", va="center", color=color, fontsize=7)
+            ax.text(j, i, f"{value:.2f}", ha="center", va="center", color=color, fontsize=7)
 
     ax = gu.standard_graph_styles(
         ax=ax,
