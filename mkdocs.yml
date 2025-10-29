@@ -7,6 +7,7 @@ nav:
   - Home: index.md
   - Getting Started:
       - Installation: getting_started/installation.md
+      - Options & Configuration: getting_started/options_guide.md
   - Analysis Modules:
       - analysis_modules.md
   - Examples:
@@ -91,6 +92,8 @@ plugins:
   - mkdocs-jupyter
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - attr_list
   - md_in_html
   - pymdownx.highlight:
