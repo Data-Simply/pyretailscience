@@ -585,24 +585,27 @@ class TestBubbleChartFeature:
             # All sizes should be the same (matplotlib default)
             assert len(set(sizes)) <= 1, "All points should have uniform size when size_col=None"
 
-    def test_bubble_chart_size_col_not_found(self, bubble_chart_dataframe):
-        """Test error handling when size_col doesn't exist."""
-        with pytest.raises(KeyError, match="size_col 'nonexistent_col' not found in DataFrame"):
+    @pytest.mark.parametrize(
+        ("size_col", "expected_error", "expected_message"),
+        [
+            ("nonexistent_col", KeyError, "size_col 'nonexistent_col' not found in DataFrame"),
+            ("store_id", ValueError, "size_col 'store_id' must contain numeric values"),
+        ],
+    )
+    def test_bubble_chart_size_col_validation_errors(
+        self,
+        bubble_chart_dataframe,
+        size_col,
+        expected_error,
+        expected_message,
+    ):
+        """Test size_col validation error handling."""
+        with pytest.raises(expected_error, match=expected_message):
             scatter.plot(
                 df=bubble_chart_dataframe,
                 x_col="sales",
                 value_col="profit_margin",
-                size_col="nonexistent_col",
-            )
-
-    def test_bubble_chart_non_numeric_size_col(self, bubble_chart_dataframe):
-        """Test error handling when size_col contains non-numeric values."""
-        with pytest.raises(ValueError, match="size_col 'store_id' must contain numeric values"):
-            scatter.plot(
-                df=bubble_chart_dataframe,
-                x_col="sales",
-                value_col="profit_margin",
-                size_col="store_id",  # String column
+                size_col=size_col,
             )
 
     def test_bubble_chart_with_nan_values(self, bubble_chart_dataframe):
