@@ -63,7 +63,7 @@ def _validate_size_col(df: pd.DataFrame, size_col: str | None) -> None:
 
     Raises:
         KeyError: If size_col doesn't exist in DataFrame.
-        ValueError: If size_col contains non-numeric values.
+        ValueError: If DataFrame is empty or size_col contains non-numeric values.
     """
     if size_col is None:
         return
@@ -71,6 +71,11 @@ def _validate_size_col(df: pd.DataFrame, size_col: str | None) -> None:
     if size_col not in df.columns:
         msg = f"size_col '{size_col}' not found in DataFrame"
         raise KeyError(msg)
+
+    # Check for empty DataFrame first
+    if len(df) == 0:
+        msg = "Cannot create bubble chart with empty DataFrame"
+        raise ValueError(msg)
 
     if not pd.api.types.is_numeric_dtype(df[size_col]):
         msg = f"size_col '{size_col}' must contain numeric values"

@@ -483,7 +483,6 @@ def test_plot_without_labels_no_textalloc_called(sample_product_dataframe, mocke
 class TestBubbleChartFeature:
     """Tests for the bubble chart functionality (size_col parameter)."""
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
     def test_bubble_chart_basic(self, bubble_chart_dataframe):
         """Test basic bubble chart functionality with size_col."""
         result_ax = scatter.plot(
@@ -512,10 +511,9 @@ class TestBubbleChartFeature:
         expected_sizes = bubble_chart_dataframe["store_sqft"].values
         assert np.array_equal(sizes, expected_sizes), "Sizes should match store_sqft values"
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-    def test_bubble_chart_with_scaling(self, bubble_chart_dataframe):
-        """Test bubble chart with custom size_scale."""
-        size_scale = 0.01
+    @pytest.mark.parametrize("size_scale", [0.01, 0.5, 1.0, 2.0, 10.0])
+    def test_bubble_chart_with_scaling(self, bubble_chart_dataframe, size_scale):
+        """Test bubble chart with various size_scale values."""
         result_ax = scatter.plot(
             df=bubble_chart_dataframe,
             x_col="sales",
@@ -535,7 +533,6 @@ class TestBubbleChartFeature:
         expected_sizes = bubble_chart_dataframe["store_sqft"].values * size_scale
         assert np.array_equal(sizes, expected_sizes), f"Sizes should be scaled by {size_scale}"
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
     def test_bubble_chart_with_groups(self, bubble_chart_dataframe):
         """Test bubble chart with group_col parameter."""
         result_ax = scatter.plot(
@@ -567,7 +564,6 @@ class TestBubbleChartFeature:
             offsets = collection.get_offsets()
             assert len(sizes) == len(offsets), "Each point should have a corresponding size"
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
     def test_bubble_chart_none_size_col(self, bubble_chart_dataframe):
         """Test that size_col=None behaves like original implementation with uniform sizing."""
         result_ax = scatter.plot(
@@ -609,7 +605,6 @@ class TestBubbleChartFeature:
                 size_col="store_id",  # String column
             )
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
     def test_bubble_chart_with_nan_values(self, bubble_chart_dataframe):
         """Test bubble chart handles NaN values in size_col gracefully."""
         # Add some NaN values to size column
@@ -638,7 +633,6 @@ class TestBubbleChartFeature:
         sizes = collections[0].get_sizes()
         assert len(sizes) == len(df_with_nan), "Size array should match data length"
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
     def test_bubble_chart_s_parameter_override(self, bubble_chart_dataframe):
         """Test that user-provided 's' parameter is overridden by size_col."""
         result_ax = scatter.plot(
@@ -659,3 +653,51 @@ class TestBubbleChartFeature:
         sizes = collections[0].get_sizes()
         expected_sizes = bubble_chart_dataframe["store_sqft"].values
         assert np.array_equal(sizes, expected_sizes), "Sizes should come from size_col, not 's' parameter"
+
+    def test_bubble_chart_multiple_value_columns(self, bubble_chart_dataframe):
+        """Test bubble chart with multiple value columns and size_col."""
+        value_cols = ["profit_margin", "sales"]
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="store_sqft",
+            value_col=value_cols,  # Multiple columns
+            size_col="sales",  # Bubble sizes
+            title="Multi-Series Bubble Chart",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify collections for each value column
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) == len(value_cols), (
+            f"Expected {len(value_cols)} collections for multiple value columns, got {len(collections)}"
+        )
+
+        # Verify each collection has sizes and correct number of points
+        for i, collection in enumerate(collections):
+            sizes = collection.get_sizes()
+            offsets = collection.get_offsets()
+
+            assert len(sizes) == len(bubble_chart_dataframe), (
+                f"Collection {i} should have {len(bubble_chart_dataframe)} sizes, got {len(sizes)}"
+            )
+            assert len(offsets) == len(bubble_chart_dataframe), (
+                f"Collection {i} should have {len(bubble_chart_dataframe)} points, got {len(offsets)}"
+            )
+
+            # Verify sizes match the size_col values (sales column)
+            expected_sizes = bubble_chart_dataframe["sales"].values
+            assert np.array_equal(sizes, expected_sizes), f"Collection {i} sizes should match size_col values"
+
+    def test_bubble_chart_empty_dataframe(self):
+        """Test bubble chart with empty DataFrame."""
+        empty_df = pd.DataFrame(columns=["x", "y", "size_col"])
+
+        with pytest.raises(ValueError, match="Cannot create bubble chart with empty DataFrame"):
+            scatter.plot(
+                df=empty_df,
+                x_col="x",
+                value_col="y",
+                size_col="size_col",
+                title="Empty DataFrame Bubble Chart",
+            )
