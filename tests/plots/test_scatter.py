@@ -659,3 +659,111 @@ class TestBubbleChartFeature:
         sizes = collections[0].get_sizes()
         expected_sizes = bubble_chart_dataframe["store_sqft"].values
         assert np.array_equal(sizes, expected_sizes), "Sizes should come from size_col, not 's' parameter"
+
+    def test_bubble_chart_multiple_value_columns(self, bubble_chart_dataframe):
+        """Test bubble chart with multiple value columns and size_col."""
+        value_cols = ["profit_margin", "sales"]
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="store_sqft",
+            value_col=value_cols,  # Multiple columns
+            size_col="sales",  # Bubble sizes
+            title="Multi-Series Bubble Chart",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify collections for each value column
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) == len(value_cols), (
+            f"Expected {len(value_cols)} collections for multiple value columns, got {len(collections)}"
+        )
+
+        # Verify each collection has sizes and correct number of points
+        for i, collection in enumerate(collections):
+            sizes = collection.get_sizes()
+            offsets = collection.get_offsets()
+
+            assert len(sizes) == len(bubble_chart_dataframe), (
+                f"Collection {i} should have {len(bubble_chart_dataframe)} sizes, got {len(sizes)}"
+            )
+            assert len(offsets) == len(bubble_chart_dataframe), (
+                f"Collection {i} should have {len(bubble_chart_dataframe)} points, got {len(offsets)}"
+            )
+
+            # Verify sizes match the size_col values (sales column)
+            expected_sizes = bubble_chart_dataframe["sales"].values
+            assert np.array_equal(sizes, expected_sizes), f"Collection {i} sizes should match size_col values"
+
+    def test_bubble_chart_with_negative_sizes(self, bubble_chart_dataframe):
+        """Test bubble chart behavior with negative size values."""
+        df = bubble_chart_dataframe.copy()
+        df.loc[0, "store_sqft"] = -100
+        df.loc[1, "store_sqft"] = -50
+
+        # Should work without errors (matplotlib handles it)
+        result_ax = scatter.plot(
+            df=df,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            title="Bubble Chart with Negative Sizes",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        offsets = collections[0].get_offsets()
+        assert len(offsets) == len(df), "All data points should be plotted"
+
+        # Verify sizes array includes negative values (passed to matplotlib as-is)
+        sizes = collections[0].get_sizes()
+        expected_sizes = df["store_sqft"].values
+        assert np.array_equal(sizes, expected_sizes), "Sizes should match data including negatives"
+
+    def test_bubble_chart_with_zero_sizes(self, bubble_chart_dataframe):
+        """Test bubble chart with zero size values (invisible points)."""
+        df = bubble_chart_dataframe.copy()
+        df.loc[0, "store_sqft"] = 0
+        df.loc[1, "store_sqft"] = 0
+
+        # Should work without errors
+        result_ax = scatter.plot(
+            df=df,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            title="Bubble Chart with Zero Sizes",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify all points are plotted (including zero-sized ones)
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        offsets = collections[0].get_offsets()
+        assert len(offsets) == len(df), "All data points should be plotted including zero-sized"
+
+        # Verify sizes array includes zero values
+        sizes = collections[0].get_sizes()
+        expected_sizes = df["store_sqft"].values
+        assert np.array_equal(sizes, expected_sizes), "Sizes should match data including zeros"
+
+        # Verify some sizes are actually zero
+        assert (sizes == 0).any(), "Some points should have zero size"
+
+    def test_bubble_chart_empty_dataframe(self):
+        """Test bubble chart with empty DataFrame."""
+        empty_df = pd.DataFrame(columns=["x", "y", "size_col"])
+
+        with pytest.raises(ValueError, match="Cannot create bubble chart with empty DataFrame"):
+            scatter.plot(
+                df=empty_df,
+                x_col="x",
+                value_col="y",
+                size_col="size_col",
+                title="Empty DataFrame Bubble Chart",
+            )
