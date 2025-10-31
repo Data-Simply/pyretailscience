@@ -409,181 +409,305 @@ def option_context(*args: OptionTypes) -> Generator[None, None, None]:
             set_option(pat, val)
 
 
-class ColumnHelper:
-    """A class to help with column naming conventions."""
+class AggColumns:
+    """Aggregation columns accessed via cols.agg.*."""
 
-    def __init__(self) -> None:  # noqa: PLR0915 - Fix with issue #332
-        """A class to help with column naming conventions."""
-        # Date/Time
-        self.transaction_date = get_option("column.transaction_date")
-        self.transaction_time = get_option("column.transaction_time")
-        # Customers
-        self.customer_id = get_option("column.customer_id")
-        self.agg_customer_id = get_option("column.agg.customer_id")
-        self.agg_customer_id_p1 = self.join_options("column.agg.customer_id", "column.suffix.period_1")
-        self.agg_customer_id_p2 = self.join_options("column.agg.customer_id", "column.suffix.period_2")
-        self.agg_customer_id_diff = self.join_options("column.agg.customer_id", "column.suffix.difference")
-        self.agg_customer_id_pct_diff = self.join_options("column.agg.customer_id", "column.suffix.percent_difference")
-        self.agg_customer_id_contrib = self.join_options("column.agg.customer_id", "column.suffix.contribution")
-        self.customers_pct = self.join_options("column.agg.customer_id", "column.suffix.percent")
-        # Transactions
-        self.transaction_id = get_option("column.transaction_id")
-        self.agg_transaction_id = get_option("column.agg.transaction_id")
-        self.agg_transaction_id_p1 = self.join_options("column.agg.transaction_id", "column.suffix.period_1")
-        self.agg_transaction_id_p2 = self.join_options("column.agg.transaction_id", "column.suffix.period_2")
-        self.agg_transaction_id_diff = self.join_options("column.agg.transaction_id", "column.suffix.difference")
-        self.agg_transaction_id_pct_diff = self.join_options(
+    def __init__(self) -> None:
+        """Initialize aggregation columns."""
+        # Base aggregation columns
+        self.customer_id: str = get_option("column.agg.customer_id")
+        self.transaction_id: str = get_option("column.agg.transaction_id")
+        self.unit_spend: str = get_option("column.agg.unit_spend")
+        self.unit_qty: str = get_option("column.agg.unit_quantity")
+        self.unit_cost: str = get_option("column.agg.unit_cost")
+        self.promo_unit_spend: str = get_option("column.agg.promo_unit_spend")
+        self.promo_unit_qty: str = get_option("column.agg.promo_unit_quantity")
+
+        # Period variants
+        self.customer_id_p1: str = ColumnHelper.join_options("column.agg.customer_id", "column.suffix.period_1")
+        self.customer_id_p2: str = ColumnHelper.join_options("column.agg.customer_id", "column.suffix.period_2")
+        self.transaction_id_p1: str = ColumnHelper.join_options("column.agg.transaction_id", "column.suffix.period_1")
+        self.transaction_id_p2: str = ColumnHelper.join_options("column.agg.transaction_id", "column.suffix.period_2")
+        self.unit_spend_p1: str = ColumnHelper.join_options("column.agg.unit_spend", "column.suffix.period_1")
+        self.unit_spend_p2: str = ColumnHelper.join_options("column.agg.unit_spend", "column.suffix.period_2")
+        self.unit_qty_p1: str = ColumnHelper.join_options("column.agg.unit_quantity", "column.suffix.period_1")
+        self.unit_qty_p2: str = ColumnHelper.join_options("column.agg.unit_quantity", "column.suffix.period_2")
+        self.unit_cost_p1: str = ColumnHelper.join_options("column.agg.unit_cost", "column.suffix.period_1")
+        self.unit_cost_p2: str = ColumnHelper.join_options("column.agg.unit_cost", "column.suffix.period_2")
+        self.promo_unit_spend_p1: str = ColumnHelper.join_options(
+            "column.agg.promo_unit_spend",
+            "column.suffix.period_1",
+        )
+        self.promo_unit_spend_p2: str = ColumnHelper.join_options(
+            "column.agg.promo_unit_spend",
+            "column.suffix.period_2",
+        )
+        self.promo_unit_qty_p1: str = ColumnHelper.join_options(
+            "column.agg.promo_unit_quantity",
+            "column.suffix.period_1",
+        )
+        self.promo_unit_qty_p2: str = ColumnHelper.join_options(
+            "column.agg.promo_unit_quantity",
+            "column.suffix.period_2",
+        )
+
+        # Diff variants
+        self.customer_id_diff: str = ColumnHelper.join_options("column.agg.customer_id", "column.suffix.difference")
+        self.transaction_id_diff: str = ColumnHelper.join_options(
+            "column.agg.transaction_id",
+            "column.suffix.difference",
+        )
+        self.unit_spend_diff: str = ColumnHelper.join_options("column.agg.unit_spend", "column.suffix.difference")
+        self.unit_qty_diff: str = ColumnHelper.join_options("column.agg.unit_quantity", "column.suffix.difference")
+        self.unit_cost_diff: str = ColumnHelper.join_options("column.agg.unit_cost", "column.suffix.difference")
+        self.promo_unit_spend_diff: str = ColumnHelper.join_options(
+            "column.agg.promo_unit_spend",
+            "column.suffix.difference",
+        )
+        self.promo_unit_qty_diff: str = ColumnHelper.join_options(
+            "column.agg.promo_unit_quantity",
+            "column.suffix.difference",
+        )
+
+        # Percent diff variants
+        self.customer_id_pct_diff: str = ColumnHelper.join_options(
+            "column.agg.customer_id",
+            "column.suffix.percent_difference",
+        )
+        self.transaction_id_pct_diff: str = ColumnHelper.join_options(
             "column.agg.transaction_id",
             "column.suffix.percent_difference",
         )
-        # Unit Spend
-        self.unit_spend = get_option("column.unit_spend")
-        self.agg_unit_spend = get_option("column.agg.unit_spend")
-        self.agg_unit_spend_p1 = self.join_options("column.agg.unit_spend", "column.suffix.period_1")
-        self.agg_unit_spend_p2 = self.join_options("column.agg.unit_spend", "column.suffix.period_2")
-        self.agg_unit_spend_diff = self.join_options("column.agg.unit_spend", "column.suffix.difference")
-        self.agg_unit_spend_pct_diff = self.join_options("column.agg.unit_spend", "column.suffix.percent_difference")
-        # Spend / Customer
-        self.calc_spend_per_cust = get_option("column.calc.spend_per_customer")
-        self.calc_spend_per_cust_p1 = self.join_options("column.calc.spend_per_customer", "column.suffix.period_1")
-        self.calc_spend_per_cust_p2 = self.join_options("column.calc.spend_per_customer", "column.suffix.period_2")
-        self.calc_spend_per_cust_diff = self.join_options("column.calc.spend_per_customer", "column.suffix.difference")
-        self.calc_spend_per_cust_pct_diff = self.join_options(
-            "column.calc.spend_per_customer",
+        self.unit_spend_pct_diff: str = ColumnHelper.join_options(
+            "column.agg.unit_spend",
             "column.suffix.percent_difference",
         )
-        self.calc_spend_per_cust_contrib = self.join_options(
-            "column.calc.spend_per_customer",
-            "column.suffix.contribution",
-        )
-        # Transactions / Customer
-        self.calc_trans_per_cust = get_option("column.calc.transactions_per_customer")
-        self.calc_trans_per_cust_p1 = self.join_options(
-            "column.calc.transactions_per_customer",
-            "column.suffix.period_1",
-        )
-        self.calc_trans_per_cust_p2 = self.join_options(
-            "column.calc.transactions_per_customer",
-            "column.suffix.period_2",
-        )
-        self.calc_trans_per_cust_diff = self.join_options(
-            "column.calc.transactions_per_customer",
-            "column.suffix.difference",
-        )
-        self.calc_trans_per_cust_pct_diff = self.join_options(
-            "column.calc.transactions_per_customer",
+        self.unit_qty_pct_diff: str = ColumnHelper.join_options(
+            "column.agg.unit_quantity",
             "column.suffix.percent_difference",
         )
-        self.calc_trans_per_cust_contrib = self.join_options(
-            "column.calc.transactions_per_customer",
-            "column.suffix.contribution",
-        )
-        # Spend / Transaction
-        self.calc_spend_per_trans = get_option("column.calc.spend_per_transaction")
-        self.calc_spend_per_trans_p1 = self.join_options("column.calc.spend_per_transaction", "column.suffix.period_1")
-        self.calc_spend_per_trans_p2 = self.join_options("column.calc.spend_per_transaction", "column.suffix.period_2")
-        self.calc_spend_per_trans_diff = self.join_options(
-            "column.calc.spend_per_transaction",
-            "column.suffix.difference",
-        )
-        self.calc_spend_per_trans_pct_diff = self.join_options(
-            "column.calc.spend_per_transaction",
+        self.unit_cost_pct_diff: str = ColumnHelper.join_options(
+            "column.agg.unit_cost",
             "column.suffix.percent_difference",
         )
-        self.calc_spend_per_trans_contrib = self.join_options(
-            "column.calc.spend_per_transaction",
-            "column.suffix.contribution",
-        )
-        # Unit Quantity
-        self.unit_qty = get_option("column.unit_quantity")
-        self.agg_unit_qty = get_option("column.agg.unit_quantity")
-        self.agg_unit_qty_p1 = self.join_options("column.agg.unit_quantity", "column.suffix.period_1")
-        self.agg_unit_qty_p2 = self.join_options("column.agg.unit_quantity", "column.suffix.period_2")
-        self.agg_unit_qty_diff = self.join_options("column.agg.unit_quantity", "column.suffix.difference")
-        self.agg_unit_qty_pct_diff = self.join_options("column.agg.unit_quantity", "column.suffix.percent_difference")
-        # Units / Transaction
-        self.calc_units_per_trans = get_option("column.calc.units_per_transaction")
-        self.calc_units_per_trans_p1 = self.join_options("column.calc.units_per_transaction", "column.suffix.period_1")
-        self.calc_units_per_trans_p2 = self.join_options("column.calc.units_per_transaction", "column.suffix.period_2")
-        self.calc_units_per_trans_diff = self.join_options(
-            "column.calc.units_per_transaction",
-            "column.suffix.difference",
-        )
-        self.calc_units_per_trans_pct_diff = self.join_options(
-            "column.calc.units_per_transaction",
-            "column.suffix.percent_difference",
-        )
-        self.calc_units_per_trans_contrib = self.join_options(
-            "column.calc.units_per_transaction",
-            "column.suffix.contribution",
-        )
-        # Price / Unit
-        self.calc_price_per_unit = get_option("column.calc.price_per_unit")
-        self.calc_price_per_unit_p1 = self.join_options("column.calc.price_per_unit", "column.suffix.period_1")
-        self.calc_price_per_unit_p2 = self.join_options("column.calc.price_per_unit", "column.suffix.period_2")
-        self.calc_price_per_unit_diff = self.join_options("column.calc.price_per_unit", "column.suffix.difference")
-        self.calc_price_per_unit_pct_diff = self.join_options(
-            "column.calc.price_per_unit",
-            "column.suffix.percent_difference",
-        )
-        self.calc_price_per_unit_contrib = self.join_options("column.calc.price_per_unit", "column.suffix.contribution")
-        # Cost
-        self.unit_cost = get_option("column.unit_cost")
-        self.agg_unit_cost = get_option("column.agg.unit_cost")
-        self.agg_unit_cost_p1 = self.join_options("column.agg.unit_cost", "column.suffix.period_1")
-        self.agg_unit_cost_p2 = self.join_options("column.agg.unit_cost", "column.suffix.period_2")
-        self.agg_unit_cost_diff = self.join_options("column.agg.unit_cost", "column.suffix.difference")
-        self.agg_unit_cost_pct_diff = self.join_options("column.agg.unit_cost", "column.suffix.percent_difference")
-        # Promo Unit Spend
-        self.promo_unit_spend = get_option("column.promo_unit_spend")
-        self.agg_promo_unit_spend = get_option("column.agg.promo_unit_spend")
-        self.agg_promo_unit_spend_p1 = self.join_options("column.agg.promo_unit_spend", "column.suffix.period_1")
-        self.agg_promo_unit_spend_p2 = self.join_options("column.agg.promo_unit_spend", "column.suffix.period_2")
-        self.agg_promo_unit_spend_diff = self.join_options("column.agg.promo_unit_spend", "column.suffix.difference")
-        self.agg_promo_unit_spend_pct_diff = self.join_options(
+        self.promo_unit_spend_pct_diff: str = ColumnHelper.join_options(
             "column.agg.promo_unit_spend",
             "column.suffix.percent_difference",
         )
-        # Promo Unit Quantity
-        self.promo_unit_qty = get_option("column.promo_unit_quantity")
-        self.agg_promo_unit_qty = get_option("column.agg.promo_unit_quantity")
-        self.agg_promo_unit_qty_p1 = self.join_options("column.agg.promo_unit_quantity", "column.suffix.period_1")
-        self.agg_promo_unit_qty_p2 = self.join_options("column.agg.promo_unit_quantity", "column.suffix.period_2")
-        self.agg_promo_unit_qty_diff = self.join_options("column.agg.promo_unit_quantity", "column.suffix.difference")
-        self.agg_promo_unit_qty_pct_diff = self.join_options(
+        self.promo_unit_qty_pct_diff: str = ColumnHelper.join_options(
             "column.agg.promo_unit_quantity",
             "column.suffix.percent_difference",
         )
-        # Elasticity
-        self.calc_price_elasticity = get_option("column.calc.price_elasticity")
-        self.calc_frequency_elasticity = get_option("column.calc.frequency_elasticity")
-        # Unknown customer and total suffixes
-        self.agg_unit_spend_unknown = self.join_options("column.agg.unit_spend", "column.suffix.unknown_customer")
-        self.agg_unit_spend_total = self.join_options("column.agg.unit_spend", "column.suffix.total")
-        self.agg_transaction_id_unknown = self.join_options(
+
+        # Contribution variants
+        self.customer_id_contrib: str = ColumnHelper.join_options(
+            "column.agg.customer_id",
+            "column.suffix.contribution",
+        )
+
+        # Percent variants
+        self.customers_pct: str = ColumnHelper.join_options("column.agg.customer_id", "column.suffix.percent")
+
+        # Unknown/Total variants
+        self.unit_spend_unknown: str = ColumnHelper.join_options(
+            "column.agg.unit_spend",
+            "column.suffix.unknown_customer",
+        )
+        self.unit_spend_total: str = ColumnHelper.join_options("column.agg.unit_spend", "column.suffix.total")
+        self.transaction_id_unknown: str = ColumnHelper.join_options(
             "column.agg.transaction_id",
             "column.suffix.unknown_customer",
         )
-        self.agg_transaction_id_total = self.join_options("column.agg.transaction_id", "column.suffix.total")
-        self.agg_unit_qty_unknown = self.join_options("column.agg.unit_quantity", "column.suffix.unknown_customer")
-        self.agg_unit_qty_total = self.join_options("column.agg.unit_quantity", "column.suffix.total")
-        self.calc_spend_per_trans_unknown = self.join_options(
+        self.transaction_id_total: str = ColumnHelper.join_options("column.agg.transaction_id", "column.suffix.total")
+        self.unit_qty_unknown: str = ColumnHelper.join_options(
+            "column.agg.unit_quantity",
+            "column.suffix.unknown_customer",
+        )
+        self.unit_qty_total: str = ColumnHelper.join_options("column.agg.unit_quantity", "column.suffix.total")
+
+
+class CalcColumns:
+    """Calculated columns accessed via cols.calc.*."""
+
+    def __init__(self) -> None:
+        """Initialize calculated columns."""
+        # Base calculated columns
+        self.spend_per_cust: str = get_option("column.calc.spend_per_customer")
+        self.trans_per_cust: str = get_option("column.calc.transactions_per_customer")
+        self.spend_per_trans: str = get_option("column.calc.spend_per_transaction")
+        self.units_per_trans: str = get_option("column.calc.units_per_transaction")
+        self.price_per_unit: str = get_option("column.calc.price_per_unit")
+        self.price_elasticity: str = get_option("column.calc.price_elasticity")
+        self.frequency_elasticity: str = get_option("column.calc.frequency_elasticity")
+
+        # Period variants
+        self.spend_per_cust_p1: str = ColumnHelper.join_options(
+            "column.calc.spend_per_customer",
+            "column.suffix.period_1",
+        )
+        self.spend_per_cust_p2: str = ColumnHelper.join_options(
+            "column.calc.spend_per_customer",
+            "column.suffix.period_2",
+        )
+        self.trans_per_cust_p1: str = ColumnHelper.join_options(
+            "column.calc.transactions_per_customer",
+            "column.suffix.period_1",
+        )
+        self.trans_per_cust_p2: str = ColumnHelper.join_options(
+            "column.calc.transactions_per_customer",
+            "column.suffix.period_2",
+        )
+        self.spend_per_trans_p1: str = ColumnHelper.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.period_1",
+        )
+        self.spend_per_trans_p2: str = ColumnHelper.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.period_2",
+        )
+        self.units_per_trans_p1: str = ColumnHelper.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.period_1",
+        )
+        self.units_per_trans_p2: str = ColumnHelper.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.period_2",
+        )
+        self.price_per_unit_p1: str = ColumnHelper.join_options("column.calc.price_per_unit", "column.suffix.period_1")
+        self.price_per_unit_p2: str = ColumnHelper.join_options("column.calc.price_per_unit", "column.suffix.period_2")
+
+        # Diff variants
+        self.spend_per_cust_diff: str = ColumnHelper.join_options(
+            "column.calc.spend_per_customer",
+            "column.suffix.difference",
+        )
+        self.trans_per_cust_diff: str = ColumnHelper.join_options(
+            "column.calc.transactions_per_customer",
+            "column.suffix.difference",
+        )
+        self.spend_per_trans_diff: str = ColumnHelper.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.difference",
+        )
+        self.units_per_trans_diff: str = ColumnHelper.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.difference",
+        )
+        self.price_per_unit_diff: str = ColumnHelper.join_options(
+            "column.calc.price_per_unit",
+            "column.suffix.difference",
+        )
+
+        # Percent diff variants
+        self.spend_per_cust_pct_diff: str = ColumnHelper.join_options(
+            "column.calc.spend_per_customer",
+            "column.suffix.percent_difference",
+        )
+        self.trans_per_cust_pct_diff: str = ColumnHelper.join_options(
+            "column.calc.transactions_per_customer",
+            "column.suffix.percent_difference",
+        )
+        self.spend_per_trans_pct_diff: str = ColumnHelper.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.percent_difference",
+        )
+        self.units_per_trans_pct_diff: str = ColumnHelper.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.percent_difference",
+        )
+        self.price_per_unit_pct_diff: str = ColumnHelper.join_options(
+            "column.calc.price_per_unit",
+            "column.suffix.percent_difference",
+        )
+
+        # Contribution variants
+        self.spend_per_cust_contrib: str = ColumnHelper.join_options(
+            "column.calc.spend_per_customer",
+            "column.suffix.contribution",
+        )
+        self.trans_per_cust_contrib: str = ColumnHelper.join_options(
+            "column.calc.transactions_per_customer",
+            "column.suffix.contribution",
+        )
+        self.spend_per_trans_contrib: str = ColumnHelper.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.contribution",
+        )
+        self.units_per_trans_contrib: str = ColumnHelper.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.contribution",
+        )
+        self.price_per_unit_contrib: str = ColumnHelper.join_options(
+            "column.calc.price_per_unit",
+            "column.suffix.contribution",
+        )
+
+        # Unknown/Total variants
+        self.spend_per_trans_unknown: str = ColumnHelper.join_options(
             "column.calc.spend_per_transaction",
             "column.suffix.unknown_customer",
         )
-        self.calc_spend_per_trans_total = self.join_options("column.calc.spend_per_transaction", "column.suffix.total")
-        self.calc_price_per_unit_unknown = self.join_options(
+        self.spend_per_trans_total: str = ColumnHelper.join_options(
+            "column.calc.spend_per_transaction",
+            "column.suffix.total",
+        )
+        self.price_per_unit_unknown: str = ColumnHelper.join_options(
             "column.calc.price_per_unit",
             "column.suffix.unknown_customer",
         )
-        self.calc_price_per_unit_total = self.join_options("column.calc.price_per_unit", "column.suffix.total")
-        self.calc_units_per_trans_unknown = self.join_options(
+        self.price_per_unit_total: str = ColumnHelper.join_options("column.calc.price_per_unit", "column.suffix.total")
+        self.units_per_trans_unknown: str = ColumnHelper.join_options(
             "column.calc.units_per_transaction",
             "column.suffix.unknown_customer",
         )
-        self.calc_units_per_trans_total = self.join_options("column.calc.units_per_transaction", "column.suffix.total")
+        self.units_per_trans_total: str = ColumnHelper.join_options(
+            "column.calc.units_per_transaction",
+            "column.suffix.total",
+        )
+
+
+class ColumnHelper:
+    """A class to help with column naming conventions.
+
+    Access patterns:
+    - Base columns: cols.transaction_date, cols.customer_id, etc.
+    - Aggregation columns: cols.agg.unit_spend, cols.agg.customer_id_p1, etc.
+    - Calculated columns: cols.calc.spend_per_cust, cols.calc.price_per_unit_diff, etc.
+    """
+
+    def __init__(self) -> None:
+        """Initialize column helper with base columns and nested column groups."""
+        # Base columns (stay flat on ColumnHelper)
+        self.transaction_date = get_option("column.transaction_date")
+        self.transaction_time = get_option("column.transaction_time")
+        self.customer_id = get_option("column.customer_id")
+        self.transaction_id = get_option("column.transaction_id")
+        self.unit_spend = get_option("column.unit_spend")
+        self.unit_qty = get_option("column.unit_quantity")
+        self.unit_cost = get_option("column.unit_cost")
+        self.promo_unit_spend = get_option("column.promo_unit_spend")
+        self.promo_unit_qty = get_option("column.promo_unit_quantity")
+
+        # Nested column groups
+        self.agg = AggColumns()
+        self.calc = CalcColumns()
 
     @staticmethod
     def join_options(*args: str, sep: str = "_") -> str:
-        """A helper function to join multiple options together."""
+        """Join multiple option values together with a separator.
+
+        This method resolves option keys to their configured values and joins them.
+        Commonly used to create column names with suffixes like period indicators.
+
+        Args:
+            *args: Option keys to resolve and join (e.g., "column.agg.unit_spend", "column.suffix.period_1")
+            sep: Separator to use when joining values (default: "_")
+
+        Returns:
+            A string with all resolved option values joined together.
+
+        Example:
+            >>> join_options("column.agg.unit_spend", "column.suffix.period_1")
+            "spend_p1"  # Assuming default options
+        """
         return sep.join(map(get_option, args))

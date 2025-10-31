@@ -278,17 +278,30 @@ cols = ColumnHelper()
 cols.customer_id  # Uses get_option("column.customer_id")
 cols.unit_spend   # Uses get_option("column.unit_spend")
 
-# Automatically constructs compound names
-cols.agg_unit_spend_p1        # "spend_p1" (spend + period 1 suffix)
-cols.agg_customer_id_pct_diff # "customers_pct_diff"
-cols.calc_spend_per_cust_contrib # "spend_per_customer_contrib"
+# Access aggregation columns via nested structure
+cols.agg.unit_spend           # "spend"
+cols.agg.customer_id          # "customers"
+cols.agg.unit_spend_p1        # "spend_p1" (spend + period 1 suffix)
+cols.agg.customer_id_pct_diff # "customers_pct_diff"
+
+# Access calculated columns via nested structure
+cols.calc.spend_per_cust        # "spend_per_customer"
+cols.calc.price_per_unit        # "price_per_unit"
+cols.calc.spend_per_cust_contrib # "spend_per_customer_contrib"
 ```
 
 #### How ColumnHelper Works Internally
 
 1. Reads option values on initialization
-2. Combines base names with suffixes using `join_options()`
-3. Provides consistent naming across all modules
+2. Creates nested `AggColumns` and `CalcColumns` objects for organized access
+3. Combines base names with suffixes using `join_options()`
+4. Provides consistent naming across all modules
+
+The nested structure mirrors the configuration hierarchy:
+
+- Base columns: Direct access (`cols.customer_id`)
+- Aggregation columns: Nested access (`cols.agg.customer_id`)
+- Calculated columns: Nested access (`cols.calc.spend_per_cust`)
 
 This ensures that all PyRetailScience functions use the same column naming conventions you've configured.
 

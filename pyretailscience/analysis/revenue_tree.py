@@ -53,21 +53,21 @@ def calc_tree_kpis(
         and percentage differences between periods.
     """
     cols = ColumnHelper()
-    required_cols = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend]
+    required_cols = [cols.agg.customer_id, cols.agg.transaction_id, cols.agg.unit_spend]
 
-    if cols.agg_unit_qty in df.columns:
-        required_cols.append(cols.agg_unit_qty)
+    if cols.agg.unit_qty in df.columns:
+        required_cols.append(cols.agg.unit_qty)
 
     df = df[required_cols].copy()
     df_cols = df.columns
 
-    if cols.agg_unit_qty in df_cols:
-        df[cols.calc_units_per_trans] = df[cols.agg_unit_qty] / df[cols.agg_transaction_id]
-        df[cols.calc_price_per_unit] = df[cols.agg_unit_spend] / df[cols.agg_unit_qty]
+    if cols.agg.unit_qty in df_cols:
+        df[cols.calc.units_per_trans] = df[cols.agg.unit_qty] / df[cols.agg.transaction_id]
+        df[cols.calc.price_per_unit] = df[cols.agg.unit_spend] / df[cols.agg.unit_qty]
 
-    df[cols.calc_spend_per_cust] = df[cols.agg_unit_spend] / df[cols.agg_customer_id]
-    df[cols.calc_spend_per_trans] = df[cols.agg_unit_spend] / df[cols.agg_transaction_id]
-    df[cols.calc_trans_per_cust] = df[cols.agg_transaction_id] / df[cols.agg_customer_id]
+    df[cols.calc.spend_per_cust] = df[cols.agg.unit_spend] / df[cols.agg.customer_id]
+    df[cols.calc.spend_per_trans] = df[cols.agg.unit_spend] / df[cols.agg.transaction_id]
+    df[cols.calc.trans_per_cust] = df[cols.agg.transaction_id] / df[cols.agg.customer_id]
 
     p1_df = df[p1_index]
     p1_df.columns = [col + "_" + get_option("column.suffix.period_1") for col in p1_df.columns]
@@ -84,12 +84,12 @@ def calc_tree_kpis(
     df = pd.concat([p1_df, p2_df], axis=1).fillna(0)
 
     for col in [
-        cols.agg_customer_id,
-        cols.agg_transaction_id,
-        cols.agg_unit_spend,
-        cols.calc_spend_per_trans,
-        cols.calc_trans_per_cust,
-        cols.calc_spend_per_cust,
+        cols.agg.customer_id,
+        cols.agg.transaction_id,
+        cols.agg.unit_spend,
+        cols.calc.spend_per_trans,
+        cols.calc.trans_per_cust,
+        cols.calc.spend_per_cust,
     ]:
         # Difference calculations
         df[col + "_" + get_option("column.suffix.difference")] = (
@@ -103,60 +103,60 @@ def calc_tree_kpis(
         )
 
     # Calculate price elasticity
-    if cols.agg_unit_qty in df_cols:
-        df[cols.calc_price_elasticity] = (
-            (df[cols.agg_unit_qty_p2] - df[cols.agg_unit_qty_p1])
-            / ((df[cols.agg_unit_qty_p2] + df[cols.agg_unit_qty_p1]) / 2)
+    if cols.agg.unit_qty in df_cols:
+        df[cols.calc.price_elasticity] = (
+            (df[cols.agg.unit_qty_p2] - df[cols.agg.unit_qty_p1])
+            / ((df[cols.agg.unit_qty_p2] + df[cols.agg.unit_qty_p1]) / 2)
         ) / (
-            (df[cols.calc_price_per_unit_p2] - df[cols.calc_price_per_unit_p1])
-            / ((df[cols.calc_price_per_unit_p2] + df[cols.calc_price_per_unit_p1]) / 2)
+            (df[cols.calc.price_per_unit_p2] - df[cols.calc.price_per_unit_p1])
+            / ((df[cols.calc.price_per_unit_p2] + df[cols.calc.price_per_unit_p1]) / 2)
         )
 
     # Calculate frequency elasticity
-    df[cols.calc_frequency_elasticity] = (
-        (df[cols.calc_trans_per_cust_p2] - df[cols.calc_trans_per_cust_p1])
-        / ((df[cols.calc_trans_per_cust_p2] + df[cols.calc_trans_per_cust_p1]) / 2)
+    df[cols.calc.frequency_elasticity] = (
+        (df[cols.calc.trans_per_cust_p2] - df[cols.calc.trans_per_cust_p1])
+        / ((df[cols.calc.trans_per_cust_p2] + df[cols.calc.trans_per_cust_p1]) / 2)
     ) / (
-        (df[cols.calc_spend_per_cust_p2] - df[cols.calc_spend_per_cust_p1])
-        / ((df[cols.calc_spend_per_cust_p2] + df[cols.calc_spend_per_cust_p1]) / 2)
+        (df[cols.calc.spend_per_cust_p2] - df[cols.calc.spend_per_cust_p1])
+        / ((df[cols.calc.spend_per_cust_p2] + df[cols.calc.spend_per_cust_p1]) / 2)
     )
 
     # Contribution calculations
-    df[cols.agg_customer_id_contrib] = (
-        df[cols.agg_unit_spend_p2]
-        - (df[cols.agg_customer_id_p1] * df[cols.calc_spend_per_cust_p2])
-        - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 2)
+    df[cols.agg.customer_id_contrib] = (
+        df[cols.agg.unit_spend_p2]
+        - (df[cols.agg.customer_id_p1] * df[cols.calc.spend_per_cust_p2])
+        - ((df[cols.agg.customer_id_diff] * df[cols.calc.spend_per_cust_diff]) / 2)
     )
-    df[cols.calc_spend_per_cust_contrib] = (
-        df[cols.agg_unit_spend_p2]
-        - (df[cols.calc_spend_per_cust_p1] * df[cols.agg_customer_id_p2])
-        - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 2)
+    df[cols.calc.spend_per_cust_contrib] = (
+        df[cols.agg.unit_spend_p2]
+        - (df[cols.calc.spend_per_cust_p1] * df[cols.agg.customer_id_p2])
+        - ((df[cols.agg.customer_id_diff] * df[cols.calc.spend_per_cust_diff]) / 2)
     )
 
-    df[cols.calc_trans_per_cust_contrib] = (
+    df[cols.calc.trans_per_cust_contrib] = (
         (
-            df[cols.calc_spend_per_cust_p2]
-            - (df[cols.calc_trans_per_cust_p1] * df[cols.calc_spend_per_trans_p2])
-            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 2)
+            df[cols.calc.spend_per_cust_p2]
+            - (df[cols.calc.trans_per_cust_p1] * df[cols.calc.spend_per_trans_p2])
+            - ((df[cols.calc.trans_per_cust_diff] * df[cols.calc.spend_per_trans_diff]) / 2)
         )
-        * df[cols.agg_customer_id_p2]
-    ) - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 4)
+        * df[cols.agg.customer_id_p2]
+    ) - ((df[cols.agg.customer_id_diff] * df[cols.calc.spend_per_cust_diff]) / 4)
 
-    df[cols.calc_spend_per_trans_contrib] = (
+    df[cols.calc.spend_per_trans_contrib] = (
         (
-            df[cols.calc_spend_per_cust_p2]
-            - (df[cols.calc_spend_per_trans_p1] * df[cols.calc_trans_per_cust_p2])
-            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 2)
+            df[cols.calc.spend_per_cust_p2]
+            - (df[cols.calc.spend_per_trans_p1] * df[cols.calc.trans_per_cust_p2])
+            - ((df[cols.calc.trans_per_cust_diff] * df[cols.calc.spend_per_trans_diff]) / 2)
         )
-        * df[cols.agg_customer_id_p2]
-    ) - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 4)
+        * df[cols.agg.customer_id_p2]
+    ) - ((df[cols.agg.customer_id_diff] * df[cols.calc.spend_per_cust_diff]) / 4)
 
-    if cols.agg_unit_qty in df_cols:
+    if cols.agg.unit_qty in df_cols:
         # Difference calculations
         for col in [
-            cols.agg_unit_qty,
-            cols.calc_units_per_trans,
-            cols.calc_price_per_unit,
+            cols.agg.unit_qty,
+            cols.calc.units_per_trans,
+            cols.calc.price_per_unit,
         ]:
             df[col + "_" + get_option("column.suffix.difference")] = (
                 df[col + "_" + get_option("column.suffix.period_2")]
@@ -164,40 +164,40 @@ def calc_tree_kpis(
             )
 
         for col in [
-            cols.agg_unit_qty,
-            cols.calc_units_per_trans,
-            cols.calc_price_per_unit,
+            cols.agg.unit_qty,
+            cols.calc.units_per_trans,
+            cols.calc.price_per_unit,
         ]:
             df[col + "_" + get_option("column.suffix.percent_difference")] = (
                 df[col + "_" + get_option("column.suffix.difference")]
                 / df[col + "_" + get_option("column.suffix.period_1")]
             )
 
-        df[cols.calc_price_per_unit_contrib] = (
+        df[cols.calc.price_per_unit_contrib] = (
             (
                 (
-                    df[cols.calc_spend_per_trans_p2]
-                    - (df[cols.calc_price_per_unit_p1] * df[cols.calc_units_per_trans_p2])
-                    - ((df[cols.calc_units_per_trans_diff] * df[cols.calc_price_per_unit_diff]) / 2)
+                    df[cols.calc.spend_per_trans_p2]
+                    - (df[cols.calc.price_per_unit_p1] * df[cols.calc.units_per_trans_p2])
+                    - ((df[cols.calc.units_per_trans_diff] * df[cols.calc.price_per_unit_diff]) / 2)
                 )
-                * df[cols.calc_trans_per_cust_p2]
+                * df[cols.calc.trans_per_cust_p2]
             )
-            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 4)
-        ) * df[cols.agg_customer_id_p2] - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 8)
+            - ((df[cols.calc.trans_per_cust_diff] * df[cols.calc.spend_per_trans_diff]) / 4)
+        ) * df[cols.agg.customer_id_p2] - ((df[cols.agg.customer_id_diff] * df[cols.calc.spend_per_cust_diff]) / 8)
 
-        df[cols.calc_units_per_trans_contrib] = (
+        df[cols.calc.units_per_trans_contrib] = (
             (
                 (
-                    df[cols.calc_spend_per_trans_p2]
-                    - (df[cols.calc_units_per_trans_p1] * df[cols.calc_price_per_unit_p2])
-                    - ((df[cols.calc_units_per_trans_diff] * df[cols.calc_price_per_unit_diff]) / 2)
+                    df[cols.calc.spend_per_trans_p2]
+                    - (df[cols.calc.units_per_trans_p1] * df[cols.calc.price_per_unit_p2])
+                    - ((df[cols.calc.units_per_trans_diff] * df[cols.calc.price_per_unit_diff]) / 2)
                 )
-                * df[cols.calc_trans_per_cust_p2]
+                * df[cols.calc.trans_per_cust_p2]
             )
-            - ((df[cols.calc_trans_per_cust_diff] * df[cols.calc_spend_per_trans_diff]) / 4)
-        ) * df[cols.agg_customer_id_p2] - ((df[cols.agg_customer_id_diff] * df[cols.calc_spend_per_cust_diff]) / 8)
+            - ((df[cols.calc.trans_per_cust_diff] * df[cols.calc.spend_per_trans_diff]) / 4)
+        ) * df[cols.agg.customer_id_p2] - ((df[cols.agg.customer_id_diff] * df[cols.calc.spend_per_cust_diff]) / 8)
 
-    cols = RevenueTree._get_final_col_order(include_quantity=cols.agg_unit_qty in df_cols)
+    cols = RevenueTree._get_final_col_order(include_quantity=cols.agg.unit_qty in df_cols)
 
     return df[cols]
 
@@ -291,12 +291,12 @@ class RevenueTree:
             df: ibis.Table = ibis.memtable(df)
 
         aggs = {
-            cols.agg_customer_id: df[cols.customer_id].nunique(),
-            cols.agg_transaction_id: df[cols.transaction_id].nunique(),
-            cols.agg_unit_spend: df[cols.unit_spend].sum(),
+            cols.agg.customer_id: df[cols.customer_id].nunique(),
+            cols.agg.transaction_id: df[cols.transaction_id].nunique(),
+            cols.agg.unit_spend: df[cols.unit_spend].sum(),
         }
         if cols.unit_qty in df.columns:
-            aggs[cols.agg_unit_qty] = df[cols.unit_qty].sum()
+            aggs[cols.agg.unit_qty] = df[cols.unit_qty].sum()
 
         group_by_cols = [*group_col, period_col] if group_col else [period_col]
         df = pd.DataFrame(df.group_by(group_by_cols).aggregate(**aggs).execute())
@@ -335,65 +335,65 @@ class RevenueTree:
         cols = ColumnHelper()
         col_order = [
             # Customers
-            cols.agg_customer_id_p1,
-            cols.agg_customer_id_p2,
-            cols.agg_customer_id_diff,
-            cols.agg_customer_id_pct_diff,
-            cols.agg_customer_id_contrib,
+            cols.agg.customer_id_p1,
+            cols.agg.customer_id_p2,
+            cols.agg.customer_id_diff,
+            cols.agg.customer_id_pct_diff,
+            cols.agg.customer_id_contrib,
             # Transactions
-            cols.agg_transaction_id_p1,
-            cols.agg_transaction_id_p2,
-            cols.agg_transaction_id_diff,
-            cols.agg_transaction_id_pct_diff,
+            cols.agg.transaction_id_p1,
+            cols.agg.transaction_id_p2,
+            cols.agg.transaction_id_diff,
+            cols.agg.transaction_id_pct_diff,
             # Unit Spend
-            cols.agg_unit_spend_p1,
-            cols.agg_unit_spend_p2,
-            cols.agg_unit_spend_diff,
-            cols.agg_unit_spend_pct_diff,
+            cols.agg.unit_spend_p1,
+            cols.agg.unit_spend_p2,
+            cols.agg.unit_spend_diff,
+            cols.agg.unit_spend_pct_diff,
             # Spend / Customer
-            cols.calc_spend_per_cust_p1,
-            cols.calc_spend_per_cust_p2,
-            cols.calc_spend_per_cust_diff,
-            cols.calc_spend_per_cust_pct_diff,
-            cols.calc_spend_per_cust_contrib,
+            cols.calc.spend_per_cust_p1,
+            cols.calc.spend_per_cust_p2,
+            cols.calc.spend_per_cust_diff,
+            cols.calc.spend_per_cust_pct_diff,
+            cols.calc.spend_per_cust_contrib,
             # Transactions / Customer
-            cols.calc_trans_per_cust_p1,
-            cols.calc_trans_per_cust_p2,
-            cols.calc_trans_per_cust_diff,
-            cols.calc_trans_per_cust_pct_diff,
-            cols.calc_trans_per_cust_contrib,
+            cols.calc.trans_per_cust_p1,
+            cols.calc.trans_per_cust_p2,
+            cols.calc.trans_per_cust_diff,
+            cols.calc.trans_per_cust_pct_diff,
+            cols.calc.trans_per_cust_contrib,
             # Spend / Transaction
-            cols.calc_spend_per_trans_p1,
-            cols.calc_spend_per_trans_p2,
-            cols.calc_spend_per_trans_diff,
-            cols.calc_spend_per_trans_pct_diff,
-            cols.calc_spend_per_trans_contrib,
+            cols.calc.spend_per_trans_p1,
+            cols.calc.spend_per_trans_p2,
+            cols.calc.spend_per_trans_diff,
+            cols.calc.spend_per_trans_pct_diff,
+            cols.calc.spend_per_trans_contrib,
             # Elasticity
-            cols.calc_frequency_elasticity,
+            cols.calc.frequency_elasticity,
         ]
 
         if include_quantity:
             col_order.extend(
                 [
                     # Unit Quantity
-                    cols.agg_unit_qty_p1,
-                    cols.agg_unit_qty_p2,
-                    cols.agg_unit_qty_diff,
-                    cols.agg_unit_qty_pct_diff,
+                    cols.agg.unit_qty_p1,
+                    cols.agg.unit_qty_p2,
+                    cols.agg.unit_qty_diff,
+                    cols.agg.unit_qty_pct_diff,
                     # Quantity / Transaction
-                    cols.calc_units_per_trans_p1,
-                    cols.calc_units_per_trans_p2,
-                    cols.calc_units_per_trans_diff,
-                    cols.calc_units_per_trans_pct_diff,
-                    cols.calc_units_per_trans_contrib,
+                    cols.calc.units_per_trans_p1,
+                    cols.calc.units_per_trans_p2,
+                    cols.calc.units_per_trans_diff,
+                    cols.calc.units_per_trans_pct_diff,
+                    cols.calc.units_per_trans_contrib,
                     # Price / Unit
-                    cols.calc_price_per_unit_p1,
-                    cols.calc_price_per_unit_p2,
-                    cols.calc_price_per_unit_diff,
-                    cols.calc_price_per_unit_pct_diff,
-                    cols.calc_price_per_unit_contrib,
+                    cols.calc.price_per_unit_p1,
+                    cols.calc.price_per_unit_p2,
+                    cols.calc.price_per_unit_diff,
+                    cols.calc.price_per_unit_pct_diff,
+                    cols.calc.price_per_unit_contrib,
                     # Price Elasticity
-                    cols.calc_price_elasticity,
+                    cols.calc.price_elasticity,
                 ],
             )
 
@@ -443,10 +443,10 @@ class RevenueTree:
         tree_structure = {
             "revenue": {
                 "header": unit_spend_label,
-                "percent": graph_data[cols.agg_unit_spend_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.agg_unit_spend_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.agg_unit_spend_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.agg_unit_spend_diff], decimals=2),
+                "percent": graph_data[cols.agg.unit_spend_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.agg.unit_spend_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.agg.unit_spend_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.agg.unit_spend_diff], decimals=2),
                 # Contribution omitted for root node (would be same as diff)
                 "current_label": current_label,
                 "previous_label": previous_label,
@@ -455,11 +455,11 @@ class RevenueTree:
             },
             "customers": {
                 "header": customer_id_label,
-                "percent": graph_data[cols.agg_customer_id_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.agg_customer_id_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.agg_customer_id_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.agg_customer_id_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.agg_customer_id_contrib], decimals=2),
+                "percent": graph_data[cols.agg.customer_id_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.agg.customer_id_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.agg.customer_id_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.agg.customer_id_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.agg.customer_id_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
                 "position": (0, 1),
@@ -467,11 +467,11 @@ class RevenueTree:
             },
             "spend_per_customer": {
                 "header": spend_per_customer_label,
-                "percent": graph_data[cols.calc_spend_per_cust_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc_spend_per_cust_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc_spend_per_cust_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc_spend_per_cust_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc_spend_per_cust_contrib], decimals=2),
+                "percent": graph_data[cols.calc.spend_per_cust_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc.spend_per_cust_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc.spend_per_cust_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc.spend_per_cust_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc.spend_per_cust_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
                 "position": (2, 1),
@@ -479,11 +479,11 @@ class RevenueTree:
             },
             "visits_per_customer": {
                 "header": transactions_per_customer_label,
-                "percent": graph_data[cols.calc_trans_per_cust_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc_trans_per_cust_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc_trans_per_cust_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc_trans_per_cust_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc_trans_per_cust_contrib], decimals=2),
+                "percent": graph_data[cols.calc.trans_per_cust_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc.trans_per_cust_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc.trans_per_cust_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc.trans_per_cust_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc.trans_per_cust_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
                 "position": (1, 2),
@@ -491,11 +491,11 @@ class RevenueTree:
             },
             "spend_per_visit": {
                 "header": spend_per_transaction_label,
-                "percent": graph_data[cols.calc_spend_per_trans_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc_spend_per_trans_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc_spend_per_trans_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc_spend_per_trans_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc_spend_per_trans_contrib], decimals=2),
+                "percent": graph_data[cols.calc.spend_per_trans_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc.spend_per_trans_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc.spend_per_trans_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc.spend_per_trans_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc.spend_per_trans_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
                 "position": (3, 2),
@@ -507,18 +507,18 @@ class RevenueTree:
         grid_cols = 4
 
         # Add quantity-related nodes if data is available
-        has_quantity = cols.agg_unit_qty_p1 in graph_data
+        has_quantity = cols.agg.unit_qty_p1 in graph_data
         if has_quantity:
             grid_rows = 4
             grid_cols = 5
             tree_structure["spend_per_visit"]["children"] = ["units_per_visit", "price_per_unit"]
             tree_structure["units_per_visit"] = {
                 "header": units_per_transaction_label,
-                "percent": graph_data[cols.calc_units_per_trans_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc_units_per_trans_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc_units_per_trans_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc_units_per_trans_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc_units_per_trans_contrib], decimals=2),
+                "percent": graph_data[cols.calc.units_per_trans_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc.units_per_trans_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc.units_per_trans_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc.units_per_trans_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc.units_per_trans_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
                 "position": (2, 3),
@@ -526,11 +526,11 @@ class RevenueTree:
             }
             tree_structure["price_per_unit"] = {
                 "header": price_per_unit_label,
-                "percent": graph_data[cols.calc_price_per_unit_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc_price_per_unit_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc_price_per_unit_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc_price_per_unit_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc_price_per_unit_contrib], decimals=2),
+                "percent": graph_data[cols.calc.price_per_unit_pct_diff] * 100,
+                "current_period": gu.human_format(graph_data[cols.calc.price_per_unit_p2], decimals=2),
+                "previous_period": gu.human_format(graph_data[cols.calc.price_per_unit_p1], decimals=2),
+                "diff": gu.human_format(graph_data[cols.calc.price_per_unit_diff], decimals=2),
+                "contribution": gu.human_format(graph_data[cols.calc.price_per_unit_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
                 "position": (4, 3),
