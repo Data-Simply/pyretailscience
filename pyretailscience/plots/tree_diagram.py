@@ -221,6 +221,39 @@ class SimpleTreeNode(TreeNode):
             return COLORS["red"][500]
         return COLORS["gray"][500]
 
+    def _get_responsive_font_sizes(self, styling_context: Any) -> dict[str, float]:  # noqa: ANN401
+        """Calculate responsive font sizes based on node dimensions.
+
+        Scales font sizes proportionally to node dimensions relative to defaults.
+        Uses the smaller of width/height scaling to ensure text fits.
+
+        Args:
+            styling_context: Styling context containing default font sizes.
+
+        Returns:
+            dict[str, float]: Dictionary with 'label_size' and 'title_size' keys.
+
+        """
+        # Default dimensions (what the fixed font sizes were designed for)
+        default_width = 3.75
+        default_height = 1.75
+
+        # Calculate scaling factors
+        width_scale = self.NODE_WIDTH / default_width
+        height_scale = self.NODE_HEIGHT / default_height
+
+        # Use the smaller scale factor to ensure text fits
+        scale_factor = min(width_scale, height_scale)
+
+        # Scale the default font sizes
+        base_label_size = styling_context.fonts.label_size
+        base_title_size = styling_context.fonts.title_size
+
+        return {
+            "label_size": base_label_size * scale_factor,
+            "title_size": base_title_size * scale_factor,
+        }
+
     def render(self, ax: Axes) -> None:
         """Render the node on the given axes.
 
@@ -251,6 +284,9 @@ class SimpleTreeNode(TreeNode):
         # Get standard font properties
         semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
         regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+
+        # Calculate responsive font sizes based on node dimensions
+        font_sizes = self._get_responsive_font_sizes(styling_context)
 
         # Determine color based on percent change
         color = self._get_color(percent)
@@ -290,7 +326,7 @@ class SimpleTreeNode(TreeNode):
             ha="center",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_sizes["label_size"],
             color=text_color,
         )
 
@@ -301,7 +337,7 @@ class SimpleTreeNode(TreeNode):
             ha="center",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.title_size,
+            fontsize=font_sizes["title_size"],
             color=text_color,
         )
 
@@ -312,7 +348,7 @@ class SimpleTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_sizes["label_size"],
             color=text_color,
         )
         ax.text(
@@ -322,7 +358,7 @@ class SimpleTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_sizes["label_size"],
             color=text_color,
         )
 
@@ -338,39 +374,30 @@ class TreeGrid:
     def __init__(
         self,
         tree_structure: dict[str, dict],
-        num_rows: int,
-        num_cols: int,
         node_class: type[TreeNode],
+        node_width: float | None = None,
+        node_height: float | None = None,
         vertical_spacing: float | None = None,
         horizontal_spacing: float | None = None,
-        use_auto_layout: bool = False,
     ) -> None:
-        """Initialize the tree grid.
+        """Initialize the tree grid with automatic layout.
 
         Args:
-            tree_structure: Dictionary mapping node IDs to node data with required keys
-                depending on the node_class being used.
-            num_rows: Number of rows in the grid.
-            num_cols: Number of columns in the grid.
+            tree_structure: Dictionary mapping node IDs to node data. Each node must include a
+                'children' key (list[str]) listing child node IDs. Use empty list for leaf nodes.
             node_class: The TreeNode subclass to use for rendering nodes.
+            node_width: Override the default node width from node_class. Defaults to None (use class default).
+            node_height: Override the default node height from node_class. Defaults to None (use class default).
             vertical_spacing: Vertical spacing between rows. If None, automatically calculated as
                 node_height + 0.6 gap.
             horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
-                node_width - 1.0 overlap for compact layout.
-            use_auto_layout: When True (or when any node lacks a `position`), compute positions automatically
-                from the parent→children structure and override provided grid size.
+                node_width + 0.5 gap.
 
         Raises:
-            ValueError: If grid dimensions are not positive, if tree_structure is empty,
-                or if node positions are out of bounds.
+            ValueError: If tree_structure is empty.
             TypeError: If node_class is not a TreeNode subclass.
 
         """
-        # Validate grid dimensions
-        if num_rows <= 0 or num_cols <= 0:
-            error_msg = f"Grid dimensions must be positive: num_rows={num_rows}, num_cols={num_cols}"
-            raise ValueError(error_msg)
-
         # Validate node_class is a TreeNode subclass
         if not issubclass(node_class, TreeNode):
             error_msg = f"node_class must be a TreeNode subclass, got {node_class}"
@@ -381,43 +408,23 @@ class TreeGrid:
             raise ValueError("tree_structure cannot be empty")
 
         self.tree_structure = tree_structure
-        self.num_rows = num_rows
-        self.num_cols = num_cols
         self.node_class = node_class
 
-        # Get node dimensions from the node class
-        self.node_width = node_class.NODE_WIDTH
-        self.node_height = node_class.NODE_HEIGHT
+        # Get node dimensions from the node class or use overrides
+        self.node_width = node_width if node_width is not None else node_class.NODE_WIDTH
+        self.node_height = node_height if node_height is not None else node_class.NODE_HEIGHT
 
         # Auto-calculate spacing if not provided
         self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
-        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width - 1.0
+        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width + 0.5
 
-        # Determine whether to auto-compute positions
-        self.use_auto_layout = use_auto_layout or any("position" not in nd for nd in tree_structure.values())
+        # Always compute positions automatically from tree structure
+        positions, computed_rows, computed_cols = self._compute_positions()
 
-        if self.use_auto_layout:
-            positions, computed_rows, computed_cols = self._compute_positions()
-            # Inject computed positions into structure (non-destructive copy)
-            for node_id, pos in positions.items():
-                self.tree_structure[node_id]["position"] = pos
-            # Override grid size based on computed layout
-            self.num_rows = computed_rows
-            self.num_cols = computed_cols
-        else:
-            # Validate positions are within grid bounds
-            for node_id, node_data in tree_structure.items():
-                if "position" not in node_data:
-                    error_msg = f"Node '{node_id}' is missing required 'position' key"
-                    raise ValueError(error_msg)
-
-                col_idx, row_idx = node_data["position"]
-                if not (0 <= col_idx < num_cols):
-                    error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
-                    raise ValueError(error_msg)
-                if not (0 <= row_idx < num_rows):
-                    error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
-                    raise ValueError(error_msg)
+        # Store computed positions (we'll use them during rendering)
+        self._positions = positions
+        self.num_rows = computed_rows
+        self.num_cols = computed_cols
 
         # Generate row and column positions
         # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
@@ -448,13 +455,13 @@ class TreeGrid:
         # First pass: create all nodes and store their centers
         node_centers = {}
         for node_id, node_data in self.tree_structure.items():
-            # Convert grid coordinates to absolute positions
-            col_idx, row_idx = node_data["position"]
+            # Get computed position from auto-layout
+            col_idx, row_idx = self._positions[node_id]
             x = self.col[col_idx]
             y = self.row[row_idx]
 
-            # Extract data for the node (exclude position and children which are structural)
-            data_dict = {k: v for k, v in node_data.items() if k not in ("position", "children")}
+            # Extract data for the node (exclude children which is structural)
+            data_dict = {k: v for k, v in node_data.items() if k != "children"}
 
             # Create and render the node
             node = self.node_class(
@@ -462,6 +469,9 @@ class TreeGrid:
                 x=x,
                 y=y,
             )
+            # Override node dimensions if custom dimensions were specified
+            node.NODE_WIDTH = self.node_width
+            node.NODE_HEIGHT = self.node_height
             node.render(ax)
 
             # Store center positions for connections
@@ -495,7 +505,11 @@ class TreeGrid:
         return ax
 
     def _compute_positions(self) -> tuple[dict[str, tuple[int, int]], int, int]:
-        """Compute grid positions (col,row) using a layered tree auto-layout.
+        """Compute grid positions using centered tree auto-layout.
+
+        Uses a bottom-up algorithm to center parents over their children, producing
+        a visually balanced tree layout. Layout orientation: top-down (root at top),
+        left-to-right (siblings ordered left to right).
 
         Returns:
             positions: mapping of node_id -> (col, row)
@@ -517,7 +531,7 @@ class TreeGrid:
             roots = [sorted(self.tree_structure.keys())[0]]
 
         # Level-order traversal to assign rows
-        from collections import defaultdict, deque
+        from collections import deque
 
         level_of: dict[str, int] = {}
         queue: deque[tuple[str, int]] = deque()
@@ -534,9 +548,11 @@ class TreeGrid:
             for child in children_map.get(nid, []):
                 queue.append((child, lvl + 1))
 
-        # Group nodes by level with stable ordering and assign columns
+        # Group nodes by level with stable ordering
         nodes_in_level = self._group_nodes_by_level(level_of)
-        positions, max_cols = self._assign_columns(nodes_in_level)
+
+        # Assign columns using centered layout algorithm
+        positions, max_cols = self._assign_columns_centered(nodes_in_level, children_map)
 
         num_rows = len(nodes_in_level.keys()) if nodes_in_level else 1
         num_cols = max_cols if max_cols > 0 else 1
@@ -553,17 +569,77 @@ class TreeGrid:
             nodes_in_level[lvl].append(nid)
         return nodes_in_level
 
-    @staticmethod
-    def _assign_columns(nodes_in_level: dict[int, list[str]]) -> tuple[dict[str, tuple[int, int]], int]:
-        """Assign increasing column indices per level and return positions and max width."""
+    def _assign_columns_centered(
+        self,
+        nodes_in_level: dict[int, list[str]],
+        children_map: dict[str, list[str]],
+    ) -> tuple[dict[str, tuple[int, int]], int]:
+        """Assign column positions using in-order traversal.
+
+        Uses a simple in-order traversal where each leaf gets the next available column,
+        and parents are centered over their children. This keeps siblings close together.
+
+        Args:
+            nodes_in_level: Mapping of level (row) to list of node IDs at that level.
+            children_map: Mapping of node ID to list of child node IDs.
+
+        Returns:
+            Tuple of (positions dict, max_cols count) where positions maps node_id -> (col, row).
+        """
+        # Find root nodes
+        all_children = {child for children in children_map.values() for child in children}
+        roots = [node for node in nodes_in_level.get(0, []) if node not in all_children]
+
+        if not roots:
+            roots = list(nodes_in_level.get(0, []))
+
         positions: dict[str, tuple[int, int]] = {}
-        max_cols = 0
-        for lvl in sorted(nodes_in_level.keys()):
-            row_nodes = nodes_in_level[lvl]
-            for col_idx, nid in enumerate(row_nodes):
-                positions[nid] = (col_idx, lvl)
-            max_cols = max(max_cols, len(row_nodes))
+        next_col = [0]  # Use list to allow modification in nested function
+
+        # Layout each root subtree
+        for root in roots:
+            self._layout_subtree(root, 0, children_map, positions, next_col)
+
+        max_cols = max((col + 1 for col, _ in positions.values()), default=1)
         return positions, max_cols
+
+    def _layout_subtree(
+        self,
+        node_id: str,
+        level: int,
+        children_map: dict[str, list[str]],
+        positions: dict[str, tuple[int, int]],
+        next_col: list[int],
+    ) -> None:
+        """Layout subtree using in-order traversal.
+
+        Assigns x-positions sequentially during in-order traversal (left children,
+        then parent, then right children). Parent is centered over children's columns.
+
+        Args:
+            node_id: Root of the subtree to layout.
+            level: Current level/row of this node.
+            children_map: Mapping of node ID to list of child IDs.
+            positions: Dictionary to populate with positions.
+            next_col: List containing next available column (mutable reference).
+        """
+        children = children_map.get(node_id, [])
+
+        if not children:
+            # Leaf node: assign next available column
+            positions[node_id] = (next_col[0], level)
+            next_col[0] += 1
+            return
+
+        # Process all children first to get their positions
+        child_cols: list[int] = []
+        for child in children:
+            self._layout_subtree(child, level + 1, children_map, positions, next_col)
+            child_cols.append(positions[child][0])
+
+        # Center parent over children
+        parent_col = sum(child_cols) // len(child_cols)
+        positions[node_id] = (parent_col, level)
 
     @staticmethod
     def _add_curve(
@@ -594,12 +670,15 @@ class TreeGrid:
     def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float) -> None:
         """Draw connection line between nodes with curved corners.
 
+        The connection goes straight down from parent, turns horizontally toward child,
+        then goes straight up to child. This creates cleaner paths for compact layouts.
+
         Args:
             ax: Matplotlib axes object.
-            x1: X-coordinate of first point.
-            y1: Y-coordinate of first point.
-            x2: X-coordinate of second point.
-            y2: Y-coordinate of second point.
+            x1: X-coordinate of first point (parent bottom center).
+            y1: Y-coordinate of first point (parent bottom).
+            x2: X-coordinate of second point (child top center).
+            y2: Y-coordinate of second point (child top).
 
         """
         # Use class constants for connection styling
@@ -607,8 +686,14 @@ class TreeGrid:
         line_width = TreeGrid.CONNECTION_LINE_WIDTH
         line_color = TreeGrid.CONNECTION_LINE_COLOR
 
-        mid_y = (y1 + y2) / 2
+        # Calculate the y-coordinates for the horizontal segment
+        # Place it closer to the child to minimize horizontal extension
+        vertical_gap = y1 - y2
+        horizontal_y = y2 + vertical_gap * 0.3  # 30% down from parent toward child
+
+        # Determine horizontal direction
         curve_sign = 1 if x2 > x1 else -1
+        x_diff = abs(x2 - x1)
 
         # Create path with curved corners using Bezier curves
         verts = []
@@ -618,23 +703,28 @@ class TreeGrid:
         verts.append((x1, y1))
         codes.append(Path.MOVETO)
 
-        # Vertical line down to curve start
-        verts.append((x1, mid_y + curve_radius))
-        codes.append(Path.LINETO)
+        # If nodes are aligned vertically (or very close), just draw a straight line
+        if x_diff < curve_radius * 2:
+            verts.append((x2, y2))
+            codes.append(Path.LINETO)
+        else:
+            # Vertical line down to curve start
+            verts.append((x1, horizontal_y + curve_radius))
+            codes.append(Path.LINETO)
 
-        # Curve from vertical to horizontal (first corner)
-        TreeGrid._add_curve(verts, codes, x1, mid_y, curve_sign * curve_radius, 0)
+            # Curve from vertical to horizontal (first corner)
+            TreeGrid._add_curve(verts, codes, x1, horizontal_y, curve_sign * curve_radius, 0)
 
-        # Horizontal line
-        verts.append((x2 - (curve_sign * curve_radius), mid_y))
-        codes.append(Path.LINETO)
+            # Horizontal line
+            verts.append((x2 - (curve_sign * curve_radius), horizontal_y))
+            codes.append(Path.LINETO)
 
-        # Curve from horizontal to vertical (second corner)
-        TreeGrid._add_curve(verts, codes, x2, mid_y, 0, -curve_radius)
+            # Curve from horizontal to vertical (second corner)
+            TreeGrid._add_curve(verts, codes, x2, horizontal_y, 0, -curve_radius)
 
-        # Vertical line up to child node
-        verts.append((x2, y2))
-        codes.append(Path.LINETO)
+            # Vertical line up to child node
+            verts.append((x2, y2))
+            codes.append(Path.LINETO)
 
         # Create and draw the path
         path = Path(verts, codes)
@@ -684,6 +774,39 @@ class DetailedTreeNode(TreeNode):
             return COLORS["red"][500]
         return COLORS["gray"][500]
 
+    def _get_responsive_font_sizes(self, styling_context: Any) -> dict[str, float]:  # noqa: ANN401
+        """Calculate responsive font sizes based on node dimensions.
+
+        Scales font sizes proportionally to node dimensions relative to defaults.
+        Uses the smaller of width/height scaling to ensure text fits.
+
+        Args:
+            styling_context: Styling context containing default font sizes.
+
+        Returns:
+            dict[str, float]: Dictionary with 'label_size' and 'tick_size' keys.
+
+        """
+        # Default dimensions (what the fixed font sizes were designed for)
+        default_width = 3.5
+        default_height = 2.5
+
+        # Calculate scaling factors
+        width_scale = self.NODE_WIDTH / default_width
+        height_scale = self.NODE_HEIGHT / default_height
+
+        # Use the smaller scale factor to ensure text fits
+        scale_factor = min(width_scale, height_scale)
+
+        # Scale the default font sizes
+        base_label_size = styling_context.fonts.label_size
+        base_tick_size = styling_context.fonts.tick_size
+
+        return {
+            "label_size": base_label_size * scale_factor,
+            "tick_size": base_tick_size * scale_factor,
+        }
+
     def render(self, ax: Axes) -> None:
         """Render the detailed node on the given axes.
 
@@ -713,6 +836,9 @@ class DetailedTreeNode(TreeNode):
         # Get standard font properties
         semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
         regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+
+        # Calculate responsive font sizes based on node dimensions
+        font_sizes = self._get_responsive_font_sizes(styling_context)
 
         # Title section (colored header)
         title_section_height = self.NODE_HEIGHT * header_height_ratio
@@ -781,7 +907,7 @@ class DetailedTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_sizes["label_size"],
             color=header_text_color,
         )
 
@@ -836,7 +962,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=regular_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=font_sizes["tick_size"],
                 color=label_color,
             )
             # Period metric
@@ -847,7 +973,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=semi_bold_font,
-                fontsize=styling_context.fonts.label_size,
+                fontsize=font_sizes["label_size"],
                 color=data_text_color,
             )
 
@@ -882,7 +1008,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=regular_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=font_sizes["tick_size"],
                 color=label_color,
             )
             # Metric on right
@@ -893,6 +1019,6 @@ class DetailedTreeNode(TreeNode):
                 ha="right",
                 va="center",
                 fontproperties=semi_bold_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=font_sizes["tick_size"],
                 color=data_text_color,
             )

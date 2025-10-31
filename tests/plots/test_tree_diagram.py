@@ -318,7 +318,6 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (1, 2),
                 "children": ["child1", "child2"],
             },
             "child1": {
@@ -326,7 +325,6 @@ class TestTreeGrid:
                 "percent": 3.0,
                 "value1": "$50K",
                 "value2": "$48.5K",
-                "position": (0, 1),
                 "children": ["grandchild1"],
             },
             "child2": {
@@ -334,7 +332,6 @@ class TestTreeGrid:
                 "percent": 7.0,
                 "value1": "$50K",
                 "value2": "$46.5K",
-                "position": (2, 1),
                 "children": ["grandchild2"],
             },
             "grandchild1": {
@@ -342,7 +339,6 @@ class TestTreeGrid:
                 "percent": 2.0,
                 "value1": "$25K",
                 "value2": "$24.5K",
-                "position": (0, 0),
                 "children": [],
             },
             "grandchild2": {
@@ -350,15 +346,12 @@ class TestTreeGrid:
                 "percent": 4.0,
                 "value1": "$25K",
                 "value2": "$24K",
-                "position": (2, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=3,
-            num_cols=3,
             node_class=SimpleTreeNode,
         )
 
@@ -371,15 +364,14 @@ class TestTreeGrid:
         expected_patches = num_nodes * patches_per_node + num_connections
         assert len(ax.patches) == expected_patches
 
-    def test_auto_layout_without_positions(self):
-        """TreeGrid should compute positions when use_auto_layout=True and no positions are provided."""
+    def test_automatic_layout_computation(self):
+        """TreeGrid should compute positions automatically when no positions are provided."""
         tree_structure = {
             "root": {
                 "header": "Root",
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                # no position
                 "children": ["child1", "child2"],
             },
             "child1": {
@@ -387,7 +379,6 @@ class TestTreeGrid:
                 "percent": 3.0,
                 "value1": "$50K",
                 "value2": "$48.5K",
-                # no position
                 "children": [],
             },
             "child2": {
@@ -395,17 +386,13 @@ class TestTreeGrid:
                 "percent": 7.0,
                 "value1": "$50K",
                 "value2": "$46.5K",
-                # no position
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,  # will be overridden by auto-layout
-            num_cols=1,  # will be overridden by auto-layout
             node_class=SimpleTreeNode,
-            use_auto_layout=True,
         )
 
         ax = grid.render()
@@ -422,15 +409,12 @@ class TestTreeGrid:
                 "percent": 1.0,
                 "value1": "$10K",
                 "value2": "$9.9K",
-                "position": (0, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
@@ -445,15 +429,12 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (0, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
@@ -471,7 +452,6 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (2, 1),
                 "children": ["child0", "child1", "child2", "child3", "child4"],
             },
         }
@@ -483,14 +463,11 @@ class TestTreeGrid:
                 "percent": 2.0,
                 "value1": "$20K",
                 "value2": "$19.6K",
-                "position": (i, 0),
                 "children": [],
             }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=2,
-            num_cols=5,
             node_class=SimpleTreeNode,
         )
 
@@ -511,51 +488,17 @@ class TestTreeGrid:
                 "percent": 15.3,
                 "value1": "£1.2M",
                 "value2": "£1.04M",
-                "position": (0, 0),
                 "children": ["nonexistent_child"],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
         with pytest.raises(ValueError, match="not found in tree_structure"):
             grid.render()
-
-    def test_invalid_grid_dimensions(self):
-        """Test that invalid grid dimensions raise ValueError."""
-        tree_structure = {
-            "total_revenue": {
-                "header": "Total Revenue",
-                "percent": 8.5,
-                "value1": "£850K",
-                "value2": "£784K",
-                "position": (0, 0),
-                "children": [],
-            },
-        }
-
-        # Test negative rows
-        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=-1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
-
-        # Test zero columns
-        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=0,
-                node_class=SimpleTreeNode,
-            )
 
     def test_invalid_node_class(self):
         """Test that invalid node_class raises TypeError."""
@@ -565,7 +508,6 @@ class TestTreeGrid:
                 "percent": 12.4,
                 "value1": "25,450",
                 "value2": "22,640",
-                "position": (0, 0),
                 "children": [],
             },
         }
@@ -573,8 +515,6 @@ class TestTreeGrid:
         with pytest.raises(TypeError, match="must be a TreeNode subclass"):
             TreeGrid(
                 tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
                 node_class=str,  # Not a TreeNode subclass
             )
 
@@ -583,73 +523,67 @@ class TestTreeGrid:
         with pytest.raises(ValueError, match="tree_structure cannot be empty"):
             TreeGrid(
                 tree_structure={},
-                num_rows=1,
-                num_cols=1,
                 node_class=SimpleTreeNode,
             )
 
-    def test_missing_position_key(self):
-        """Test that missing position key raises ValueError."""
+    def test_custom_spacing(self):
+        """Test that custom vertical and horizontal spacing is applied correctly."""
         tree_structure = {
-            "avg_basket": {
-                "header": "Average Basket Value",
-                "percent": 6.2,
-                "value1": "£45.80",
-                "value2": "£43.12",
-                # Missing 'position' key
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
                 "children": [],
             },
         }
 
-        with pytest.raises(ValueError, match="missing required 'position' key"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        custom_vertical_spacing = 5.0
+        custom_horizontal_spacing = 8.0
 
-    def test_out_of_bounds_position(self):
-        """Test that out of bounds positions raise ValueError."""
-        # Test column out of bounds (trying to use column 1 when only column 0 exists)
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            vertical_spacing=custom_vertical_spacing,
+            horizontal_spacing=custom_horizontal_spacing,
+        )
+
+        # Verify that the spacing values are set correctly
+        assert grid.vertical_spacing == custom_vertical_spacing
+        assert grid.horizontal_spacing == custom_horizontal_spacing
+
+    def test_custom_node_dimensions(self):
+        """Test that custom node width and height override class defaults."""
         tree_structure = {
-            "transaction_freq": {
-                "header": "Transaction Frequency",
-                "percent": 4.8,
-                "value1": "3.2",
-                "value2": "3.05",
-                "position": (1, 0),  # Column 1 is out of bounds for 1 column grid (0-indexed)
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
                 "children": [],
             },
         }
 
-        with pytest.raises(ValueError, match="column index .* is out of bounds"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        custom_width = 5.0
+        custom_height = 3.0
 
-        # Test row out of bounds (trying to use row 1 when only row 0 exists)
-        tree_structure = {
-            "items_per_basket": {
-                "header": "Items per Basket",
-                "percent": -2.3,
-                "value1": "4.8",
-                "value2": "4.9",
-                "position": (0, 1),  # Row 1 is out of bounds for 1 row grid (0-indexed)
-                "children": [],
-            },
-        }
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            node_width=custom_width,
+            node_height=custom_height,
+        )
 
-        with pytest.raises(ValueError, match="row index .* is out of bounds"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        # Verify that the custom dimensions are set correctly
+        assert grid.node_width == custom_width
+        assert grid.node_height == custom_height
 
 
 class TestDetailedTreeNode:
@@ -802,7 +736,6 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "£1.04M",
                 "diff": "+£160K",
                 "contribution": "100%",
-                "position": (1, 2),
                 "children": ["customers", "avg_value"],
             },
             "customers": {
@@ -812,7 +745,6 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "9,200",
                 "diff": "-660",
                 "contribution": "35.8%",
-                "position": (0, 1),
                 "children": [],
             },
             "avg_value": {
@@ -822,15 +754,12 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "£141.22",
                 "diff": "+£1.13",
                 "contribution": "64.2%",
-                "position": (2, 1),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=3,
-            num_cols=3,
             node_class=DetailedTreeNode,
         )
 

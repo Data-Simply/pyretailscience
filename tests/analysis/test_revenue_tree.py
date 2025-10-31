@@ -599,7 +599,12 @@ class TestRevenueTree:
             p2_value="P2",
         )
 
-        ax = rt.draw_tree(use_auto_layout=True)
+        ax = rt.draw_tree()
+        assert isinstance(ax, Axes)
+        plt.close()
+
+        # Test with custom node dimensions
+        ax = rt.draw_tree(node_width=4.0, node_height=3.0)
         assert isinstance(ax, Axes)
         plt.close()
 
