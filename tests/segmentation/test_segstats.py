@@ -32,15 +32,15 @@ class TestCalcSegStats:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [500.0, 500.0, 1000.0],
-                cols.agg_transaction_id: [3, 2, 5],
-                cols.agg_customer_id: [3, 2, 5],
-                cols.agg_unit_qty: [50, 50, 100],
-                cols.calc_spend_per_cust: [166.666667, 250.0, 200.0],
-                cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                cols.calc_price_per_unit: [10.0, 10.0, 10.0],
-                cols.calc_units_per_trans: [16.666667, 25.0, 20.0],
+                cols.agg.unit_spend: [500.0, 500.0, 1000.0],
+                cols.agg.transaction_id: [3, 2, 5],
+                cols.agg.customer_id: [3, 2, 5],
+                cols.agg.unit_qty: [50, 50, 100],
+                cols.calc.spend_per_cust: [166.666667, 250.0, 200.0],
+                cols.calc.spend_per_trans: [166.666667, 250.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
+                cols.calc.price_per_unit: [10.0, 10.0, 10.0],
+                cols.calc.units_per_trans: [16.666667, 25.0, 20.0],
             },
         )
         segment_stats = (
@@ -62,12 +62,12 @@ class TestCalcSegStats:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [500.0, 500.0, 1000.0],
-                cols.agg_transaction_id: [3, 2, 5],
-                cols.agg_customer_id: [3, 2, 5],
-                cols.calc_spend_per_cust: [166.666667, 250.0, 200.0],
-                cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg.unit_spend: [500.0, 500.0, 1000.0],
+                cols.agg.transaction_id: [3, 2, 5],
+                cols.agg.customer_id: [3, 2, 5],
+                cols.calc.spend_per_cust: [166.666667, 250.0, 200.0],
+                cols.calc.spend_per_trans: [166.666667, 250.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
             },
         )
 
@@ -82,15 +82,15 @@ class TestCalcSegStats:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "Total"],
-                cols.agg_unit_spend: [1000.0, 1000.0],
-                cols.agg_transaction_id: [5, 5],
-                cols.agg_customer_id: [5, 5],
-                cols.agg_unit_qty: [100, 100],
-                cols.calc_spend_per_cust: [200.0, 200.0],
-                cols.calc_spend_per_trans: [200.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0],
-                cols.calc_price_per_unit: [10.0, 10.0],
-                cols.calc_units_per_trans: [20.0, 20.0],
+                cols.agg.unit_spend: [1000.0, 1000.0],
+                cols.agg.transaction_id: [5, 5],
+                cols.agg.customer_id: [5, 5],
+                cols.agg.unit_qty: [100, 100],
+                cols.calc.spend_per_cust: [200.0, 200.0],
+                cols.calc.spend_per_trans: [200.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0],
+                cols.calc.price_per_unit: [10.0, 10.0],
+                cols.calc.units_per_trans: [20.0, 20.0],
             },
         )
 
@@ -105,15 +105,15 @@ class TestCalcSegStats:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [500.0, 500.0, 1000.0],
-                cols.agg_transaction_id: [3, 2, 5],
-                cols.agg_customer_id: [3, 2, 5],
-                cols.agg_unit_qty: [0, 50, 50],
-                cols.calc_spend_per_cust: [166.666667, 250.0, 200.0],
-                cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                cols.calc_price_per_unit: [np.nan, 10.0, 20.0],
-                cols.calc_units_per_trans: [0, 25.0, 10.0],
+                cols.agg.unit_spend: [500.0, 500.0, 1000.0],
+                cols.agg.transaction_id: [3, 2, 5],
+                cols.agg.customer_id: [3, 2, 5],
+                cols.agg.unit_qty: [0, 50, 50],
+                cols.calc.spend_per_cust: [166.666667, 250.0, 200.0],
+                cols.calc.spend_per_trans: [166.666667, 250.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
+                cols.calc.price_per_unit: [np.nan, 10.0, 20.0],
+                cols.calc.units_per_trans: [0, 25.0, 10.0],
             },
         )
         segment_stats = SegTransactionStats(df, "segment_name").df.sort_values("segment_name").reset_index(drop=True)
@@ -125,15 +125,15 @@ class TestCalcSegStats:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B"],
-                cols.agg_unit_spend: [500.0, 500.0],
-                cols.agg_transaction_id: [3, 2],
-                cols.agg_customer_id: [3, 2],
-                cols.agg_unit_qty: [50, 50],
-                cols.calc_spend_per_cust: [166.666667, 250.0],
-                cols.calc_spend_per_trans: [166.666667, 250.0],
-                cols.calc_trans_per_cust: [1.0, 1.0],
-                cols.calc_price_per_unit: [10.0, 10.0],
-                cols.calc_units_per_trans: [16.666667, 25.0],
+                cols.agg.unit_spend: [500.0, 500.0],
+                cols.agg.transaction_id: [3, 2],
+                cols.agg.customer_id: [3, 2],
+                cols.agg.unit_qty: [50, 50],
+                cols.calc.spend_per_cust: [166.666667, 250.0],
+                cols.calc.spend_per_trans: [166.666667, 250.0],
+                cols.calc.trans_per_cust: [1.0, 1.0],
+                cols.calc.price_per_unit: [10.0, 10.0],
+                cols.calc.units_per_trans: [16.666667, 25.0],
             },
         )
 
@@ -152,12 +152,12 @@ class TestCalcSegStats:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [500.0, 500.0, 1000.0],
-                cols.agg_transaction_id: [3, 2, 5],
-                cols.agg_unit_qty: [50, 50, 100],
-                cols.calc_spend_per_trans: [166.666667, 250.0, 200.0],
-                cols.calc_price_per_unit: [10.0, 10.0, 10.0],
-                cols.calc_units_per_trans: [16.666667, 25.0, 20.0],
+                cols.agg.unit_spend: [500.0, 500.0, 1000.0],
+                cols.agg.transaction_id: [3, 2, 5],
+                cols.agg.unit_qty: [50, 50, 100],
+                cols.calc.spend_per_trans: [166.666667, 250.0, 200.0],
+                cols.calc.price_per_unit: [10.0, 10.0, 10.0],
+                cols.calc.units_per_trans: [16.666667, 25.0, 20.0],
             },
         )
         segment_stats = (
@@ -207,12 +207,12 @@ class TestSegTransactionStats:
             {
                 "segment_name": ["High Value", "High Value", "Medium Value", "Total"],
                 "region": ["East", "North", "South", "Total"],
-                cols.agg_unit_spend: [650.0, 250.0, 450.0, 1350.0],
-                cols.agg_transaction_id: [2, 2, 2, 6],
-                cols.agg_customer_id: [1, 1, 1, 3],
-                cols.calc_spend_per_cust: [650.0, 250.0, 450.0, 450.0],
-                cols.calc_spend_per_trans: [325.0, 125.0, 225.0, 225.0],
-                cols.calc_trans_per_cust: [2.0, 2.0, 2.0, 2.0],
+                cols.agg.unit_spend: [650.0, 250.0, 450.0, 1350.0],
+                cols.agg.transaction_id: [2, 2, 2, 6],
+                cols.agg.customer_id: [1, 1, 1, 3],
+                cols.calc.spend_per_cust: [650.0, 250.0, 450.0, 450.0],
+                cols.calc.spend_per_trans: [325.0, 125.0, 225.0, 225.0],
+                cols.calc.trans_per_cust: [2.0, 2.0, 2.0, 2.0],
             },
         )
 
@@ -503,7 +503,7 @@ class TestSegTransactionStats:
             assert isinstance(result, pd.DataFrame)
             assert not result.empty
 
-            expected_columns = [cols.agg_customer_id, cols.agg_transaction_id, cols.agg_unit_spend, cols.agg_unit_qty]
+            expected_columns = [cols.agg.customer_id, cols.agg.transaction_id, cols.agg.unit_spend, cols.agg.unit_qty]
             for col in expected_columns:
                 assert col in seg_stats.df.columns, f"Expected column {col} missing from output"
 
@@ -566,7 +566,7 @@ class TestSegTransactionStats:
         for (cat0, cat1), expected_sum in expected.items():
             matches = [r for r in records if r["category_0_name"] == cat0 and r["category_1_name"] == cat1]
             assert len(matches) == 1, f"Missing row for ({cat0}, {cat1})"
-            assert matches[0][cols.agg_unit_spend] == expected_sum
+            assert matches[0][cols.agg.unit_spend] == expected_sum
 
     def test_complete_rollup_hierarchy_three_columns(self):
         """Expect prefix + suffix rollups + grand total with 3 segment columns.
@@ -615,7 +615,7 @@ class TestSegTransactionStats:
             & (result_df["subcategory"] == "Total")
         ]
         assert len(north_clothing_total) == 1
-        assert north_clothing_total[cols.agg_unit_spend].values[0] == 10.0 + 20.0
+        assert north_clothing_total[cols.agg.unit_spend].values[0] == 10.0 + 20.0
 
         # Spot check: one suffix rollup (Total, Total, Jeans)
         total_total_jeans = result_df[
@@ -624,7 +624,7 @@ class TestSegTransactionStats:
             & (result_df["subcategory"] == "Jeans")
         ]
         assert len(total_total_jeans) == 1
-        assert total_total_jeans[cols.agg_unit_spend].values[0] == 10.0 + 30.0 + 50.0 + 70.0
+        assert total_total_jeans[cols.agg.unit_spend].values[0] == 10.0 + 30.0 + 50.0 + 70.0
 
         # Grand total
         grand_total = result_df[
@@ -633,7 +633,7 @@ class TestSegTransactionStats:
             & (result_df["subcategory"] == "Total")
         ]
         assert len(grand_total) == 1
-        assert grand_total[cols.agg_unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
+        assert grand_total[cols.agg.unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
 
     def test_rollup_enabled_total_disabled(self):
         """Test that rollup rows are included but grand total is excluded when calc_rollup=True, calc_total=False."""
@@ -744,18 +744,18 @@ class TestUnknownCustomerTracking:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [300.0, 300.0, 600.0],
-                cols.agg_transaction_id: [2, 1, 3],
-                cols.agg_customer_id: [2, 1, 3],
-                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
-                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                cols.agg_unit_spend_unknown: [150.0, 0.0, 150.0],
-                cols.agg_transaction_id_unknown: [1, 0, 1],
-                cols.calc_spend_per_trans_unknown: [150.0, np.nan, 150.0],
-                cols.agg_unit_spend_total: [450.0, 300.0, 750.0],
-                cols.agg_transaction_id_total: [3, 1, 4],
-                cols.calc_spend_per_trans_total: [150.0, 300.0, 187.5],
+                cols.agg.unit_spend: [300.0, 300.0, 600.0],
+                cols.agg.transaction_id: [2, 1, 3],
+                cols.agg.customer_id: [2, 1, 3],
+                cols.calc.spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc.spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg.unit_spend_unknown: [150.0, 0.0, 150.0],
+                cols.agg.transaction_id_unknown: [1, 0, 1],
+                cols.calc.spend_per_trans_unknown: [150.0, np.nan, 150.0],
+                cols.agg.unit_spend_total: [450.0, 300.0, 750.0],
+                cols.agg.transaction_id_total: [3, 1, 4],
+                cols.calc.spend_per_trans_total: [150.0, 300.0, 187.5],
             },
         )
 
@@ -778,18 +778,18 @@ class TestUnknownCustomerTracking:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [300.0, 300.0, 600.0],
-                cols.agg_transaction_id: [2, 1, 3],
-                cols.agg_customer_id: [2, 1, 3],
-                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
-                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                cols.agg_unit_spend_unknown: [150.0, 0.0, 150.0],
-                cols.agg_transaction_id_unknown: [1, 0, 1],
-                cols.calc_spend_per_trans_unknown: [150.0, np.nan, 150.0],
-                cols.agg_unit_spend_total: [450.0, 300.0, 750.0],
-                cols.agg_transaction_id_total: [3, 1, 4],
-                cols.calc_spend_per_trans_total: [150.0, 300.0, 187.5],
+                cols.agg.unit_spend: [300.0, 300.0, 600.0],
+                cols.agg.transaction_id: [2, 1, 3],
+                cols.agg.customer_id: [2, 1, 3],
+                cols.calc.spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc.spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg.unit_spend_unknown: [150.0, 0.0, 150.0],
+                cols.agg.transaction_id_unknown: [1, 0, 1],
+                cols.calc.spend_per_trans_unknown: [150.0, np.nan, 150.0],
+                cols.agg.unit_spend_total: [450.0, 300.0, 750.0],
+                cols.agg.transaction_id_total: [3, 1, 4],
+                cols.calc.spend_per_trans_total: [150.0, 300.0, 187.5],
             },
         )
 
@@ -817,18 +817,18 @@ class TestUnknownCustomerTracking:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [300.0, 300.0, 600.0],
-                cols.agg_transaction_id: [2, 1, 3],
-                cols.agg_customer_id: [2, 1, 3],
-                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
-                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                cols.agg_unit_spend_unknown: [400.0, 0.0, 400.0],
-                cols.agg_transaction_id_unknown: [2, 0, 2],
-                cols.calc_spend_per_trans_unknown: [200.0, np.nan, 200.0],
-                cols.agg_unit_spend_total: [700.0, 300.0, 1000.0],
-                cols.agg_transaction_id_total: [4, 1, 5],
-                cols.calc_spend_per_trans_total: [175.0, 300.0, 200.0],
+                cols.agg.unit_spend: [300.0, 300.0, 600.0],
+                cols.agg.transaction_id: [2, 1, 3],
+                cols.agg.customer_id: [2, 1, 3],
+                cols.calc.spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc.spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
+                cols.agg.unit_spend_unknown: [400.0, 0.0, 400.0],
+                cols.agg.transaction_id_unknown: [2, 0, 2],
+                cols.calc.spend_per_trans_unknown: [200.0, np.nan, 200.0],
+                cols.agg.unit_spend_total: [700.0, 300.0, 1000.0],
+                cols.agg.transaction_id_total: [4, 1, 5],
+                cols.calc.spend_per_trans_total: [175.0, 300.0, 200.0],
             },
         )
 
@@ -852,27 +852,27 @@ class TestUnknownCustomerTracking:
         expected_output = pd.DataFrame(
             {
                 "segment_name": ["A", "B", "Total"],
-                cols.agg_unit_spend: [300.0, 300.0, 600.0],
-                cols.agg_transaction_id: [2, 1, 3],
-                cols.agg_customer_id: [2, 1, 3],
-                cols.agg_unit_qty: [30, 30, 60],
-                cols.calc_spend_per_cust: [150.0, 300.0, 200.0],
-                cols.calc_spend_per_trans: [150.0, 300.0, 200.0],
-                cols.calc_trans_per_cust: [1.0, 1.0, 1.0],
-                cols.calc_price_per_unit: [10.0, 10.0, 10.0],
-                cols.calc_units_per_trans: [15.0, 30.0, 20.0],
-                cols.agg_unit_spend_unknown: [150.0, 0.0, 150.0],
-                cols.agg_transaction_id_unknown: [1, 0, 1],
-                cols.agg_unit_qty_unknown: [15, 0, 15],
-                cols.calc_spend_per_trans_unknown: [150.0, np.nan, 150.0],
-                cols.calc_price_per_unit_unknown: [10.0, np.nan, 10.0],
-                cols.calc_units_per_trans_unknown: [15.0, np.nan, 15.0],
-                cols.agg_unit_spend_total: [450.0, 300.0, 750.0],
-                cols.agg_transaction_id_total: [3, 1, 4],
-                cols.agg_unit_qty_total: [45, 30, 75],
-                cols.calc_spend_per_trans_total: [150.0, 300.0, 187.5],
-                cols.calc_price_per_unit_total: [10.0, 10.0, 10.0],
-                cols.calc_units_per_trans_total: [15.0, 30.0, 18.75],
+                cols.agg.unit_spend: [300.0, 300.0, 600.0],
+                cols.agg.transaction_id: [2, 1, 3],
+                cols.agg.customer_id: [2, 1, 3],
+                cols.agg.unit_qty: [30, 30, 60],
+                cols.calc.spend_per_cust: [150.0, 300.0, 200.0],
+                cols.calc.spend_per_trans: [150.0, 300.0, 200.0],
+                cols.calc.trans_per_cust: [1.0, 1.0, 1.0],
+                cols.calc.price_per_unit: [10.0, 10.0, 10.0],
+                cols.calc.units_per_trans: [15.0, 30.0, 20.0],
+                cols.agg.unit_spend_unknown: [150.0, 0.0, 150.0],
+                cols.agg.transaction_id_unknown: [1, 0, 1],
+                cols.agg.unit_qty_unknown: [15, 0, 15],
+                cols.calc.spend_per_trans_unknown: [150.0, np.nan, 150.0],
+                cols.calc.price_per_unit_unknown: [10.0, np.nan, 10.0],
+                cols.calc.units_per_trans_unknown: [15.0, np.nan, 15.0],
+                cols.agg.unit_spend_total: [450.0, 300.0, 750.0],
+                cols.agg.transaction_id_total: [3, 1, 4],
+                cols.agg.unit_qty_total: [45, 30, 75],
+                cols.calc.spend_per_trans_total: [150.0, 300.0, 187.5],
+                cols.calc.price_per_unit_total: [10.0, 10.0, 10.0],
+                cols.calc.units_per_trans_total: [15.0, 30.0, 18.75],
             },
         )
 
@@ -916,12 +916,12 @@ class TestUnknownCustomerTracking:
         # Check that rollup rows include unknown and total columns
         total_row = result_df[(result_df["category"] == "Total") & (result_df["subcategory"] == "Total")]
         assert len(total_row) == 1
-        assert cols.agg_unit_spend_unknown in total_row.columns
-        assert cols.agg_unit_spend_total in total_row.columns
+        assert cols.agg.unit_spend_unknown in total_row.columns
+        assert cols.agg.unit_spend_total in total_row.columns
         expected_unknown_spend = 400.0
         expected_total_spend = 700.0
-        assert total_row[cols.agg_unit_spend_unknown].iloc[0] == expected_unknown_spend
-        assert total_row[cols.agg_unit_spend_total].iloc[0] == expected_total_spend
+        assert total_row[cols.agg.unit_spend_unknown].iloc[0] == expected_unknown_spend
+        assert total_row[cols.agg.unit_spend_total].iloc[0] == expected_total_spend
 
     def test_unknown_customer_with_extra_aggs(self):
         """Test unknown customer tracking with extra aggregations."""
