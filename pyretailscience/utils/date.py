@@ -61,6 +61,7 @@ def _validate_and_normalize_periods(
 def filter_and_label_by_periods(
     transactions: ibis.Table,
     period_ranges: dict[str, tuple[datetime, datetime] | tuple[str, str]],
+    period_col: str = "period_name",
 ) -> ibis.Table:
     """Filters transactions to specified time periods and adds period labels.
 
@@ -81,9 +82,10 @@ def filter_and_label_by_periods(
         transactions (ibis.Table): An ibis table with a transaction_date column.
         period_ranges (dict[str, tuple[datetime, datetime] | tuple[str, str]]): Dict where keys are period names and
             values are(start_date, end_date) tuples.
+        period_col (str): Name of the column to create for period labels. Defaults to "period_name".
 
     Returns:
-        An ibis table with filtered transactions and added period_name column.
+        An ibis table with filtered transactions and added period label column.
 
     Raises:
         ValueError: If any value in period_ranges is not a tuple of length 2.
@@ -108,7 +110,7 @@ def filter_and_label_by_periods(
         branches.append((period_condition, ibis.literal(period_name)))
 
     conditions = ibis.or_(*[condition[0] for condition in branches])
-    return transactions.filter(conditions).mutate(period_name=ibis.cases(*branches))
+    return transactions.filter(conditions).mutate(**{period_col: ibis.cases(*branches)})
 
 
 def find_overlapping_periods(
