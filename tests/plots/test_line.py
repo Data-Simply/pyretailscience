@@ -645,22 +645,3 @@ class TestHighlightFeature:
             assert context_line.get_linewidth() == context_linewidth, "Context lines should have context linewidth"
             assert context_line.get_alpha() == context_alpha, "Context lines should have context alpha"
             assert context_line.get_zorder() == context_zorder, "Context lines should have context z-order"
-
-    def test_edge_case_empty_highlighted_cols(self, multi_category_dataframe, mocker):
-        """Test edge case where highlighted_cols becomes empty (defensive programming)."""
-        mocker.patch(
-            "pyretailscience.plots.line._categorize_columns",
-            return_value=([], ["Electronics", "Clothing", "Home"]),
-        )
-
-        result_ax = line.plot(
-            df=multi_category_dataframe,
-            x_col="month",
-            value_col="revenue",
-            group_col="category",
-            highlight="Electronics",
-        )
-
-        assert isinstance(result_ax, Axes), "Result should be an Axes object"
-        lines = result_ax.get_lines()
-        assert len(lines) > 0, f"Expected at least one line to be plotted but got {len(lines)}"

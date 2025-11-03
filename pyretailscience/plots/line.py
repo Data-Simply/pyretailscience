@@ -78,8 +78,9 @@ def _validate_highlight_parameter(
     highlight: str | list[str] | None,
     value_col: str | list[str],
     group_col: str | None,
+    pivot_df: pd.DataFrame | None = None,
 ) -> list[str] | None:
-    """Validate and normalize the highlight parameter."""
+    """Validate and normalize the highlight parameter against available columns."""
     if highlight is None:
         return None
 
@@ -93,6 +94,14 @@ def _validate_highlight_parameter(
     )
     if is_single_line:
         raise ValueError("highlight parameter cannot be used with single-line plots")
+
+    # Validate highlight values against available columns if pivot_df is provided
+    if pivot_df is not None:
+        available_columns = list(pivot_df.columns)
+        invalid_highlights = [h for h in highlight if h not in available_columns]
+        if invalid_highlights:
+            error_msg = f"highlight values {invalid_highlights} not found in available columns {available_columns}"
+            raise ValueError(error_msg)
 
     return highlight
 
@@ -119,23 +128,6 @@ def _create_pivot_dataframe(
             pivot_df = pivot_df.fillna(fill_na_value)
 
     return pivot_df
-
-
-def _validate_highlight_values(
-    highlight: list[str] | None,
-    pivot_df: pd.DataFrame,
-) -> list[str] | None:
-    """Validate highlight values against available columns."""
-    if highlight is None:
-        return None
-
-    available_columns = list(pivot_df.columns)
-    invalid_highlights = [h for h in highlight if h not in available_columns]
-    if invalid_highlights:
-        error_msg = f"highlight values {invalid_highlights} not found in available columns {available_columns}"
-        raise ValueError(error_msg)
-
-    return highlight
 
 
 def _categorize_columns(
@@ -268,7 +260,7 @@ def plot(
     Args:
         df (pd.DataFrame | pd.Series): The dataframe or series to plot. When a Series is provided,
             it represents the values to plot against its index.
-        value_col (str, list of str, or None): The column(s) to plot. Must be None when df is a Series.
+        value_col (str | list[str], optional): The column(s) to plot. Must be None when df is a Series.
             Required when df is a DataFrame.
         x_label (str, optional): The x-axis label.
         y_label (str, optional): The y-axis label.
@@ -280,7 +272,7 @@ def plot(
         source_text (str, optional): The source text to add to the plot.
         move_legend_outside (bool, optional): Move the legend outside the plot.
         fill_na_value (float, optional): Value to fill NaNs with after pivoting.
-        highlight (str or list of str, optional): Line(s) to highlight. When using
+        highlight (str | list[str], optional): Line(s) to highlight. When using
             `group_col`, these should be group values. When using a list of `value_col`,
             these should be column names. Highlighted lines will be rendered with bold
             linewidth (3), full opacity (alpha=1.0), and saturated colors. Non-highlighted
@@ -352,14 +344,14 @@ def plot(
     # Validate and prepare input
     df, value_col = _validate_and_prepare_input(df, value_col, x_col, group_col)
 
-    # Validate highlight parameter
+    # Validate highlight parameter (initial validation)
     highlight = _validate_highlight_parameter(highlight, value_col, group_col)
 
     # Create pivot DataFrame
     pivot_df = _create_pivot_dataframe(df, value_col, x_col, group_col, fill_na_value)
 
-    # Validate highlight values
-    highlight = _validate_highlight_values(highlight, pivot_df)
+    # Validate highlight values against available columns
+    highlight = _validate_highlight_parameter(highlight, value_col, group_col, pivot_df)
 
     # Categorize columns and generate colors
     highlighted_cols, context_cols = _categorize_columns(pivot_df, highlight)
