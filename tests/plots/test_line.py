@@ -31,6 +31,12 @@ def sample_dataframe():
 
 
 @pytest.fixture
+def sample_series():
+    """A sample pandas Series for testing."""
+    return pd.Series([100, 150, 200, 175, 225], index=["A", "B", "C", "D", "E"], name="revenue")
+
+
+@pytest.fixture
 def retail_sales_dataframe():
     """A realistic retail sales dataframe that creates predictable NaN values when pivoted."""
     data = {
@@ -275,19 +281,24 @@ def test_line_plot_grouped_series_calls_dataframe_plot(mocker, sample_dataframe)
     )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_multiple_columns_with_group_col(sample_dataframe):
-    """Test the plot function when using multiple columns along with a group column."""
-    sample_dataframe["y1"] = range(10, 20)
-    with pytest.raises(ValueError, match="Cannot use both a list for `value_col` and a `group_col`. Choose one."):
+@pytest.mark.parametrize(
+    ("value_col", "group_col", "expected_error"),
+    [
+        (None, None, "value_col is required when df is a DataFrame"),
+        (["y", "y1"], "group", "Cannot use both a list for `value_col` and a `group_col`. Choose one."),
+    ],
+)
+def test_dataframe_error_conditions(sample_dataframe, value_col, group_col, expected_error):
+    """Test DataFrame error conditions for invalid parameter combinations."""
+    if value_col is not None:
+        sample_dataframe["y1"] = range(10, 20)
+
+    with pytest.raises(ValueError, match=expected_error):
         line.plot(
             df=sample_dataframe,
-            value_col=["y", "y1"],
-            x_label="Transaction Date",
-            y_label="Sales",
-            title="Sales Trend (Grouped by Category)",
+            value_col=value_col,
             x_col="x",
-            group_col="group",
+            group_col=group_col,
         )
 
 
@@ -349,10 +360,99 @@ def test_fill_na_value_none_preserves_nan_values(retail_sales_dataframe):
     south_data = line_data["Store_South"]
 
     # When fill_na_value=None, matplotlib handles missing data with masked arrays
-    # Store_North with missing data should be a masked array
     assert isinstance(north_data, np.ma.MaskedArray), "Store_North data should be a masked array due to missing data"
     assert north_data.mask.any(), "Store_North should have masked values for missing week 4"
 
     # Store_South with complete data should be a regular numpy array (no masking needed)
     assert isinstance(south_data, np.ndarray), "Store_South data should be a numpy array"
     assert not isinstance(south_data, np.ma.MaskedArray), "Store_South should not be a masked array (has complete data)"
+
+
+@pytest.mark.parametrize(
+    ("x_label", "y_label"),
+    [
+        ("Categories", "Revenue ($)"),
+        ("Time Period", "Sales"),
+        (None, None),
+    ],
+)
+def test_plot_series_with_styling_options(sample_series, x_label, y_label):
+    """Test that styling options (x_label, y_label) work with Series input."""
+    result_ax = line.plot(
+        df=sample_series,
+        value_col=None,
+        x_label=x_label,
+        y_label=y_label,
+    )
+
+    # Verify it returns an Axes object
+    assert isinstance(result_ax, Axes)
+
+    # Verify the x-axis data uses the Series index
+    lines = result_ax.get_lines()
+    plotted_x_data = lines[0].get_xdata()
+    # For string indices, matplotlib converts them to numeric positions
+    if sample_series.index.dtype == "object":
+        assert len(plotted_x_data) == len(sample_series.index), "X-axis should have same length as Series index"
+    else:
+        assert list(plotted_x_data) == list(range(len(sample_series))), "X-axis should match Series index positions"
+
+
+@pytest.mark.parametrize(
+    ("value_col", "x_col", "group_col", "expected_error"),
+    [
+        ("revenue", None, None, "When df is a pd.Series, value_col must be None"),
+        (None, "revenue", None, "When df is a pd.Series, x_col must be None"),
+        (None, None, "revenue", "When df is a pd.Series, group_col must be None"),
+    ],
+)
+def test_invalid_series_parameter_combinations(sample_series, value_col, x_col, group_col, expected_error):
+    """Test that invalid parameter combinations with Series raise appropriate ValueError messages."""
+    with pytest.raises(ValueError, match=expected_error):
+        line.plot(df=sample_series, value_col=value_col, x_col=x_col, group_col=group_col)
+
+
+@pytest.mark.parametrize(
+    ("data", "index", "name"),
+    [
+        ([12450.50, 15890.25, 18234.75], ["Store_North", "Store_South", "Store_East"], "revenue"),
+        ([145, 189, 234, 178], [1, 2, 3, 4], "daily_transactions"),
+        ([1245.50, 1567.25, 1834.75], pd.date_range("2024-01-01", periods=3), "daily_sales"),
+        ([523, 678, 845, 912, 1034], range(5), "customer_count"),
+        ([1, np.nan, 3, np.nan, 5], [1, 2, 3, 4, 5], "with_nans"),  # Series with NaN values
+        ([np.nan, np.nan, np.nan], [1, 2, 3], "all_nan"),  # All NaN values
+        ([1, 2, 3, 4, 5], [1, 1, 2, 2, 3], "duplicate_index"),  # Duplicate index values
+        ([0], [1], "single_zero"),  # Single value Series with zero
+    ],
+)
+def test_series_with_various_configurations(data, index, name):
+    """Test Series plotting with various data types, indices, and naming configurations including edge cases."""
+    test_series = pd.Series(data, index=index, name=name)
+    result_ax = line.plot(df=test_series, value_col=None, title="Series Configuration Test")
+
+    assert isinstance(result_ax, Axes)
+
+    # Verify exactly one line is plotted
+    lines = result_ax.get_lines()
+    assert len(lines) == 1, "Should have exactly one line for Series"
+
+    # For edge cases, handle different validation approaches
+    plotted_data = lines[0].get_ydata()
+
+    if name == "all_nan":
+        # All NaN Series - matplotlib handles NaN values with masked arrays
+        assert len(plotted_data) == len(data), f"Expected {len(data)} data points, got {len(plotted_data)}"
+        # Check that all values are masked (NaN)
+        if hasattr(plotted_data, "mask"):
+            assert plotted_data.mask.all(), "All NaN Series should have all values masked"
+    elif name == "with_nans":
+        # Series with some NaN values - matplotlib handles with masked arrays
+        assert len(plotted_data) == len(data), f"Expected {len(data)} data points, got {len(plotted_data)}"
+    else:
+        # Regular cases - verify the plotted data matches the input data
+        expected_data = data if isinstance(data, list) else list(data)
+        actual_data = list(plotted_data)
+        assert actual_data == expected_data, f"Plotted data {actual_data} should match input data {expected_data}"
+
+    # Verify data length always matches
+    assert len(plotted_data) == len(data), f"Expected {len(data)} data points, got {len(plotted_data)}"

@@ -1,7 +1,6 @@
 [project]
 dependencies = [
     "duckdb>=1.0.0,<2",
-    "graphviz>=0.20.3,<0.21",
     "ibis-framework[duckdb]>=10.0.0,<11",
     "matplotlib-set-diagrams~=0.0.2",
     "matplotlib>=3.9.1,<4",
@@ -10,6 +9,7 @@ dependencies = [
     "pyarrow>=16.0.0,<17",
     "scikit-learn>=1.4.2,<2",
     "scipy>=1.13.0,<2",
+    "textalloc>=1.2.1",
     "toml>=0.10.2,<0.11",
     "tqdm>=4.66.1,<5",
 ]
@@ -18,7 +18,7 @@ license = "Elastic-2.0"
 name = "pyretailscience"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
-version = "0.38.0"
+version = "0.40.0"
 [[project.authors]]
 email = "2493311+mvanwyk@users.noreply.github.com"
 name  = "Murray Vanwyk"
@@ -27,7 +27,6 @@ name  = "Murray Vanwyk"
 dev = [
     "freezegun>=1.5.1,<2",
     "ibis-framework[bigquery,pyspark]>=10.0.0,<11",
-
     "nbstripout>=0.7.1,<0.8",
     "pre-commit>=3.6.2,<4",
     "pytest-cov>=4.1.0,<5",

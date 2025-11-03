@@ -517,6 +517,58 @@ cohort.plot(
 )
 ```
 
+### Heatmap Plot
+
+<div class="clear" markdown>
+
+![Heatmap Plot](assets/images/analysis_modules/plots/heatmap.svg){ align=right loading=lazy width="50%"}
+
+Heatmap plots provide a flexible way to visualize any 2D data matrix using color-coded cells. Unlike the specialized
+cohort plot, heatmaps are completely generic and can be used for various analytical purposes without domain-specific
+assumptions. They are particularly useful for:
+
+- **Migration Matrices**: Visualize customer movement between segments or quintiles
+- **Correlation Matrices**: Show relationships between variables or features
+- **Confusion Matrices**: Display classification results and model performance
+- **Geographic Analysis**: Show performance metrics across regions and time periods
+- **Any 2D Data**: Generic support for visualizing tabular data with automatic label handling
+
+Key features include automatic label rotation for long text, auto-contrast cell text, and consistent styling with
+other PyRetailScience plots. Values are displayed exactly as provided in the DataFrame without formatting assumptions.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.plots import heatmap
+
+df = pd.DataFrame({
+    'Champions': [0.65, 0.25, 0.18, 0.12, 0.08, 0.15, 0.03, 0.02],
+    'Loyal Customers': [0.15, 0.45, 0.22, 0.15, 0.12, 0.20, 0.05, 0.03],
+    'Potential Loyalists': [0.08, 0.18, 0.35, 0.28, 0.15, 0.10, 0.12, 0.08],
+    'New Customers': [0.02, 0.03, 0.08, 0.25, 0.05, 0.02, 0.08, 0.12],
+    'At Risk': [0.06, 0.05, 0.08, 0.08, 0.35, 0.15, 0.15, 0.10],
+    'Cannot Lose Them': [0.02, 0.02, 0.03, 0.02, 0.08, 0.25, 0.05, 0.03],
+    'Hibernating': [0.01, 0.01, 0.04, 0.06, 0.12, 0.08, 0.35, 0.25],
+    'Lost': [0.01, 0.01, 0.02, 0.04, 0.05, 0.05, 0.17, 0.37]
+}, index=[
+    'Champions', 'Loyal Customers', 'Potential Loyalists', 'New Customers',
+    'At Risk', 'Cannot Lose Them', 'Hibernating', 'Lost'
+])
+
+heatmap.plot(
+    df=df,
+    cbar_label="Migration Probability",
+    x_label="Current Quarter Segment",
+    y_label="Previous Quarter Segment",
+    title="Customer Segment Migration Analysis (Quarterly)",
+    figsize=(12, 8),
+    source_text="Source: PyRetailScience",
+)
+```
+
 ### Timeline Plot
 
 <div class="clear" markdown>

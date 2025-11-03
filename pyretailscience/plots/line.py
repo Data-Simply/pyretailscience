@@ -39,8 +39,8 @@ from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_sing
 
 
 def plot(
-    df: pd.DataFrame,
-    value_col: str | list[str],
+    df: pd.DataFrame | pd.Series,
+    value_col: str | list[str] | None = None,
     x_label: str | None = None,
     y_label: str | None = None,
     title: str | None = None,
@@ -55,9 +55,14 @@ def plot(
 ) -> SubplotBase:
     """Plots the `value_col` over the specified `x_col` or index, creating a separate line for each unique value in `group_col`.
 
+    This function supports both pandas DataFrames and Series as input. When a Series is provided,
+    the Series values are plotted against its index, and `value_col` must be None.
+
     Args:
-        df (pd.DataFrame): The dataframe to plot.
-        value_col (str or list of str): The column(s) to plot.
+        df (pd.DataFrame | pd.Series): The dataframe or series to plot. When a Series is provided,
+            it represents the values to plot against its index.
+        value_col (str, list of str, or None): The column(s) to plot. Must be None when df is a Series.
+            Required when df is a DataFrame.
         x_label (str, optional): The x-axis label.
         y_label (str, optional): The y-axis label.
         title (str, optional): The title of the plot.
@@ -75,7 +80,34 @@ def plot(
 
     Raises:
         ValueError: If `value_col` is a list and `group_col` is provided (which causes ambiguity in plotting).
+        ValueError: If df is a Series and `value_col` is not None.
+        ValueError: If df is a DataFrame and `value_col` is None.
+        ValueError: If df is a Series and `x_col` is specified (Series uses its index as x-axis).
+        ValueError: If df is a Series and `group_col` is specified (cannot group a single series).
     """
+    # Handle Series input
+    if isinstance(df, pd.Series):
+        if value_col is not None:
+            raise ValueError(
+                "When df is a pd.Series, value_col must be None. The Series itself represents the values to plot.",
+            )
+        if x_col is not None:
+            raise ValueError(
+                "When df is a pd.Series, x_col must be None. The Series index is used as the x-axis.",
+            )
+        if group_col is not None:
+            raise ValueError(
+                "When df is a pd.Series, group_col must be None. Cannot group a single series.",
+            )
+        # Convert Series to DataFrame for uniform processing
+        series_name = df.name if df.name is not None else "value"
+        df = df.to_frame(name=series_name)
+        value_col = series_name
+
+    # Validate value_col for DataFrame input
+    if value_col is None:
+        raise ValueError("value_col is required when df is a DataFrame")
+
     if isinstance(value_col, list) and group_col:
         raise ValueError("Cannot use both a list for `value_col` and a `group_col`. Choose one.")
     if group_col is None:

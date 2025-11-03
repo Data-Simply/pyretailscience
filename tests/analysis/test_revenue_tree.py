@@ -2,8 +2,10 @@
 
 import math
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from matplotlib.axes import Axes
 
 from pyretailscience.analysis.revenue_tree import RevenueTree, calc_tree_kpis
 from pyretailscience.options import ColumnHelper, option_context
@@ -42,6 +44,23 @@ class TestRevenueTree:
         with pytest.raises(ValueError) as excinfo:
             RevenueTree(df=df, period_col="period", p1_value="P1", p2_value="P2", group_col="group_id")
         assert "The following columns are required but missing:" in str(excinfo.value)
+
+    def test_dataframe_missing_group_cols_list(self, cols: ColumnHelper):
+        """Test that an error is raised when the DataFrame is missing group_col columns from a list."""
+        data = {
+            cols.customer_id: [1, 2, 3],
+            cols.transaction_id: [1, 2, 3],
+            cols.unit_spend: [100, 200, 300],
+            cols.transaction_date: ["2023-01-01", "2023-06-02", "2023-01-03"],
+            "period": ["P1", "P2", "P1"],
+            "region": ["North", "South", "North"],
+        }
+        df = pd.DataFrame(data)
+
+        with pytest.raises(ValueError) as excinfo:
+            RevenueTree(df=df, period_col="period", p1_value="P1", p2_value="P2", group_col=["region", "store"])
+        assert "The following columns are required but missing:" in str(excinfo.value)
+        assert "store" in str(excinfo.value)
 
     @pytest.mark.parametrize("include_quantity", [True, False])
     def test_agg_data_no_group(self, cols: ColumnHelper, include_quantity: bool):
@@ -127,8 +146,12 @@ class TestRevenueTree:
             period_col="period",
             p1_value="P1",
             p2_value="P2",
-            group_col="group_id",
+            group_col=["group_id"],
         )
+
+        # Verify single column produces CategoricalIndex, not MultiIndex
+        assert isinstance(result_df.index, pd.CategoricalIndex)
+        assert not isinstance(result_df.index, pd.MultiIndex)
 
         pd.testing.assert_frame_equal(result_df, expected_df)
         assert new_p1_index == [True, True, False, False]
@@ -253,7 +276,7 @@ class TestRevenueTree:
             period_col="period",
             p1_value="P1",
             p2_value="P2",
-            group_col="group_id",
+            group_col=["group_id"],
         )
 
         pd.testing.assert_frame_equal(result_df, expected_df)
@@ -437,3 +460,185 @@ class TestRevenueTree:
 
             for col in expected_columns:
                 assert col in rt.df.columns, f"Expected column {col} missing from output"
+
+    @pytest.mark.parametrize("include_quantity", [True, False])
+    def test_agg_data_with_multi_group_cols(self, cols: ColumnHelper, include_quantity: bool):
+        """Test the _agg_data method with multiple group columns."""
+        df = pd.DataFrame(
+            {
+                "region": ["North", "North", "North", "South", "South", "South"],
+                "store": ["A", "A", "A", "B", "B", "B"],
+                cols.customer_id: [1, 2, 3, 4, 5, 6],
+                cols.transaction_id: [1, 2, 3, 4, 5, 6],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+                cols.transaction_date: [
+                    "2023-01-01",
+                    "2023-01-05",
+                    "2023-01-03",
+                    "2023-01-06",
+                    "2023-01-02",
+                    "2023-01-04",
+                ],
+                "period": ["P1", "P2", "P1", "P2", "P1", "P2"],
+            },
+        )
+
+        if include_quantity:
+            df[cols.unit_qty] = [1, 2, 3, 4, 5, 6]
+
+        result_df, new_p1_index, new_p2_index = RevenueTree._agg_data(
+            df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col=["region", "store"],
+        )
+
+        # Verify MultiIndex structure
+        assert isinstance(result_df.index, pd.MultiIndex)
+        assert result_df.index.names == ["region", "store"]
+        expected_num_index_levels = 2
+        assert len(result_df.index.levels) == expected_num_index_levels
+
+        # Verify data
+        expected_num_rows = 4  # 2 groups * 2 periods
+        assert len(result_df) == expected_num_rows
+        assert new_p1_index == [True, True, False, False]
+        assert new_p2_index == [False, False, True, True]
+
+        # Verify aggregations are correct
+        assert result_df[cols.agg_customer_id].tolist() == [2, 1, 1, 2]
+        assert result_df[cols.agg_transaction_id].tolist() == [2, 1, 1, 2]
+        assert result_df[cols.agg_unit_spend].tolist() == [400.0, 500.0, 200.0, 1000.0]
+
+        if include_quantity:
+            assert result_df[cols.agg_unit_qty].tolist() == [4, 5, 2, 10]
+
+    def test_revenue_tree_with_multi_group_cols(self, cols: ColumnHelper):
+        """Test RevenueTree end-to-end with multiple group columns."""
+        df = pd.DataFrame(
+            {
+                "region": ["North", "North", "South", "South"],
+                "store": ["A", "A", "B", "B"],
+                cols.customer_id: [1, 2, 3, 4],
+                cols.transaction_id: [1, 2, 3, 4],
+                cols.unit_spend: [100.0, 200.0, 300.0, 400.0],
+                "period": ["P1", "P2", "P1", "P2"],
+            },
+        )
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col=["region", "store"],
+        )
+
+        # Verify MultiIndex
+        assert isinstance(rt.df.index, pd.MultiIndex)
+        assert rt.df.index.names == ["region", "store"]
+        expected_num_combinations = 2
+        assert len(rt.df) == expected_num_combinations  # 2 unique combinations
+
+        # Verify we have all the expected columns
+        assert cols.agg_customer_id_p1 in rt.df.columns
+        assert cols.agg_customer_id_p2 in rt.df.columns
+        assert cols.agg_unit_spend_p1 in rt.df.columns
+        assert cols.agg_unit_spend_p2 in rt.df.columns
+
+    @pytest.mark.parametrize("include_qty", [True, False])
+    def test_draw_tree_matplotlib(self, cols: ColumnHelper, include_qty: bool):
+        """Test that draw_tree() returns a matplotlib Axes and renders correctly."""
+        data = {
+            cols.customer_id: [1, 2, 3, 1, 2, 3],
+            cols.transaction_id: [1, 2, 3, 4, 5, 6],
+            cols.unit_spend: [100.0, 150.0, 200.0, 120.0, 180.0, 240.0],
+            "period": ["P1", "P1", "P1", "P2", "P2", "P2"],
+        }
+
+        if include_qty:
+            data[cols.unit_qty] = [10, 15, 20, 12, 18, 24]
+
+        df = pd.DataFrame(data)
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+        )
+
+        # Test with default parameters
+        ax = rt.draw_tree()
+        assert isinstance(ax, Axes)
+        assert ax.get_title() == ""  # TreeGrid doesn't set a title by default
+
+        # Clean up
+        plt.close()
+
+        # Test with custom value labels
+        ax = rt.draw_tree(value_labels=("Current", "Previous"))
+        assert isinstance(ax, Axes)
+        plt.close()
+
+        # Test with custom node labels
+        ax = rt.draw_tree(
+            unit_spend_label="Sales",
+            customer_id_label="Shoppers",
+            spend_per_customer_label="Sales / Shopper",
+            transactions_per_customer_label="Trips / Shopper",
+            spend_per_transaction_label="Sales / Trip",
+            units_per_transaction_label="Items / Trip",
+            price_per_unit_label="Price / Item",
+        )
+        assert isinstance(ax, Axes)
+        plt.close()
+
+    def test_draw_tree_with_row_index(self, cols: ColumnHelper):
+        """Test that draw_tree() can visualize a specific row from a multi-group RevenueTree."""
+        data = {
+            "region": ["North", "North", "North", "South", "South", "South"],
+            cols.customer_id: [1, 2, 1, 3, 4, 3],
+            cols.transaction_id: [1, 2, 3, 4, 5, 6],
+            cols.unit_spend: [100.0, 150.0, 120.0, 200.0, 250.0, 220.0],
+            cols.unit_qty: [10, 15, 12, 20, 25, 22],
+            "period": ["P1", "P1", "P2", "P1", "P1", "P2"],
+        }
+
+        df = pd.DataFrame(data)
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col="region",
+        )
+
+        # Should have 2 rows (North and South)
+        expected_regions = ["North", "South"]
+        assert len(rt.df) == len(expected_regions)
+        assert rt.df.index.tolist() == expected_regions
+
+        # Draw first row (North region)
+        ax = rt.draw_tree(row_index=0)
+        assert isinstance(ax, Axes)
+        # Check that the North region's revenue value appears in the plot
+        text_strings = [t.get_text() for t in ax.texts]
+        # North P2 revenue is 120, P1 revenue is 250 (100 + 150)
+        # The formatted values should appear in the text
+        assert any("120" in s for s in text_strings), "North region P2 revenue should appear"
+        plt.close()
+
+        # Draw second row (South region)
+        ax = rt.draw_tree(row_index=1)
+        assert isinstance(ax, Axes)
+        text_strings = [t.get_text() for t in ax.texts]
+        # South P2 revenue is 220, P1 revenue is 450 (200 + 250)
+        assert any("220" in s for s in text_strings), "South region P2 revenue should appear"
+        plt.close()
+
+        # Test that out of bounds raises IndexError
+        with pytest.raises(IndexError):
+            rt.draw_tree(row_index=2)
