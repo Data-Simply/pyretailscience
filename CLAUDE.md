@@ -31,10 +31,12 @@
 - Type annotations should use Python 3.11 formats
 - Remove unnecessary trailing whitespace
 - Use vectorized operations for numpy arrays and pandas DataFrames/Series wherever possible instead of loops or
-  .apply() to keep code clean and performant
+  .apply() to keep code clean and performant. Avoid converting Series to lists for iteration or using .iterrows() -
+  use vectorized operations directly on the DataFrame/Series
 - Extract magic numbers as named constants with descriptive names (e.g., `GREEN_THRESHOLD = 1.0` instead of hardcoded
   `1.0` in conditionals)
-- Add input validation for public APIs: validate types, ranges, and constraints early with clear error messages
+- Add input validation for public functions and class methods: validate types, ranges, and constraints early with clear
+  error messages
 - Use ternary operators for simple conditional assignments (e.g., `status = "active" if count > 0 else "inactive"`
   instead of multi-line if/else blocks)
 
@@ -54,7 +56,7 @@
 
 ### Required Practices
 
-- Prefer test classes for organizing related tests for modules or classes
+- Prefer test classes for organizing related tests (group tests by module or class being tested)
 - Always put imports at the top of the module (never import inside test methods)
 - Where possible prefer pandas `assert_frame_equal` to asserting individual values of the dataframe
     - This may require creating an expected dataframe to compare against
@@ -65,6 +67,7 @@
 - Include boundary/edge case tests for threshold values, limits, and special cases
 - When testing against expected values (colors, formats, etc.), reference package constants rather than hardcoding
   values in tests
+- Use pytest fixtures for shared test data setup to improve readability and reduce duplication
 
 ### Anti-Patterns to Avoid
 
@@ -78,8 +81,9 @@
     - Only `assert hasattr()` or `callable()` checks without behavior verification
     - Only `assert isinstance()` type checks without validating actual behavior
     - Assertions that can never fail (e.g., `assert x >= 0 or x < 0`)
-    - Vague comparison assertions (e.g., `assert result_with_filter != result_without_filter` instead of asserting what
-      the filter actually does to the data)
+    - Vague comparison assertions that only check "something changed" (e.g., `assert filtered_df.shape !=
+      unfiltered_df.shape`). Better: verify the actual filtering behavior (e.g., `assert len(filtered_df) == 5` and
+      `assert (filtered_df['price'] > 100).all()`)
 - **Don't duplicate tests**: Multiple tests with identical structure should use parametrize instead
 - **Don't over-mock**: Mock external dependencies only (databases, APIs, file I/O, network calls). Never mock internal
   PyRetailScience logic or calculations. Test real package behavior.
