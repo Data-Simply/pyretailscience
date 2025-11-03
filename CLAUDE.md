@@ -35,6 +35,8 @@
 - Extract magic numbers as named constants with descriptive names (e.g., `GREEN_THRESHOLD = 1.0` instead of hardcoded
   `1.0` in conditionals)
 - Add input validation for public APIs: validate types, ranges, and constraints early with clear error messages
+- Use ternary operators for simple conditional assignments (e.g., `status = "active" if count > 0 else "inactive"`
+  instead of multi-line if/else blocks)
 
 ## Test Writing Guidelines
 
