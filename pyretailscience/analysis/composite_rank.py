@@ -261,13 +261,13 @@ class CompositeRank:
         order_by: any,
     ) -> any:
         """Create window function for ranking."""
-        if group_col is None:
-            return ibis.window(order_by=order_by)
-        if isinstance(group_col, str):
-            return ibis.window(group_by=df[group_col], order_by=order_by)
-        # list of columns
-        group_by_cols = [df[col] for col in group_col]
-        return ibis.window(group_by=group_by_cols, order_by=order_by)
+        return (
+            ibis.window(order_by=order_by)
+            if group_col is None
+            else ibis.window(group_by=df[group_col], order_by=order_by)
+            if isinstance(group_col, str)
+            else ibis.window(group_by=[df[col] for col in group_col], order_by=order_by)
+        )
 
     def _create_composite_ranking(self, df: ibis.Table, rank_mutates: dict[str, any], agg_func: str) -> ibis.Table:
         """Create the final composite ranking."""
