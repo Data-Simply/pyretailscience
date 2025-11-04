@@ -88,8 +88,8 @@ def test_plot_with_group_col(sample_dataframe):
     )
     expected_num_lines = 2
 
-    assert isinstance(result_ax, Axes)
-    assert len(result_ax.get_lines()) == expected_num_lines  # One line for each group
+    assert isinstance(result_ax, Axes), "Result should be an Axes object"
+    assert len(result_ax.get_lines()) == expected_num_lines, "Should have one line for each group"
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -105,59 +105,39 @@ def test_plot_without_group_col(sample_dataframe):
     )
     expected_num_lines = 1
 
-    assert isinstance(result_ax, Axes)
-    assert len(result_ax.get_lines()) == expected_num_lines  # Only one line
+    assert isinstance(result_ax, Axes), "Result should be an Axes object"
+    assert len(result_ax.get_lines()) == expected_num_lines, "Should have only one line"
 
 
+@pytest.mark.parametrize(
+    ("move_legend_outside", "expected_title"),
+    [
+        (True, "Test Plot Legend Outside"),
+        (False, "Test Plot Legend Inside"),
+    ],
+)
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_moves_legend_outside(sample_dataframe):
-    """Test the plot function moves the legend outside the plot."""
-    # Create the plot with move_legend_outside=True
+def test_plot_legend_positioning(sample_dataframe, move_legend_outside, expected_title):
+    """Test the plot function legend positioning (inside vs outside)."""
     result_ax = line.plot(
         df=sample_dataframe,
         value_col="y",
         x_label="X Axis",
         y_label="Y Axis",
-        title="Test Plot Legend Outside",
+        title=expected_title,
         x_col="x",
         group_col="group",
-        move_legend_outside=True,
+        move_legend_outside=move_legend_outside,
     )
 
-    # Assert that standard_graph_styles was called with move_legend_outside=True
+    # Assert that standard_graph_styles was called with the correct move_legend_outside value
     gu.standard_graph_styles.assert_called_once_with(
         ax=result_ax,
-        title="Test Plot Legend Outside",
+        title=expected_title,
         x_label="X Axis",
         y_label="Y Axis",
         legend_title=None,
-        move_legend_outside=True,
-    )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_moves_legend_inside(sample_dataframe):
-    """Test the plot function moves the legend inside the plot."""
-    # Create the plot with move_legend_outside=False
-    result_ax = line.plot(
-        df=sample_dataframe,
-        value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
-        title="Test Plot Legend Inside",
-        x_col="x",
-        group_col="group",
-        move_legend_outside=False,
-    )
-
-    # Assert that standard_graph_styles was called with move_legend_outside=False
-    gu.standard_graph_styles.assert_called_once_with(
-        ax=result_ax,
-        title="Test Plot Legend Inside",
-        x_label="X Axis",
-        y_label="Y Axis",
-        legend_title=None,
-        move_legend_outside=False,
+        move_legend_outside=move_legend_outside,
     )
 
 
@@ -234,50 +214,37 @@ def test_plot_with_legend_title_and_move_outside(sample_dataframe):
     )
 
 
+@pytest.mark.parametrize(
+    ("group_col", "expected_legend", "plot_title"),
+    [
+        (None, False, "Test Single Line Plot"),
+        ("group", True, "Test Grouped Line Plot"),
+    ],
+)
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_line_plot_single_value_col_calls_dataframe_plot(mocker, sample_dataframe):
-    """Test that pandas.DataFrame.plot is called with correct arguments when group_col is None."""
+def test_line_plot_calls_dataframe_plot(mocker, sample_dataframe, group_col, expected_legend, plot_title):
+    """Test that pandas.DataFrame.plot is called with correct arguments for single vs grouped plots."""
     # Mock DataFrame's plot method
     mock_df_plot = mocker.patch("pandas.DataFrame.plot")
 
-    # Call the line plot function without a group column (single line)
+    # Call the line plot function
     line.plot(
         df=sample_dataframe,
         value_col="y",
+        group_col=group_col,
         x_col="x",
-        title="Test Single Line Plot",
+        title=plot_title,
     )
 
     # Check that DataFrame.plot was called with the correct arguments
+    # Since we added highlight functionality, we expect additional parameters
     mock_df_plot.assert_called_once_with(
         ax=mocker.ANY,
         linewidth=3,
         color=mocker.ANY,  # Dynamic color generation
-        legend=False,
-    )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_line_plot_grouped_series_calls_dataframe_plot(mocker, sample_dataframe):
-    """Test that pandas.DataFrame.plot is called with correct arguments when group_col is provided."""
-    # Mock DataFrame's plot method
-    mock_df_plot = mocker.patch("pandas.DataFrame.plot")
-
-    # Call the line plot function with a group column (multiple lines)
-    line.plot(
-        df=sample_dataframe,
-        value_col="y",
-        group_col="group",
-        x_col="x",
-        title="Test Grouped Line Plot",
-    )
-
-    # Check that DataFrame.plot was called with the correct arguments for grouped plot
-    mock_df_plot.assert_called_once_with(
-        ax=mocker.ANY,
-        linewidth=3,
-        color=mocker.ANY,  # Dynamic color generation
-        legend=True,  # Legend should be present for grouped lines
+        alpha=1.0,  # New parameter added for highlight functionality
+        legend=expected_legend,
+        zorder=2,  # New parameter added for highlight functionality
     )
 
 
@@ -313,9 +280,9 @@ def test_fill_na_value_fills_missing_pivot_values(retail_sales_dataframe):
         fill_na_value=0.0,
     )
 
-    assert isinstance(result_ax, Axes)
+    assert isinstance(result_ax, Axes), "Result should be an Axes object"
     expected_num_lines = 2  # One for each store
-    assert len(result_ax.get_lines()) == expected_num_lines
+    assert len(result_ax.get_lines()) == expected_num_lines, "Should have one line for each store"
 
     # Get the plotted data for each store
     line_data = {}
@@ -345,9 +312,9 @@ def test_fill_na_value_none_preserves_nan_values(retail_sales_dataframe):
         fill_na_value=None,
     )
 
-    assert isinstance(result_ax, Axes)
+    assert isinstance(result_ax, Axes), "Result should be an Axes object"
     expected_num_lines = 2  # One for each store
-    assert len(result_ax.get_lines()) == expected_num_lines
+    assert len(result_ax.get_lines()) == expected_num_lines, "Should have one line for each store"
 
     # Get the plotted data for each store
     line_data = {}
@@ -386,7 +353,7 @@ def test_plot_series_with_styling_options(sample_series, x_label, y_label):
     )
 
     # Verify it returns an Axes object
-    assert isinstance(result_ax, Axes)
+    assert isinstance(result_ax, Axes), "Result should be an Axes object"
 
     # Verify the x-axis data uses the Series index
     lines = result_ax.get_lines()
@@ -430,7 +397,7 @@ def test_series_with_various_configurations(data, index, name):
     test_series = pd.Series(data, index=index, name=name)
     result_ax = line.plot(df=test_series, value_col=None, title="Series Configuration Test")
 
-    assert isinstance(result_ax, Axes)
+    assert isinstance(result_ax, Axes), "Result should be an Axes object"
 
     # Verify exactly one line is plotted
     lines = result_ax.get_lines()
@@ -456,3 +423,225 @@ def test_series_with_various_configurations(data, index, name):
 
     # Verify data length always matches
     assert len(plotted_data) == len(data), f"Expected {len(data)} data points, got {len(plotted_data)}"
+
+
+@pytest.fixture
+def multi_category_dataframe():
+    """A sample dataframe with multiple categories for highlight testing."""
+    data = {
+        "month": [1, 2, 3, 1, 2, 3, 1, 2, 3],
+        "category": [
+            "Electronics",
+            "Electronics",
+            "Electronics",
+            "Clothing",
+            "Clothing",
+            "Clothing",
+            "Home",
+            "Home",
+            "Home",
+        ],
+        "revenue": [100, 120, 140, 80, 85, 90, 60, 65, 70],
+    }
+    return pd.DataFrame(data)
+
+
+@pytest.fixture
+def multi_metric_dataframe():
+    """A sample dataframe with multiple metrics as columns for highlight testing."""
+    data = {
+        "day": range(1, 6),
+        "revenue": [100, 110, 120, 130, 140],
+        "units_sold": [50, 55, 60, 65, 70],
+        "avg_order_value": [2.0, 2.0, 2.0, 2.0, 2.0],
+        "profit_margin": [0.2, 0.22, 0.24, 0.26, 0.28],
+    }
+    return pd.DataFrame(data)
+
+
+class TestHighlightFeature:
+    """Tests for the highlight parameter functionality."""
+
+    @pytest.mark.parametrize(
+        ("highlight", "expected_highlighted_count", "expected_context_count"),
+        [
+            ("Electronics", 1, 2),
+            (["Electronics", "Clothing"], 2, 1),
+        ],
+    )
+    def test_highlight_with_group_col(
+        self,
+        multi_category_dataframe,
+        highlight,
+        expected_highlighted_count,
+        expected_context_count,
+    ):
+        """Test highlighting with group_col using single string or list of strings."""
+        expected_categories_count = 3
+
+        result_ax = line.plot(
+            df=multi_category_dataframe,
+            x_col="month",
+            value_col="revenue",
+            group_col="category",
+            highlight=highlight,
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+        lines = result_ax.get_lines()
+        assert len(lines) == expected_categories_count, (
+            f"Expected {expected_categories_count} lines but got {len(lines)}"
+        )
+
+        # Normalize highlight to list for uniform processing
+        highlight_list = [highlight] if isinstance(highlight, str) else highlight
+
+        # Check that highlighted lines have higher z-order
+        highlighted_lines = []
+        context_lines = []
+        for plot_line in lines:
+            if plot_line.get_label() in highlight_list:
+                highlighted_lines.append(plot_line)
+            else:
+                context_lines.append(plot_line)
+
+        assert len(highlighted_lines) == expected_highlighted_count, (
+            f"Expected {expected_highlighted_count} highlighted lines but got {len(highlighted_lines)}"
+        )
+        assert len(context_lines) == expected_context_count, (
+            f"Expected {expected_context_count} context lines but got {len(context_lines)}"
+        )
+
+        # Highlighted lines should have higher z-order than context
+        for highlighted_line in highlighted_lines:
+            for context_line in context_lines:
+                assert highlighted_line.get_zorder() > context_line.get_zorder(), (
+                    "Highlighted lines should have higher z-order than context lines"
+                )
+
+    def test_highlight_with_value_col_list(self, multi_metric_dataframe):
+        """Test highlighting with list of value_col."""
+        expected_metrics_count = 4
+        expected_highlighted_pairs = 2
+
+        result_ax = line.plot(
+            df=multi_metric_dataframe,
+            x_col="day",
+            value_col=["revenue", "units_sold", "avg_order_value", "profit_margin"],
+            highlight=["revenue", "profit_margin"],
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+        lines = result_ax.get_lines()
+        assert len(lines) == expected_metrics_count, f"Expected {expected_metrics_count} lines but got {len(lines)}"
+
+        # Check that highlighted lines have higher z-order
+        highlighted_lines = []
+        context_lines = []
+        for plot_line in lines:
+            if plot_line.get_label() in ["revenue", "profit_margin"]:
+                highlighted_lines.append(plot_line)
+            else:
+                context_lines.append(plot_line)
+
+        assert len(highlighted_lines) == expected_highlighted_pairs, (
+            f"Expected {expected_highlighted_pairs} highlighted lines but got {len(highlighted_lines)}"
+        )
+        assert len(context_lines) == expected_highlighted_pairs, (
+            f"Expected {expected_highlighted_pairs} context lines but got {len(context_lines)}"
+        )
+
+        # Highlighted lines should have higher z-order than context
+        for highlighted_line in highlighted_lines:
+            for context_line in context_lines:
+                assert highlighted_line.get_zorder() > context_line.get_zorder(), (
+                    "Highlighted lines should have higher z-order than context lines"
+                )
+
+    def test_highlight_single_line_raises_error(self, sample_dataframe):
+        """Test that highlight raises error for single-line plots."""
+        with pytest.raises(ValueError, match="highlight parameter cannot be used with single-line plots"):
+            line.plot(df=sample_dataframe, value_col="y", x_col="x", highlight="something")
+
+    def test_highlight_invalid_values_raises_error(self, multi_category_dataframe):
+        """Test that highlight raises error for invalid values."""
+        with pytest.raises(ValueError, match="highlight values .* not found in available columns"):
+            line.plot(
+                df=multi_category_dataframe,
+                x_col="month",
+                value_col="revenue",
+                group_col="category",
+                highlight=["NonExistent", "AlsoNotThere"],
+            )
+
+    def test_highlight_none_behaves_normally(self, multi_category_dataframe):
+        """Test that highlight=None behaves like the original implementation."""
+        expected_categories_count = 3
+        highlighted_linewidth = 3
+        highlighted_alpha = 1.0
+        highlighted_zorder = 2
+
+        result_ax = line.plot(
+            df=multi_category_dataframe,
+            x_col="month",
+            value_col="revenue",
+            group_col="category",
+            highlight=None,
+        )
+
+        lines = result_ax.get_lines()
+        assert len(lines) == expected_categories_count, (
+            f"Expected {expected_categories_count} lines but got {len(lines)}"
+        )
+
+        # All lines should have highlighted styling (no context lines)
+        for plot_line in lines:
+            assert plot_line.get_linewidth() == highlighted_linewidth, (
+                "All lines should have highlighted linewidth when highlight=None"
+            )
+            assert plot_line.get_alpha() == highlighted_alpha, (
+                "All lines should have highlighted alpha when highlight=None"
+            )
+            assert plot_line.get_zorder() == highlighted_zorder, (
+                "All lines should have highlighted z-order when highlight=None"
+            )
+
+    def test_highlight_styling_properties(self, multi_category_dataframe):
+        """Test that highlight applies correct styling properties."""
+        highlighted_linewidth = 3
+        highlighted_alpha = 1.0
+        highlighted_zorder = 2
+        context_linewidth = 1.5
+        context_alpha = 0.6
+        context_zorder = 1
+
+        result_ax = line.plot(
+            df=multi_category_dataframe,
+            x_col="month",
+            value_col="revenue",
+            group_col="category",
+            highlight="Electronics",
+        )
+
+        lines = result_ax.get_lines()
+
+        # Find highlighted and context lines
+        highlighted_line = None
+        context_lines = []
+        for plot_line in lines:
+            if plot_line.get_label() == "Electronics":
+                highlighted_line = plot_line
+            else:
+                context_lines.append(plot_line)
+
+        # Check styling properties
+        assert highlighted_line.get_linewidth() == highlighted_linewidth, (
+            "Highlighted line should have default highlighted linewidth"
+        )
+        assert highlighted_line.get_alpha() == highlighted_alpha, "Highlighted line should have highlighted alpha"
+        assert highlighted_line.get_zorder() == highlighted_zorder, "Highlighted line should have highlighted z-order"
+
+        for context_line in context_lines:
+            assert context_line.get_linewidth() == context_linewidth, "Context lines should have context linewidth"
+            assert context_line.get_alpha() == context_alpha, "Context lines should have context alpha"
+            assert context_line.get_zorder() == context_zorder, "Context lines should have context z-order"

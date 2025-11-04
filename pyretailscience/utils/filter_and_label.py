@@ -17,6 +17,7 @@ import ibis
 def filter_and_label_by_condition(
     table: ibis.Table,
     conditions: dict[str, ibis.expr.types.BooleanColumn],
+    label_col: str = "label",
 ) -> ibis.Table:
     """Filters a table based on specified conditions and adds labels.
 
@@ -40,6 +41,7 @@ def filter_and_label_by_condition(
         table (ibis.Table): An ibis table to filter.
         conditions (dict[str, ibis.expr.types.BooleanColumn]): Dict where keys are labels and
             values are ibis boolean expressions representing filter conditions.
+        label_col (str): Name of the label column to add. Defaults to "label".
 
     Returns:
         ibis.Table: An ibis table with filtered rows and an added label column.
@@ -47,4 +49,4 @@ def filter_and_label_by_condition(
     branches = [(condition, ibis.literal(label)) for label, condition in conditions.items()]
     combined_condition = ibis.or_(*[condition for condition, _ in branches])
 
-    return table.filter(combined_condition).mutate(label=ibis.cases(*branches))
+    return table.filter(combined_condition).mutate(**{label_col: ibis.cases(*branches)})

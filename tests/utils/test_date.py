@@ -268,6 +268,33 @@ class TestFilterAndLabelByPeriods:
             assert isinstance(result_df, pd.DataFrame)
             assert "my_date_col" in result_df.columns
 
+    def test_custom_period_column_name(self, sample_transactions_table):
+        """Test filter_and_label_by_periods with a custom period column name."""
+        # Define expected transaction counts
+        q1_count = 2
+        q2_count = 2
+
+        period_ranges = {
+            "Q1": ("2023-01-01", "2023-03-31"),
+            "Q2": ("2023-04-01", "2023-06-30"),
+        }
+
+        # Test with custom column name
+        result = filter_and_label_by_periods(sample_transactions_table, period_ranges, period_col="quarter")
+        result_df = result.execute()
+
+        # Verify the custom column exists
+        assert "quarter" in result_df.columns, "Custom period column 'quarter' should exist"
+        assert "period_name" not in result_df.columns, "Default 'period_name' column should not exist"
+
+        # Verify the values are correct
+        assert len(result_df) == q1_count + q2_count, f"Should return {q1_count + q2_count} transactions from Q1 and Q2"
+        q1_transactions = result_df[result_df["quarter"] == "Q1"]
+        q2_transactions = result_df[result_df["quarter"] == "Q2"]
+
+        assert len(q1_transactions) == q1_count, f"Should have {q1_count} transactions in Q1"
+        assert len(q2_transactions) == q2_count, f"Should have {q2_count} transactions in Q2"
+
 
 class TestFindOverlappingPeriods:
     """Test cases for the find_overlapping_periods function."""
