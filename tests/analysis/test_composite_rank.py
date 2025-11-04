@@ -366,7 +366,7 @@ class TestCompositeRank:
             (123, "Group column '123' not found"),
             (12.5, "Group column '12.5' not found"),
             (True, "Group column 'True' not found"),
-            (["invalid"], r"Group column '\['invalid'\]' not found"),
+            (["invalid"], r"Group columns \['invalid'\] not found in the DataFrame"),
             ({"key": "value"}, r"Group column '\{'key': 'value'\}' not found"),
         ],
     )
@@ -584,6 +584,44 @@ class TestCompositeRank:
 
         # Compare the relevant columns
         result_cols = ["id", "group", "value", "value_rank", "composite_rank"]
+        pd.testing.assert_frame_equal(
+            result[result_cols].sort_values("id").reset_index(drop=True),
+            expected[result_cols].sort_values("id").reset_index(drop=True),
+            check_dtype=False,
+        )
+
+    def test_group_col_with_list(self):
+        """Test group-based ranking with list of group columns."""
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4, 5, 6, 7, 8],
+                "region": ["North", "North", "South", "South", "North", "North", "South", "South"],
+                "category": ["A", "B", "A", "B", "A", "B", "A", "B"],
+                "value": [100, 80, 90, 70, 95, 85, 88, 75],
+            },
+        )
+
+        ranker = CompositeRank(
+            df=df,
+            rank_cols=[("value", "desc")],
+            agg_func="mean",
+            group_col=["region", "category"],  # Group by both region and category
+        )
+
+        result = ranker.df.sort_values("id").reset_index(drop=True)
+
+        expected = pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4, 5, 6, 7, 8],
+                "region": ["North", "North", "South", "South", "North", "North", "South", "South"],
+                "category": ["A", "B", "A", "B", "A", "B", "A", "B"],
+                "value": [100, 80, 90, 70, 95, 85, 88, 75],
+                "value_rank": [1, 2, 1, 2, 2, 1, 2, 1],
+                "composite_rank": [1.0, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0, 1.0],
+            },
+        )
+
+        result_cols = ["id", "region", "category", "value", "value_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
             result[result_cols].sort_values("id").reset_index(drop=True),
             expected[result_cols].sort_values("id").reset_index(drop=True),
