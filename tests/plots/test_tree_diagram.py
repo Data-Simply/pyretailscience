@@ -585,6 +585,154 @@ class TestTreeGrid:
         assert grid.node_width == custom_width
         assert grid.node_height == custom_height
 
+    def test_uniform_horizontal_spacing_simple_tree(self):
+        """Test that horizontal spacing is uniform at all levels in a simple tree."""
+        # The auto-layout algorithm uses spacing=2 between siblings
+        expected_spacing = 2
+
+        # Create a revenue tree structure: root -> 2 children, left child has 2 children
+        tree_structure = {
+            "revenue": {
+                "header": "Revenue",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["customers", "spend_per_customer"],
+            },
+            "customers": {
+                "header": "Customers",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],  # Leaf node
+            },
+            "spend_per_customer": {
+                "header": "Spend/Customer",
+                "percent": 2.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": ["visits", "spend_per_visit"],
+            },
+            "visits": {
+                "header": "Visits",
+                "percent": 1.0,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": [],  # Leaf node
+            },
+            "spend_per_visit": {
+                "header": "Spend/Visit",
+                "percent": 1.0,
+                "value1": "$25K",
+                "value2": "$22K",
+                "children": [],  # Leaf node
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        # Get the positions from the auto-layout
+        positions, _, _ = grid._compute_positions()
+
+        # Check spacing at level 1 (customers and spend_per_customer)
+        level_1_nodes = ["customers", "spend_per_customer"]
+        level_1_cols = sorted([positions[node][0] for node in level_1_nodes])
+        spacing_level_1 = level_1_cols[1] - level_1_cols[0]
+
+        # Check spacing at level 2 (visits and spend_per_visit)
+        level_2_nodes = ["visits", "spend_per_visit"]
+        level_2_cols = sorted([positions[node][0] for node in level_2_nodes])
+        spacing_level_2 = level_2_cols[1] - level_2_cols[0]
+
+        # Both levels should have the same spacing
+        assert spacing_level_1 == spacing_level_2 == expected_spacing, (
+            f"Spacing mismatch: level 1 spacing={spacing_level_1}, level 2 spacing={spacing_level_2}, expected={expected_spacing}"
+        )
+
+    def test_uniform_horizontal_spacing_complex_tree(self):
+        """Test uniform spacing in a more complex tree with multiple levels."""
+        # The auto-layout algorithm uses spacing=2 between siblings
+        expected_spacing = 2
+
+        # Create a deeper tree with varying structure
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["a", "b", "c"],
+            },
+            "a": {
+                "header": "A",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": ["a1", "a2"],
+            },
+            "b": {
+                "header": "B",
+                "percent": 2.0,
+                "value1": "$30K",
+                "value2": "$29K",
+                "children": [],  # Leaf - sibling to non-leaf nodes
+            },
+            "c": {
+                "header": "C",
+                "percent": 1.0,
+                "value1": "$20K",
+                "value2": "$17.5K",
+                "children": ["c1"],
+            },
+            "a1": {
+                "header": "A1",
+                "percent": 1.5,
+                "value1": "$25K",
+                "value2": "$24K",
+                "children": [],
+            },
+            "a2": {
+                "header": "A2",
+                "percent": 1.5,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": [],
+            },
+            "c1": {
+                "header": "C1",
+                "percent": 1.0,
+                "value1": "$20K",
+                "value2": "$17.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        positions, _, _ = grid._compute_positions()
+
+        # Check level 1: nodes a, b, c should have uniform spacing
+        level_1_nodes = ["a", "b", "c"]
+        level_1_cols = sorted([positions[node][0] for node in level_1_nodes])
+        spacing_1 = [level_1_cols[i + 1] - level_1_cols[i] for i in range(len(level_1_cols) - 1)]
+
+        # All spacings should be equal
+        assert all(s == expected_spacing for s in spacing_1), f"Level 1 spacing not uniform: {spacing_1}"
+
+        # Check level 2: nodes a1, a2, c1 should have uniform spacing
+        level_2_nodes = ["a1", "a2", "c1"]
+        level_2_cols = sorted([positions[node][0] for node in level_2_nodes])
+        spacing_2 = [level_2_cols[i + 1] - level_2_cols[i] for i in range(len(level_2_cols) - 1)]
+
+        # All spacings should be equal
+        assert all(s == expected_spacing for s in spacing_2), f"Level 2 spacing not uniform: {spacing_2}"
+
 
 class TestDetailedTreeNode:
     """Test the DetailedTreeNode class."""

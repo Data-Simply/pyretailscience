@@ -442,8 +442,15 @@ class TreeGrid:
 
         """
         if ax is None:
-            # Calculate plot dimensions based on layout
-            plot_width = self.col[self.num_cols - 1] + self.node_width
+            # Calculate plot dimensions based on actual node positions
+            # Find the maximum x position from all nodes
+            max_x = max(
+                col_idx * self.horizontal_spacing
+                for col_idx, _ in self._positions.values()
+            )
+            # Add padding for half node width on each side
+            plot_width = max_x + self.node_width
+
             # Row 0 is at the top with the highest y-value after coordinate inversion
             plot_height = self.row[0] + self.node_height
 
@@ -457,7 +464,7 @@ class TreeGrid:
         for node_id, node_data in self.tree_structure.items():
             # Get computed position from auto-layout
             col_idx, row_idx = self._positions[node_id]
-            x = self.col[col_idx]
+            x = col_idx * self.horizontal_spacing  # Calculate x from float column index
             y = self.row[row_idx]
 
             # Extract data for the node (exclude children which is structural)
@@ -507,8 +514,9 @@ class TreeGrid:
     def _compute_positions(self) -> tuple[dict[str, tuple[int, int]], int, int]:
         """Compute grid positions using centered tree auto-layout.
 
-        Uses a bottom-up algorithm to center parents over their children, producing
-        a visually balanced tree layout. Layout orientation: top-down (root at top),
+        Uses a bottom-up algorithm to center parents over their children, then scales
+        positions by a uniform spacing factor. This produces a visually balanced tree
+        layout with consistent sibling spacing. Layout orientation: top-down (root at top),
         left-to-right (siblings ordered left to right).
 
         Returns:
@@ -574,10 +582,13 @@ class TreeGrid:
         nodes_in_level: dict[int, list[str]],
         children_map: dict[str, list[str]],
     ) -> tuple[dict[str, tuple[int, int]], int]:
-        """Assign column positions using in-order traversal.
+        """Assign column positions using bottom-up traversal with uniform spacing.
 
-        Uses a simple in-order traversal where each leaf gets the next available column,
-        and parents are centered over their children. This keeps siblings close together.
+        Uses a two-pass approach:
+        1. Bottom-up: leaves get sequential positions, parents are centered over children
+        2. Level-by-level: enforce uniform spacing between siblings, shifting subtrees as needed
+
+        This ensures both aesthetic centering and consistent spacing at all levels.
 
         Args:
             nodes_in_level: Mapping of level (row) to list of node IDs at that level.
@@ -594,27 +605,101 @@ class TreeGrid:
             roots = list(nodes_in_level.get(0, []))
 
         positions: dict[str, tuple[int, int]] = {}
+        spacing = 2  # Uniform spacing between all siblings
         next_col = [0]  # Use list to allow modification in nested function
 
-        # Layout each root subtree
+        # Pass 1: Layout each root subtree with bottom-up algorithm (centering parents)
         for root in roots:
-            self._layout_subtree(root, 0, children_map, positions, next_col)
+            self._layout_subtree_uniform(root, 0, children_map, positions, next_col, spacing)
+
+        # Pass 2: Enforce uniform spacing at each level by shifting subtrees
+        self._enforce_uniform_spacing(nodes_in_level, children_map, positions, spacing)
 
         max_cols = max((col + 1 for col, _ in positions.values()), default=1)
         return positions, max_cols
 
-    def _layout_subtree(
+    def _enforce_uniform_spacing(
+        self,
+        nodes_in_level: dict[int, list[str]],
+        children_map: dict[str, list[str]],
+        positions: dict[str, tuple[int, int]],
+        spacing: int,
+    ) -> None:
+        """Enforce uniform spacing between siblings at each level by shifting subtrees.
+
+        After the initial layout, this method ensures that all nodes at each level
+        maintain the required spacing from their left sibling. When a node is too close
+        to its left sibling, the entire subtree rooted at that node is shifted right.
+
+        Args:
+            nodes_in_level: Mapping of level to list of node IDs at that level.
+            children_map: Mapping of node ID to list of child IDs.
+            positions: Dictionary of node positions to update in-place.
+            spacing: Required spacing between siblings.
+        """
+        # Process each level from top to bottom
+        for level in sorted(nodes_in_level.keys()):
+            nodes = nodes_in_level[level]
+
+            # Sort nodes by their current column position to process left-to-right
+            sorted_nodes = sorted(nodes, key=lambda n: positions[n][0])
+
+            # Track the minimum required column for the next node
+            min_next_col = None
+
+            for node_id in sorted_nodes:
+                col, row = positions[node_id]
+
+                if min_next_col is not None and col != min_next_col:
+                    # This node needs to be at exactly min_next_col to maintain uniform spacing
+                    shift_amount = min_next_col - col
+                    self._shift_subtree(node_id, shift_amount, children_map, positions)
+                    col = min_next_col
+
+                # Update minimum column for next node at this level
+                min_next_col = col + spacing
+
+    def _shift_subtree(
+        self,
+        node_id: str,
+        shift_amount: int,
+        children_map: dict[str, list[str]],
+        positions: dict[str, tuple[int, int]],
+    ) -> None:
+        """Shift a node and all its descendants horizontally by shift_amount.
+
+        Args:
+            node_id: Root of the subtree to shift.
+            shift_amount: Amount to shift (positive = right, negative = left).
+            children_map: Mapping of node ID to list of child IDs.
+            positions: Dictionary containing node positions to update.
+        """
+        if node_id not in positions:
+            return
+
+        # Shift this node
+        col, row = positions[node_id]
+        positions[node_id] = (col + shift_amount, row)
+
+        # Recursively shift all children
+        for child in children_map.get(node_id, []):
+            self._shift_subtree(child, shift_amount, children_map, positions)
+
+    def _layout_subtree_uniform(
         self,
         node_id: str,
         level: int,
         children_map: dict[str, list[str]],
         positions: dict[str, tuple[int, int]],
         next_col: list[int],
+        spacing: int,
     ) -> None:
-        """Layout subtree using in-order traversal.
+        """Layout subtree using bottom-up traversal (Pass 1 of 2).
 
-        Assigns x-positions sequentially during in-order traversal (left children,
-        then parent, then right children). Parent is centered over children's columns.
+        Assigns initial x-positions during in-order traversal. Leaves get sequential
+        positions with spacing between them, parents are centered over children.
+        A second pass (_enforce_uniform_spacing) will adjust positions to ensure
+        uniform spacing at all levels.
 
         Args:
             node_id: Root of the subtree to layout.
@@ -622,23 +707,24 @@ class TreeGrid:
             children_map: Mapping of node ID to list of child IDs.
             positions: Dictionary to populate with positions.
             next_col: List containing next available column (mutable reference).
+            spacing: Uniform spacing between leaf siblings.
         """
         children = children_map.get(node_id, [])
 
         if not children:
-            # Leaf node: assign next available column
+            # Leaf node: assign next available column with spacing
             positions[node_id] = (next_col[0], level)
-            next_col[0] += 1
+            next_col[0] += spacing
             return
 
         # Process all children first to get their positions
         child_cols: list[int] = []
         for child in children:
-            self._layout_subtree(child, level + 1, children_map, positions, next_col)
+            self._layout_subtree_uniform(child, level + 1, children_map, positions, next_col, spacing)
             child_cols.append(positions[child][0])
 
-        # Center parent over children
-        parent_col = sum(child_cols) // len(child_cols)
+        # Center parent over children (exact midpoint)
+        parent_col = (min(child_cols) + max(child_cols)) // 2
         positions[node_id] = (parent_col, level)
 
     @staticmethod
