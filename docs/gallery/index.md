@@ -8,7 +8,7 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 <!-- markdownlint-disable MD033 -->
 <style>
 /* Matplotlib-style gallery container */
-.sphx-glr-gallery {
+.glr-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, 200px);
   gap: 15px;
@@ -17,7 +17,7 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 }
 
 /* Individual thumbnail container - consistent card style */
-.sphx-glr-thumbcontainer {
+.glr-thumbcontainer {
   text-decoration: none;
   color: inherit;
   display: block;
@@ -30,7 +30,7 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
   width: 200px;
 }
 
-.sphx-glr-thumbcontainer:hover {
+.glr-thumbcontainer:hover {
   transform: scale(1.02);
   text-decoration: none;
   border-color: #007acc;
@@ -38,7 +38,7 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 }
 
 /* Card header - plot type name */
-.sphx-glr-thumb-title {
+.glr-thumb-title {
   font-size: 14px;
   margin-bottom: 12px;
   font-weight: 600;
@@ -49,7 +49,7 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 }
 
 /* Thumbnail image */
-.sphx-glr-thumb img {
+.glr-thumb img {
   width: 160px;
   height: 112px;
   object-fit: contain;
@@ -102,10 +102,10 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 }
 </style>
 
-<div class="sphx-glr-gallery">
-  <a href="plots/area/" class="sphx-glr-thumbcontainer">
-    <div class="sphx-glr-thumb-title">Area Plot</div>
-    <div class="sphx-glr-thumb">
+<div class="glr-gallery">
+  <a href="plots/area/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Area Plot</div>
+    <div class="glr-thumb">
       <img src="../assets/gallery/area_thumbnail.png" alt="Area Plot">
     </div>
   </a>
@@ -113,66 +113,69 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
 ### Coming Soon
 
-<div class="sphx-glr-gallery">
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+<div class="glr-gallery">
+  <div class="glr-thumbcontainer coming-soon-container">
+    <div class="coming-soon-title">Bar Plot</div>
+    <div class="coming-soon-thumb">Preview</div>
+  </div>
+
+  <div class="glr-thumbcontainer coming-soon-container">
+    <div class="coming-soon-title">Line Plot</div>
+    <div class="coming-soon-thumb">Preview</div>
+  </div>
+
+  <div class="glr-thumbcontainer coming-soon-container">
+    <div class="coming-soon-title">Scatter Plot</div>
+    <div class="coming-soon-thumb">Preview</div>
+  </div>
+
+  <div class="glr-thumbcontainer coming-soon-container">
+    <div class="coming-soon-title">Histogram Plot</div>
+    <div class="coming-soon-thumb">Preview</div>
+  </div>
+
+  <div class="glr-thumbcontainer coming-soon-container">
+    <div class="coming-soon-title">Heatmap Plot</div>
+    <div class="coming-soon-thumb">Preview</div>
+  </div>
+
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Time Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Waterfall Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Cohort Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Venn Diagram</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Period on Period Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Broken Timeline Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Index Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
-  <div class="sphx-glr-thumbcontainer coming-soon-container">
+  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Price Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 </div>
-
-## Getting Started
-
-Each plot page includes:
-
-- **Basic examples** - Simple usage to get started quickly
-- **Configuration options** - Major built-in features demonstrated with code
-- **Realistic data** - Retail domain examples you can copy and adapt
-- **Best practices** - Tips for effective visualization
-
-All examples use the consistent PyRetailScience import pattern:
-
-```python
-from pyretailscience.plots import area
-# Then call: area.plot(...)
-```
-
-## Additional Resources
-
-- **[API Reference](../api/plots/area.md)** - Complete parameter documentation for all plots
-- **[Examples](../examples/retention.ipynb)** - End-to-end analysis workflows combining multiple plots
-- **[Styling Guide](../api/plots/styles/tailwind.md)** - Customize colors, themes, and appearance
