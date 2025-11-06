@@ -10,6 +10,9 @@ nav:
       - Options & Configuration: getting_started/options_guide.md
   - Analysis Modules:
       - analysis_modules.md
+  - Plot Gallery:
+      - Overview: gallery/index.md
+      - Area Plot: gallery/plots/area.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
