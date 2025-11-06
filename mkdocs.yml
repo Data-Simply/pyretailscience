@@ -13,6 +13,7 @@ nav:
   - Plot Gallery:
       - Overview: gallery/index.md
       - Area Plot: gallery/plots/area.ipynb
+      - Bar Plot: gallery/plots/bar.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb

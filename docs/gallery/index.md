@@ -109,15 +109,18 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
       <img src="../assets/gallery/area_thumbnail.png" alt="Area Plot">
     </div>
   </a>
+
+  <a href="plots/bar/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Bar Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/bar_thumbnail.png" alt="Bar Plot">
+    </div>
+  </a>
 </div>
 
 ### Coming Soon
 
 <div class="glr-gallery">
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Bar Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Line Plot</div>
