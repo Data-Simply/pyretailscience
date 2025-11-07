@@ -14,6 +14,7 @@ nav:
       - Overview: gallery/index.md
       - Area Plot: gallery/plots/area.ipynb
       - Bar Plot: gallery/plots/bar.ipynb
+      - Broken Timeline Plot: gallery/plots/broken_timeline.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
