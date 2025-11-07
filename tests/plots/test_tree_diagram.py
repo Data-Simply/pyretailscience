@@ -1,10 +1,20 @@
 """Tests for the plots.tree_diagram module."""
 
+# ruff: noqa: N806, PLR2004
+
 import matplotlib.pyplot as plt
 import pytest
 
 from pyretailscience.plots.styles.tailwind import COLORS
-from pyretailscience.plots.tree_diagram import BaseRoundedBox, DetailedTreeNode, SimpleTreeNode, TreeGrid, TreeNode
+from pyretailscience.plots.tree_diagram import (
+    BaseRoundedBox,
+    DetailedTreeNode,
+    LightGBMTreeNode,
+    SimpleTreeNode,
+    TreeGrid,
+    TreeNode,
+    lightgbm_tree_to_grid,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -929,3 +939,341 @@ class TestDetailedTreeNodeIntegration:
             facecolor = title_box.get_facecolor()
             hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
             assert hex_color == expected_colors[i]
+
+
+class TestLightGBMTreeNode:
+    """Test the LightGBMTreeNode class."""
+
+    def test_rendering_leaf_node(self, ax):
+        """Test rendering a leaf node with sample count and average value."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 45.2,
+                "sample_count": 1500,
+                "avg_value": 45.2,
+                "value_range": (0, 100),
+            },
+            x=0.5,
+            y=0.8,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and content box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (header, sample count, avg value)
+        assert len(ax.texts) >= initial_text_count + 2
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Leaf" in text_strings
+        assert "Samples: 1,500" in text_strings
+
+    def test_rendering_internal_node(self, ax):
+        """Test rendering an internal node with split condition."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "age",
+                "split_condition": "<= 35.0000",
+                "value": 52.8,
+                "sample_count": 3200,
+                "avg_value": 52.8,
+                "value_range": (0, 100),
+            },
+            x=1.0,
+            y=2.0,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and content box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (feature name, split condition, sample count, avg value)
+        assert len(ax.texts) >= initial_text_count + 3
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "age" in text_strings
+        assert "<= 35.0000" in text_strings
+        assert "Samples: 3,200" in text_strings
+
+    def test_color_gradient_low_value(self, ax):
+        """Test that low values result in red coloring."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 10.0,  # Low value
+                "sample_count": 1000,
+                "avg_value": 10.0,
+                "value_range": (10, 90),  # Range 10-90, value at minimum
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Header box (first patch) should be red-ish for low values
+        header_box = ax.patches[0]
+        facecolor = header_box.get_facecolor()
+        # Should be red (normalized value = 0)
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == COLORS["red"][500]
+
+    def test_color_gradient_high_value(self, ax):
+        """Test that high values result in green coloring."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 90.0,  # High value
+                "sample_count": 1000,
+                "avg_value": 90.0,
+                "value_range": (10, 90),  # Range 10-90, value at maximum
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Header box (first patch) should be green for high values
+        header_box = ax.patches[0]
+        facecolor = header_box.get_facecolor()
+        # Should be green (normalized value = 1)
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == COLORS["green"][500]
+
+    def test_color_gradient_mid_value(self, ax):
+        """Test that mid values result in yellow coloring."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 50.0,  # Mid value
+                "sample_count": 1000,
+                "avg_value": 50.0,
+                "value_range": (10, 90),  # Range 10-90, value at midpoint
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Header box should be yellow-ish for mid values
+        header_box = ax.patches[0]
+        facecolor = header_box.get_facecolor()
+        # Should be yellow (normalized value = 0.5)
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == COLORS["yellow"][500]
+
+    def test_percentage_formatting(self, ax):
+        """Test that small values are formatted as percentages."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 0.0425,
+                "sample_count": 500,
+                "avg_value": 0.0425,  # Should be formatted as percentage
+                "value_range": (0, 1),
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Check that the average value is formatted as percentage
+        text_strings = [t.get_text() for t in ax.texts]
+        # Should find "Avg: 4.25%" or similar
+        assert any("4.25%" in s for s in text_strings)
+
+    def test_decimal_formatting(self, ax):
+        """Test that large values are formatted as decimals."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 125.75,
+                "sample_count": 800,
+                "avg_value": 125.75,  # Should be formatted as decimal
+                "value_range": (0, 200),
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Check that the average value is formatted as decimal
+        text_strings = [t.get_text() for t in ax.texts]
+        # Should find "Avg: 125.75" or similar
+        assert any("125.75" in s for s in text_strings)
+
+
+class TestLightGBMTreeToGrid:
+    """Test the lightgbm_tree_to_grid function."""
+
+    def test_single_node_tree(self):
+        """Test conversion of a single-node (leaf only) tree."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Create a trivial dataset that results in a single leaf
+        X = np.array([[1], [2], [3]])
+        y = np.array([10, 10, 10])  # All same value
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=1, min_child_samples=10)
+        model.fit(X, y)
+
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Should have exactly one node
+        assert len(tree_structure) == 1
+
+        # Node should have required fields
+        node_id = next(iter(tree_structure.keys()))
+        node = tree_structure[node_id]
+        assert "split_feature" in node
+        assert "value" in node
+        assert "sample_count" in node
+        assert "avg_value" in node
+        assert "value_range" in node
+        assert "children" in node
+
+        # Children list should be empty for leaf
+        assert len(node["children"]) == 0
+
+    def test_two_level_tree(self):
+        """Test conversion of a two-level tree (root with two children)."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Create a dataset that will result in a split
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 10, 10, 50, 50, 50])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Should have at least 3 nodes (root + 2 children) if split occurred
+        assert len(tree_structure) >= 3
+
+        # Find root node (first node added)
+        root_id = "node_0"
+        assert root_id in tree_structure
+
+        root_node = tree_structure[root_id]
+        # Root should have children
+        assert len(root_node["children"]) > 0
+
+        # Root should have split information
+        assert "split_feature" in root_node
+        assert root_node["split_feature"] == "feature1"
+        assert "split_condition" in root_node
+
+    def test_feature_names_mapping(self):
+        """Test that feature names are correctly mapped to splits."""
+        import lightgbm as lgb
+        import numpy as np
+
+        X = np.array([[1, 10], [2, 20], [3, 30], [4, 40], [5, 50], [6, 60]])
+        y = np.array([10, 10, 10, 50, 50, 50])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        feature_names = ["age", "income"]
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=feature_names)
+
+        # Root node should reference one of the feature names
+        root_node = tree_structure["node_0"]
+        if "split_feature" in root_node and root_node["split_feature"] != "Leaf":
+            assert root_node["split_feature"] in feature_names
+
+    def test_value_range_calculation(self):
+        """Test that value_range is correctly calculated across all nodes."""
+        import lightgbm as lgb
+        import numpy as np
+
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 20, 30, 40, 50, 60])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=3, min_child_samples=1)
+        model.fit(X, y)
+
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Extract all value_range tuples
+        value_ranges = [node["value_range"] for node in tree_structure.values()]
+
+        # All nodes should have the same value_range
+        assert all(vr == value_ranges[0] for vr in value_ranges)
+
+        # Value range should be (min, max) of all node values
+        min_range, max_range = value_ranges[0]
+        all_values = [node["value"] for node in tree_structure.values()]
+        assert min_range == pytest.approx(min(all_values))
+        assert max_range == pytest.approx(max(all_values))
+
+    def test_multiple_trees_raises_error(self):
+        """Test that providing a booster with multiple trees raises ValueError."""
+        import lightgbm as lgb
+        import numpy as np
+
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 20, 30, 40, 50, 60])
+
+        # Train with multiple estimators
+        model = lgb.LGBMRegressor(n_estimators=3, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        # Should raise ValueError
+        with pytest.raises(ValueError, match="Expected single tree"):
+            lightgbm_tree_to_grid(model.booster_)
+
+
+class TestLightGBMTreeNodeIntegration:
+    """Integration tests for LightGBMTreeNode with TreeGrid."""
+
+    def test_tree_grid_with_lightgbm_nodes(self):
+        """Test rendering a TreeGrid with LightGBMTreeNode instances."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Create a simple dataset
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 10, 10, 50, 50, 50])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        # Convert to TreeGrid format
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Create TreeGrid
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=LightGBMTreeNode,
+        )
+
+        # Render
+        ax = grid.render()
+
+        # Should have patches for nodes and connection lines
+        num_nodes = len(tree_structure)
+        patches_per_node = 2  # Header box + content box for LightGBMTreeNode
+        # Count connections: each non-leaf node contributes edges to its children
+        num_connections = sum(len(node["children"]) for node in tree_structure.values())
+
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
