@@ -116,12 +116,19 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
       <img src="../assets/gallery/bar_thumbnail.png" alt="Bar Plot">
     </div>
   </a>
+  <a href="plots/broken_timeline/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Broken Timeline Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/broken_timeline_thumbnail.png" alt="Broken Timeline Plot">
+    </div>
+  </a>
   <a href="plots/cohort/" class="glr-thumbcontainer">
     <div class="glr-thumb-title">Cohort Plot</div>
     <div class="glr-thumb">
       <img src="../assets/gallery/cohort_thumbnail.png" alt="Cohort Plot">
     </div>
   </a>
+
 </div>
 
 ### Coming Soon
@@ -165,11 +172,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Period on Period Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Broken Timeline Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
