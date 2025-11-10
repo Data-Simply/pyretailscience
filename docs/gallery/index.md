@@ -122,6 +122,12 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
       <img src="../assets/gallery/broken_timeline_thumbnail.png" alt="Broken Timeline Plot">
     </div>
   </a>
+  <a href="plots/heatmap/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Heatmap Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/heatmap_thumbnail.png" alt="Heatmap Plot">
+    </div>
+  </a>
 </div>
 
 ### Coming Soon
@@ -140,11 +146,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Histogram Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Heatmap Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
