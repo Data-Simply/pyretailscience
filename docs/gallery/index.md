@@ -135,6 +135,13 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
     </div>
   </a>
 
+  <a href="plots/index_plot/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Index Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/index_thumbnail.png" alt="Index Plot">
+    </div>
+  </a>
+
 </div>
 
 ### Coming Soon
@@ -173,11 +180,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Period on Period Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Index Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
