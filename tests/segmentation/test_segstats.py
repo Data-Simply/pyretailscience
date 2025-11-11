@@ -171,6 +171,19 @@ class TestCalcSegStats:
 class TestSegTransactionStats:
     """Tests for the SegTransactionStats class."""
 
+    @pytest.fixture
+    def base_df(self):
+        """Return a base DataFrame for testing."""
+        return pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3, 4, 5],
+                cols.unit_spend: [100.0, 200.0, 150.0, 300.0, 250.0],
+                cols.transaction_id: [101, 102, 103, 104, 105],
+                "segment_name": ["A", "B", "A", "B", "A"],
+                cols.unit_qty: [10, 20, 15, 30, 25],
+            },
+        )
+
     def test_handles_empty_dataframe_with_errors(self):
         """Test that the method raises an error when the DataFrame is missing a required column."""
         df = pd.DataFrame(
@@ -180,18 +193,10 @@ class TestSegTransactionStats:
         with pytest.raises(ValueError):
             SegTransactionStats(df, "segment_name")
 
-    def test_raises_error_when_segment_col_is_empty_list(self):
+    def test_raises_error_when_segment_col_is_empty_list(self, base_df):
         """Test that a ValueError is raised when segment_col is an empty list."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [101, 102, 103],
-                cols.unit_spend: [150.0, 200.0, 175.0],
-                cols.transaction_id: [1001, 1002, 1003],
-            },
-        )
-
         with pytest.raises(ValueError) as excinfo:
-            SegTransactionStats(df, segment_col=[])
+            SegTransactionStats(base_df, segment_col=[])
 
         assert "segment_col cannot be an empty list" in str(excinfo.value)
 
