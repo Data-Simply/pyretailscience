@@ -135,16 +135,18 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
     </div>
   </a>
 
+  <a href="plots/line/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Line Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/line_thumbnail.png" alt="Line Plot">
+    </div>
+  </a>
+
 </div>
 
 ### Coming Soon
 
 <div class="glr-gallery">
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Line Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Scatter Plot</div>
