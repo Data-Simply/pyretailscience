@@ -271,8 +271,8 @@ export GCP_PROJECT_ID=your-project-id
 # Install dependencies
 uv sync
 
-# Run all tests
-uv run pytest tests/integration/bigquery -v
+# Run all BigQuery tests
+uv run pytest tests/integration -k "bigquery" -v
 
 # Run specific test module
 uv run pytest tests/integration/bigquery/test_cohort_analysis.py -v
