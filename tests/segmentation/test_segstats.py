@@ -180,6 +180,21 @@ class TestSegTransactionStats:
         with pytest.raises(ValueError):
             SegTransactionStats(df, "segment_name")
 
+    def test_raises_error_when_segment_col_is_empty_list(self):
+        """Test that a ValueError is raised when segment_col is an empty list."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [101, 102, 103],
+                cols.unit_spend: [150.0, 200.0, 175.0],
+                cols.transaction_id: [1001, 1002, 1003],
+            },
+        )
+
+        with pytest.raises(ValueError) as excinfo:
+            SegTransactionStats(df, segment_col=[])
+
+        assert "segment_col cannot be an empty list" in str(excinfo.value)
+
     def test_multiple_segment_columns(self):
         """Test that the class correctly handles multiple segment columns."""
         df = pd.DataFrame(
