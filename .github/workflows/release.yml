@@ -121,8 +121,18 @@ jobs:
           print(f"New Version: {new_version}")
           EOF
           echo "RELEASE_TAG=$(uv run python -c 'from tomlkit.toml_file import TOMLFile; print(TOMLFile("pyproject.toml").read()["project"]["version"])')" >> $GITHUB_ENV
+      # Build both source distribution and wheel for PyPI and Pyodide compatibility
       - name: Build package
         run: python -m build
+      - name: Verify wheel was built
+        run: |
+          ls -lh dist/
+          wheel_count=$(ls -1 dist/*.whl 2>/dev/null | wc -l)
+          if [ "$wheel_count" -eq 0 ]; then
+            echo "Error: No wheel file was built"
+            exit 1
+          fi
+          echo "Successfully built $wheel_count wheel file(s)"
       - uses: actions/upload-artifact@v4
         with:
           name: build
@@ -162,6 +172,16 @@ jobs:
             } catch (error) {
               core.setFailed(error.message);
             }
+      - name: Upload wheel to release
+        run: |
+          for wheel in dist/*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Uploading $wheel to release $RELEASE_TAG"
+              gh release upload "$RELEASE_TAG" "$wheel" --clobber
+            fi
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
