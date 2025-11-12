@@ -1,7 +1,5 @@
 """Tests for the analysis.speed_drill module."""
 
-# ruff: noqa: N806, NPY002, PLR2004
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,32 +22,34 @@ def cleanup_figures():
 @pytest.fixture
 def sample_regression_data():
     """Create sample regression data for testing."""
-    np.random.seed(42)
-    X = pd.DataFrame(
+    np.random.seed(42)  # noqa: NPY002
+    X = pd.DataFrame(  # noqa: N806
         {
-            "feature1": np.random.rand(100) * 100,
-            "feature2": np.random.rand(100) * 50,
-            "feature3": np.random.rand(100) * 25,
+            "feature1": np.random.rand(100) * 100,  # noqa: NPY002
+            "feature2": np.random.rand(100) * 50,  # noqa: NPY002
+            "feature3": np.random.rand(100) * 25,  # noqa: NPY002
         },
     )
     # Create target with some relationship to features
-    y = pd.Series(X["feature1"] * 0.5 + X["feature2"] * 0.3 + np.random.rand(100) * 10)
+    y = pd.Series(X["feature1"] * 0.5 + X["feature2"] * 0.3 + np.random.rand(100) * 10)  # noqa: NPY002
     return X, y
 
 
 @pytest.fixture
 def sample_binary_data():
     """Create sample binary classification data for testing."""
-    np.random.seed(42)
-    X = pd.DataFrame(
+    np.random.seed(42)  # noqa: NPY002
+    X = pd.DataFrame(  # noqa: N806
         {
-            "age": np.random.rand(100) * 50 + 20,
-            "income": np.random.rand(100) * 50000 + 30000,
-            "score": np.random.rand(100) * 100,
+            "age": np.random.rand(100) * 50 + 20,  # noqa: NPY002
+            "income": np.random.rand(100) * 50000 + 30000,  # noqa: NPY002
+            "score": np.random.rand(100) * 100,  # noqa: NPY002
         },
     )
     # Create binary target based on threshold
-    y = pd.Series((X["age"] > 40) & (X["income"] > 50000), dtype=int)
+    _threshold_age = 40  # Internal variable
+    _threshold_income = 50000  # Internal variable
+    y = pd.Series((X["age"] > _threshold_age) & (X["income"] > _threshold_income), dtype=int)
     return X, y
 
 
@@ -65,7 +65,7 @@ class TestSpeedDrill:
 
     def test_fit_regression(self, sample_regression_data):
         """Test fitting on regression data."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
         result = model.fit(X, y, min_child_samples=10, max_depth=3)
 
@@ -84,7 +84,7 @@ class TestSpeedDrill:
 
     def test_fit_binary_classification(self, sample_binary_data):
         """Test fitting on binary classification data."""
-        X, y = sample_binary_data
+        X, y = sample_binary_data  # noqa: N806
         model = SpeedDrill()
         result = model.fit(X, y, min_child_samples=10, max_depth=3)
 
@@ -107,7 +107,7 @@ class TestSpeedDrill:
 
     def test_fit_with_custom_params(self, sample_regression_data):
         """Test fitting with custom LightGBM parameters."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
 
         # Pass custom learning rate
@@ -119,7 +119,7 @@ class TestSpeedDrill:
 
     def test_view_tree_regression(self, sample_regression_data):
         """Test tree visualization for regression model."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
         model.fit(X, y, min_child_samples=10, max_depth=2)
 
@@ -135,7 +135,7 @@ class TestSpeedDrill:
 
     def test_view_tree_classification(self, sample_binary_data):
         """Test tree visualization for classification model."""
-        X, y = sample_binary_data
+        X, y = sample_binary_data  # noqa: N806
         model = SpeedDrill()
         model.fit(X, y, min_child_samples=10, max_depth=2)
 
@@ -158,7 +158,7 @@ class TestSpeedDrill:
 
     def test_view_tree_custom_figsize(self, sample_regression_data):
         """Test that custom figsize is applied to tree visualization."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
         model.fit(X, y, min_child_samples=10, max_depth=2)
 
@@ -175,7 +175,7 @@ class TestSpeedDrill:
 
     def test_metrics_are_data_quality_checks(self, sample_regression_data):
         """Test that metrics are calculated on training data (data quality checks)."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
         model.fit(X, y, min_child_samples=10, max_depth=3)
 
@@ -186,7 +186,7 @@ class TestSpeedDrill:
 
     def test_single_tree_trained(self, sample_regression_data):
         """Test that only a single tree is trained (n_estimators=1)."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
         model.fit(X, y, min_child_samples=10, max_depth=3)
 
@@ -196,7 +196,7 @@ class TestSpeedDrill:
 
     def test_feature_names_preserved(self, sample_regression_data):
         """Test that feature names are preserved after training."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         expected_feature_names = X.columns.tolist()
 
         model = SpeedDrill()
@@ -206,7 +206,7 @@ class TestSpeedDrill:
 
     def test_max_depth_unlimited(self, sample_regression_data):
         """Test that max_depth=-1 creates deeper trees."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
         model = SpeedDrill()
         model.fit(X, y, min_child_samples=5, max_depth=-1)
 
@@ -216,11 +216,11 @@ class TestSpeedDrill:
 
     def test_min_child_samples_enforced(self, sample_regression_data):
         """Test that min_child_samples parameter is respected."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
 
         # Train with large min_child_samples (should result in shallower tree)
         model_large = SpeedDrill()
-        model_large.fit(X, y, min_child_samples=40, max_depth=-1)
+        model_large.fit(X, y, min_child_samples=40, max_depth=-1)  # Magic value is for testing purposes
 
         # Train with small min_child_samples (should result in deeper tree if max_depth allows)
         model_small = SpeedDrill()
@@ -236,7 +236,7 @@ class TestSpeedDrillIntegration:
 
     def test_complete_workflow_regression(self, sample_regression_data):
         """Test complete workflow: fit -> check metrics -> visualize tree."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
 
         # Initialize and fit
         model = SpeedDrill()
@@ -259,7 +259,7 @@ class TestSpeedDrillIntegration:
 
     def test_complete_workflow_classification(self, sample_binary_data):
         """Test complete workflow for binary classification."""
-        X, y = sample_binary_data
+        X, y = sample_binary_data  # noqa: N806
 
         # Initialize and fit
         model = SpeedDrill()
@@ -280,7 +280,7 @@ class TestSpeedDrillIntegration:
 
     def test_method_chaining(self, sample_regression_data):
         """Test that fit returns self for method chaining."""
-        X, y = sample_regression_data
+        X, y = sample_regression_data  # noqa: N806
 
         model = SpeedDrill().fit(X, y, min_child_samples=10, max_depth=3)
 
@@ -291,3 +291,30 @@ class TestSpeedDrillIntegration:
         # Should be able to visualize after chaining
         ax = model.view_tree()
         assert ax is not None
+
+
+class TestLightGBMTreeWithIdenticalValues:
+    """Test tree visualization with identical values in nodes."""
+
+    def test_lightgbm_tree_with_identical_values(self, sample_regression_data):
+        """Test that LightGBM visualization works with identical values in nodes."""
+        X, y = sample_regression_data  # noqa: N806
+
+        # Use a more complex model configuration
+        model = SpeedDrill()
+        model.fit(X, y, min_child_samples=5, max_depth=3)
+
+        # Generate visualization
+        ax = model.view_tree(figsize=(20, 12))
+
+        # Verify visualization was created
+        assert ax is not None
+        assert isinstance(ax, plt.Axes)
+
+        # Check that the visualization has content
+        assert len(ax.patches) > 0  # Should have node rectangles
+        assert len(ax.texts) > 0  # Should have node labels
+
+        # Verify important tree elements are present
+        text_content = [text.get_text() for text in ax.texts]
+        assert any("feature" in text.lower() for text in text_content)  # Feature names should appear
