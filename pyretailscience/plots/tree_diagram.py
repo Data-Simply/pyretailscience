@@ -143,6 +143,8 @@ class TreeNode(ABC):
         data: dict[str, Any],
         x: float,
         y: float,
+        width: float | None = None,
+        height: float | None = None,
     ) -> None:
         """Initialize the tree node.
 
@@ -150,11 +152,24 @@ class TreeNode(ABC):
             data: Dictionary containing node data. Each subclass defines required keys.
             x: X-coordinate of bottom-left corner.
             y: Y-coordinate of bottom-left corner.
+            width: Optional override for node width. If None, uses class default NODE_WIDTH.
+            height: Optional override for node height. If None, uses class default NODE_HEIGHT.
 
         """
         self._data = data
         self.x = x
         self.y = y
+        # Use instance-specific dimensions if provided, otherwise fall back to class constants
+        # This allows TreeGrid to override dimensions per-node without mutating class attributes
+        # Set instance dimensions (use class constants as fallback)
+        # All render code should use self.node_width/node_height instead of NODE_WIDTH/NODE_HEIGHT
+        self.node_width = width if width is not None else self.NODE_WIDTH
+        self.node_height = height if height is not None else self.NODE_HEIGHT
+
+        # For backward compatibility, keep NODE_WIDTH/NODE_HEIGHT accessible as instance attributes
+        # This allows existing render code to work without changes
+        self.NODE_WIDTH = self.node_width
+        self.NODE_HEIGHT = self.node_height
 
     @abstractmethod
     def render(self, ax: Axes) -> None:
@@ -198,6 +213,10 @@ class SimpleTreeNode(TreeNode):
     NODE_WIDTH = 3.75
     NODE_HEIGHT = 1.75
 
+    # Default dimensions used for responsive font scaling
+    DEFAULT_WIDTH = 3.75
+    DEFAULT_HEIGHT = 1.75
+
     # Color thresholds for percent change
     GREEN_THRESHOLD = 1.0  # Percent change at or above this shows green
     RED_THRESHOLD = -1.0  # Percent change at or below this shows red
@@ -234,13 +253,9 @@ class SimpleTreeNode(TreeNode):
             dict[str, float]: Dictionary with 'label_size' and 'title_size' keys.
 
         """
-        # Default dimensions (what the fixed font sizes were designed for)
-        default_width = 3.75
-        default_height = 1.75
-
-        # Calculate scaling factors
-        width_scale = self.NODE_WIDTH / default_width
-        height_scale = self.NODE_HEIGHT / default_height
+        # Calculate scaling factors relative to default dimensions
+        width_scale = self.NODE_WIDTH / self.DEFAULT_WIDTH
+        height_scale = self.NODE_HEIGHT / self.DEFAULT_HEIGHT
 
         # Use the smaller scale factor to ensure text fits
         scale_factor = min(width_scale, height_scale)
@@ -374,6 +389,10 @@ class LightGBMTreeNode(TreeNode):
     NODE_WIDTH = 3.5
     NODE_HEIGHT = 1.7
     HEADER_HEIGHT_FRACTION = 0.25
+
+    # Default dimensions used for responsive font scaling
+    DEFAULT_WIDTH = 3.5
+    DEFAULT_HEIGHT = 1.7
 
     def render(self, ax: Axes) -> None:
         """Render the LightGBM tree node on the given axes.
@@ -511,9 +530,13 @@ class LightGBMTreeNode(TreeNode):
             )
 
     def _get_responsive_font_sizes(self) -> dict[str, float]:
-        """Calculate responsive font sizes based on node dimensions."""
-        width_scale = self.NODE_WIDTH / 3.5
-        height_scale = self.NODE_HEIGHT / 1.7
+        """Calculate responsive font sizes based on node dimensions.
+
+        Scales fonts relative to the default dimensions to maintain readability
+        when node sizes are customized.
+        """
+        width_scale = self.NODE_WIDTH / self.DEFAULT_WIDTH
+        height_scale = self.NODE_HEIGHT / self.DEFAULT_HEIGHT
         scale_factor = min(width_scale, height_scale)
 
         return {
@@ -562,7 +585,7 @@ class TreeGrid:
                 node_width + 0.5 gap.
 
         Raises:
-            ValueError: If tree_structure is empty.
+            ValueError: If tree_structure is empty, or if spacing is insufficient to prevent overlap.
             TypeError: If node_class is not a TreeNode subclass.
 
         """
@@ -585,6 +608,20 @@ class TreeGrid:
         # Auto-calculate spacing if not provided
         self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
         self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width + 0.5
+
+        # Validate spacing is sufficient to prevent node overlap
+        if self.horizontal_spacing < self.node_width:
+            error_msg = (
+                f"horizontal_spacing ({self.horizontal_spacing}) must be >= "
+                f"node_width ({self.node_width}) to prevent node overlap"
+            )
+            raise ValueError(error_msg)
+        if self.vertical_spacing < self.node_height:
+            error_msg = (
+                f"vertical_spacing ({self.vertical_spacing}) must be >= "
+                f"node_height ({self.node_height}) to prevent node overlap"
+            )
+            raise ValueError(error_msg)
 
         # Always compute positions automatically from tree structure
         positions, computed_rows, computed_cols = self._compute_positions()
@@ -635,15 +672,14 @@ class TreeGrid:
             # Extract data for the node (exclude children which is structural)
             data_dict = {k: v for k, v in node_data.items() if k != "children"}
 
-            # Create and render the node
+            # Create and render the node with custom dimensions if specified
             node = self.node_class(
                 data=data_dict,
                 x=x,
                 y=y,
+                width=self.node_width,
+                height=self.node_height,
             )
-            # Override node dimensions if custom dimensions were specified
-            node.NODE_WIDTH = self.node_width
-            node.NODE_HEIGHT = self.node_height
             node.render(ax)
 
             # Store center positions for connections
@@ -676,8 +712,8 @@ class TreeGrid:
 
         return ax
 
-    def _compute_positions(self) -> tuple[dict[str, tuple[int, int]], int, int]:
-        """Compute grid positions using centered tree auto-layout.
+    def _compute_positions(self) -> tuple[dict[str, tuple[float, int]], int, int]:
+        """Compute grid positions using centered tree auto-layout with float column indices.
 
         Uses a bottom-up algorithm to center parents over their children, then scales
         positions by a uniform spacing factor. This produces a visually balanced tree
@@ -769,67 +805,59 @@ class TreeGrid:
         if not roots:
             roots = list(nodes_in_level.get(0, []))
 
-        positions: dict[str, tuple[int, int]] = {}
+        positions: dict[str, tuple[float, int]] = {}
         spacing = 2  # Uniform spacing between all siblings
-        next_col = [0]  # Use list to allow modification in nested function
+        next_col = [0.0]  # Use list to allow modification in nested function (float for precision)
 
         # Pass 1: Layout each root subtree with bottom-up algorithm (centering parents)
         for root in roots:
             self._layout_subtree_uniform(root, 0, children_map, positions, next_col, spacing)
 
-        # Pass 2: Enforce uniform spacing at each level by shifting subtrees
-        self._enforce_uniform_spacing(nodes_in_level, children_map, positions, spacing)
-
-        max_cols = max((col + 1 for col, _ in positions.values()), default=1)
-        return positions, max_cols
-
-    def _enforce_uniform_spacing(
-        self,
-        nodes_in_level: dict[int, list[str]],
-        children_map: dict[str, list[str]],
-        positions: dict[str, tuple[int, int]],
-        spacing: int,
-    ) -> None:
-        """Enforce uniform spacing between siblings at each level by shifting subtrees.
-
-        After the initial layout, this method ensures that all nodes at each level
-        maintain the required spacing from their left sibling. When a node is too close
-        to its left sibling, the entire subtree rooted at that node is shifted right.
-
-        Args:
-            nodes_in_level: Mapping of level to list of node IDs at that level.
-            children_map: Mapping of node ID to list of child IDs.
-            positions: Dictionary of node positions to update in-place.
-            spacing: Required spacing between siblings.
-        """
-        # Process each level from top to bottom
-        for level in sorted(nodes_in_level.keys()):
+        # Pass 2: Enforce uniform spacing AND re-center parents in a single pass (efficient!)
+        # Process levels from bottom to top: fix leaf spacing, then re-center their parents, etc.
+        for level in sorted(nodes_in_level.keys(), reverse=True):
             nodes = nodes_in_level[level]
 
-            # Sort nodes by their current column position to process left-to-right
+            # Sort nodes by column position to process left-to-right
             sorted_nodes = sorted(nodes, key=lambda n: positions[n][0])
 
-            # Track the minimum required column for the next node
+            # Enforce spacing at this level
             min_next_col = None
-
             for node_id in sorted_nodes:
                 col, row = positions[node_id]
 
-                if min_next_col is not None and col != min_next_col:
-                    # This node needs to be at exactly min_next_col to maintain uniform spacing
+                if min_next_col is not None and col < min_next_col:
+                    # Shift this node and its subtree to maintain spacing
                     shift_amount = min_next_col - col
                     self._shift_subtree(node_id, shift_amount, children_map, positions)
                     col = min_next_col
 
-                # Update minimum column for next node at this level
                 min_next_col = col + spacing
+
+            # After enforcing spacing at this level, re-center all parents at the level above
+            if level > 0:
+                parent_level_nodes = nodes_in_level.get(level - 1, [])
+                for parent_id in parent_level_nodes:
+                    children = children_map.get(parent_id, [])
+                    if children:
+                        # Re-center this parent over its (possibly shifted) children
+                        child_cols = [positions[child][0] for child in children]
+                        centered_col = (min(child_cols) + max(child_cols)) / 2
+                        _, parent_row = positions[parent_id]
+                        positions[parent_id] = (centered_col, parent_row)
+
+        # Calculate max columns (convert float to int by rounding up)
+        import math
+
+        max_cols = math.ceil(max((col + 1 for col, _ in positions.values()), default=1))
+        return positions, max_cols
 
     def _shift_subtree(
         self,
         node_id: str,
-        shift_amount: int,
+        shift_amount: float,
         children_map: dict[str, list[str]],
-        positions: dict[str, tuple[int, int]],
+        positions: dict[str, tuple[float, int]],
     ) -> None:
         """Shift a node and all its descendants horizontally by shift_amount.
 
@@ -855,16 +883,15 @@ class TreeGrid:
         node_id: str,
         level: int,
         children_map: dict[str, list[str]],
-        positions: dict[str, tuple[int, int]],
-        next_col: list[int],
+        positions: dict[str, tuple[float, int]],
+        next_col: list[float],
         spacing: int,
     ) -> None:
         """Layout subtree using bottom-up traversal (Pass 1 of 2).
 
         Assigns initial x-positions during in-order traversal. Leaves get sequential
         positions with spacing between them, parents are centered over children.
-        A second pass (_enforce_uniform_spacing) will adjust positions to ensure
-        uniform spacing at all levels.
+        A second pass will enforce spacing and re-center parents as needed.
 
         Args:
             node_id: Root of the subtree to layout.
@@ -888,8 +915,8 @@ class TreeGrid:
             self._layout_subtree_uniform(child, level + 1, children_map, positions, next_col, spacing)
             child_cols.append(positions[child][0])
 
-        # Center parent over children (exact midpoint)
-        parent_col = (min(child_cols) + max(child_cols)) // 2
+        # Center parent over children (exact midpoint using float division for precision)
+        parent_col = (min(child_cols) + max(child_cols)) / 2
         positions[node_id] = (parent_col, level)
 
     @staticmethod
@@ -1002,6 +1029,10 @@ class DetailedTreeNode(TreeNode):
     NODE_WIDTH = 3.5
     NODE_HEIGHT = 2.5
 
+    # Default dimensions used for responsive font scaling
+    DEFAULT_WIDTH = 3.5
+    DEFAULT_HEIGHT = 2.5
+
     # Color thresholds for percent change
     GREEN_THRESHOLD = 1.0  # Percent change at or above this shows green
     RED_THRESHOLD = -1.0  # Percent change at or below this shows red
@@ -1038,13 +1069,9 @@ class DetailedTreeNode(TreeNode):
             dict[str, float]: Dictionary with 'label_size' and 'tick_size' keys.
 
         """
-        # Default dimensions (what the fixed font sizes were designed for)
-        default_width = 3.5
-        default_height = 2.5
-
-        # Calculate scaling factors
-        width_scale = self.NODE_WIDTH / default_width
-        height_scale = self.NODE_HEIGHT / default_height
+        # Calculate scaling factors relative to default dimensions
+        width_scale = self.NODE_WIDTH / self.DEFAULT_WIDTH
+        height_scale = self.NODE_HEIGHT / self.DEFAULT_HEIGHT
 
         # Use the smaller scale factor to ensure text fits
         scale_factor = min(width_scale, height_scale)

@@ -596,9 +596,13 @@ class TestTreeGrid:
         assert grid.node_height == custom_height
 
     def test_uniform_horizontal_spacing_simple_tree(self):
-        """Test that horizontal spacing is uniform at all levels in a simple tree."""
-        # The auto-layout algorithm uses spacing=2 between siblings
-        expected_spacing = 2
+        """Test that parents are centered over children and spacing is reasonable.
+
+        Note: After parent re-centering, spacing between parent and leaf nodes at the same
+        level may differ. This is geometrically correct and prioritizes proper centering.
+        """
+        # The auto-layout algorithm uses spacing=2 between leaf siblings
+        leaf_spacing = 2
 
         # Create a revenue tree structure: root -> 2 children, left child has 2 children
         tree_structure = {
@@ -647,25 +651,34 @@ class TestTreeGrid:
         # Get the positions from the auto-layout
         positions, _, _ = grid._compute_positions()
 
-        # Check spacing at level 1 (customers and spend_per_customer)
-        level_1_nodes = ["customers", "spend_per_customer"]
-        level_1_cols = sorted([positions[node][0] for node in level_1_nodes])
-        spacing_level_1 = level_1_cols[1] - level_1_cols[0]
-
-        # Check spacing at level 2 (visits and spend_per_visit)
+        # Check that leaf nodes have the expected spacing
         level_2_nodes = ["visits", "spend_per_visit"]
         level_2_cols = sorted([positions[node][0] for node in level_2_nodes])
         spacing_level_2 = level_2_cols[1] - level_2_cols[0]
+        assert spacing_level_2 == pytest.approx(leaf_spacing, abs=0.01), (
+            f"Leaf spacing mismatch: {spacing_level_2} != {leaf_spacing}"
+        )
 
-        # Both levels should have the same spacing
-        assert spacing_level_1 == spacing_level_2 == expected_spacing, (
-            f"Spacing mismatch: level 1 spacing={spacing_level_1}, level 2 spacing={spacing_level_2}, expected={expected_spacing}"
+        # Check that parent is centered over its children
+        parent_col = positions["spend_per_customer"][0]
+        expected_parent_col = (level_2_cols[0] + level_2_cols[1]) / 2
+        assert parent_col == pytest.approx(expected_parent_col, abs=0.01), (
+            f"Parent not centered: at {parent_col}, expected {expected_parent_col}"
+        )
+
+        # Check that root is centered over its children
+        root_col = positions["revenue"][0]
+        level_1_nodes = ["customers", "spend_per_customer"]
+        level_1_cols = [positions[node][0] for node in level_1_nodes]
+        expected_root_col = (min(level_1_cols) + max(level_1_cols)) / 2
+        assert root_col == pytest.approx(expected_root_col, abs=0.01), (
+            f"Root not centered: at {root_col}, expected {expected_root_col}"
         )
 
     def test_uniform_horizontal_spacing_complex_tree(self):
-        """Test uniform spacing in a more complex tree with multiple levels."""
-        # The auto-layout algorithm uses spacing=2 between siblings
-        expected_spacing = 2
+        """Test parent centering and reasonable spacing in a complex tree."""
+        # The auto-layout algorithm uses spacing=2 between leaf siblings
+        leaf_spacing = 2
 
         # Create a deeper tree with varying structure
         tree_structure = {
@@ -727,21 +740,34 @@ class TestTreeGrid:
 
         positions, _, _ = grid._compute_positions()
 
-        # Check level 1: nodes a, b, c should have uniform spacing
-        level_1_nodes = ["a", "b", "c"]
-        level_1_cols = sorted([positions[node][0] for node in level_1_nodes])
-        spacing_1 = [level_1_cols[i + 1] - level_1_cols[i] for i in range(len(level_1_cols) - 1)]
+        # Check that sibling leaf nodes have expected spacing
+        a1_col = positions["a1"][0]
+        a2_col = positions["a2"][0]
+        assert abs(a2_col - a1_col) == pytest.approx(leaf_spacing, abs=0.01), (
+            f"Sibling leaves a1 and a2 spacing incorrect: {abs(a2_col - a1_col)}"
+        )
 
-        # All spacings should be equal
-        assert all(s == expected_spacing for s in spacing_1), f"Level 1 spacing not uniform: {spacing_1}"
+        # Check that parent 'a' is centered over its children a1 and a2
+        a_col = positions["a"][0]
+        expected_a_col = (a1_col + a2_col) / 2
+        assert a_col == pytest.approx(expected_a_col, abs=0.01), (
+            f"Parent 'a' not centered: at {a_col}, expected {expected_a_col}"
+        )
 
-        # Check level 2: nodes a1, a2, c1 should have uniform spacing
-        level_2_nodes = ["a1", "a2", "c1"]
-        level_2_cols = sorted([positions[node][0] for node in level_2_nodes])
-        spacing_2 = [level_2_cols[i + 1] - level_2_cols[i] for i in range(len(level_2_cols) - 1)]
+        # Check that parent 'c' is centered over its child c1
+        c_col = positions["c"][0]
+        c1_col = positions["c1"][0]
+        assert c_col == pytest.approx(c1_col, abs=0.01), (
+            f"Parent 'c' not centered over single child: at {c_col}, expected {c1_col}"
+        )
 
-        # All spacings should be equal
-        assert all(s == expected_spacing for s in spacing_2), f"Level 2 spacing not uniform: {spacing_2}"
+        # Check that root is centered over all its children a, b, c
+        root_col = positions["root"][0]
+        children_cols = [positions[child][0] for child in ["a", "b", "c"]]
+        expected_root_col = (min(children_cols) + max(children_cols)) / 2
+        assert root_col == pytest.approx(expected_root_col, abs=0.01), (
+            f"Root not centered: at {root_col}, expected {expected_root_col}"
+        )
 
 
 class TestDetailedTreeNode:

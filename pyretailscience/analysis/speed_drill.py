@@ -4,6 +4,8 @@ SpeedDrill is a descriptive analytics tool for exploratory data analysis (EDA), 
 It fits a single decision tree on the entire dataset to understand feature relationships and variance explanation.
 """
 
+from typing import Any
+
 import lightgbm as lgb
 import pandas as pd
 from matplotlib.axes import Axes
@@ -51,7 +53,7 @@ class SpeedDrill:
         y: pd.Series,
         min_child_samples: int,
         max_depth: int,
-        **kwargs: dict[str, any],
+        **kwargs: Any,  # noqa: ANN401 - LightGBM params vary by model type
     ) -> "SpeedDrill":
         """Train a single LightGBM tree for descriptive analysis of the full dataset.
 
@@ -166,19 +168,30 @@ class SpeedDrill:
             feature_names=self.column_names,
         )
 
-        # Create TreeGrid with auto-layout and compact spacing
+        # Create TreeGrid with auto-layout and proper spacing
+        # Nodes are 3.5 wide x 1.7 tall, so spacing must be larger than node size
         grid = TreeGrid(
             tree_structure=tree_structure,
             node_class=LightGBMTreeNode,
-            horizontal_spacing=0.5,  # Compact horizontal spacing
-            vertical_spacing=0.3,  # Compact vertical spacing
+            horizontal_spacing=4.5,  # Wide enough to prevent overlap (node width is 3.5)
+            vertical_spacing=2.5,  # Tall enough for clear separation (node height is 1.7)
         )
 
-        # Create figure and render
+        # Create figure with desired size and render tree
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots(figsize=figsize)
         ax = grid.render(ax=ax)
+
+        # Calculate proper axis limits from tree structure
+        max_x = max(col_idx * grid.horizontal_spacing for col_idx, _ in grid._positions.values())
+        plot_width = max_x + grid.node_width
+        plot_height = grid.row[0] + grid.node_height
+
+        ax.set_xlim(0, plot_width)
+        ax.set_ylim(0, plot_height)
+        ax.axis("off")
+
         fig.suptitle("LightGBM Decision Tree", fontsize=16, fontweight="bold")
 
         return ax
