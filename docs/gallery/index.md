@@ -135,6 +135,13 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
     </div>
   </a>
 
+  <a href="plots/period_on_period/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Period on Period Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/period_on_period_thumbnail.png" alt="Period on Period Plot">
+    </div>
+  </a>
+
 </div>
 
 ### Coming Soon
@@ -168,11 +175,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Venn Diagram</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Period on Period Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
