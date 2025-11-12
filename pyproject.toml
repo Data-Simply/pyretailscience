@@ -48,6 +48,10 @@ examples = [ "jupyterlab>=4.2.5,<5", "tqdm>=4.66.1,<5" ]
 build-backend = "hatchling.build"
 requires      = [ "hatchling" ]
 
+[tool.hatchling.build.targets.wheel]
+# Build universal wheel for Pyodide compatibility (py3-none-any)
+only-include = ["pyretailscience"]
+
 [tool.uv]
 default-groups = [ "dev", "docs", "examples" ]
 
