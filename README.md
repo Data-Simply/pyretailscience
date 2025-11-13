@@ -246,8 +246,8 @@ The PySpark integration tests run in a Docker container with a pre-configured Sp
 # Build the PySpark test image
 docker build -f tests/integration/pyspark/Dockerfile -t pyspark-it .
 
-# Run the integration tests
-docker run --rm pyspark-it uv run pytest -v tests/integration/pyspark/test_segstats_segmentation.py
+# Run all PySpark tests
+docker run --rm pyspark-it uv run pytest tests/integration -k "pyspark" -v
 ```
 
 #### BigQuery Integration Tests
