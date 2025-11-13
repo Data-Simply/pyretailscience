@@ -134,6 +134,12 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
       <img src="../assets/gallery/heatmap_thumbnail.png" alt="Heatmap Plot">
     </div>
   </a>
+  <a href="plots/histogram/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Histogram Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/histogram_thumbnail.png" alt="Histogram Plot">
+    </div>
+  </a>
 
   <a href="plots/index_plot/" class="glr-thumbcontainer">
     <div class="glr-thumb-title">Index Plot</div>
@@ -155,11 +161,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Scatter Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Histogram Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
