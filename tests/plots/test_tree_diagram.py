@@ -10,6 +10,7 @@ from pyretailscience.plots.tree_diagram import (
     BaseRoundedBox,
     DetailedTreeNode,
     LightGBMTreeNode,
+    SegmentTreeNode,
     SimpleTreeNode,
     TreeGrid,
     TreeNode,
@@ -762,12 +763,129 @@ class TestTreeGrid:
         )
 
         # Check that root is centered over all its children a, b, c
+        # Using arithmetic mean (average of all children columns) as per Excel-like grid requirements
         root_col = positions["root"][0]
         children_cols = [positions[child][0] for child in ["a", "b", "c"]]
-        expected_root_col = (min(children_cols) + max(children_cols)) / 2
+        expected_root_col = sum(children_cols) / len(children_cols)  # Arithmetic mean, not midpoint
         assert root_col == pytest.approx(expected_root_col, abs=0.01), (
             f"Root not centered: at {root_col}, expected {expected_root_col}"
         )
+
+    def test_orientation_top_down(self):
+        """Test that top-down orientation creates a vertical tree."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            orientation="top-down",
+        )
+
+        # Verify orientation was set correctly
+        assert grid.orientation == "top-down"
+
+        # Render and verify it works
+        ax = grid.render()
+        assert ax is not None
+
+    def test_orientation_left_right(self):
+        """Test that left-right orientation creates a horizontal tree."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            orientation="left-right",
+        )
+
+        # Verify orientation was set correctly
+        assert grid.orientation == "left-right"
+
+        # Render and verify it works
+        ax = grid.render()
+        assert ax is not None
+
+    def test_orientation_invalid_raises_error(self):
+        """Test that invalid orientation value raises ValueError."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": [],
+            },
+        }
+
+        with pytest.raises(ValueError, match="orientation must be one of"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                node_class=SimpleTreeNode,
+                orientation="invalid",
+            )
+
+    def test_orientation_default_is_top_down(self):
+        """Test that default orientation is top-down."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        assert grid.orientation == "top-down"
 
 
 class TestDetailedTreeNode:
@@ -1298,6 +1416,217 @@ class TestLightGBMTreeNodeIntegration:
         # Should have patches for nodes and connection lines
         num_nodes = len(tree_structure)
         patches_per_node = 2  # Header box + content box for LightGBMTreeNode
+        # Count connections: each non-leaf node contributes edges to its children
+        num_connections = sum(len(node["children"]) for node in tree_structure.values())
+
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
+
+
+class TestSegmentTreeNode:
+    """Test the SegmentTreeNode class."""
+
+    def test_rendering_with_valid_data(self, ax):
+        """Test that SegmentTreeNode renders correctly with valid data."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Female Passengers",
+                "metric_label": "Survival Rate",
+                "metric_value": "74.2%",
+                "sample_size": "271",
+                "baseline_value": "40.6%",
+                "variance": "+33.6pp",
+                "variance_numeric": 33.6,
+            },
+            x=0.5,
+            y=0.8,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and content box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (header + 3 content lines minimum)
+        assert len(ax.texts) >= initial_text_count + 4
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Female Passengers" in text_strings
+        assert "Survival Rate: 74.2%" in text_strings
+        assert "Sample: 271" in text_strings
+        assert "vs Overall (40.6%): +33.6pp" in text_strings
+
+    @pytest.mark.parametrize(
+        ("variance_numeric", "expected_color_name"),
+        [
+            (33.6, "green"),  # Above GREEN_THRESHOLD (5.0)
+            (-22.8, "red"),  # Below RED_THRESHOLD (-5.0)
+            (5.0, "green"),  # At green threshold
+            (-5.0, "red"),  # At red threshold
+            (2.0, "yellow"),  # Between thresholds (neutral)
+        ],
+    )
+    def test_color_selection_based_on_variance(self, ax, variance_numeric, expected_color_name):
+        """Test that header box color is selected correctly based on variance thresholds."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Test Segment",
+                "metric_label": "Metric",
+                "metric_value": "50%",
+                "sample_size": "100",
+                "baseline_value": "40%",
+                "variance": f"+{variance_numeric}pp",
+                "variance_numeric": variance_numeric,
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # The header box (first patch added) should have the color based on variance
+        header_box = ax.patches[-2]
+        expected_color = COLORS[expected_color_name][500]
+
+        # Convert RGBA to hex for comparison
+        facecolor = header_box.get_facecolor()
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == expected_color
+
+    @pytest.mark.parametrize(
+        "missing_key",
+        ["header", "metric_label", "metric_value", "sample_size", "baseline_value", "variance"],
+    )
+    def test_missing_required_keys(self, ax, missing_key):
+        """Test that KeyError is raised when required keys are missing."""
+        data = {
+            "header": "Test Segment",
+            "metric_label": "Conversion Rate",
+            "metric_value": "28.3%",
+            "sample_size": "2,500",
+            "baseline_value": "12.5%",
+            "variance": "+15.8pp",
+        }
+        del data[missing_key]
+
+        node = SegmentTreeNode(data=data, x=0, y=0)
+
+        with pytest.raises(KeyError):
+            node.render(ax)
+
+    def test_rendering_with_contribution(self, ax):
+        """Test that contribution field is rendered when provided."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Premium Customers",
+                "metric_label": "Conversion Rate",
+                "metric_value": "28.3%",
+                "sample_size": "2,500",
+                "baseline_value": "12.5%",
+                "variance": "+15.8pp",
+                "variance_numeric": 15.8,
+                "contribution": "56.7%",
+                "contribution_label": "of total conversions",
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Verify contribution text is rendered
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "56.7% of total conversions" in text_strings
+
+    def test_variance_extraction_from_string(self, ax):
+        """Test that variance_numeric is extracted from variance string if not provided."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Test Segment",
+                "metric_label": "Metric",
+                "metric_value": "50%",
+                "sample_size": "100",
+                "baseline_value": "40%",
+                "variance": "+10.5pp",
+                # variance_numeric not provided - should be extracted
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Should not raise error and should use extracted value for coloring
+        # Extracted value should be 10.5, which is > GREEN_THRESHOLD (5.0)
+        header_box = ax.patches[-2]
+        expected_color = COLORS["green"][500]
+
+        facecolor = header_box.get_facecolor()
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == expected_color
+
+
+class TestSegmentTreeNodeIntegration:
+    """Integration tests for SegmentTreeNode with TreeGrid."""
+
+    def test_segment_tree_rendering(self):
+        """Test that a complete segment tree renders without errors."""
+        # Create tree structure for customer segment analysis
+        tree_structure = {
+            "all": {
+                "header": "All Customers",
+                "metric_label": "Conversion Rate",
+                "metric_value": "12.5%",
+                "sample_size": "10,000",
+                "baseline_value": "12.5%",
+                "variance": "0.0pp",
+                "variance_numeric": 0.0,
+                "contribution": "100%",
+                "contribution_label": "of total conversions",
+                "children": ["premium", "standard"],
+            },
+            "premium": {
+                "header": "Premium",
+                "metric_label": "Conversion Rate",
+                "metric_value": "28.3%",
+                "sample_size": "2,500",
+                "baseline_value": "12.5%",
+                "variance": "+15.8pp",
+                "variance_numeric": 15.8,
+                "contribution": "56.7%",
+                "contribution_label": "of total conversions",
+                "children": [],
+            },
+            "standard": {
+                "header": "Standard",
+                "metric_label": "Conversion Rate",
+                "metric_value": "7.2%",
+                "sample_size": "7,500",
+                "baseline_value": "12.5%",
+                "variance": "-5.3pp",
+                "variance_numeric": -5.3,
+                "contribution": "43.3%",
+                "contribution_label": "of total conversions",
+                "children": [],
+            },
+        }
+
+        # Create TreeGrid
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SegmentTreeNode,
+        )
+
+        # Render
+        ax = grid.render()
+
+        # Should have patches for nodes and connection lines
+        num_nodes = len(tree_structure)
+        patches_per_node = 2  # Header box + content box for SegmentTreeNode
         # Count connections: each non-leaf node contributes edges to its children
         num_connections = sum(len(node["children"]) for node in tree_structure.values())
 

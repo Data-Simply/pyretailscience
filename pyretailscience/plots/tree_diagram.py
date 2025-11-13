@@ -5,6 +5,7 @@ hierarchical tree diagrams with custom node types and grid-based layouts.
 """
 
 from abc import ABC, abstractmethod
+from collections import defaultdict, deque
 from typing import Any
 
 import matplotlib.patches as mpatches
@@ -400,8 +401,6 @@ class LightGBMTreeNode(TreeNode):
         Args:
             ax: Matplotlib axes object to render on.
         """
-        from pyretailscience.plots.styles.tailwind import COLORS
-
         data = self._data
         header_height = self.NODE_HEIGHT * self.HEADER_HEIGHT_FRACTION
         content_height = self.NODE_HEIGHT - header_height
@@ -554,6 +553,248 @@ class LightGBMTreeNode(TreeNode):
         return self.NODE_HEIGHT
 
 
+class SegmentTreeNode(TreeNode):
+    """Segment analysis tree node for descriptive analytics and cohort comparison.
+
+    Designed for showing segment metrics compared to a baseline (e.g., survival rates,
+    conversion rates, or other KPIs for different customer segments).
+
+    Required data keys:
+        header: str - Segment name (e.g., "Female Passengers", "Premium Customers")
+        metric_label: str - Name of the metric being analyzed (e.g., "Survival Rate", "Conversion Rate")
+        metric_value: str - The metric value for this segment (e.g., "74.2%", "£125.50")
+        sample_size: str - Number of items in segment (e.g., "271", "1,234 customers")
+        baseline_value: str - The baseline/overall value for comparison (e.g., "40.6%")
+        variance: str - Difference from baseline (e.g., "+33.6pp", "-15.2%")
+
+    Optional data keys:
+        baseline_label: str - Label for baseline (default: "Overall")
+        contribution: str - Contribution to total (e.g., "69.3% of survivors")
+        contribution_label: str - Label for contribution (default: "of total")
+        variance_numeric: float - Numeric variance for color coding (extracted from variance if not provided)
+
+    Example:
+        >>> tree_structure = {
+        ...     "all": {
+        ...         "header": "All Customers",
+        ...         "metric_label": "Conversion Rate",
+        ...         "metric_value": "12.5%",
+        ...         "sample_size": "10,000",
+        ...         "baseline_value": "12.5%",
+        ...         "variance": "0.0pp",
+        ...         "contribution": "100%",
+        ...         "children": ["premium", "standard"]
+        ...     },
+        ...     "premium": {
+        ...         "header": "Premium",
+        ...         "metric_label": "Conversion Rate",
+        ...         "metric_value": "28.3%",
+        ...         "sample_size": "2,500",
+        ...         "baseline_value": "12.5%",
+        ...         "variance": "+15.8pp",
+        ...         "contribution": "56.7%",
+        ...         "children": []
+        ...     }
+        ... }
+        >>> grid = TreeGrid(tree_structure, SegmentTreeNode)
+        >>> grid.render()
+    """
+
+    NODE_WIDTH = 3.5
+    NODE_HEIGHT = 2.2
+
+    # Default dimensions used for responsive font scaling
+    DEFAULT_WIDTH = 3.5
+    DEFAULT_HEIGHT = 2.2
+
+    # Color thresholds for variance (percentage points or percentage)
+    GREEN_THRESHOLD = 5.0  # Variance at or above this shows green
+    RED_THRESHOLD = -5.0  # Variance at or below this shows red
+
+    @staticmethod
+    def _get_color(variance: float) -> str:
+        """Return color based on variance from baseline.
+
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Yellow otherwise.
+
+        Args:
+            variance: Numeric variance from baseline.
+
+        Returns:
+            str: Hex color code as string.
+        """
+        if variance >= SegmentTreeNode.GREEN_THRESHOLD:
+            return COLORS["green"][500]
+        if variance <= SegmentTreeNode.RED_THRESHOLD:
+            return COLORS["red"][500]
+        return COLORS["yellow"][500]
+
+    def _get_responsive_font_sizes(self) -> dict[str, float]:
+        """Calculate responsive font sizes based on node dimensions.
+
+        Scales fonts relative to the default dimensions to maintain readability
+        when node sizes are customized.
+
+        Returns:
+            dict[str, float]: Font sizes for different text elements.
+        """
+        width_scale = self.NODE_WIDTH / self.DEFAULT_WIDTH
+        height_scale = self.NODE_HEIGHT / self.DEFAULT_HEIGHT
+        scale_factor = min(width_scale, height_scale)
+
+        return {
+            "header_size": 11 * scale_factor,
+            "metric_size": 10 * scale_factor,
+            "label_size": 8.5 * scale_factor,
+        }
+
+    def render(self, ax: Axes) -> None:
+        """Render the segment analysis node on the given axes.
+
+        Args:
+            ax: Matplotlib axes object to render on.
+        """
+        data = self._data
+
+        # Extract required fields
+        header = data["header"]
+        metric_label = data["metric_label"]
+        metric_value = data["metric_value"]
+        sample_size = data["sample_size"]
+        baseline_value = data["baseline_value"]
+        variance = data["variance"]
+
+        # Extract optional fields
+        baseline_label = data.get("baseline_label", "Overall")
+        contribution = data.get("contribution")
+        contribution_label = data.get("contribution_label", "of total")
+
+        # Extract numeric variance for color coding
+        if "variance_numeric" in data:
+            variance_numeric = data["variance_numeric"]
+        else:
+            # Try to extract numeric value from variance string
+            import re
+
+            match = re.search(r"([+-]?\d+\.?\d*)", variance)
+            variance_numeric = float(match.group(1)) if match else 0.0
+
+        # Layout constants
+        corner_radius = 0.15
+        header_height_ratio = 0.28
+        header_height = self.NODE_HEIGHT * header_height_ratio
+        content_height = self.NODE_HEIGHT - header_height
+
+        # Colors
+        header_color = self._get_color(variance_numeric)
+        header_text_color = "white"
+        content_bg_color = "white"
+        text_color = COLORS["gray"][700]
+        border_color = COLORS["gray"][700]
+
+        # Get responsive font sizes
+        font_sizes = self._get_responsive_font_sizes()
+
+        # Draw header box with colored background
+        header_box = BaseRoundedBox(
+            xy=(self.x, self.y + content_height),
+            width=self.NODE_WIDTH,
+            height=header_height,
+            top_radius=corner_radius,
+            bottom_radius=0,
+            facecolor=header_color,
+            edgecolor=border_color,
+            linewidth=1.5,
+        )
+        ax.add_patch(header_box)
+
+        # Draw content box
+        content_box = BaseRoundedBox(
+            xy=(self.x, self.y),
+            width=self.NODE_WIDTH,
+            height=content_height,
+            top_radius=0,
+            bottom_radius=corner_radius,
+            facecolor=content_bg_color,
+            edgecolor=border_color,
+            linewidth=1.5,
+        )
+        ax.add_patch(content_box)
+
+        # Render header text
+        ax.text(
+            self.x + self.NODE_WIDTH / 2,
+            self.y + content_height + header_height / 2,
+            header,
+            ha="center",
+            va="center",
+            fontsize=font_sizes["header_size"],
+            fontweight="bold",
+            color=header_text_color,
+        )
+
+        # Render content area text
+        y_offset = self.y + content_height * 0.88
+        line_height = content_height * 0.20
+
+        # Line 1: Metric label and value
+        ax.text(
+            self.x + self.NODE_WIDTH * 0.05,
+            y_offset,
+            f"{metric_label}: {metric_value}",
+            ha="left",
+            va="center",
+            fontsize=font_sizes["metric_size"],
+            fontweight="bold",
+            color=text_color,
+        )
+        y_offset -= line_height
+
+        # Line 2: Sample size
+        ax.text(
+            self.x + self.NODE_WIDTH * 0.05,
+            y_offset,
+            f"Sample: {sample_size}",
+            ha="left",
+            va="center",
+            fontsize=font_sizes["label_size"],
+            color=text_color,
+        )
+        y_offset -= line_height
+
+        # Line 3: Variance from baseline
+        ax.text(
+            self.x + self.NODE_WIDTH * 0.05,
+            y_offset,
+            f"vs {baseline_label} ({baseline_value}): {variance}",
+            ha="left",
+            va="center",
+            fontsize=font_sizes["label_size"],
+            color=text_color,
+        )
+        y_offset -= line_height
+
+        # Line 4: Contribution (if provided)
+        if contribution is not None:
+            ax.text(
+                self.x + self.NODE_WIDTH * 0.05,
+                y_offset,
+                f"{contribution} {contribution_label}",
+                ha="left",
+                va="center",
+                fontsize=font_sizes["label_size"],
+                color=text_color,
+            )
+
+    def get_width(self) -> float:
+        """Return the node width."""
+        return self.NODE_WIDTH
+
+    def get_height(self) -> float:
+        """Return the node height."""
+        return self.NODE_HEIGHT
+
+
 class TreeGrid:
     """Grid-based tree diagram renderer with configurable node types."""
 
@@ -561,6 +802,9 @@ class TreeGrid:
     CONNECTION_CURVE_RADIUS = 0.15
     CONNECTION_LINE_WIDTH = 2
     CONNECTION_LINE_COLOR = "black"
+
+    # Layout constants
+    POSITION_TOLERANCE = 0.01  # Minimum change threshold for parent centering convergence
 
     def __init__(
         self,
@@ -570,6 +814,8 @@ class TreeGrid:
         node_height: float | None = None,
         vertical_spacing: float | None = None,
         horizontal_spacing: float | None = None,
+        grid_spacing: int = 2,
+        orientation: str = "top-down",
     ) -> None:
         """Initialize the tree grid with automatic layout.
 
@@ -583,9 +829,12 @@ class TreeGrid:
                 node_height + 0.6 gap.
             horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
                 node_width + 0.5 gap.
+            grid_spacing: Grid cell spacing between sibling nodes. Default is 2 (one empty cell between nodes).
+                Use 1 for compact layouts (nodes directly adjacent with minimal gap).
+            orientation: Tree orientation. 'top-down' (default) for vertical trees, 'left-right' for horizontal trees.
 
         Raises:
-            ValueError: If tree_structure is empty, or if spacing is insufficient to prevent overlap.
+            ValueError: If tree_structure is empty, spacing is insufficient, or orientation is invalid.
             TypeError: If node_class is not a TreeNode subclass.
 
         """
@@ -598,16 +847,25 @@ class TreeGrid:
         if not tree_structure:
             raise ValueError("tree_structure cannot be empty")
 
+        # Validate orientation
+        valid_orientations = {"top-down", "left-right"}
+        if orientation not in valid_orientations:
+            error_msg = f"orientation must be one of {valid_orientations}, got '{orientation}'"
+            raise ValueError(error_msg)
+
         self.tree_structure = tree_structure
         self.node_class = node_class
+        self.orientation = orientation
 
         # Get node dimensions from the node class or use overrides
         self.node_width = node_width if node_width is not None else node_class.NODE_WIDTH
         self.node_height = node_height if node_height is not None else node_class.NODE_HEIGHT
 
         # Auto-calculate spacing if not provided
-        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
-        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width + 0.5
+        # Default: 10% of node width horizontally, slightly more vertically
+        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.8
+        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width * 1.1
+        self.grid_spacing = grid_spacing
 
         # Validate spacing is sufficient to prevent node overlap
         if self.horizontal_spacing < self.node_width:
@@ -631,10 +889,16 @@ class TreeGrid:
         self.num_rows = computed_rows
         self.num_cols = computed_cols
 
-        # Generate row and column positions
-        # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
-        self.row = {i: (self.num_rows - 1 - i) * self.vertical_spacing for i in range(self.num_rows)}
-        self.col = {i: i * self.horizontal_spacing for i in range(self.num_cols)}
+        # Generate row and column positions based on orientation
+        if self.orientation == "top-down":
+            # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
+            self.row = {i: (self.num_rows - 1 - i) * self.vertical_spacing for i in range(self.num_rows)}
+            self.col = {i: i * self.horizontal_spacing for i in range(self.num_cols)}
+        else:  # left-right
+            # Row 0 is on the left, increasing rightward (row = depth, col = vertical position)
+            # Use horizontal_spacing for depth (x-axis) and vertical_spacing for siblings (y-axis)
+            self.row = {i: i * self.horizontal_spacing for i in range(self.num_rows)}
+            self.col = {i: (self.num_cols - 1 - i) * self.vertical_spacing for i in range(self.num_cols)}
 
     def render(self, ax: Axes | None = None) -> Axes:
         """Render the tree diagram.
@@ -647,14 +911,20 @@ class TreeGrid:
 
         """
         if ax is None:
-            # Calculate plot dimensions based on actual node positions
-            # Find the maximum x position from all nodes
-            max_x = max(col_idx * self.horizontal_spacing for col_idx, _ in self._positions.values())
-            # Add padding for half node width on each side
-            plot_width = max_x + self.node_width
-
-            # Row 0 is at the top with the highest y-value after coordinate inversion
-            plot_height = self.row[0] + self.node_height
+            # Calculate plot dimensions based on orientation
+            if self.orientation == "top-down":
+                # Find the maximum x position from all nodes
+                max_x = max(col_idx * self.horizontal_spacing for col_idx, _ in self._positions.values())
+                plot_width = max_x + self.node_width
+                # Row 0 is at the top with the highest y-value after coordinate inversion
+                plot_height = self.row[0] + self.node_height
+            else:  # left-right
+                # Find the maximum y position (which comes from col) - siblings use vertical_spacing
+                max_y = max(col_idx * self.vertical_spacing for col_idx, _ in self._positions.values())
+                plot_height = max_y + self.node_height
+                # Find the maximum x position (rightmost row) - depth uses horizontal_spacing
+                max_x = max(self.row[row_idx] for _, row_idx in self._positions.values())
+                plot_width = max_x + self.node_width
 
             _, ax = plt.subplots(figsize=(plot_width, plot_height))
             ax.set_xlim(0, plot_width)
@@ -666,8 +936,14 @@ class TreeGrid:
         for node_id, node_data in self.tree_structure.items():
             # Get computed position from auto-layout
             col_idx, row_idx = self._positions[node_id]
-            x = col_idx * self.horizontal_spacing  # Calculate x from float column index
-            y = self.row[row_idx]
+
+            # Calculate x and y based on orientation
+            if self.orientation == "top-down":
+                x = col_idx * self.horizontal_spacing  # Calculate x from float column index
+                y = self.row[row_idx]
+            else:  # left-right
+                x = self.row[row_idx]  # Depth (row) uses horizontal_spacing
+                y = col_idx * self.vertical_spacing  # Siblings (col) use vertical_spacing
 
             # Extract data for the node (exclude children which is structural)
             data_dict = {k: v for k, v in node_data.items() if k != "children"}
@@ -682,12 +958,19 @@ class TreeGrid:
             )
             node.render(ax)
 
-            # Store center positions for connections
-            node_centers[node_id] = {
-                "x": x + self.node_width / 2,
-                "y_bottom": y,
-                "y_top": y + self.node_height,
-            }
+            # Store center positions for connections based on orientation
+            if self.orientation == "top-down":
+                node_centers[node_id] = {
+                    "x": x + self.node_width / 2,
+                    "y_bottom": y,
+                    "y_top": y + self.node_height,
+                }
+            else:  # left-right
+                node_centers[node_id] = {
+                    "y": y + self.node_height / 2,
+                    "x_left": x,
+                    "x_right": x + self.node_width,
+                }
 
         # Second pass: draw connections
         for node_id, node_data in self.tree_structure.items():
@@ -702,30 +985,46 @@ class TreeGrid:
                         )
                         raise ValueError(error_msg)
                     child = node_centers[child_id]
-                    self._draw_connection(
-                        ax=ax,
-                        x1=parent["x"],
-                        y1=parent["y_bottom"],
-                        x2=child["x"],
-                        y2=child["y_top"],
-                    )
+
+                    if self.orientation == "top-down":
+                        self._draw_connection(
+                            ax=ax,
+                            x1=parent["x"],
+                            y1=parent["y_bottom"],
+                            x2=child["x"],
+                            y2=child["y_top"],
+                            orientation="top-down",
+                        )
+                    else:  # left-right
+                        self._draw_connection(
+                            ax=ax,
+                            x1=parent["x_right"],
+                            y1=parent["y"],
+                            x2=child["x_left"],
+                            y2=child["y"],
+                            orientation="left-right",
+                        )
 
         return ax
 
     def _compute_positions(self) -> tuple[dict[str, tuple[float, int]], int, int]:
-        """Compute grid positions using centered tree auto-layout with float column indices.
+        """Compute grid positions using Excel-like grid layout system.
 
-        Uses a bottom-up algorithm to center parents over their children, then scales
-        positions by a uniform spacing factor. This produces a visually balanced tree
-        layout with consistent sibling spacing. Layout orientation: top-down (root at top),
-        left-to-right (siblings ordered left to right).
+        Implements a grid-based layout where:
+        - Each node occupies a (row, col) coordinate in a virtual grid
+        - Parents are centered at the exact average column of their children
+        - Nodes in the same row maintain consistent spacing (at most 1 cell apart)
+        - Bottom-up processing ensures children are positioned before parents
+        - Float precision maintained for accurate parent centering
+
+        Layout orientation: top-down (root at row 0), left-to-right (siblings ordered left to right).
 
         Returns:
-            positions: mapping of node_id -> (col, row)
+            positions: mapping of node_id -> (col, row) where col is float for precise centering
             num_rows: total number of rows required
             num_cols: maximum number of columns across rows
         """
-        # Build child adjacency and in-degree to find roots
+        # Build parent-child relationships
         children_map: dict[str, list[str]] = {}
         referenced_as_child: set[str] = set()
         for node_id, node_data in self.tree_structure.items():
@@ -733,15 +1032,14 @@ class TreeGrid:
             children_map[node_id] = list(children)
             for c in children:
                 referenced_as_child.add(c)
-        # Root candidates are nodes never referenced as a child
+
+        # Find root nodes (never referenced as children)
         roots = [nid for nid in self.tree_structure if nid not in referenced_as_child]
         if not roots:
-            # Fallback: choose deterministic root
+            # Fallback: use first node as root
             roots = [sorted(self.tree_structure.keys())[0]]
 
-        # Level-order traversal to assign rows
-        from collections import deque
-
+        # Assign rows using level-order traversal
         level_of: dict[str, int] = {}
         queue: deque[tuple[str, int]] = deque()
         for r in roots:
@@ -757,167 +1055,26 @@ class TreeGrid:
             for child in children_map.get(nid, []):
                 queue.append((child, lvl + 1))
 
-        # Group nodes by level with stable ordering
-        nodes_in_level = self._group_nodes_by_level(level_of)
-
-        # Assign columns using centered layout algorithm
-        positions, max_cols = self._assign_columns_centered(nodes_in_level, children_map)
-
-        num_rows = len(nodes_in_level.keys()) if nodes_in_level else 1
-        num_cols = max_cols if max_cols > 0 else 1
-
-        return positions, num_rows, num_cols
-
-    def _group_nodes_by_level(self, level_of: dict[str, int]) -> dict[int, list[str]]:
-        """Group node ids by their computed level (row), preserving input order per level."""
-        from collections import defaultdict
-
+        # Group nodes by level (row) with stable ordering
         nodes_in_level: dict[int, list[str]] = defaultdict(list)
         for nid in self.tree_structure:
             lvl = level_of.get(nid, 0)
             nodes_in_level[lvl].append(nid)
-        return nodes_in_level
 
-    def _assign_columns_centered(
-        self,
-        nodes_in_level: dict[int, list[str]],
-        children_map: dict[str, list[str]],
-    ) -> tuple[dict[str, tuple[int, int]], int]:
-        """Assign column positions using bottom-up traversal with uniform spacing.
+        # Compute grid positions using Excel-like grid system
+        positions = self._compute_grid_positions(nodes_in_level, children_map)
 
-        Uses a two-pass approach:
-        1. Bottom-up: leaves get sequential positions, parents are centered over children
-        2. Level-by-level: enforce uniform spacing between siblings, shifting subtrees as needed
+        # Calculate grid dimensions
+        num_rows = len(nodes_in_level.keys()) if nodes_in_level else 1
 
-        This ensures both aesthetic centering and consistent spacing at all levels.
+        # Find maximum column index (accounting for float precision)
+        max_col = 0.0
+        for col, _row in positions.values():
+            max_col = max(max_col, col)
+        # Convert to integer column count (round up to nearest integer)
+        num_cols = int(max_col) + 1 if positions else 1
 
-        Args:
-            nodes_in_level: Mapping of level (row) to list of node IDs at that level.
-            children_map: Mapping of node ID to list of child node IDs.
-
-        Returns:
-            Tuple of (positions dict, max_cols count) where positions maps node_id -> (col, row).
-        """
-        # Find root nodes
-        all_children = {child for children in children_map.values() for child in children}
-        roots = [node for node in nodes_in_level.get(0, []) if node not in all_children]
-
-        if not roots:
-            roots = list(nodes_in_level.get(0, []))
-
-        positions: dict[str, tuple[float, int]] = {}
-        spacing = 2  # Uniform spacing between all siblings
-        next_col = [0.0]  # Use list to allow modification in nested function (float for precision)
-
-        # Pass 1: Layout each root subtree with bottom-up algorithm (centering parents)
-        for root in roots:
-            self._layout_subtree_uniform(root, 0, children_map, positions, next_col, spacing)
-
-        # Pass 2: Enforce uniform spacing AND re-center parents in a single pass (efficient!)
-        # Process levels from bottom to top: fix leaf spacing, then re-center their parents, etc.
-        for level in sorted(nodes_in_level.keys(), reverse=True):
-            nodes = nodes_in_level[level]
-
-            # Sort nodes by column position to process left-to-right
-            sorted_nodes = sorted(nodes, key=lambda n: positions[n][0])
-
-            # Enforce spacing at this level
-            min_next_col = None
-            for node_id in sorted_nodes:
-                col, row = positions[node_id]
-
-                if min_next_col is not None and col < min_next_col:
-                    # Shift this node and its subtree to maintain spacing
-                    shift_amount = min_next_col - col
-                    self._shift_subtree(node_id, shift_amount, children_map, positions)
-                    col = min_next_col
-
-                min_next_col = col + spacing
-
-            # After enforcing spacing at this level, re-center all parents at the level above
-            if level > 0:
-                parent_level_nodes = nodes_in_level.get(level - 1, [])
-                for parent_id in parent_level_nodes:
-                    children = children_map.get(parent_id, [])
-                    if children:
-                        # Re-center this parent over its (possibly shifted) children
-                        child_cols = [positions[child][0] for child in children]
-                        centered_col = (min(child_cols) + max(child_cols)) / 2
-                        _, parent_row = positions[parent_id]
-                        positions[parent_id] = (centered_col, parent_row)
-
-        # Calculate max columns (convert float to int by rounding up)
-        import math
-
-        max_cols = math.ceil(max((col + 1 for col, _ in positions.values()), default=1))
-        return positions, max_cols
-
-    def _shift_subtree(
-        self,
-        node_id: str,
-        shift_amount: float,
-        children_map: dict[str, list[str]],
-        positions: dict[str, tuple[float, int]],
-    ) -> None:
-        """Shift a node and all its descendants horizontally by shift_amount.
-
-        Args:
-            node_id: Root of the subtree to shift.
-            shift_amount: Amount to shift (positive = right, negative = left).
-            children_map: Mapping of node ID to list of child IDs.
-            positions: Dictionary containing node positions to update.
-        """
-        if node_id not in positions:
-            return
-
-        # Shift this node
-        col, row = positions[node_id]
-        positions[node_id] = (col + shift_amount, row)
-
-        # Recursively shift all children
-        for child in children_map.get(node_id, []):
-            self._shift_subtree(child, shift_amount, children_map, positions)
-
-    def _layout_subtree_uniform(
-        self,
-        node_id: str,
-        level: int,
-        children_map: dict[str, list[str]],
-        positions: dict[str, tuple[float, int]],
-        next_col: list[float],
-        spacing: int,
-    ) -> None:
-        """Layout subtree using bottom-up traversal (Pass 1 of 2).
-
-        Assigns initial x-positions during in-order traversal. Leaves get sequential
-        positions with spacing between them, parents are centered over children.
-        A second pass will enforce spacing and re-center parents as needed.
-
-        Args:
-            node_id: Root of the subtree to layout.
-            level: Current level/row of this node.
-            children_map: Mapping of node ID to list of child IDs.
-            positions: Dictionary to populate with positions.
-            next_col: List containing next available column (mutable reference).
-            spacing: Uniform spacing between leaf siblings.
-        """
-        children = children_map.get(node_id, [])
-
-        if not children:
-            # Leaf node: assign next available column with spacing
-            positions[node_id] = (next_col[0], level)
-            next_col[0] += spacing
-            return
-
-        # Process all children first to get their positions
-        child_cols: list[int] = []
-        for child in children:
-            self._layout_subtree_uniform(child, level + 1, children_map, positions, next_col, spacing)
-            child_cols.append(positions[child][0])
-
-        # Center parent over children (exact midpoint using float division for precision)
-        parent_col = (min(child_cols) + max(child_cols)) / 2
-        positions[node_id] = (parent_col, level)
+        return positions, num_rows, num_cols
 
     @staticmethod
     def _add_curve(
@@ -945,18 +1102,19 @@ class TreeGrid:
         codes.append(Path.CURVE3)
 
     @staticmethod
-    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float) -> None:
+    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float, orientation: str = "top-down") -> None:
         """Draw connection line between nodes with curved corners.
 
-        The connection goes straight down from parent, turns horizontally toward child,
-        then goes straight up to child. This creates cleaner paths for compact layouts.
+        For top-down: goes straight down from parent, turns horizontally toward child, then up to child.
+        For left-right: goes straight right from parent, turns vertically toward child, then right to child.
 
         Args:
             ax: Matplotlib axes object.
-            x1: X-coordinate of first point (parent bottom center).
-            y1: Y-coordinate of first point (parent bottom).
-            x2: X-coordinate of second point (child top center).
-            y2: Y-coordinate of second point (child top).
+            x1: X-coordinate of first point (parent exit point).
+            y1: Y-coordinate of first point (parent exit point).
+            x2: X-coordinate of second point (child entry point).
+            y2: Y-coordinate of second point (child entry point).
+            orientation: Tree orientation ('top-down' or 'left-right').
 
         """
         # Use class constants for connection styling
@@ -964,50 +1122,220 @@ class TreeGrid:
         line_width = TreeGrid.CONNECTION_LINE_WIDTH
         line_color = TreeGrid.CONNECTION_LINE_COLOR
 
-        # Calculate the y-coordinates for the horizontal segment
-        # Place it closer to the child to minimize horizontal extension
-        vertical_gap = y1 - y2
-        horizontal_y = y2 + vertical_gap * 0.3  # 30% down from parent toward child
-
-        # Determine horizontal direction
-        curve_sign = 1 if x2 > x1 else -1
-        x_diff = abs(x2 - x1)
-
         # Create path with curved corners using Bezier curves
         verts = []
         codes = []
 
-        # Start point (bottom of parent node)
+        # Start point
         verts.append((x1, y1))
         codes.append(Path.MOVETO)
 
-        # If nodes are aligned vertically (or very close), just draw a straight line
-        if x_diff < curve_radius * 2:
-            verts.append((x2, y2))
-            codes.append(Path.LINETO)
-        else:
-            # Vertical line down to curve start
-            verts.append((x1, horizontal_y + curve_radius))
-            codes.append(Path.LINETO)
+        if orientation == "top-down":
+            # Calculate the y-coordinate for the horizontal segment
+            vertical_gap = y1 - y2
+            horizontal_y = y2 + vertical_gap * 0.3  # 30% down from parent toward child
 
-            # Curve from vertical to horizontal (first corner)
-            TreeGrid._add_curve(verts, codes, x1, horizontal_y, curve_sign * curve_radius, 0)
+            # Determine horizontal direction
+            curve_sign = 1 if x2 > x1 else -1
+            x_diff = abs(x2 - x1)
 
-            # Horizontal line
-            verts.append((x2 - (curve_sign * curve_radius), horizontal_y))
-            codes.append(Path.LINETO)
+            # If nodes are aligned vertically (or very close), just draw a straight line
+            if x_diff < curve_radius * 2:
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
+            else:
+                # Vertical line down to curve start
+                verts.append((x1, horizontal_y + curve_radius))
+                codes.append(Path.LINETO)
 
-            # Curve from horizontal to vertical (second corner)
-            TreeGrid._add_curve(verts, codes, x2, horizontal_y, 0, -curve_radius)
+                # Curve from vertical to horizontal (first corner)
+                TreeGrid._add_curve(verts, codes, x1, horizontal_y, curve_sign * curve_radius, 0)
 
-            # Vertical line up to child node
-            verts.append((x2, y2))
-            codes.append(Path.LINETO)
+                # Horizontal line
+                verts.append((x2 - (curve_sign * curve_radius), horizontal_y))
+                codes.append(Path.LINETO)
+
+                # Curve from horizontal to vertical (second corner)
+                TreeGrid._add_curve(verts, codes, x2, horizontal_y, 0, -curve_radius)
+
+                # Vertical line up to child node
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
+
+        else:  # left-right
+            # Calculate the x-coordinate for the vertical segment
+            horizontal_gap = x2 - x1
+            vertical_x = x1 + horizontal_gap * 0.3  # 30% right from parent toward child
+
+            # Determine vertical direction
+            curve_sign = 1 if y2 > y1 else -1
+            y_diff = abs(y2 - y1)
+
+            # If nodes are aligned horizontally (or very close), just draw a straight line
+            if y_diff < curve_radius * 2:
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
+            else:
+                # Small gap to ensure line starts outside parent box
+                gap = 0.05
+                # Horizontal line right to curve start
+                verts.append((max(x1 + gap, vertical_x - curve_radius), y1))
+                codes.append(Path.LINETO)
+
+                # Curve from horizontal to vertical (first corner)
+                TreeGrid._add_curve(verts, codes, vertical_x, y1, 0, curve_sign * curve_radius)
+
+                # Vertical line
+                verts.append((vertical_x, y2 - (curve_sign * curve_radius)))
+                codes.append(Path.LINETO)
+
+                # Curve from vertical to horizontal (second corner)
+                TreeGrid._add_curve(verts, codes, vertical_x, y2, curve_radius, 0)
+
+                # Horizontal line right to child node
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
 
         # Create and draw the path
         path = Path(verts, codes)
         patch = mpatches.PathPatch(path, facecolor="none", edgecolor=line_color, linewidth=line_width)
         ax.add_patch(patch)
+
+    def _compute_grid_positions(
+        self,
+        nodes_in_level: dict[int, list[str]],
+        children_map: dict[str, list[str]],
+    ) -> dict[str, tuple[float, int]]:
+        """Compute positions using Excel-like grid system with tree-based layout.
+
+        Implements a clean grid-based layout algorithm:
+        1. Tree traversal: process nodes in tree order (depth-first) to assign initial columns
+        2. Leaf nodes: placed at consecutive columns with spacing of 2 (at most 1 empty cell between)
+        3. Internal nodes: centered at exact average column of their children
+        4. Spacing enforcement: maintains "at most 1 cell apart" within each row
+        5. Float precision: maintains accurate centering for parent nodes
+
+        Args:
+            nodes_in_level: Mapping of level (row) to list of node IDs at that level.
+            children_map: Mapping of node ID to list of child node IDs.
+
+        Returns:
+            Dictionary mapping node IDs to (col, row) grid positions with float column indices.
+        """
+        grid_positions: dict[str, tuple[float, int]] = {}
+        spacing = self.grid_spacing  # Spacing between sibling nodes
+        next_col = [0.0]  # Mutable reference for tracking next available leaf column
+
+        # Find root nodes (nodes never referenced as children)
+        all_children = {child for children in children_map.values() for child in children}
+        roots = [
+            node for level_nodes in [nodes_in_level.get(0, [])] for node in level_nodes if node not in all_children
+        ]
+        if not roots:
+            roots = list(nodes_in_level.get(0, []))
+
+        def layout_subtree(node_id: str, level: int) -> None:
+            """Recursively layout subtree using depth-first traversal.
+
+            Args:
+                node_id: Current node to layout.
+                level: Current level/row of this node.
+            """
+            children = children_map.get(node_id, [])
+
+            if len(children) == 0:
+                # Leaf node: assign next available column
+                grid_positions[node_id] = (next_col[0], level)
+                next_col[0] += spacing
+            else:
+                # Internal node: process children first, then center over them
+                for child_id in children:
+                    layout_subtree(child_id, level + 1)
+
+                # Center parent at exact average of children columns
+                child_cols = [grid_positions[child_id][0] for child_id in children]
+                avg_col = sum(child_cols) / len(child_cols)
+                grid_positions[node_id] = (avg_col, level)
+
+        # Layout each root subtree
+        for root in roots:
+            layout_subtree(root, 0)
+
+        # Iterative spacing enforcement: converge to valid layout
+        # Keep adjusting until no more overlaps exist
+        max_iterations = 10
+        for _ in range(max_iterations):
+            changes_made = False
+
+            # Process from deepest level to shallowest (bottom-up)
+            for level in sorted(nodes_in_level.keys(), reverse=True):
+                nodes = nodes_in_level[level]
+                sorted_nodes = sorted(nodes, key=lambda n: grid_positions[n][0])
+
+                # Enforce minimum spacing to prevent overlaps
+                for i in range(len(sorted_nodes) - 1):
+                    curr_node = sorted_nodes[i]
+                    next_node = sorted_nodes[i + 1]
+
+                    curr_col = grid_positions[curr_node][0]
+                    next_col_pos = grid_positions[next_node][0]
+
+                    gap = next_col_pos - curr_col
+                    min_gap = spacing  # Minimum spacing to prevent overlap
+
+                    # If gap is too small, shift next node and its subtree right
+                    if gap < min_gap - 0.01:  # Allow small floating point tolerance
+                        shift_amount = min_gap - gap
+                        self._shift_node_and_descendants(next_node, shift_amount, children_map, grid_positions)
+                        changes_made = True
+
+                # After adjusting spacing at this level, re-center parents at the level above
+                if level > 0:
+                    parent_level_nodes = nodes_in_level.get(level - 1, [])
+                    for parent_id in parent_level_nodes:
+                        children = children_map.get(parent_id, [])
+                        if len(children) > 0:
+                            child_cols = [grid_positions[child][0] for child in children if child in grid_positions]
+                            if len(child_cols) > 0:
+                                old_col = grid_positions[parent_id][0]
+                                avg_col = sum(child_cols) / len(child_cols)
+                                if abs(avg_col - old_col) > self.POSITION_TOLERANCE:
+                                    _, parent_row = grid_positions[parent_id]
+                                    grid_positions[parent_id] = (avg_col, parent_row)
+                                    changes_made = True
+
+            # If no changes were made in this iteration, we've converged
+            if not changes_made:
+                break
+
+        return grid_positions
+
+    def _shift_node_and_descendants(
+        self,
+        node_id: str,
+        shift_amount: float,
+        children_map: dict[str, list[str]],
+        positions: dict[str, tuple[float, int]],
+    ) -> None:
+        """Recursively shift a node and all its descendants horizontally.
+
+        Args:
+            node_id: Root of the subtree to shift.
+            shift_amount: Amount to shift (positive = right, negative = left).
+            children_map: Mapping of node ID to list of child IDs.
+            positions: Dictionary containing node positions to update.
+        """
+        if node_id not in positions:
+            return
+
+        # Shift this node
+        col, row = positions[node_id]
+        positions[node_id] = (col + shift_amount, row)
+
+        # Recursively shift all descendants
+        children = children_map.get(node_id, [])
+        for child_id in children:
+            self._shift_node_and_descendants(child_id, shift_amount, children_map, positions)
 
 
 class DetailedTreeNode(TreeNode):
