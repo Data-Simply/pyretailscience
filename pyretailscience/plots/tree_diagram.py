@@ -900,7 +900,7 @@ class TreeGrid:
             self.row = {i: i * self.horizontal_spacing for i in range(self.num_rows)}
             self.col = {i: (self.num_cols - 1 - i) * self.vertical_spacing for i in range(self.num_cols)}
 
-    def render(self, ax: Axes | None = None) -> Axes:
+    def render(self, ax: Axes | None = None) -> Axes:  # noqa: C901
         """Render the tree diagram.
 
         Args:
@@ -1201,7 +1201,7 @@ class TreeGrid:
         patch = mpatches.PathPatch(path, facecolor="none", edgecolor=line_color, linewidth=line_width)
         ax.add_patch(patch)
 
-    def _compute_grid_positions(
+    def _compute_grid_positions(  # noqa: C901
         self,
         nodes_in_level: dict[int, list[str]],
         children_map: dict[str, list[str]],
