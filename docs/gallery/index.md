@@ -141,6 +141,13 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
     </div>
   </a>
 
+  <a href="plots/time/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Time Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/time_thumbnail.png" alt="Time Plot">
+    </div>
+  </a>
+
 </div>
 
 ### Coming Soon
@@ -154,11 +161,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Scatter Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Time Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
