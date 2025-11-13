@@ -46,6 +46,12 @@ In a similar vein, we do enforce certain linting, formatting, and documentation 
 If you are finding these difficult (or even just annoying) to work with, feel free to contact a maintainer for help.
 We do not want these to get in the way of getting good code into the codebase.
 
+### Understanding the Release Process
+
+Want to understand how your code gets released to users? Check out our [Release Guide for New Developers](docs/contributing/release_guide.md).
+
+For detailed information about creating releases (maintainers), see [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
+
 ### Recognition
 
 If your contribution has been included in a release, we will add you to the README.md and note you as a contributor.

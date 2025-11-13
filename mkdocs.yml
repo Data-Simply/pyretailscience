@@ -24,6 +24,8 @@ nav:
       - Segmentation: examples/segmentation.ipynb
       - Product Association: examples/product_association.ipynb
       - Revenue Tree: examples/revenue_tree.ipynb
+  - Contributing:
+      - Release Guide: contributing/release_guide.md
   - Reference:
       - Options: api/options.md
       - Analysis:
