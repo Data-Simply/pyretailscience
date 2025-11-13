@@ -140,6 +140,12 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
       <img src="../assets/gallery/histogram_thumbnail.png" alt="Histogram Plot">
     </div>
   </a>
+  <a href="plots/waterfall/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Waterfall Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/waterfall_thumbnail.png" alt="Waterfall Plot">
+    </div>
+  </a>
 
 </div>
 
@@ -159,11 +165,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Time Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Waterfall Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 

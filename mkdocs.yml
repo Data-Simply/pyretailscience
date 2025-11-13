@@ -18,6 +18,7 @@ nav:
       - Cohort Plot: gallery/plots/cohort.ipynb
       - Heatmap Plot: gallery/plots/heatmap.ipynb
       - Histogram Plot: gallery/plots/histogram.ipynb
+      - Waterfall Plot: gallery/plots/waterfall.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
