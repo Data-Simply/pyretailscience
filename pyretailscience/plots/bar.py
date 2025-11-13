@@ -138,6 +138,7 @@ def plot(
 
     plot_kind = "bar" if orientation in ["vertical", "v"] else "barh"
     color = kwargs.pop("color", default_colors)
+    legend = kwargs.pop("legend", (len(value_col) > 1))
 
     ax = df.plot(
         kind=plot_kind,
@@ -146,7 +147,7 @@ def plot(
         ax=ax,
         width=width,
         color=color,
-        legend=(len(value_col) > 1),
+        legend=legend,
         **kwargs,
     )
 

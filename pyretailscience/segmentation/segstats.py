@@ -123,6 +123,10 @@ class SegTransactionStats:
         if isinstance(segment_col, str):
             segment_col = [segment_col]
 
+        if len(segment_col) == 0:
+            msg = "segment_col cannot be an empty list. At least one segment column must be specified."
+            raise ValueError(msg)
+
         required_cols = [
             cols.unit_spend,
             cols.transaction_id,

@@ -17,6 +17,7 @@ nav:
       - Broken Timeline Plot: gallery/plots/broken_timeline.ipynb
       - Cohort Plot: gallery/plots/cohort.ipynb
       - Heatmap Plot: gallery/plots/heatmap.ipynb
+      - Histogram Plot: gallery/plots/histogram.ipynb
       - Line Plot: gallery/plots/line.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
