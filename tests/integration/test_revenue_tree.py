@@ -1,4 +1,4 @@
-"""Integration tests for Revenue Tree Analysis with BigQuery."""
+"""Unified integration tests for Revenue Tree Analysis with multiple database backends."""
 
 import pytest
 
@@ -17,20 +17,26 @@ cols = ColumnHelper()
         ("category_0_name", False),
     ],
 )
-def test_revenue_tree_with_bigquery(
+def test_revenue_tree_integration(
     transactions_table,
     group_col,
     include_qty,
 ):
-    """Test RevenueTree with data fetched from BigQuery.
+    """Integration test for RevenueTree using parameterized database backends.
 
-    This parameterized test verifies that RevenueTree can be initialized
-    and process data from BigQuery using different group columns
-    without throwing exceptions.
+    This test runs against both BigQuery and PySpark backends automatically
+    via pytest parameterization. The same test logic validates functionality
+    across different database systems.
+
+    Args:
+        transactions_table: Parameterized fixture providing either BigQuery
+                          or PySpark transactions table
+        group_col: Group column parameter for analysis
+        include_qty: Whether to include quantity in analysis
     """
     period_col = "transaction_date"
+    limited_table = transactions_table.limit(10000)
 
-    limited_transactions = transactions_table.limit(10000)
     columns_to_keep = [
         cols.customer_id,
         cols.transaction_id,
@@ -43,12 +49,14 @@ def test_revenue_tree_with_bigquery(
     if group_col:
         columns_to_keep.append(group_col)
 
-    filtered_transactions = limited_transactions.select(columns_to_keep)
+    filtered_transactions = limited_table.select(columns_to_keep)
 
-    RevenueTree(
+    revenue_tree = RevenueTree(
         df=filtered_transactions,
         period_col=period_col,
         p1_value="2023-05-24",
         p2_value="2023-04-15",
         group_col=group_col,
     )
+
+    assert revenue_tree is not None
