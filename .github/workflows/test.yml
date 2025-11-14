@@ -12,15 +12,18 @@ concurrency:
 
 jobs:
   pre-commit:
-    name: Pre-Commit
+    name: Pre-Commit (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - name: Install UV
         run: |
           pip install --upgrade pip
