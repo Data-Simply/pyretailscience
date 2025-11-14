@@ -22,6 +22,7 @@ nav:
       - Period on Period Plot: gallery/plots/period_on_period.ipynb
       - Time Plot: gallery/plots/time.ipynb
       - Venn Diagram: gallery/plots/venn.ipynb
+      - Waterfall Plot: gallery/plots/waterfall.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
