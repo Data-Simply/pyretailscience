@@ -23,6 +23,7 @@ nav:
       - Time Plot: gallery/plots/time.ipynb
       - Venn Diagram: gallery/plots/venn.ipynb
       - Waterfall Plot: gallery/plots/waterfall.ipynb
+      - Index Plot: gallery/plots/index_plot.ipynb
       - Scatter Plot: gallery/plots/scatter.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
