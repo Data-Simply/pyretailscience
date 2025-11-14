@@ -175,16 +175,18 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
     </div>
   </a>
 
+  <a href="plots/scatter/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Scatter Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/scatter_thumbnail.png" alt="Scatter Plot">
+    </div>
+  </a>
+
 </div>
 
 ### Coming Soon
 
 <div class="glr-gallery">
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Scatter Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Index Plot</div>
