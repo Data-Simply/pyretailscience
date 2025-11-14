@@ -140,6 +140,34 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
       <img src="../assets/gallery/histogram_thumbnail.png" alt="Histogram Plot">
     </div>
   </a>
+  <a href="plots/line/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Line Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/line_thumbnail.png" alt="Line Plot">
+    </div>
+  </a>
+
+  <a href="plots/period_on_period/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Period on Period Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/period_on_period_thumbnail.png" alt="Period on Period Plot">
+    </div>
+    </a>
+
+  <a href="plots/time/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Time Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/time_thumbnail.png" alt="Time Plot">
+    </div>
+  </a>
+
+  <a href="plots/venn/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Venn Diagram</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/venn_thumbnail.png" alt="Venn Diagram">
+    </div>
+  </a>
+
   <a href="plots/waterfall/" class="glr-thumbcontainer">
     <div class="glr-thumb-title">Waterfall Plot</div>
     <div class="glr-thumb">
@@ -154,16 +182,12 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 <div class="glr-gallery">
 
   <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Line Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Scatter Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
   <div class="glr-thumbcontainer coming-soon-container">
+<<<<<<< HEAD
     <div class="coming-soon-title">Time Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
@@ -175,6 +199,9 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
 
   <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Period on Period Plot</div>
+=======
+    <div class="coming-soon-title">Waterfall Plot</div>
+>>>>>>> d4357ab8c5b85b43fb69befe3a0efca5465d69e9
     <div class="coming-soon-thumb">Preview</div>
   </div>
 
