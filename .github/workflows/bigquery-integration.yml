@@ -60,5 +60,8 @@ jobs:
           TEST_SUITE: ${{ inputs.test_suite }}
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          uv run pytest tests/integration/bigquery -v \
-            $(if [ "$TEST_SUITE" != "all" ]; then echo "-k $TEST_SUITE"; fi)
+          if [ "$TEST_SUITE" == "all" ]; then
+            uv run pytest tests/integration -k "bigquery" -v
+          else
+            uv run pytest tests/integration -k "bigquery and $TEST_SUITE" -v
+          fi
