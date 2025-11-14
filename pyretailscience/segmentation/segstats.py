@@ -181,37 +181,37 @@ class SegTransactionStats:
         cols = ColumnHelper()
 
         column_configs = [
-            (cols.agg_unit_spend, True),
-            (cols.agg_transaction_id, True),
-            (cols.agg_customer_id, include_customer),
-            (cols.agg_unit_qty, include_quantity),
-            (cols.calc_spend_per_cust, include_customer),
-            (cols.calc_spend_per_trans, True),
-            (cols.calc_trans_per_cust, include_customer),
-            (cols.calc_price_per_unit, include_quantity),
-            (cols.calc_units_per_trans, include_quantity),
+            (cols.agg.unit_spend, True),
+            (cols.agg.transaction_id, True),
+            (cols.agg.customer_id, include_customer),
+            (cols.agg.unit_qty, include_quantity),
+            (cols.calc.spend_per_cust, include_customer),
+            (cols.calc.spend_per_trans, True),
+            (cols.calc.trans_per_cust, include_customer),
+            (cols.calc.price_per_unit, include_quantity),
+            (cols.calc.units_per_trans, include_quantity),
         ]
 
         # Add unknown customer columns if tracking unknown customers
         if include_unknown:
             unknown_configs = [
-                (cols.agg_unit_spend_unknown, True),
-                (cols.agg_transaction_id_unknown, True),
-                (cols.agg_unit_qty_unknown, include_quantity),
-                (cols.calc_spend_per_trans_unknown, True),
-                (cols.calc_price_per_unit_unknown, include_quantity),
-                (cols.calc_units_per_trans_unknown, include_quantity),
+                (cols.agg.unit_spend_unknown, True),
+                (cols.agg.transaction_id_unknown, True),
+                (cols.agg.unit_qty_unknown, include_quantity),
+                (cols.calc.spend_per_trans_unknown, True),
+                (cols.calc.price_per_unit_unknown, include_quantity),
+                (cols.calc.units_per_trans_unknown, include_quantity),
             ]
             column_configs.extend(unknown_configs)
 
             # Add total columns
             total_configs = [
-                (cols.agg_unit_spend_total, True),
-                (cols.agg_transaction_id_total, True),
-                (cols.agg_unit_qty_total, include_quantity),
-                (cols.calc_spend_per_trans_total, True),
-                (cols.calc_price_per_unit_total, include_quantity),
-                (cols.calc_units_per_trans_total, include_quantity),
+                (cols.agg.unit_spend_total, True),
+                (cols.agg.transaction_id_total, True),
+                (cols.agg.unit_qty_total, include_quantity),
+                (cols.calc.spend_per_trans_total, True),
+                (cols.calc.price_per_unit_total, include_quantity),
+                (cols.calc.units_per_trans_total, include_quantity),
             ]
             column_configs.extend(total_configs)
 
@@ -332,10 +332,10 @@ class SegTransactionStats:
         """
         cols = ColumnHelper()
         agg_specs = [
-            (cols.agg_unit_spend, cols.unit_spend, "sum"),
-            (cols.agg_transaction_id, cols.transaction_id, "nunique"),
-            (cols.agg_unit_qty, cols.unit_qty, "sum"),
-            (cols.agg_customer_id, cols.customer_id, "nunique"),
+            (cols.agg.unit_spend, cols.unit_spend, "sum"),
+            (cols.agg.transaction_id, cols.transaction_id, "nunique"),
+            (cols.agg.unit_qty, cols.unit_qty, "sum"),
+            (cols.agg.customer_id, cols.customer_id, "nunique"),
         ]
 
         aggs = {agg_name: getattr(data[col], func)() for agg_name, col, func in agg_specs if col in data.columns}
@@ -367,24 +367,24 @@ class SegTransactionStats:
 
         # Identified customers only (where NOT unknown)
         # Use coalesce to ensure proper types: int for counts, float for sums
-        aggs[cols.agg_unit_spend] = data[cols.unit_spend].sum(where=~unknown_flag).coalesce(0.0)
-        aggs[cols.agg_transaction_id] = data[cols.transaction_id].nunique(where=~unknown_flag).coalesce(0)
-        aggs[cols.agg_customer_id] = data[cols.customer_id].nunique(where=~unknown_flag).coalesce(0)
+        aggs[cols.agg.unit_spend] = data[cols.unit_spend].sum(where=~unknown_flag).coalesce(0.0)
+        aggs[cols.agg.transaction_id] = data[cols.transaction_id].nunique(where=~unknown_flag).coalesce(0)
+        aggs[cols.agg.customer_id] = data[cols.customer_id].nunique(where=~unknown_flag).coalesce(0)
         if cols.unit_qty in data.columns:
-            aggs[cols.agg_unit_qty] = data[cols.unit_qty].sum(where=~unknown_flag).coalesce(0)
+            aggs[cols.agg.unit_qty] = data[cols.unit_qty].sum(where=~unknown_flag).coalesce(0)
 
         # Unknown customers (where unknown)
         # Use coalesce to ensure proper types: int for counts, float for sums
-        aggs[cols.agg_unit_spend_unknown] = data[cols.unit_spend].sum(where=unknown_flag).coalesce(0.0)
-        aggs[cols.agg_transaction_id_unknown] = data[cols.transaction_id].nunique(where=unknown_flag).coalesce(0)
+        aggs[cols.agg.unit_spend_unknown] = data[cols.unit_spend].sum(where=unknown_flag).coalesce(0.0)
+        aggs[cols.agg.transaction_id_unknown] = data[cols.transaction_id].nunique(where=unknown_flag).coalesce(0)
         if cols.unit_qty in data.columns:
-            aggs[cols.agg_unit_qty_unknown] = data[cols.unit_qty].sum(where=unknown_flag).coalesce(0)
+            aggs[cols.agg.unit_qty_unknown] = data[cols.unit_qty].sum(where=unknown_flag).coalesce(0)
 
         # Total (all customers)
-        aggs[cols.agg_unit_spend_total] = data[cols.unit_spend].sum()
-        aggs[cols.agg_transaction_id_total] = data[cols.transaction_id].nunique()
+        aggs[cols.agg.unit_spend_total] = data[cols.unit_spend].sum()
+        aggs[cols.agg.transaction_id_total] = data[cols.transaction_id].nunique()
         if cols.unit_qty in data.columns:
-            aggs[cols.agg_unit_qty_total] = data[cols.unit_qty].sum()
+            aggs[cols.agg.unit_qty_total] = data[cols.unit_qty].sum()
 
         # Add extra aggregations with three variants
         if extra_aggs:
@@ -487,25 +487,25 @@ class SegTransactionStats:
         # Calculate derived metrics
         final_metrics = final_metrics.mutate(
             **{
-                cols.calc_spend_per_trans: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_transaction_id],
+                cols.calc.spend_per_trans: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.transaction_id],
             },
         )
 
         if cols.unit_qty in data.columns:
             final_metrics = final_metrics.mutate(
                 **{
-                    cols.calc_price_per_unit: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_unit_qty].nullif(0),
-                    cols.calc_units_per_trans: ibis._[cols.agg_unit_qty]
-                    / ibis._[cols.agg_transaction_id].cast("float"),
+                    cols.calc.price_per_unit: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.unit_qty].nullif(0),
+                    cols.calc.units_per_trans: ibis._[cols.agg.unit_qty]
+                    / ibis._[cols.agg.transaction_id].cast("float"),
                 },
             )
 
         if cols.customer_id in data.columns:
             final_metrics = final_metrics.mutate(
                 **{
-                    cols.calc_spend_per_cust: ibis._[cols.agg_unit_spend] / ibis._[cols.agg_customer_id],
-                    cols.calc_trans_per_cust: ibis._[cols.agg_transaction_id]
-                    / ibis._[cols.agg_customer_id].cast("float"),
+                    cols.calc.spend_per_cust: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.customer_id],
+                    cols.calc.trans_per_cust: ibis._[cols.agg.transaction_id]
+                    / ibis._[cols.agg.customer_id].cast("float"),
                 },
             )
 
@@ -514,16 +514,16 @@ class SegTransactionStats:
             # Unknown customer derived metrics
             final_metrics = final_metrics.mutate(
                 **{
-                    cols.calc_spend_per_trans_unknown: ibis._[cols.agg_unit_spend_unknown]
-                    / ibis._[cols.agg_transaction_id_unknown],
+                    cols.calc.spend_per_trans_unknown: ibis._[cols.agg.unit_spend_unknown]
+                    / ibis._[cols.agg.transaction_id_unknown],
                 },
             )
 
             # Total derived metrics
             final_metrics = final_metrics.mutate(
                 **{
-                    cols.calc_spend_per_trans_total: ibis._[cols.agg_unit_spend_total]
-                    / ibis._[cols.agg_transaction_id_total],
+                    cols.calc.spend_per_trans_total: ibis._[cols.agg.unit_spend_total]
+                    / ibis._[cols.agg.transaction_id_total],
                 },
             )
 
@@ -531,14 +531,14 @@ class SegTransactionStats:
             if cols.unit_qty in data.columns:
                 final_metrics = final_metrics.mutate(
                     **{
-                        cols.calc_price_per_unit_unknown: ibis._[cols.agg_unit_spend_unknown]
-                        / ibis._[cols.agg_unit_qty_unknown].nullif(0),
-                        cols.calc_units_per_trans_unknown: ibis._[cols.agg_unit_qty_unknown]
-                        / ibis._[cols.agg_transaction_id_unknown].cast("float"),
-                        cols.calc_price_per_unit_total: ibis._[cols.agg_unit_spend_total]
-                        / ibis._[cols.agg_unit_qty_total].nullif(0),
-                        cols.calc_units_per_trans_total: ibis._[cols.agg_unit_qty_total]
-                        / ibis._[cols.agg_transaction_id_total].cast("float"),
+                        cols.calc.price_per_unit_unknown: ibis._[cols.agg.unit_spend_unknown]
+                        / ibis._[cols.agg.unit_qty_unknown].nullif(0),
+                        cols.calc.units_per_trans_unknown: ibis._[cols.agg.unit_qty_unknown]
+                        / ibis._[cols.agg.transaction_id_unknown].cast("float"),
+                        cols.calc.price_per_unit_total: ibis._[cols.agg.unit_spend_total]
+                        / ibis._[cols.agg.unit_qty_total].nullif(0),
+                        cols.calc.units_per_trans_total: ibis._[cols.agg.unit_qty_total]
+                        / ibis._[cols.agg.transaction_id_total].cast("float"),
                     },
                 )
 
@@ -549,8 +549,8 @@ class SegTransactionStats:
         """Returns the dataframe with the transaction statistics by segment."""
         if self._df is None:
             cols = ColumnHelper()
-            include_quantity = cols.agg_unit_qty in self.table.columns
-            include_customer = cols.agg_customer_id in self.table.columns
+            include_quantity = cols.agg.unit_qty in self.table.columns
+            include_customer = cols.agg.customer_id in self.table.columns
             include_unknown = self.unknown_customer_value is not None
             col_order = [
                 *self.segment_col,
