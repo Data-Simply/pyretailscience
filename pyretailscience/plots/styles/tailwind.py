@@ -405,6 +405,31 @@ def get_multi_color_cmap() -> Generator[str, None, None]:
     return cycle([COLORS[color][color_number] for color_number in color_numbers for color in color_order])
 
 
+def get_plot_colors(num_series: int) -> list[str]:
+    """Get appropriate colors for the given number of series.
+
+    Automatically selects between single-color (monochromatic) and multi-color
+    palettes based on the number of series requested.
+
+    Args:
+        num_series: Number of series/groups being plotted
+
+    Returns:
+        List of color hex strings
+
+    Examples:
+        >>> get_plot_colors(2)  # Returns 2 colors from green palette
+        ['#22c55e', '#86efac']
+
+        >>> get_plot_colors(5)  # Returns 5 colors from multi-color palette
+        ['#22c55e', '#3b82f6', '#ef4444', '#f97316', '#eab308']
+    """
+    threshold = 4
+
+    color_gen = get_single_color_cmap() if num_series < threshold else get_multi_color_cmap()
+    return [next(color_gen) for _ in range(num_series)]
+
+
 slate_cmap = get_listed_cmap("slate")
 gray_cmap = get_listed_cmap("gray")
 zinc_cmap = get_listed_cmap("zinc")

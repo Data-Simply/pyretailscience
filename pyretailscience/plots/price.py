@@ -30,7 +30,7 @@ from matplotlib.axes import Axes, SubplotBase
 from matplotlib.lines import Line2D
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
+from pyretailscience.plots.styles.tailwind import get_plot_colors
 
 
 def _validate_inputs(
@@ -175,10 +175,7 @@ def plot(
     price_bins = proportions.columns.tolist()
 
     # Set up color mapping
-    color_gen_threshold = 4
-    num_groups = len(groups)
-    cmap = get_single_color_cmap() if num_groups < color_gen_threshold else get_multi_color_cmap()
-    colors = [next(cmap) for _ in range(num_groups)]
+    colors = get_plot_colors(len(groups))
 
     alpha = kwargs.pop("alpha", 0.7)
     s_scale = kwargs.pop("s", 800)  # size for bubbles

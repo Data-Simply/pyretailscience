@@ -46,7 +46,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_multi_color_cmap
+from pyretailscience.plots.styles.tailwind import get_plot_colors
 
 
 def plot(
@@ -107,8 +107,7 @@ def plot(
 
     num_histograms = _get_num_histograms(df=df, value_col=value_col, group_col=group_col)
 
-    color_gen = get_multi_color_cmap()
-    default_colors = [next(color_gen) for _ in range(num_histograms)]
+    default_colors = get_plot_colors(num_histograms)
     colors = kwargs.pop("color", default_colors)
 
     ax = _plot_histogram(

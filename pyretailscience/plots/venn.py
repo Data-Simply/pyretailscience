@@ -32,7 +32,7 @@ from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
 from pyretailscience.plots.styles import graph_utils as gu
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.styles.tailwind import get_plot_colors
 
 MAX_SUPPORTED_SETS = 3
 MIN_SUPPORTED_SETS = 2
@@ -72,9 +72,7 @@ def plot(
     if num_sets not in {MIN_SUPPORTED_SETS, MAX_SUPPORTED_SETS}:
         raise ValueError("Only 2-set or 3-set Venn diagrams are supported.")
 
-    default_colors = [COLORS["green"][500], COLORS["green"][800]]
-    if num_sets == MAX_SUPPORTED_SETS:
-        default_colors.append(COLORS["green"][200])
+    default_colors = get_plot_colors(num_sets)
     colors = kwargs.pop("color", default_colors)
 
     zero_group = (0, 0) if num_sets == MIN_SUPPORTED_SETS else (0, 0, 0)

@@ -35,7 +35,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import COLORS, get_multi_color_cmap, get_single_color_cmap
+from pyretailscience.plots.styles.tailwind import COLORS, get_plot_colors
 
 
 def _validate_and_prepare_input(
@@ -147,10 +147,8 @@ def _categorize_columns(
 
 def _generate_colors(highlighted_cols: list[str]) -> list[str]:
     """Generate colors for highlighted lines."""
-    color_gen_threshold = 4
     num_highlighted = len(highlighted_cols) if highlighted_cols else 1
-    color_gen = get_single_color_cmap() if num_highlighted < color_gen_threshold else get_multi_color_cmap()
-    return [next(color_gen) for _ in range(num_highlighted)]
+    return get_plot_colors(num_highlighted)
 
 
 def _render_plot(
