@@ -246,8 +246,8 @@ The PySpark integration tests run in a Docker container with a pre-configured Sp
 # Build the PySpark test image
 docker build -f tests/integration/pyspark/Dockerfile -t pyspark-it .
 
-# Run the integration tests
-docker run --rm pyspark-it uv run pytest -v tests/integration/pyspark/test_segstats_segmentation.py
+# Run all PySpark tests
+docker run --rm pyspark-it uv run pytest tests/integration -k "pyspark" -v
 ```
 
 #### BigQuery Integration Tests
@@ -271,8 +271,8 @@ export GCP_PROJECT_ID=your-project-id
 # Install dependencies
 uv sync
 
-# Run all tests
-uv run pytest tests/integration/bigquery -v
+# Run all BigQuery tests
+uv run pytest tests/integration -k "bigquery" -v
 
 # Run specific test module
 uv run pytest tests/integration/bigquery/test_cohort_analysis.py -v
