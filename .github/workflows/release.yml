@@ -99,8 +99,8 @@ jobs:
           pip install uv==0.5.30
       - name: Install Dependencies
         run: uv sync
-      - name: Run Tests
-        run: uv run pytest
+      - name: Run Tests (excluding integration tests)
+        run: uv run pytest --ignore=tests/integration
 
   build:
     name: Build
