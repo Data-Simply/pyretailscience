@@ -187,25 +187,6 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
   </div>
 
   <div class="glr-thumbcontainer coming-soon-container">
-<<<<<<< HEAD
-    <div class="coming-soon-title">Time Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Venn Diagram</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Period on Period Plot</div>
-=======
-    <div class="coming-soon-title">Waterfall Plot</div>
->>>>>>> d4357ab8c5b85b43fb69befe3a0efca5465d69e9
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
     <div class="coming-soon-title">Index Plot</div>
     <div class="coming-soon-thumb">Preview</div>
   </div>
