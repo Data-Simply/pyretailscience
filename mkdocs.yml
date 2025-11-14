@@ -24,6 +24,7 @@ nav:
       - Venn Diagram: gallery/plots/venn.ipynb
       - Waterfall Plot: gallery/plots/waterfall.ipynb
       - Index Plot: gallery/plots/index_plot.ipynb
+      - Scatter Plot: gallery/plots/scatter.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb

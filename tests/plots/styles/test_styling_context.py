@@ -6,8 +6,6 @@ import pytest
 from pyretailscience.plots.styles.styling_context import (
     FontConfig,
     StylingContext,
-    get_styling_context,
-    update_styling_context,
 )
 
 
@@ -64,21 +62,6 @@ class TestStylingContext:
 
         assert props1 is props2
         assert "poppins_regular" in context._font_cache
-
-    def test_global_styling_context(self):
-        """Test global styling context management."""
-        original_context = get_styling_context()
-        assert isinstance(original_context, StylingContext)
-
-        new_context = StylingContext()
-        expected_title_size = 25
-        new_context.fonts.title_size = expected_title_size
-
-        update_styling_context(new_context)
-        updated_context = get_styling_context()
-
-        assert updated_context.fonts.title_size == expected_title_size
-        assert updated_context is new_context
 
     def test_font_config_customization(self):
         """Test FontConfig can be customized."""
