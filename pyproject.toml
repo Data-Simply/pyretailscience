@@ -17,7 +17,7 @@ description = "Retail Data Science Tools"
 license = "Elastic-2.0"
 name = "pyretailscience"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.10,<3.15"
 version = "0.40.0"
 [[project.authors]]
 email = "2493311+mvanwyk@users.noreply.github.com"
@@ -54,7 +54,7 @@ default-groups = [ "dev", "docs", "examples" ]
 [tool.ruff]
 line-length    = 120
 show-fixes     = true
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 ignore = [ "ANN101", "ANN102", "EM101", "PT011", "PTH123", "SLF001", "TRY003" ]
