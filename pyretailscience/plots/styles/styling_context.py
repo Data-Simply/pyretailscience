@@ -1,7 +1,6 @@
 """Central configuration for fonts, colors, and styling options with proper bundled font management."""
 
 import importlib.resources as pkg_resources
-from collections.abc import Generator
 from dataclasses import dataclass
 
 import matplotlib.font_manager as fm
@@ -26,7 +25,7 @@ class FontConfig:
 
 
 class StylingContext:
-    """Central styling context that maintains bundled fonts as defaults but enables customization."""
+    """Central styling context for fonts and styling options."""
 
     def __init__(self) -> None:
         """Initialize the styling context with default fonts and cache."""
@@ -73,17 +72,6 @@ class StylingContext:
         self._font_cache[font_name] = font_props
         return font_props
 
-    def get_color_generators(self) -> dict[str, Generator[str, None, None]] | None:
-        """Get color generators for plots.
-
-        Returns:
-            Dictionary with 'single' and 'multi' color generators if custom colors are set,
-            or None to fall back to default tailwind colors.
-            Enterprise plugins override this method to provide custom color generators.
-        """
-        # Base implementation returns None - enterprise plugins will override this
-        return None
-
 
 # Global styling context instance
 _styling_context = StylingContext()
@@ -92,9 +80,3 @@ _styling_context = StylingContext()
 def get_styling_context() -> StylingContext:
     """Get the global styling context instance."""
     return _styling_context
-
-
-def update_styling_context(context: StylingContext) -> None:
-    """Update the global styling context (used by enterprise plugins)."""
-    global _styling_context  # noqa:PLW0603
-    _styling_context = context
