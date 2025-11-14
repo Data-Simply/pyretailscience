@@ -240,57 +240,111 @@ class SegTransactionStats:
         return mutations
 
     @staticmethod
-    def _add_rollup_metrics(
+    def _generate_grouping_sets(
+        segment_col: list[str],
+        calc_total: bool,
+        calc_rollup: bool,
+    ) -> list[tuple[str, ...]]:
+        """Generate grouping sets based on current calc_total/calc_rollup settings.
+
+        Args:
+            segment_col (list[str]): The segment columns to generate grouping sets for
+            calc_total (bool): Whether to include grand total (all columns = rollup_value)
+            calc_rollup (bool): Whether to generate rollup subtotals
+
+        Returns:
+            list[tuple[str, ...]]: List of grouping set tuples. Each tuple contains the
+                column names to group by for that grouping set. Empty tuple () represents
+                grand total.
+
+        Example:
+            >>> _generate_grouping_sets(["region", "store", "product"], True, True)
+            [
+                ("region", "store", "product"),  # base grouping
+                ("region", "store"),             # prefix rollup
+                ("region",),                     # prefix rollup
+                ("store", "product"),            # suffix rollup
+                ("product",),                    # suffix rollup
+                (),                              # grand total
+            ]
+        """
+        grouping_sets = [tuple(segment_col)]  # Base grouping always included
+
+        if calc_rollup:
+            # Prefix rollups: progressively remove from the right
+            grouping_sets.extend(tuple(segment_col[:i]) for i in range(1, len(segment_col)))
+
+            # Suffix rollups: progressively remove from the left (only if calc_total=True)
+            if calc_total:
+                grouping_sets.extend(tuple(segment_col[i:]) for i in range(1, len(segment_col)))
+
+        if calc_total:
+            grouping_sets.append(())  # Empty tuple = grand total
+
+        return grouping_sets
+
+    @staticmethod
+    def _execute_grouping_sets(
         data: ibis.Table,
-        segment_metrics: ibis.Table,
+        grouping_sets: list[tuple[str, ...]],
         segment_col: list[str],
         rollup_value: list[Any],
         aggs: dict[str, Any],
-        calc_total: bool,
     ) -> ibis.Table:
-        """Add rollup metrics to segment metrics.
+        """Execute all grouping sets and union results.
+
+        This method handles ALL grouping set execution uniformly, including:
+        - Base grouping (full segment_col)
+        - Rollup groupings (subsets of segment_col)
+        - Grand total (empty tuple)
+
+        Each grouping set is executed independently and results are unioned together.
 
         Args:
-            data (ibis.Table): The data table
-            segment_metrics (ibis.Table): The segment metrics table
-            segment_col (list[str]): The segment columns
-            rollup_value (list[Any]): The rollup values
-            aggs (dict[str, Any]): The aggregation specifications
-            calc_total (bool): Whether to include suffix rollups
+            data (ibis.Table): The data table to aggregate
+            grouping_sets (list[tuple[str, ...]]): List of grouping set tuples to execute.
+                Each tuple contains column names to group by. Empty tuple () means grand total.
+            segment_col (list[str]): All segment columns (used for mutation)
+            rollup_value (list[Any]): Rollup values for each segment column
+            aggs (dict[str, Any]): Aggregation specifications
 
         Returns:
-            ibis.Table: Metrics with rollups added
+            ibis.Table: Union of all grouping set results
+
+        Example:
+            >>> grouping_sets = [
+            ...     ("region", "store", "product"),  # base
+            ...     ("region", "store"),             # rollup
+            ...     ("region",),                     # rollup
+            ...     ()                               # grand total
+            ... ]
+            >>> _execute_grouping_sets(data, grouping_sets, segment_col, rollup_value, aggs)
         """
-        rollup_metrics = []
+        results = []
 
-        # Configuration for rollups
-        rollup_configs = [
-            # Prefix rollups: always include when calc_rollup=True
-            (segment_col[:i], segment_col[i:], rollup_value[i:])
-            for i in range(1, len(segment_col))
-        ]
+        for gs in grouping_sets:
+            if len(gs) == 0:
+                # Grand total: aggregate all data, no GROUP BY
+                result = data.aggregate(**aggs)
+                # Mutate ALL segment columns to rollup_value
+                mutations = SegTransactionStats._create_typed_literals(data, segment_col, rollup_value)
+                result = result.mutate(**mutations)
+            else:
+                # Regular grouping: group by specified columns
+                group_cols = list(gs)
+                result = data.group_by(group_cols).aggregate(**aggs)
 
-        # Only add suffix rollups when calc_total=True (to avoid "Total" in category when no grand total)
-        if calc_total:
-            rollup_configs.extend(
-                # Suffix rollups: group by suffixes, mutate preceding columns
-                [(segment_col[i:], segment_col[:i], rollup_value[:i]) for i in range(1, len(segment_col))],
-            )
+                # Mutate columns NOT in this grouping set to rollup_value
+                mutation_cols = [col for col in segment_col if col not in gs]
+                if len(mutation_cols) > 0:
+                    mutation_values = [rollup_value[segment_col.index(col)] for col in mutation_cols]
+                    mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
+                    result = result.mutate(**mutations)
 
-        # Process both prefix and suffix rollups with unified logic
-        for group_cols, mutation_cols, mutation_values in rollup_configs:
-            # Group by the specified columns and aggregate
-            rollup_result = data.group_by(group_cols).aggregate(**aggs)
+            results.append(result)
 
-            # Add rollup values for mutation columns with proper types
-            rollup_mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
-
-            # Apply all mutations at once
-            rollup_result = rollup_result.mutate(**rollup_mutations)
-            rollup_metrics.append(rollup_result)
-
-        # Union all rollup results
-        return segment_metrics.union(*rollup_metrics) if rollup_metrics else segment_metrics
+        # Union all results - first result is the base, union the rest
+        return results[0].union(*results[1:]) if len(results) > 1 else results[0]
 
     @staticmethod
     def _create_unknown_flag(
@@ -465,24 +519,11 @@ class SegTransactionStats:
             else SegTransactionStats._build_standard_aggs(data, extra_aggs)
         )
 
-        # Calculate metrics for segments
-        segment_metrics = data.group_by(segment_col).aggregate(**aggs)
+        # Generate ALL grouping sets based on current parameters
+        grouping_sets = SegTransactionStats._generate_grouping_sets(segment_col, calc_total, calc_rollup)
 
-        # Add rollups if requested
-        final_metrics = (
-            SegTransactionStats._add_rollup_metrics(data, segment_metrics, segment_col, rollup_value, aggs, calc_total)
-            if calc_rollup
-            else segment_metrics
-        )
-
-        # Add grand total row if requested
-        if calc_total:
-            total_metrics = data.aggregate(**aggs)
-
-            # Create properly typed values for all segment columns
-            total_mutations = SegTransactionStats._create_typed_literals(data, segment_col, rollup_value)
-            total_metrics = total_metrics.mutate(**total_mutations)
-            final_metrics = final_metrics.union(total_metrics)
+        # Execute all grouping sets uniformly - no special cases
+        final_metrics = SegTransactionStats._execute_grouping_sets(data, grouping_sets, segment_col, rollup_value, aggs)
 
         # Calculate derived metrics
         final_metrics = final_metrics.mutate(
