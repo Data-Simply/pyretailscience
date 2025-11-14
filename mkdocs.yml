@@ -19,6 +19,7 @@ nav:
       - Heatmap Plot: gallery/plots/heatmap.ipynb
       - Histogram Plot: gallery/plots/histogram.ipynb
       - Line Plot: gallery/plots/line.ipynb
+      - Period on Period Plot: gallery/plots/period_on_period.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
