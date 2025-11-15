@@ -1,10 +1,21 @@
 """Tests for the plots.tree_diagram module."""
 
+# ruff: noqa: N806, PLR2004
+
 import matplotlib.pyplot as plt
 import pytest
 
 from pyretailscience.plots.styles.tailwind import COLORS
-from pyretailscience.plots.tree_diagram import BaseRoundedBox, DetailedTreeNode, SimpleTreeNode, TreeGrid, TreeNode
+from pyretailscience.plots.tree_diagram import (
+    BaseRoundedBox,
+    DetailedTreeNode,
+    LightGBMTreeNode,
+    SegmentTreeNode,
+    SimpleTreeNode,
+    TreeGrid,
+    TreeNode,
+    lightgbm_tree_to_grid,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -318,7 +329,6 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (1, 2),
                 "children": ["child1", "child2"],
             },
             "child1": {
@@ -326,7 +336,6 @@ class TestTreeGrid:
                 "percent": 3.0,
                 "value1": "$50K",
                 "value2": "$48.5K",
-                "position": (0, 1),
                 "children": ["grandchild1"],
             },
             "child2": {
@@ -334,7 +343,6 @@ class TestTreeGrid:
                 "percent": 7.0,
                 "value1": "$50K",
                 "value2": "$46.5K",
-                "position": (2, 1),
                 "children": ["grandchild2"],
             },
             "grandchild1": {
@@ -342,7 +350,6 @@ class TestTreeGrid:
                 "percent": 2.0,
                 "value1": "$25K",
                 "value2": "$24.5K",
-                "position": (0, 0),
                 "children": [],
             },
             "grandchild2": {
@@ -350,15 +357,12 @@ class TestTreeGrid:
                 "percent": 4.0,
                 "value1": "$25K",
                 "value2": "$24K",
-                "position": (2, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=3,
-            num_cols=3,
             node_class=SimpleTreeNode,
         )
 
@@ -371,6 +375,43 @@ class TestTreeGrid:
         expected_patches = num_nodes * patches_per_node + num_connections
         assert len(ax.patches) == expected_patches
 
+    def test_automatic_layout_computation(self):
+        """TreeGrid should compute positions automatically when no positions are provided."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        ax = grid.render()
+
+        # 3 nodes * 2 patches = 6 patches + 2 connections
+        expected_patches = 3 * 2 + 2
+        assert len(ax.patches) == expected_patches
+
     def test_axes_management_with_provided_ax(self, ax):
         """Test that TreeGrid uses provided axes."""
         tree_structure = {
@@ -379,15 +420,12 @@ class TestTreeGrid:
                 "percent": 1.0,
                 "value1": "$10K",
                 "value2": "$9.9K",
-                "position": (0, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
@@ -402,15 +440,12 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (0, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
@@ -428,7 +463,6 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (2, 1),
                 "children": ["child0", "child1", "child2", "child3", "child4"],
             },
         }
@@ -440,14 +474,11 @@ class TestTreeGrid:
                 "percent": 2.0,
                 "value1": "$20K",
                 "value2": "$19.6K",
-                "position": (i, 0),
                 "children": [],
             }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=2,
-            num_cols=5,
             node_class=SimpleTreeNode,
         )
 
@@ -468,51 +499,17 @@ class TestTreeGrid:
                 "percent": 15.3,
                 "value1": "£1.2M",
                 "value2": "£1.04M",
-                "position": (0, 0),
                 "children": ["nonexistent_child"],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
         with pytest.raises(ValueError, match="not found in tree_structure"):
             grid.render()
-
-    def test_invalid_grid_dimensions(self):
-        """Test that invalid grid dimensions raise ValueError."""
-        tree_structure = {
-            "total_revenue": {
-                "header": "Total Revenue",
-                "percent": 8.5,
-                "value1": "£850K",
-                "value2": "£784K",
-                "position": (0, 0),
-                "children": [],
-            },
-        }
-
-        # Test negative rows
-        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=-1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
-
-        # Test zero columns
-        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=0,
-                node_class=SimpleTreeNode,
-            )
 
     def test_invalid_node_class(self):
         """Test that invalid node_class raises TypeError."""
@@ -522,7 +519,6 @@ class TestTreeGrid:
                 "percent": 12.4,
                 "value1": "25,450",
                 "value2": "22,640",
-                "position": (0, 0),
                 "children": [],
             },
         }
@@ -530,8 +526,6 @@ class TestTreeGrid:
         with pytest.raises(TypeError, match="must be a TreeNode subclass"):
             TreeGrid(
                 tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
                 node_class=str,  # Not a TreeNode subclass
             )
 
@@ -540,73 +534,358 @@ class TestTreeGrid:
         with pytest.raises(ValueError, match="tree_structure cannot be empty"):
             TreeGrid(
                 tree_structure={},
-                num_rows=1,
-                num_cols=1,
                 node_class=SimpleTreeNode,
             )
 
-    def test_missing_position_key(self):
-        """Test that missing position key raises ValueError."""
+    def test_custom_spacing(self):
+        """Test that custom vertical and horizontal spacing is applied correctly."""
         tree_structure = {
-            "avg_basket": {
-                "header": "Average Basket Value",
-                "percent": 6.2,
-                "value1": "£45.80",
-                "value2": "£43.12",
-                # Missing 'position' key
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
                 "children": [],
             },
         }
 
-        with pytest.raises(ValueError, match="missing required 'position' key"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        custom_vertical_spacing = 5.0
+        custom_horizontal_spacing = 8.0
 
-    def test_out_of_bounds_position(self):
-        """Test that out of bounds positions raise ValueError."""
-        # Test column out of bounds (trying to use column 1 when only column 0 exists)
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            vertical_spacing=custom_vertical_spacing,
+            horizontal_spacing=custom_horizontal_spacing,
+        )
+
+        # Verify that the spacing values are set correctly
+        assert grid.vertical_spacing == custom_vertical_spacing
+        assert grid.horizontal_spacing == custom_horizontal_spacing
+
+    def test_custom_node_dimensions(self):
+        """Test that custom node width and height override class defaults."""
         tree_structure = {
-            "transaction_freq": {
-                "header": "Transaction Frequency",
-                "percent": 4.8,
-                "value1": "3.2",
-                "value2": "3.05",
-                "position": (1, 0),  # Column 1 is out of bounds for 1 column grid (0-indexed)
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
                 "children": [],
             },
         }
 
-        with pytest.raises(ValueError, match="column index .* is out of bounds"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        custom_width = 5.0
+        custom_height = 3.0
 
-        # Test row out of bounds (trying to use row 1 when only row 0 exists)
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            node_width=custom_width,
+            node_height=custom_height,
+        )
+
+        # Verify that the custom dimensions are set correctly
+        assert grid.node_width == custom_width
+        assert grid.node_height == custom_height
+
+    def test_uniform_horizontal_spacing_simple_tree(self):
+        """Test that parents are centered over children and spacing is reasonable.
+
+        Note: After parent re-centering, spacing between parent and leaf nodes at the same
+        level may differ. This is geometrically correct and prioritizes proper centering.
+        """
+        # The auto-layout algorithm uses spacing=2 between leaf siblings
+        leaf_spacing = 2
+
+        # Create a revenue tree structure: root -> 2 children, left child has 2 children
         tree_structure = {
-            "items_per_basket": {
-                "header": "Items per Basket",
-                "percent": -2.3,
-                "value1": "4.8",
-                "value2": "4.9",
-                "position": (0, 1),  # Row 1 is out of bounds for 1 row grid (0-indexed)
+            "revenue": {
+                "header": "Revenue",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["customers", "spend_per_customer"],
+            },
+            "customers": {
+                "header": "Customers",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],  # Leaf node
+            },
+            "spend_per_customer": {
+                "header": "Spend/Customer",
+                "percent": 2.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": ["visits", "spend_per_visit"],
+            },
+            "visits": {
+                "header": "Visits",
+                "percent": 1.0,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": [],  # Leaf node
+            },
+            "spend_per_visit": {
+                "header": "Spend/Visit",
+                "percent": 1.0,
+                "value1": "$25K",
+                "value2": "$22K",
+                "children": [],  # Leaf node
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        # Get the positions from the auto-layout
+        positions, _, _ = grid._compute_positions()
+
+        # Check that leaf nodes have the expected spacing
+        level_2_nodes = ["visits", "spend_per_visit"]
+        level_2_cols = sorted([positions[node][0] for node in level_2_nodes])
+        spacing_level_2 = level_2_cols[1] - level_2_cols[0]
+        assert spacing_level_2 == pytest.approx(leaf_spacing, abs=0.01), (
+            f"Leaf spacing mismatch: {spacing_level_2} != {leaf_spacing}"
+        )
+
+        # Check that parent is centered over its children
+        parent_col = positions["spend_per_customer"][0]
+        expected_parent_col = (level_2_cols[0] + level_2_cols[1]) / 2
+        assert parent_col == pytest.approx(expected_parent_col, abs=0.01), (
+            f"Parent not centered: at {parent_col}, expected {expected_parent_col}"
+        )
+
+        # Check that root is centered over its children
+        root_col = positions["revenue"][0]
+        level_1_nodes = ["customers", "spend_per_customer"]
+        level_1_cols = [positions[node][0] for node in level_1_nodes]
+        expected_root_col = (min(level_1_cols) + max(level_1_cols)) / 2
+        assert root_col == pytest.approx(expected_root_col, abs=0.01), (
+            f"Root not centered: at {root_col}, expected {expected_root_col}"
+        )
+
+    def test_uniform_horizontal_spacing_complex_tree(self):
+        """Test parent centering and reasonable spacing in a complex tree."""
+        # The auto-layout algorithm uses spacing=2 between leaf siblings
+        leaf_spacing = 2
+
+        # Create a deeper tree with varying structure
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["a", "b", "c"],
+            },
+            "a": {
+                "header": "A",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": ["a1", "a2"],
+            },
+            "b": {
+                "header": "B",
+                "percent": 2.0,
+                "value1": "$30K",
+                "value2": "$29K",
+                "children": [],  # Leaf - sibling to non-leaf nodes
+            },
+            "c": {
+                "header": "C",
+                "percent": 1.0,
+                "value1": "$20K",
+                "value2": "$17.5K",
+                "children": ["c1"],
+            },
+            "a1": {
+                "header": "A1",
+                "percent": 1.5,
+                "value1": "$25K",
+                "value2": "$24K",
+                "children": [],
+            },
+            "a2": {
+                "header": "A2",
+                "percent": 1.5,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": [],
+            },
+            "c1": {
+                "header": "C1",
+                "percent": 1.0,
+                "value1": "$20K",
+                "value2": "$17.5K",
                 "children": [],
             },
         }
 
-        with pytest.raises(ValueError, match="row index .* is out of bounds"):
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        positions, _, _ = grid._compute_positions()
+
+        # Check that sibling leaf nodes have expected spacing
+        a1_col = positions["a1"][0]
+        a2_col = positions["a2"][0]
+        assert abs(a2_col - a1_col) == pytest.approx(leaf_spacing, abs=0.01), (
+            f"Sibling leaves a1 and a2 spacing incorrect: {abs(a2_col - a1_col)}"
+        )
+
+        # Check that parent 'a' is centered over its children a1 and a2
+        a_col = positions["a"][0]
+        expected_a_col = (a1_col + a2_col) / 2
+        assert a_col == pytest.approx(expected_a_col, abs=0.01), (
+            f"Parent 'a' not centered: at {a_col}, expected {expected_a_col}"
+        )
+
+        # Check that parent 'c' is centered over its child c1
+        c_col = positions["c"][0]
+        c1_col = positions["c1"][0]
+        assert c_col == pytest.approx(c1_col, abs=0.01), (
+            f"Parent 'c' not centered over single child: at {c_col}, expected {c1_col}"
+        )
+
+        # Check that root is centered over all its children a, b, c
+        # Using arithmetic mean (average of all children columns) as per Excel-like grid requirements
+        root_col = positions["root"][0]
+        children_cols = [positions[child][0] for child in ["a", "b", "c"]]
+        expected_root_col = sum(children_cols) / len(children_cols)  # Arithmetic mean, not midpoint
+        assert root_col == pytest.approx(expected_root_col, abs=0.01), (
+            f"Root not centered: at {root_col}, expected {expected_root_col}"
+        )
+
+    def test_orientation_top_down(self):
+        """Test that top-down orientation creates a vertical tree."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            orientation="top-down",
+        )
+
+        # Verify orientation was set correctly
+        assert grid.orientation == "top-down"
+
+        # Render and verify it works
+        ax = grid.render()
+        assert ax is not None
+
+    def test_orientation_left_right(self):
+        """Test that left-right orientation creates a horizontal tree."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1", "child2"],
+            },
+            "child1": {
+                "header": "Child 1",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],
+            },
+            "child2": {
+                "header": "Child 2",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            orientation="left-right",
+        )
+
+        # Verify orientation was set correctly
+        assert grid.orientation == "left-right"
+
+        # Render and verify it works
+        ax = grid.render()
+        assert ax is not None
+
+    def test_orientation_invalid_raises_error(self):
+        """Test that invalid orientation value raises ValueError."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": [],
+            },
+        }
+
+        with pytest.raises(ValueError, match="orientation must be one of"):
             TreeGrid(
                 tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
                 node_class=SimpleTreeNode,
+                orientation="invalid",
             )
+
+    def test_orientation_default_is_top_down(self):
+        """Test that default orientation is top-down."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        assert grid.orientation == "top-down"
 
 
 class TestDetailedTreeNode:
@@ -759,7 +1038,6 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "£1.04M",
                 "diff": "+£160K",
                 "contribution": "100%",
-                "position": (1, 2),
                 "children": ["customers", "avg_value"],
             },
             "customers": {
@@ -769,7 +1047,6 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "9,200",
                 "diff": "-660",
                 "contribution": "35.8%",
-                "position": (0, 1),
                 "children": [],
             },
             "avg_value": {
@@ -779,15 +1056,12 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "£141.22",
                 "diff": "+£1.13",
                 "contribution": "64.2%",
-                "position": (2, 1),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=3,
-            num_cols=3,
             node_class=DetailedTreeNode,
         )
 
@@ -809,3 +1083,552 @@ class TestDetailedTreeNodeIntegration:
             facecolor = title_box.get_facecolor()
             hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
             assert hex_color == expected_colors[i]
+
+
+class TestLightGBMTreeNode:
+    """Test the LightGBMTreeNode class."""
+
+    def test_rendering_leaf_node(self, ax):
+        """Test rendering a leaf node with sample count and average value."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 45.2,
+                "sample_count": 1500,
+                "avg_value": 45.2,
+                "value_range": (0, 100),
+            },
+            x=0.5,
+            y=0.8,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and content box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (header, sample count, avg value)
+        assert len(ax.texts) >= initial_text_count + 2
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Leaf" in text_strings
+        assert "Samples: 1,500" in text_strings
+
+    def test_rendering_internal_node(self, ax):
+        """Test rendering an internal node with split condition."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "age",
+                "split_condition": "<= 35.0000",
+                "value": 52.8,
+                "sample_count": 3200,
+                "avg_value": 52.8,
+                "value_range": (0, 100),
+            },
+            x=1.0,
+            y=2.0,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and content box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (feature name, split condition, sample count, avg value)
+        assert len(ax.texts) >= initial_text_count + 3
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "age" in text_strings
+        assert "<= 35.0000" in text_strings
+        assert "Samples: 3,200" in text_strings
+
+    def test_color_gradient_low_value(self, ax):
+        """Test that low values result in red coloring."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 10.0,  # Low value
+                "sample_count": 1000,
+                "avg_value": 10.0,
+                "value_range": (10, 90),  # Range 10-90, value at minimum
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Header box (first patch) should be red-ish for low values
+        header_box = ax.patches[0]
+        facecolor = header_box.get_facecolor()
+        # Should be red (normalized value = 0)
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == COLORS["red"][500]
+
+    def test_color_gradient_high_value(self, ax):
+        """Test that high values result in green coloring."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 90.0,  # High value
+                "sample_count": 1000,
+                "avg_value": 90.0,
+                "value_range": (10, 90),  # Range 10-90, value at maximum
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Header box (first patch) should be green for high values
+        header_box = ax.patches[0]
+        facecolor = header_box.get_facecolor()
+        # Should be green (normalized value = 1)
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == COLORS["green"][500]
+
+    def test_color_gradient_mid_value(self, ax):
+        """Test that mid values result in yellow coloring."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 50.0,  # Mid value
+                "sample_count": 1000,
+                "avg_value": 50.0,
+                "value_range": (10, 90),  # Range 10-90, value at midpoint
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Header box should be yellow-ish for mid values
+        header_box = ax.patches[0]
+        facecolor = header_box.get_facecolor()
+        # Should be yellow (normalized value = 0.5)
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == COLORS["yellow"][500]
+
+    def test_percentage_formatting(self, ax):
+        """Test that small values are formatted as percentages."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 0.0425,
+                "sample_count": 500,
+                "avg_value": 0.0425,  # Should be formatted as percentage
+                "value_range": (0, 1),
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Check that the average value is formatted as percentage
+        text_strings = [t.get_text() for t in ax.texts]
+        # Should find "Avg: 4.25%" or similar
+        assert any("4.25%" in s for s in text_strings)
+
+    def test_decimal_formatting(self, ax):
+        """Test that large values are formatted as decimals."""
+        node = LightGBMTreeNode(
+            data={
+                "split_feature": "Leaf",
+                "value": 125.75,
+                "sample_count": 800,
+                "avg_value": 125.75,  # Should be formatted as decimal
+                "value_range": (0, 200),
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Check that the average value is formatted as decimal
+        text_strings = [t.get_text() for t in ax.texts]
+        # Should find "Avg: 125.75" or similar
+        assert any("125.75" in s for s in text_strings)
+
+
+class TestLightGBMTreeToGrid:
+    """Test the lightgbm_tree_to_grid function."""
+
+    def test_single_node_tree(self):
+        """Test conversion of a single-node (leaf only) tree."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Create a trivial dataset that results in a single leaf
+        X = np.array([[1], [2], [3]])
+        y = np.array([10, 10, 10])  # All same value
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=1, min_child_samples=10)
+        model.fit(X, y)
+
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Should have exactly one node
+        assert len(tree_structure) == 1
+
+        # Node should have required fields
+        node_id = next(iter(tree_structure.keys()))
+        node = tree_structure[node_id]
+        assert "split_feature" in node
+        assert "value" in node
+        assert "sample_count" in node
+        assert "avg_value" in node
+        assert "value_range" in node
+        assert "children" in node
+
+        # Children list should be empty for leaf
+        assert len(node["children"]) == 0
+
+    def test_two_level_tree(self):
+        """Test conversion of a two-level tree (root with two children)."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Create a dataset that will result in a split
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 10, 10, 50, 50, 50])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Should have at least 3 nodes (root + 2 children) if split occurred
+        assert len(tree_structure) >= 3
+
+        # Find root node (first node added)
+        root_id = "node_0"
+        assert root_id in tree_structure
+
+        root_node = tree_structure[root_id]
+        # Root should have children
+        assert len(root_node["children"]) > 0
+
+        # Root should have split information
+        assert "split_feature" in root_node
+        assert root_node["split_feature"] == "feature1"
+        assert "split_condition" in root_node
+
+    def test_feature_names_mapping(self):
+        """Test that feature names are correctly mapped to splits."""
+        import lightgbm as lgb
+        import numpy as np
+
+        X = np.array([[1, 10], [2, 20], [3, 30], [4, 40], [5, 50], [6, 60]])
+        y = np.array([10, 10, 10, 50, 50, 50])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        feature_names = ["age", "income"]
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=feature_names)
+
+        # Root node should reference one of the feature names
+        root_node = tree_structure["node_0"]
+        if "split_feature" in root_node and root_node["split_feature"] != "Leaf":
+            assert root_node["split_feature"] in feature_names
+
+    def test_value_range_calculation(self):
+        """Test that value_range is correctly calculated across all nodes."""
+        import lightgbm as lgb
+        import numpy as np
+
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 20, 30, 40, 50, 60])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=3, min_child_samples=1)
+        model.fit(X, y)
+
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Extract all value_range tuples
+        value_ranges = [node["value_range"] for node in tree_structure.values()]
+
+        # All nodes should have the same value_range
+        assert all(vr == value_ranges[0] for vr in value_ranges)
+
+        # Value range should be (min, max) of all node values
+        min_range, max_range = value_ranges[0]
+        all_values = [node["value"] for node in tree_structure.values()]
+        assert min_range == pytest.approx(min(all_values))
+        assert max_range == pytest.approx(max(all_values))
+
+    def test_multiple_trees_raises_error(self):
+        """Test that providing a booster with multiple trees raises ValueError."""
+        import lightgbm as lgb
+        import numpy as np
+
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 20, 30, 40, 50, 60])
+
+        # Train with multiple estimators
+        model = lgb.LGBMRegressor(n_estimators=3, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        # Should raise ValueError
+        with pytest.raises(ValueError, match="Expected single tree"):
+            lightgbm_tree_to_grid(model.booster_)
+
+
+class TestLightGBMTreeNodeIntegration:
+    """Integration tests for LightGBMTreeNode with TreeGrid."""
+
+    def test_tree_grid_with_lightgbm_nodes(self):
+        """Test rendering a TreeGrid with LightGBMTreeNode instances."""
+        import lightgbm as lgb
+        import numpy as np
+
+        # Create a simple dataset
+        X = np.array([[1], [2], [3], [4], [5], [6]])
+        y = np.array([10, 10, 10, 50, 50, 50])
+
+        model = lgb.LGBMRegressor(n_estimators=1, max_depth=2, min_child_samples=1)
+        model.fit(X, y)
+
+        # Convert to TreeGrid format
+        tree_structure = lightgbm_tree_to_grid(model.booster_, feature_names=["feature1"])
+
+        # Create TreeGrid
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=LightGBMTreeNode,
+        )
+
+        # Render
+        ax = grid.render()
+
+        # Should have patches for nodes and connection lines
+        num_nodes = len(tree_structure)
+        patches_per_node = 2  # Header box + content box for LightGBMTreeNode
+        # Count connections: each non-leaf node contributes edges to its children
+        num_connections = sum(len(node["children"]) for node in tree_structure.values())
+
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
+
+
+class TestSegmentTreeNode:
+    """Test the SegmentTreeNode class."""
+
+    def test_rendering_with_valid_data(self, ax):
+        """Test that SegmentTreeNode renders correctly with valid data."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Female Passengers",
+                "metric_label": "Survival Rate",
+                "metric_value": "74.2%",
+                "sample_size": "271",
+                "baseline_value": "40.6%",
+                "variance": "+33.6pp",
+                "variance_numeric": 33.6,
+            },
+            x=0.5,
+            y=0.8,
+        )
+
+        initial_patch_count = len(ax.patches)
+        initial_text_count = len(ax.texts)
+
+        node.render(ax)
+
+        # Should add 2 patches (header box and content box)
+        assert len(ax.patches) == initial_patch_count + 2
+
+        # Should add text elements (header + 3 content lines minimum)
+        assert len(ax.texts) >= initial_text_count + 4
+
+        # Verify text content
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Female Passengers" in text_strings
+        assert "Survival Rate: 74.2%" in text_strings
+        assert "Sample: 271" in text_strings
+        assert "vs Overall (40.6%): +33.6pp" in text_strings
+
+    @pytest.mark.parametrize(
+        ("variance_numeric", "expected_color_name"),
+        [
+            (33.6, "green"),  # Above GREEN_THRESHOLD (5.0)
+            (-22.8, "red"),  # Below RED_THRESHOLD (-5.0)
+            (5.0, "green"),  # At green threshold
+            (-5.0, "red"),  # At red threshold
+            (2.0, "yellow"),  # Between thresholds (neutral)
+        ],
+    )
+    def test_color_selection_based_on_variance(self, ax, variance_numeric, expected_color_name):
+        """Test that header box color is selected correctly based on variance thresholds."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Test Segment",
+                "metric_label": "Metric",
+                "metric_value": "50%",
+                "sample_size": "100",
+                "baseline_value": "40%",
+                "variance": f"+{variance_numeric}pp",
+                "variance_numeric": variance_numeric,
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # The header box (first patch added) should have the color based on variance
+        header_box = ax.patches[-2]
+        expected_color = COLORS[expected_color_name][500]
+
+        # Convert RGBA to hex for comparison
+        facecolor = header_box.get_facecolor()
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == expected_color
+
+    @pytest.mark.parametrize(
+        "missing_key",
+        ["header", "metric_label", "metric_value", "sample_size", "baseline_value", "variance"],
+    )
+    def test_missing_required_keys(self, ax, missing_key):
+        """Test that KeyError is raised when required keys are missing."""
+        data = {
+            "header": "Test Segment",
+            "metric_label": "Conversion Rate",
+            "metric_value": "28.3%",
+            "sample_size": "2,500",
+            "baseline_value": "12.5%",
+            "variance": "+15.8pp",
+        }
+        del data[missing_key]
+
+        node = SegmentTreeNode(data=data, x=0, y=0)
+
+        with pytest.raises(KeyError):
+            node.render(ax)
+
+    def test_rendering_with_contribution(self, ax):
+        """Test that contribution field is rendered when provided."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Premium Customers",
+                "metric_label": "Conversion Rate",
+                "metric_value": "28.3%",
+                "sample_size": "2,500",
+                "baseline_value": "12.5%",
+                "variance": "+15.8pp",
+                "variance_numeric": 15.8,
+                "contribution": "56.7%",
+                "contribution_label": "of total conversions",
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Verify contribution text is rendered
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "56.7% of total conversions" in text_strings
+
+    def test_variance_extraction_from_string(self, ax):
+        """Test that variance_numeric is extracted from variance string if not provided."""
+        node = SegmentTreeNode(
+            data={
+                "header": "Test Segment",
+                "metric_label": "Metric",
+                "metric_value": "50%",
+                "sample_size": "100",
+                "baseline_value": "40%",
+                "variance": "+10.5pp",
+                # variance_numeric not provided - should be extracted
+            },
+            x=0,
+            y=0,
+        )
+
+        node.render(ax)
+
+        # Should not raise error and should use extracted value for coloring
+        # Extracted value should be 10.5, which is > GREEN_THRESHOLD (5.0)
+        header_box = ax.patches[-2]
+        expected_color = COLORS["green"][500]
+
+        facecolor = header_box.get_facecolor()
+        hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
+        assert hex_color == expected_color
+
+
+class TestSegmentTreeNodeIntegration:
+    """Integration tests for SegmentTreeNode with TreeGrid."""
+
+    def test_segment_tree_rendering(self):
+        """Test that a complete segment tree renders without errors."""
+        # Create tree structure for customer segment analysis
+        tree_structure = {
+            "all": {
+                "header": "All Customers",
+                "metric_label": "Conversion Rate",
+                "metric_value": "12.5%",
+                "sample_size": "10,000",
+                "baseline_value": "12.5%",
+                "variance": "0.0pp",
+                "variance_numeric": 0.0,
+                "contribution": "100%",
+                "contribution_label": "of total conversions",
+                "children": ["premium", "standard"],
+            },
+            "premium": {
+                "header": "Premium",
+                "metric_label": "Conversion Rate",
+                "metric_value": "28.3%",
+                "sample_size": "2,500",
+                "baseline_value": "12.5%",
+                "variance": "+15.8pp",
+                "variance_numeric": 15.8,
+                "contribution": "56.7%",
+                "contribution_label": "of total conversions",
+                "children": [],
+            },
+            "standard": {
+                "header": "Standard",
+                "metric_label": "Conversion Rate",
+                "metric_value": "7.2%",
+                "sample_size": "7,500",
+                "baseline_value": "12.5%",
+                "variance": "-5.3pp",
+                "variance_numeric": -5.3,
+                "contribution": "43.3%",
+                "contribution_label": "of total conversions",
+                "children": [],
+            },
+        }
+
+        # Create TreeGrid
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SegmentTreeNode,
+        )
+
+        # Render
+        ax = grid.render()
+
+        # Should have patches for nodes and connection lines
+        num_nodes = len(tree_structure)
+        patches_per_node = 2  # Header box + content box for SegmentTreeNode
+        # Count connections: each non-leaf node contributes edges to its children
+        num_connections = sum(len(node["children"]) for node in tree_structure.values())
+
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
