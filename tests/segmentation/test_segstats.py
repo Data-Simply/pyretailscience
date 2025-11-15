@@ -970,3 +970,135 @@ class TestUnknownCustomerTracking:
         assert result_df.loc[0, "stores"] == expected_identified_stores
         assert result_df.loc[0, "stores_unknown"] == expected_unknown_stores
         assert result_df.loc[0, "stores_total"] == expected_total_stores
+
+
+class TestGenerateGroupingSets:
+    """Test the _generate_grouping_sets helper method."""
+
+    def test_no_rollup_no_total(self):
+        """Test with calc_rollup=False and calc_total=False returns only base grouping."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            calc_total=False,
+            calc_rollup=False,
+        )
+        expected = [("region", "store", "product")]
+        assert result == expected
+
+    def test_no_rollup_with_total(self):
+        """Test with calc_rollup=False and calc_total=True returns base grouping and grand total."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            calc_total=True,
+            calc_rollup=False,
+        )
+        expected = [
+            ("region", "store", "product"),
+            (),  # grand total
+        ]
+        assert result == expected
+
+    def test_rollup_without_total(self):
+        """Test with calc_rollup=True and calc_total=False returns prefix rollups only."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            calc_total=False,
+            calc_rollup=True,
+        )
+        expected = [
+            ("region", "store", "product"),
+            ("region",),
+            ("region", "store"),
+        ]
+        assert result == expected
+
+    def test_rollup_with_total(self):
+        """Test with calc_rollup=True and calc_total=True returns prefix and suffix rollups plus grand total."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            calc_total=True,
+            calc_rollup=True,
+        )
+        expected = [
+            ("region", "store", "product"),
+            ("region",),
+            ("region", "store"),
+            ("store", "product"),
+            ("product",),
+            (),  # grand total
+        ]
+        assert result == expected
+
+    def test_two_columns_rollup_with_total(self):
+        """Test with two segment columns generates correct prefix and suffix rollups."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store"],
+            calc_total=True,
+            calc_rollup=True,
+        )
+        expected = [
+            ("region", "store"),
+            ("region",),
+            ("store",),
+            (),
+        ]
+        assert result == expected
+
+    def test_single_column_no_rollup_no_total(self):
+        """Test with single segment column and no rollup or total returns only base grouping."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region"],
+            calc_total=False,
+            calc_rollup=False,
+        )
+        expected = [
+            ("region",),
+        ]
+        assert result == expected
+
+    def test_single_column_with_total(self):
+        """Test with single segment column and calc_total=True returns base grouping and grand total."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region"],
+            calc_total=True,
+            calc_rollup=True,
+        )
+        expected = [
+            ("region",),
+            (),
+        ]
+        assert result == expected
+
+    def test_four_columns_rollup_with_total(self):
+        """Test with four segment columns verifies pattern holds for larger hierarchies."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "category", "product"],
+            calc_total=True,
+            calc_rollup=True,
+        )
+        expected = [
+            ("region", "store", "category", "product"),  # base
+            ("region",),  # prefix rollup
+            ("region", "store"),  # prefix rollup
+            ("region", "store", "category"),  # prefix rollup
+            ("store", "category", "product"),  # suffix rollup
+            ("category", "product"),  # suffix rollup
+            ("product",),  # suffix rollup
+            (),  # grand total
+        ]
+        assert result == expected
+
+    def test_four_columns_rollup_without_total(self):
+        """Test with four segment columns and calc_total=False returns prefix rollups only."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "category", "product"],
+            calc_total=False,
+            calc_rollup=True,
+        )
+        expected = [
+            ("region", "store", "category", "product"),  # base
+            ("region",),  # prefix rollup
+            ("region", "store"),  # prefix rollup
+            ("region", "store", "category"),  # prefix rollup
+        ]
+        assert result == expected
