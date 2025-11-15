@@ -45,6 +45,7 @@ transaction frequency, average basket size, and custom business metrics for any
 segment combination.
 """
 
+import warnings
 from typing import Any, Literal
 
 import ibis
@@ -629,9 +630,12 @@ class SegTransactionStats:
         sort_order: Literal["ascending", "descending", None] = None,
         source_text: str | None = None,
         hide_total: bool = True,
-        **kwargs: dict[str, any],
+        **kwargs: dict[str, Any],
     ) -> SubplotBase:
         """Plots the value_col by segment.
+
+        .. deprecated::
+            This method is deprecated. Use :func:`pyretailscience.plots.bar.py` instead.
 
         Args:
             value_col (str): The column to plot.
@@ -658,6 +662,13 @@ class SegTransactionStats:
             ValueError: If the orientation is not "vertical" or "horizontal".
             ValueError: If multiple segment columns are used, as plotting is only supported for a single segment column.
         """
+        warnings.warn(
+            "SegTransactionStats.plot() is deprecated and will be removed in a future version. "
+            "Use pyretailscience.plots.bar instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         if sort_order not in ["ascending", "descending", None]:
             raise ValueError("sort_order must be either 'ascending' or 'descending' or None")
         if orientation not in ["vertical", "horizontal"]:
