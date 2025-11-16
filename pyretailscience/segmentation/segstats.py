@@ -57,6 +57,9 @@ import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.plots.styles.tailwind import COLORS
 
+# Maximum number of dimensions for CUBE mode before warning about exponential growth
+MAX_CUBE_DIMENSIONS_WITHOUT_WARNING = 6
+
 
 class SegTransactionStats:
     """Calculates transaction performance statistics for any business segment or dimension.
@@ -306,7 +309,7 @@ class SegTransactionStats:
         Raises:
             ValueError: If column doesn't exist or aggregation function is not available
         """
-        if not extra_aggs:
+        if extra_aggs is None:
             return
 
         for col_tuple in extra_aggs.values():
@@ -439,13 +442,12 @@ class SegTransactionStats:
         if grouping_sets == "cube":
             # SQL CUBE: all possible combinations (2^n groupings)
             # Warn if too many dimensions (exponential growth)
-            max_dimensions_for_cube = 6
             num_grouping_sets = 2 ** len(segment_col)
-            if len(segment_col) > max_dimensions_for_cube:
+            if len(segment_col) > MAX_CUBE_DIMENSIONS_WITHOUT_WARNING:
                 warnings.warn(
                     f"CUBE mode with {len(segment_col)} dimensions will generate {num_grouping_sets} grouping sets, "
                     f"which may be computationally expensive. Consider using ROLLUP mode or limiting to "
-                    f"{max_dimensions_for_cube} dimensions.",
+                    f"{MAX_CUBE_DIMENSIONS_WITHOUT_WARNING} dimensions.",
                     UserWarning,
                     stacklevel=3,
                 )
@@ -464,6 +466,16 @@ class SegTransactionStats:
                 msg = (
                     f"Columns {sorted(invalid_cols)} in grouping_sets not found in segment_col {segment_col}. "
                     f"All grouping set columns must be in segment_col."
+                )
+                raise ValueError(msg)
+
+            # Validate all segment_col columns are mentioned (SQL convention)
+            unmentioned_cols = set(segment_col) - all_mentioned_cols
+            if unmentioned_cols:
+                msg = (
+                    f"Columns {sorted(unmentioned_cols)} in segment_col are not mentioned in any grouping set. "
+                    f"All segment_col columns must appear in at least one grouping set. "
+                    f"Either remove these columns from segment_col or include them in at least one grouping set."
                 )
                 raise ValueError(msg)
 

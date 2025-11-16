@@ -22,7 +22,7 @@ class TestCalcSegStats:
                 cols.customer_id: [1, 2, 3, 4, 5],
                 cols.unit_spend: [100.0, 200.0, 150.0, 300.0, 250.0],
                 cols.transaction_id: [101, 102, 103, 104, 105],
-                "segment_name": ["A", "B", "A", "B", "A"],
+                "segment_name": ["Premium", "Standard", "Premium", "Standard", "Premium"],
                 cols.unit_qty: [10, 20, 15, 30, 25],
             },
         )
@@ -31,7 +31,7 @@ class TestCalcSegStats:
         """Test that the method correctly calculates at the transaction-item level."""
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [500.0, 500.0, 1000.0],
                 cols.agg.transaction_id: [3, 2, 5],
                 cols.agg.customer_id: [3, 2, 5],
@@ -55,13 +55,13 @@ class TestCalcSegStats:
                 get_option("column.customer_id"): [1, 2, 3, 4, 5],
                 cols.unit_spend: [100.0, 200.0, 150.0, 300.0, 250.0],
                 cols.transaction_id: [101, 102, 103, 104, 105],
-                "segment_name": ["A", "B", "A", "B", "A"],
+                "segment_name": ["Premium", "Standard", "Premium", "Standard", "Premium"],
             },
         )
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [500.0, 500.0, 1000.0],
                 cols.agg.transaction_id: [3, 2, 5],
                 cols.agg.customer_id: [3, 2, 5],
@@ -77,11 +77,11 @@ class TestCalcSegStats:
     def test_handles_dataframe_with_one_segment(self, base_df):
         """Test that the method correctly handles a DataFrame with only one segment."""
         df = base_df.copy()
-        df["segment_name"] = "A"
+        df["segment_name"] = "Premium"
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "Total"],
+                "segment_name": ["Premium", "Total"],
                 cols.agg.unit_spend: [1000.0, 1000.0],
                 cols.agg.transaction_id: [5, 5],
                 cols.agg.customer_id: [5, 5],
@@ -104,7 +104,7 @@ class TestCalcSegStats:
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [500.0, 500.0, 1000.0],
                 cols.agg.transaction_id: [3, 2, 5],
                 cols.agg.customer_id: [3, 2, 5],
@@ -124,7 +124,7 @@ class TestCalcSegStats:
         """Test that the method excludes the total row when calc_total=False."""
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B"],
+                "segment_name": ["Premium", "Standard"],
                 cols.agg.unit_spend: [500.0, 500.0],
                 cols.agg.transaction_id: [3, 2],
                 cols.agg.customer_id: [3, 2],
@@ -151,7 +151,7 @@ class TestCalcSegStats:
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [500.0, 500.0, 1000.0],
                 cols.agg.transaction_id: [3, 2, 5],
                 cols.agg.unit_qty: [50, 50, 100],
@@ -388,7 +388,7 @@ class TestSegTransactionStats:
                 cols.customer_id: [1, 2, 3],
                 cols.unit_spend: [100.0, 200.0, 300.0],
                 cols.transaction_id: [101, 102, 103],
-                "segment_name": ["A", "B", "A"],
+                "segment_name": ["Premium", "Standard", "Premium"],
                 "region": ["North", "South", "East"],
             },
         )
@@ -415,7 +415,7 @@ class TestSegTransactionStats:
                 cols.customer_id: [1, 1, 2, 2, 3, 3],
                 cols.unit_spend: [100.0, 150.0, 200.0, 250.0, 300.0, 350.0],
                 cols.transaction_id: [101, 102, 103, 104, 105, 106],
-                "segment_name": ["A", "A", "B", "B", "A", "A"],
+                "segment_name": ["Premium", "Premium", "Standard", "Standard", "Premium", "Premium"],
                 "store_id": [1, 2, 1, 3, 2, 4],
                 "product_id": [10, 20, 10, 30, 20, 40],
             },
@@ -468,7 +468,7 @@ class TestSegTransactionStats:
                 cols.customer_id: [1, 2, 3],
                 cols.unit_spend: [100.0, 200.0, 300.0],
                 cols.transaction_id: [101, 102, 103],
-                "segment_name": ["A", "B", "A"],
+                "segment_name": ["Premium", "Standard", "Premium"],
             },
         )
 
@@ -484,7 +484,7 @@ class TestSegTransactionStats:
                 cols.customer_id: [1, 2, 3],
                 cols.unit_spend: [100.0, 200.0, 300.0],
                 cols.transaction_id: [101, 102, 103],
-                "segment_name": ["A", "B", "A"],
+                "segment_name": ["Premium", "Standard", "Premium"],
             },
         )
 
@@ -507,7 +507,7 @@ class TestSegTransactionStats:
                 "cust_id": [1, 1, 2, 2],
                 "revenue": [100.0, 150.0, 200.0, 250.0],
                 "trans_id": [101, 102, 103, 104],
-                "segment_name": ["A", "A", "B", "B"],
+                "segment_name": ["Premium", "Premium", "Standard", "Standard"],
                 "quantity": [2, 3, 4, 5],
             },
         )
@@ -749,7 +749,7 @@ class TestUnknownCustomerTracking:
                 cols.customer_id: customer_ids,
                 cols.unit_spend: [100.0, 200.0, 150.0, 300.0],
                 cols.transaction_id: [101, 102, 103, 104],
-                "segment_name": ["A", "A", "A", "B"],
+                "segment_name": ["Premium", "Premium", "Premium", "Standard"],
             },
         )
 
@@ -758,7 +758,7 @@ class TestUnknownCustomerTracking:
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [300.0, 300.0, 600.0],
                 cols.agg.transaction_id: [2, 1, 3],
                 cols.agg.customer_id: [2, 1, 3],
@@ -783,7 +783,7 @@ class TestUnknownCustomerTracking:
                 cols.customer_id: [1, 2, -1, 3],
                 cols.unit_spend: [100.0, 200.0, 150.0, 300.0],
                 cols.transaction_id: [101, 102, 103, 104],
-                "segment_name": ["A", "A", "A", "B"],
+                "segment_name": ["Premium", "Premium", "Premium", "Standard"],
             },
         )
 
@@ -792,7 +792,7 @@ class TestUnknownCustomerTracking:
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [300.0, 300.0, 600.0],
                 cols.agg.transaction_id: [2, 1, 3],
                 cols.agg.customer_id: [2, 1, 3],
@@ -817,7 +817,7 @@ class TestUnknownCustomerTracking:
                 cols.customer_id: [1, 2, -1, -2, 3],
                 cols.unit_spend: [100.0, 200.0, 150.0, 250.0, 300.0],
                 cols.transaction_id: [101, 102, 103, 104, 105],
-                "segment_name": ["A", "A", "A", "A", "B"],
+                "segment_name": ["Premium", "Premium", "Premium", "Premium", "Standard"],
             },
         )
 
@@ -831,7 +831,7 @@ class TestUnknownCustomerTracking:
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [300.0, 300.0, 600.0],
                 cols.agg.transaction_id: [2, 1, 3],
                 cols.agg.customer_id: [2, 1, 3],
@@ -857,7 +857,7 @@ class TestUnknownCustomerTracking:
                 cols.unit_spend: [100.0, 200.0, 150.0, 300.0],
                 cols.transaction_id: [101, 102, 103, 104],
                 cols.unit_qty: [10, 20, 15, 30],
-                "segment_name": ["A", "A", "A", "B"],
+                "segment_name": ["Premium", "Premium", "Premium", "Standard"],
             },
         )
 
@@ -866,7 +866,7 @@ class TestUnknownCustomerTracking:
 
         expected_output = pd.DataFrame(
             {
-                "segment_name": ["A", "B", "Total"],
+                "segment_name": ["Premium", "Standard", "Total"],
                 cols.agg.unit_spend: [300.0, 300.0, 600.0],
                 cols.agg.transaction_id: [2, 1, 3],
                 cols.agg.customer_id: [2, 1, 3],
@@ -899,7 +899,7 @@ class TestUnknownCustomerTracking:
             {
                 cols.unit_spend: [100.0, 200.0],
                 cols.transaction_id: [101, 102],
-                "segment_name": ["A", "B"],
+                "segment_name": ["Premium", "Standard"],
             },
         )
 
@@ -945,7 +945,7 @@ class TestUnknownCustomerTracking:
                 cols.customer_id: [1, -1, 2, -1],
                 cols.unit_spend: [100.0, 150.0, 200.0, 250.0],
                 cols.transaction_id: [101, 102, 103, 104],
-                "segment_name": ["A", "A", "B", "B"],
+                "segment_name": ["Premium", "Premium", "Standard", "Standard"],
                 "store_id": [1, 2, 1, 3],
             },
         )
@@ -1398,7 +1398,7 @@ class TestGroupingSetsCustomMode:
     def test_generate_custom_grouping_sets_basic(self):
         """Test custom grouping sets with basic input."""
         result = SegTransactionStats._generate_grouping_sets(
-            segment_col=["region", "store", "product"],
+            segment_col=["region", "product"],
             grouping_sets=[
                 ("region", "product"),
                 ("product",),
@@ -1411,7 +1411,7 @@ class TestGroupingSetsCustomMode:
     def test_generate_custom_grouping_sets_mixed_types(self):
         """Test custom grouping sets accepts both lists and tuples."""
         result = SegTransactionStats._generate_grouping_sets(
-            segment_col=["region", "store", "product"],
+            segment_col=["region", "product"],
             grouping_sets=[
                 ["region", "product"],  # list
                 ("product",),  # tuple
@@ -1426,7 +1426,7 @@ class TestGroupingSetsCustomMode:
     def test_generate_custom_grouping_sets_deduplicates(self):
         """Test custom grouping sets removes duplicate grouping sets."""
         result = SegTransactionStats._generate_grouping_sets(
-            segment_col=["region", "store", "product"],
+            segment_col=["region", "product"],
             grouping_sets=[
                 ("region", "product"),
                 ("product",),
@@ -1441,7 +1441,7 @@ class TestGroupingSetsCustomMode:
     def test_generate_custom_grouping_sets_single(self):
         """Test custom grouping sets with single grouping set."""
         result = SegTransactionStats._generate_grouping_sets(
-            segment_col=["region", "store"],
+            segment_col=["region"],
             grouping_sets=[("region",)],
         )
         expected = [("region",)]
@@ -1453,6 +1453,18 @@ class TestGroupingSetsCustomMode:
             SegTransactionStats._generate_grouping_sets(
                 segment_col=["region", "store"],
                 grouping_sets=[("region", "invalid_col")],
+            )
+
+    def test_custom_grouping_sets_unmentioned_column(self):
+        """Test custom grouping sets raises error when segment_col column is never mentioned."""
+        with pytest.raises(ValueError, match="Columns .* in segment_col are not mentioned in any grouping set"):
+            SegTransactionStats._generate_grouping_sets(
+                segment_col=["region", "store", "date"],
+                grouping_sets=[
+                    ("region", "store"),  # date never mentioned!
+                    ("region",),
+                    (),
+                ],
             )
 
     def test_custom_grouping_sets_rejects_strings(self):
