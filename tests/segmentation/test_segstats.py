@@ -1102,3 +1102,131 @@ class TestGenerateGroupingSets:
             ("region", "store", "category"),  # prefix rollup
         ]
         assert result == expected
+
+
+class TestGroupingSetsRollupMode:
+    """Test ROLLUP mode grouping_sets parameter."""
+
+    @pytest.mark.parametrize(
+        ("segment_col", "expected"),
+        [
+            (
+                ["region", "store", "product"],
+                [("region", "store", "product"), ("region", "store"), ("region",), ()],
+            ),
+            (
+                ["category", "brand"],
+                [("category", "brand"), ("category",), ()],
+            ),
+            (
+                ["region"],
+                [("region",), ()],
+            ),
+        ],
+    )
+    def test_generate_grouping_sets_rollup_mode(self, segment_col, expected):
+        """Test ROLLUP mode generates hierarchical grouping sets."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=segment_col,
+            grouping_sets="rollup",
+        )
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("calc_total", "calc_rollup", "should_raise"),
+        [
+            (True, None, True),  # calc_total explicitly set -> error
+            (None, False, True),  # calc_rollup explicitly set -> error
+            (True, False, True),  # both explicitly set -> error
+            (None, None, False),  # both None -> valid
+        ],
+    )
+    def test_grouping_sets_rollup_mutual_exclusivity(self, calc_total, calc_rollup, should_raise):
+        """Test that grouping_sets='rollup' validates mutual exclusivity with calc_total/calc_rollup."""
+        if should_raise:
+            with pytest.raises(ValueError, match="Cannot use grouping_sets with calc_total or calc_rollup"):
+                SegTransactionStats._validate_grouping_sets_params(
+                    grouping_sets="rollup",
+                    calc_total=calc_total,
+                    calc_rollup=calc_rollup,
+                )
+        else:
+            # Should not raise - validation passes
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets="rollup",
+                calc_total=calc_total,
+                calc_rollup=calc_rollup,
+            )
+
+    def test_grouping_sets_invalid_string_value(self):
+        """Test that invalid string value raises error."""
+        with pytest.raises(ValueError, match="grouping_sets must be 'rollup', 'cube'"):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets="invalid",
+                calc_total=None,
+                calc_rollup=None,
+            )
+
+    def test_legacy_mode_validation_passes(self):
+        """Test that validation passes in legacy mode (grouping_sets=None) regardless of calc_total/calc_rollup."""
+        # Should not raise - legacy mode doesn't validate calc_total/calc_rollup
+        SegTransactionStats._validate_grouping_sets_params(
+            grouping_sets=None,
+            calc_total=None,
+            calc_rollup=None,
+        )
+
+        # Should also not raise with explicit values in legacy mode
+        SegTransactionStats._validate_grouping_sets_params(
+            grouping_sets=None,
+            calc_total=False,
+            calc_rollup=True,
+        )
+
+    def test_rollup_mode_integration(self):
+        """Test ROLLUP mode produces correct aggregations."""
+        # Create test data
+        data = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "region": ["North", "North", "South", "South", "North", "South"],
+                "store": ["Store_A", "Store_A", "Store_B", "Store_B", "Store_C", "Store_C"],
+                cols.unit_spend: [100, 150, 200, 250, 300, 350],
+            },
+        )
+
+        # Create stats with ROLLUP mode
+        stats = SegTransactionStats(
+            data=data,
+            segment_col=["region", "store"],
+            grouping_sets="rollup",
+        )
+
+        result = stats.df
+
+        # Create expected results for key aggregations
+        # Note: Only checking unit_spend column for simplicity; full test would check all columns
+        # 4 detail rows: North/Store_A, North/Store_C, South/Store_B, South/Store_C
+        # 2 rollup rows: North/Total, South/Total
+        # 1 grand total: Total/Total
+        expected = pd.DataFrame(
+            {
+                "region": ["North", "North", "South", "South", "North", "South", "Total"],
+                "store": ["Store_A", "Store_C", "Store_B", "Store_C", "Total", "Total", "Total"],
+                cols.agg.unit_spend: [250, 300, 450, 350, 550, 800, 1350],
+            },
+        )
+
+        # Verify result has correct number of rows (4 detail + 2 region rollups + 1 grand total = 7)
+        expected_row_count = 7
+        assert len(result) == expected_row_count
+
+        # Sort both dataframes for consistent comparison
+        result_subset = (
+            result[["region", "store", cols.agg.unit_spend]].sort_values(["region", "store"]).reset_index(drop=True)
+        )
+        expected_sorted = expected.sort_values(["region", "store"]).reset_index(drop=True)
+
+        # Compare using pandas assert_frame_equal
+        pd.testing.assert_frame_equal(result_subset, expected_sorted)
