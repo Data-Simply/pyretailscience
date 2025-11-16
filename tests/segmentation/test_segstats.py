@@ -1133,27 +1133,31 @@ class TestGroupingSetsRollupMode:
         assert result == expected
 
     @pytest.mark.parametrize(
-        ("calc_total", "calc_rollup", "should_raise"),
+        ("grouping_sets", "calc_total", "calc_rollup", "should_raise"),
         [
-            (True, None, True),  # calc_total explicitly set -> error
-            (None, False, True),  # calc_rollup explicitly set -> error
-            (True, False, True),  # both explicitly set -> error
-            (None, None, False),  # both None -> valid
+            ("rollup", True, None, True),  # calc_total explicitly set -> error
+            ("rollup", None, False, True),  # calc_rollup explicitly set -> error
+            ("rollup", True, False, True),  # both explicitly set -> error
+            ("rollup", None, None, False),  # both None -> valid
+            ("cube", True, None, True),  # CUBE: calc_total explicitly set -> error
+            ("cube", None, False, True),  # CUBE: calc_rollup explicitly set -> error
+            ("cube", True, False, True),  # CUBE: both explicitly set -> error
+            ("cube", None, None, False),  # CUBE: both None -> valid
         ],
     )
-    def test_grouping_sets_rollup_mutual_exclusivity(self, calc_total, calc_rollup, should_raise):
-        """Test that grouping_sets='rollup' validates mutual exclusivity with calc_total/calc_rollup."""
+    def test_grouping_sets_mutual_exclusivity(self, grouping_sets, calc_total, calc_rollup, should_raise):
+        """Test that grouping_sets validates mutual exclusivity with calc_total/calc_rollup."""
         if should_raise:
             with pytest.raises(ValueError, match="Cannot use grouping_sets with calc_total or calc_rollup"):
                 SegTransactionStats._validate_grouping_sets_params(
-                    grouping_sets="rollup",
+                    grouping_sets=grouping_sets,
                     calc_total=calc_total,
                     calc_rollup=calc_rollup,
                 )
         else:
             # Should not raise - validation passes
             SegTransactionStats._validate_grouping_sets_params(
-                grouping_sets="rollup",
+                grouping_sets=grouping_sets,
                 calc_total=calc_total,
                 calc_rollup=calc_rollup,
             )
@@ -1266,3 +1270,111 @@ class TestGroupingSetsRollupMode:
                 calc_total=None,
                 calc_rollup=None,
             )
+
+    def test_generate_grouping_sets_cube_two_columns(self):
+        """Test CUBE mode generates all 2^n combinations for two columns."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store"],
+            grouping_sets="cube",
+        )
+        expected = [
+            ("region", "store"),  # full detail
+            ("region",),  # region only
+            ("store",),  # store only
+            (),  # grand total
+        ]
+        expected_count_two_columns = 4  # 2^2 = 4
+        # Convert to sets for order-independent comparison
+        assert set(result) == set(expected)
+        assert len(result) == expected_count_two_columns
+
+    def test_generate_grouping_sets_cube_three_columns(self):
+        """Test CUBE mode generates all 2^n combinations for three columns."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            grouping_sets="cube",
+        )
+        expected = [
+            ("region", "store", "product"),  # full detail
+            ("region", "store"),  # region + store
+            ("region", "product"),  # region + product
+            ("region",),  # region only
+            ("store", "product"),  # store + product
+            ("store",),  # store only
+            ("product",),  # product only
+            (),  # grand total
+        ]
+        expected_count_three_columns = 8  # 2^3 = 8
+        # Convert to sets for order-independent comparison
+        assert set(result) == set(expected)
+        assert len(result) == expected_count_three_columns
+
+    def test_generate_grouping_sets_cube_single_column(self):
+        """Test CUBE mode with single segment column."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region"],
+            grouping_sets="cube",
+        )
+        expected = [
+            ("region",),  # detail
+            (),  # grand total
+        ]
+        expected_count_single_column = 2  # 2^1 = 2
+        assert set(result) == set(expected)
+        assert len(result) == expected_count_single_column
+
+    def test_cube_mode_integration(self):
+        """Test CUBE mode produces correct aggregations across all dimension combinations."""
+        # Create test data
+        data = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "region": ["North", "North", "South", "South", "North", "South"],
+                "store": ["Store_A", "Store_A", "Store_B", "Store_B", "Store_C", "Store_C"],
+                cols.unit_spend: [100, 150, 200, 250, 300, 350],
+            },
+        )
+
+        # Create stats with CUBE mode
+        stats = SegTransactionStats(
+            data=data,
+            segment_col=["region", "store"],
+            grouping_sets="cube",
+        )
+
+        result = stats.df
+
+        # CUBE should generate 4 grouping sets (2^2):
+        # 1. (region, store) - 4 detail rows: North/Store_A, North/Store_C, South/Store_B, South/Store_C
+        # 2. (region) - 2 region-only rows: North/Total, South/Total
+        # 3. (store) - 3 store-only rows: Total/Store_A, Total/Store_B, Total/Store_C
+        # 4. () - 1 grand total: Total/Total
+        # Total: 10 rows
+        expected = pd.DataFrame(
+            {
+                "region": ["North", "North", "South", "South", "North", "South", "Total", "Total", "Total", "Total"],
+                "store": [
+                    "Store_A",
+                    "Store_C",
+                    "Store_B",
+                    "Store_C",
+                    "Total",
+                    "Total",
+                    "Store_A",
+                    "Store_B",
+                    "Store_C",
+                    "Total",
+                ],
+                cols.agg.unit_spend: [250, 300, 450, 350, 550, 800, 250, 450, 650, 1350],
+            },
+        )
+
+        # Sort both dataframes for consistent comparison
+        result_subset = (
+            result[["region", "store", cols.agg.unit_spend]].sort_values(["region", "store"]).reset_index(drop=True)
+        )
+        expected_sorted = expected.sort_values(["region", "store"]).reset_index(drop=True)
+
+        # Compare using pandas assert_frame_equal
+        pd.testing.assert_frame_equal(result_subset, expected_sorted)
