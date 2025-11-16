@@ -1143,10 +1143,14 @@ class TestGroupingSetsRollupMode:
             ("cube", None, False, True),  # CUBE: calc_rollup explicitly set -> error
             ("cube", True, False, True),  # CUBE: both explicitly set -> error
             ("cube", None, None, False),  # CUBE: both None -> valid
+            ([("region",)], True, None, True),  # Custom: calc_total explicitly set -> error
+            ([("region",)], None, False, True),  # Custom: calc_rollup explicitly set -> error
+            ([("region",)], True, False, True),  # Custom: both explicitly set -> error
+            ([("region",)], None, None, False),  # Custom: both None -> valid
         ],
     )
     def test_grouping_sets_mutual_exclusivity(self, grouping_sets, calc_total, calc_rollup, should_raise):
-        """Test that grouping_sets validates mutual exclusivity with calc_total/calc_rollup."""
+        """Test that grouping_sets validates mutual exclusivity with calc_total/calc_rollup for all modes."""
         if should_raise:
             with pytest.raises(ValueError, match="Cannot use grouping_sets with calc_total or calc_rollup"):
                 SegTransactionStats._validate_grouping_sets_params(
@@ -1252,24 +1256,6 @@ class TestGroupingSetsRollupMode:
 
         with pytest.raises(ValueError, match="Aggregation function 'invalid_func' not available"):
             SegTransactionStats._validate_extra_aggs(table, extra_aggs)
-
-    def test_grouping_sets_invalid_type(self):
-        """Test that invalid grouping_sets type raises TypeError."""
-        with pytest.raises(TypeError, match="grouping_sets must be a string"):
-            SegTransactionStats._validate_grouping_sets_params(
-                grouping_sets=123,
-                calc_total=None,
-                calc_rollup=None,
-            )
-
-    def test_grouping_sets_custom_not_implemented(self):
-        """Test that custom grouping sets (list) raises NotImplementedError."""
-        with pytest.raises(NotImplementedError, match="Custom grouping sets are not yet implemented"):
-            SegTransactionStats._validate_grouping_sets_params(
-                grouping_sets=[("region",), ("store",)],
-                calc_total=None,
-                calc_rollup=None,
-            )
 
     def test_generate_grouping_sets_cube_two_columns(self):
         """Test CUBE mode generates all 2^n combinations for two columns."""
@@ -1404,3 +1390,160 @@ class TestGroupingSetsRollupMode:
                 segment_col=["region", "category", "brand", "channel", "store_type", "price_tier", "promotion"],
                 grouping_sets="cube",
             )
+
+
+class TestGroupingSetsCustomMode:
+    """Test custom grouping sets functionality."""
+
+    def test_generate_custom_grouping_sets_basic(self):
+        """Test custom grouping sets with basic input."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            grouping_sets=[
+                ("region", "product"),
+                ("product",),
+                (),
+            ],
+        )
+        # Verify content (order not guaranteed due to set deduplication)
+        assert set(result) == {("region", "product"), ("product",), ()}
+
+    def test_generate_custom_grouping_sets_mixed_types(self):
+        """Test custom grouping sets accepts both lists and tuples."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            grouping_sets=[
+                ["region", "product"],  # list
+                ("product",),  # tuple
+                [],  # empty list
+            ],
+        )
+        # Verify content and that both lists and tuples are normalized to tuples
+        assert set(result) == {("region", "product"), ("product",), ()}
+        # Verify all elements are tuples (normalized)
+        assert all(isinstance(gs, tuple) for gs in result)
+
+    def test_generate_custom_grouping_sets_deduplicates(self):
+        """Test custom grouping sets removes duplicate grouping sets."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            grouping_sets=[
+                ("region", "product"),
+                ("product",),
+                ("region", "product"),  # duplicate
+                (),
+                (),  # duplicate
+            ],
+        )
+        # Verify deduplication (order not guaranteed)
+        assert set(result) == {("region", "product"), ("product",), ()}
+
+    def test_generate_custom_grouping_sets_single(self):
+        """Test custom grouping sets with single grouping set."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store"],
+            grouping_sets=[("region",)],
+        )
+        expected = [("region",)]
+        assert result == expected
+
+    def test_custom_grouping_sets_invalid_column(self):
+        """Test custom grouping sets raises error for invalid column name."""
+        with pytest.raises(ValueError, match="Columns .* in grouping_sets not found in segment_col"):
+            SegTransactionStats._generate_grouping_sets(
+                segment_col=["region", "store"],
+                grouping_sets=[("region", "invalid_col")],
+            )
+
+    def test_custom_grouping_sets_rejects_strings(self):
+        """Test custom grouping sets raises error when element is a string."""
+        with pytest.raises(
+            TypeError,
+            match="Each grouping set must be a list or tuple of column names, not a string. Got: 'region'",
+        ):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=["region"],  # Wrong: string instead of list/tuple
+                calc_total=None,
+                calc_rollup=None,
+            )
+
+    def test_custom_grouping_sets_rejects_invalid_types(self):
+        """Test custom grouping sets raises error for invalid element types."""
+        # Test with integer
+        with pytest.raises(
+            TypeError,
+            match="Each grouping set must be a list or tuple of column names. Got type: int",
+        ):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=[("region",), 123],  # Wrong: integer instead of list/tuple
+                calc_total=None,
+                calc_rollup=None,
+            )
+
+        # Test with None
+        with pytest.raises(
+            TypeError,
+            match="Each grouping set must be a list or tuple of column names. Got type: NoneType",
+        ):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=[("region",), None],  # Wrong: None instead of list/tuple
+                calc_total=None,
+                calc_rollup=None,
+            )
+
+    def test_custom_grouping_sets_empty_list(self):
+        """Test custom grouping sets raises error for empty list."""
+        with pytest.raises(ValueError, match="grouping_sets list cannot be empty"):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=[],
+                calc_total=None,
+                calc_rollup=None,
+            )
+
+    def test_custom_grouping_sets_integration(self):
+        """Test custom grouping sets produce correct aggregations."""
+        # Create test data
+        data = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "region": ["North", "North", "South", "South", "North", "South"],
+                "store": ["Store_A", "Store_A", "Store_B", "Store_B", "Store_C", "Store_C"],
+                cols.unit_spend: [100, 150, 200, 250, 300, 350],
+            },
+        )
+
+        # Create stats with custom grouping sets
+        stats = SegTransactionStats(
+            data=data,
+            segment_col=["region", "store"],
+            grouping_sets=[
+                ("region", "store"),  # Detail level
+                ("region",),  # Region-only
+                (),  # Grand total
+            ],
+        )
+
+        result = stats.df
+
+        # Custom grouping sets should generate 3 grouping sets:
+        # 1. (region, store) - 4 detail rows: North/Store_A, North/Store_C, South/Store_B, South/Store_C
+        # 2. (region) - 2 region-only rows: North/Total, South/Total
+        # 3. () - 1 grand total: Total/Total
+        # Total: 7 rows
+        expected = pd.DataFrame(
+            {
+                "region": ["North", "North", "South", "South", "North", "South", "Total"],
+                "store": ["Store_A", "Store_C", "Store_B", "Store_C", "Total", "Total", "Total"],
+                cols.agg.unit_spend: [250, 300, 450, 350, 550, 800, 1350],
+            },
+        )
+
+        # Sort both dataframes for consistent comparison
+        result_subset = (
+            result[["region", "store", cols.agg.unit_spend]].sort_values(["region", "store"]).reset_index(drop=True)
+        )
+        expected_sorted = expected.sort_values(["region", "store"]).reset_index(drop=True)
+
+        # Compare using pandas assert_frame_equal
+        pd.testing.assert_frame_equal(result_subset, expected_sorted)

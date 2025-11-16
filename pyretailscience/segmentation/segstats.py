@@ -124,7 +124,9 @@ class SegTransactionStats:
                 Grouping sets mode. Mutually exclusive with calc_total/calc_rollup when explicitly set.
                 - "rollup": SQL ROLLUP (hierarchical aggregation from right to left). Generates [A,B,C], [A,B], [A], [].
                 - "cube": SQL CUBE (all possible combinations). Generates 2^n grouping sets for n dimensions.
-                - list: Custom grouping sets - not yet implemented.
+                - list: Custom grouping sets (list of lists/tuples). Specify arbitrary dimension combinations.
+                  Each element must be a list or tuple of column names from segment_col. Empty list/tuple ()
+                  represents grand total. Automatically deduplicates and validates column names.
                 - None: Use calc_total/calc_rollup behavior (default).
                 Defaults to None.
 
@@ -145,6 +147,17 @@ class SegTransactionStats:
             ...     data=df,
             ...     segment_col=["region", "store", "product"],
             ...     grouping_sets="cube",
+            ... )
+            >>>
+            >>> # Custom grouping sets for specific dimension combinations
+            >>> stats = SegTransactionStats(
+            ...     data=df,
+            ...     segment_col=["region", "store", "product"],
+            ...     grouping_sets=[
+            ...         ("region", "product"),  # Regional product performance (skip store)
+            ...         ("product",),           # Product-only totals
+            ...         ()                      # Grand total
+            ...     ],
             ... )
             >>>
             >>> # Legacy behavior (backward compatible)
@@ -340,15 +353,27 @@ class SegTransactionStats:
                 msg = f"grouping_sets must be 'rollup', 'cube', a list of lists/tuples, or None. Got: '{grouping_sets}'"
                 raise ValueError(msg)
         elif isinstance(grouping_sets, list):
-            # Custom grouping sets not yet implemented
-            msg = "Custom grouping sets are not yet implemented. Use 'rollup' or 'cube' instead."
-            raise NotImplementedError(msg)
-        else:
-            msg = (
-                f"grouping_sets must be a string ('rollup'/'cube'), list of lists/tuples, or None. "
-                f"Got type: {type(grouping_sets).__name__}"
-            )
-            raise TypeError(msg)
+            # Validate custom grouping sets
+            if len(grouping_sets) == 0:
+                msg = "grouping_sets list cannot be empty. Provide at least one grouping set."
+                raise ValueError(msg)
+
+            # Validate each element is a list or tuple (fail fast)
+            for gs in grouping_sets:
+                if not isinstance(gs, list | tuple):
+                    # Provide helpful error message for common string mistake
+                    if isinstance(gs, str):
+                        msg = (
+                            f"Each grouping set must be a list or tuple of column names, not a string. "
+                            f"Got: '{gs}'. Did you mean ['{gs}'] or ('{gs}',)?"
+                        )
+                        raise TypeError(msg)
+
+                    msg = (
+                        f"Each grouping set must be a list or tuple of column names. "
+                        f"Got type: {type(gs).__name__} with value: {gs}"
+                    )
+                    raise TypeError(msg)
 
     @staticmethod
     def _generate_grouping_sets(
@@ -370,6 +395,9 @@ class SegTransactionStats:
                 column names to group by for that grouping set. Empty tuple () represents
                 grand total.
 
+        Raises:
+            ValueError: If custom grouping set contains column not in segment_col
+
         Example:
             >>> # ROLLUP mode
             >>> _generate_grouping_sets(["region", "store", "product"], grouping_sets="rollup")
@@ -378,6 +406,17 @@ class SegTransactionStats:
                 ("region", "store"),             # rollup level 1
                 ("region",),                     # rollup level 2
                 (),                              # grand total
+            ]
+
+            >>> # Custom grouping sets
+            >>> _generate_grouping_sets(
+            ...     ["region", "store", "product"],
+            ...     grouping_sets=[("region", "product"), ("product",), ()]
+            ... )
+            [
+                ("region", "product"),  # Regional product performance
+                ("product",),           # Product-only totals
+                (),                     # Grand total
             ]
 
             >>> # Legacy mode (calc_total/calc_rollup)
@@ -414,6 +453,23 @@ class SegTransactionStats:
             return list(
                 chain.from_iterable(combinations(segment_col, size) for size in range(len(segment_col), -1, -1)),
             )
+
+        if isinstance(grouping_sets, list):
+            # Custom grouping sets: validate columns, normalize to tuples, and deduplicate
+
+            # Collect all unique columns mentioned and validate they exist in segment_col
+            all_mentioned_cols = {col for gs in grouping_sets for col in gs}
+            invalid_cols = all_mentioned_cols - set(segment_col)
+            if invalid_cols:
+                msg = (
+                    f"Columns {sorted(invalid_cols)} in grouping_sets not found in segment_col {segment_col}. "
+                    f"All grouping set columns must be in segment_col."
+                )
+                raise ValueError(msg)
+
+            # Deduplicate and normalize to tuples using set comprehension
+            # Note: Order is not preserved, but database doesn't guarantee order anyway
+            return list({tuple(gs) for gs in grouping_sets})
 
         # Existing logic for calc_total/calc_rollup
         grouping_sets_list = [tuple(segment_col)]  # Base grouping always included
