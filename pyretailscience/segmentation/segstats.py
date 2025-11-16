@@ -46,6 +46,7 @@ segment combination.
 """
 
 import warnings
+from itertools import chain, combinations
 from typing import Any, Literal
 
 import ibis
@@ -122,7 +123,7 @@ class SegTransactionStats:
             grouping_sets (Literal["rollup", "cube"] | list[list[str] | tuple[str, ...]] | None, optional):
                 Grouping sets mode. Mutually exclusive with calc_total/calc_rollup when explicitly set.
                 - "rollup": SQL ROLLUP (hierarchical aggregation from right to left). Generates [A,B,C], [A,B], [A], [].
-                - "cube": SQL CUBE (all possible combinations) - not yet implemented.
+                - "cube": SQL CUBE (all possible combinations). Generates 2^n grouping sets for n dimensions.
                 - list: Custom grouping sets - not yet implemented.
                 - None: Use calc_total/calc_rollup behavior (default).
                 Defaults to None.
@@ -137,6 +138,13 @@ class SegTransactionStats:
             ...     data=df,
             ...     segment_col=["region", "store", "product"],
             ...     grouping_sets="rollup",
+            ... )
+            >>>
+            >>> # All combinations using CUBE
+            >>> stats = SegTransactionStats(
+            ...     data=df,
+            ...     segment_col=["region", "store", "product"],
+            ...     grouping_sets="cube",
             ... )
             >>>
             >>> # Legacy behavior (backward compatible)
@@ -388,6 +396,13 @@ class SegTransactionStats:
             # SQL ROLLUP: hierarchical aggregation from right to left
             # For [A, B, C]: generates [A,B,C], [A,B], [A], []
             return [tuple(segment_col[:i]) for i in range(len(segment_col), -1, -1)]
+
+        if grouping_sets == "cube":
+            # SQL CUBE: all possible combinations (2^n groupings)
+            # Generate all subsets from size n down to 0
+            return list(
+                chain.from_iterable(combinations(segment_col, size) for size in range(len(segment_col), -1, -1)),
+            )
 
         # Existing logic for calc_total/calc_rollup
         grouping_sets_list = [tuple(segment_col)]  # Base grouping always included
