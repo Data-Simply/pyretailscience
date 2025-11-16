@@ -93,6 +93,7 @@ class SegTransactionStats:
                 Defaults to "segment_name".
             calc_total (bool | None, optional): Whether to include the total row. Defaults to True if grouping_sets is
                 None. Cannot be used with grouping_sets parameter.
+                Note: This parameter is planned for deprecation. Use grouping_sets parameter for new code.
             extra_aggs (dict[str, tuple[str, str]], optional): Additional aggregations to perform.
                 The keys in the dictionary will be the column names for the aggregation results.
                 The values are tuples with (column_name, aggregation_function), where:
@@ -105,9 +106,11 @@ class SegTransactionStats:
                 - Prefix rollups: progressively aggregating left-to-right (e.g., [A, B, Total], [A, Total, Total]).
                 - Suffix rollups: progressively aggregating right-to-left (e.g., [Total, B, C], [Total, Total, C]).
                 A grand total row is also included when calc_total is True.
+                Note: This differs from grouping_sets='rollup' which generates only prefix rollups (SQL standard).
                 Performance: adds O(n) extra aggregation passes where n is the number of segment
                 columns. For large hierarchies, consider disabling rollups or reducing columns.
                 Cannot be used with grouping_sets parameter.
+                Note: This parameter is planned for deprecation. Use grouping_sets parameter for new code.
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
