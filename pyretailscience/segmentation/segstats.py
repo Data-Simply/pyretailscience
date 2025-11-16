@@ -399,6 +399,17 @@ class SegTransactionStats:
 
         if grouping_sets == "cube":
             # SQL CUBE: all possible combinations (2^n groupings)
+            # Warn if too many dimensions (exponential growth)
+            max_dimensions_for_cube = 6
+            num_grouping_sets = 2 ** len(segment_col)
+            if len(segment_col) > max_dimensions_for_cube:
+                warnings.warn(
+                    f"CUBE mode with {len(segment_col)} dimensions will generate {num_grouping_sets} grouping sets, "
+                    f"which may be computationally expensive. Consider using ROLLUP mode or limiting to "
+                    f"{max_dimensions_for_cube} dimensions.",
+                    UserWarning,
+                    stacklevel=3,
+                )
             # Generate all subsets from size n down to 0
             return list(
                 chain.from_iterable(combinations(segment_col, size) for size in range(len(segment_col), -1, -1)),

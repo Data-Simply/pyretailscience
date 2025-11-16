@@ -1378,3 +1378,29 @@ class TestGroupingSetsRollupMode:
 
         # Compare using pandas assert_frame_equal
         pd.testing.assert_frame_equal(result_subset, expected_sorted)
+
+    def test_cube_mode_warns_on_many_dimensions(self):
+        """Test CUBE mode warns when using more than 6 dimensions."""
+        # Create test data with 7 dimensions (region, category, brand, channel, store_type, price_tier, promotion)
+        data = pd.DataFrame(
+            {
+                cols.customer_id: [1, 2, 3],
+                cols.transaction_id: [101, 102, 103],
+                "region": ["North", "South", "East"],
+                "category": ["Electronics", "Clothing", "Food"],
+                "brand": ["BrandA", "BrandB", "BrandC"],
+                "channel": ["Online", "Store", "Mobile"],
+                "store_type": ["Flagship", "Outlet", "Express"],
+                "price_tier": ["Premium", "Standard", "Budget"],
+                "promotion": ["Sale", "Regular", "Clearance"],
+                cols.unit_spend: [1000, 500, 250],
+            },
+        )
+
+        # Should warn about 7 dimensions generating 128 grouping sets
+        with pytest.warns(UserWarning, match="CUBE mode with 7 dimensions will generate 128 grouping sets"):
+            SegTransactionStats(
+                data=data,
+                segment_col=["region", "category", "brand", "channel", "store_type", "price_tier", "promotion"],
+                grouping_sets="cube",
+            )
