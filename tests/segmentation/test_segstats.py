@@ -1230,3 +1230,39 @@ class TestGroupingSetsRollupMode:
 
         # Compare using pandas assert_frame_equal
         pd.testing.assert_frame_equal(result_subset, expected_sorted)
+
+    def test_validate_extra_aggs_invalid_column(self):
+        """Test that _validate_extra_aggs raises ValueError for invalid column name."""
+        data = pd.DataFrame({"region": ["North", "South"], cols.unit_spend: [100, 200]})
+        table = ibis.memtable(data)
+        extra_aggs = {"total_sales": ("invalid_column", "sum")}
+
+        with pytest.raises(ValueError, match="Column 'invalid_column' specified in extra_aggs does not exist"):
+            SegTransactionStats._validate_extra_aggs(table, extra_aggs)
+
+    def test_validate_extra_aggs_invalid_function(self):
+        """Test that _validate_extra_aggs raises ValueError for invalid aggregation function."""
+        data = pd.DataFrame({"region": ["North", "South"], cols.unit_spend: [100, 200]})
+        table = ibis.memtable(data)
+        extra_aggs = {"total_sales": (cols.unit_spend, "invalid_func")}
+
+        with pytest.raises(ValueError, match="Aggregation function 'invalid_func' not available"):
+            SegTransactionStats._validate_extra_aggs(table, extra_aggs)
+
+    def test_grouping_sets_invalid_type(self):
+        """Test that invalid grouping_sets type raises TypeError."""
+        with pytest.raises(TypeError, match="grouping_sets must be a string"):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=123,
+                calc_total=None,
+                calc_rollup=None,
+            )
+
+    def test_grouping_sets_custom_not_implemented(self):
+        """Test that custom grouping sets (list) raises NotImplementedError."""
+        with pytest.raises(NotImplementedError, match="Custom grouping sets are not yet implemented"):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=[("region",), ("store",)],
+                calc_total=None,
+                calc_rollup=None,
+            )
