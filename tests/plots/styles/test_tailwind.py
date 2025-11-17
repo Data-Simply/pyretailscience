@@ -2,7 +2,9 @@
 
 from itertools import islice
 
-from pyretailscience.plots.styles.tailwind import COLORS, get_multi_color_cmap, get_single_color_cmap
+import pytest
+
+from pyretailscience.plots.styles.tailwind import COLORS, get_multi_color_cmap, get_plot_colors, get_single_color_cmap
 
 
 def test_get_single_color_cmap_three_colors():
@@ -118,3 +120,22 @@ def test_get_multi_color_cmap_five_colors():
 
     # Ensure the generated colors match the expected ones
     assert generated_colors == expected_colors
+
+
+@pytest.mark.parametrize("num_series", [1, 3, 4, 10])
+def test_get_plot_colors_returns_correct_length(num_series):
+    """Test that get_plot_colors returns correct number of colors."""
+    colors = get_plot_colors(num_series)
+    assert len(colors) == num_series
+
+
+def test_get_plot_colors_threshold_boundary():
+    """Test that palette switches at threshold boundary."""
+    colors_below_threshold = get_plot_colors(3)
+    colors_at_threshold = get_plot_colors(4)
+
+    # First color is the same (both start with green[500])
+    assert colors_below_threshold[0] == colors_at_threshold[0]
+
+    # But the second colors should be different when crossing threshold
+    assert colors_below_threshold[1] != colors_at_threshold[1]

@@ -40,7 +40,7 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.styling_context import get_styling_context
-from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
+from pyretailscience.plots.styles.tailwind import get_plot_colors
 
 
 def _add_point_labels(
@@ -182,10 +182,8 @@ def plot(
 
     is_multi_scatter = (group_col is not None) or (isinstance(value_col, list) and len(value_col) > 1)
 
-    color_gen_threshold = 3
     num_colors = len(pivot_df.columns) if is_multi_scatter else 1
-    color_gen = get_single_color_cmap() if num_colors < color_gen_threshold else get_multi_color_cmap()
-    default_colors = [next(color_gen) for _ in range(num_colors)]
+    default_colors = get_plot_colors(num_colors)
 
     # Handle color parameter - can be single color or list of colors
     color = kwargs.pop("color", default_colors)
