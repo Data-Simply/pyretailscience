@@ -1,0 +1,1658 @@
+================================================================================
+                    TECHNICAL DEBT ASSESSMENT REPORT
+                         PyRetailScience
+================================================================================
+
+Generated: Mon Nov 17 10:43:41 UTC 2025
+Repository: /home/user/pyretailscience
+
+================================================================================
+1. CODE STATISTICS
+================================================================================
+
+Python files: 44
+Total lines of code: 10840
+Test files: 50
+
+================================================================================
+2. CODE DUPLICATION ANALYSIS
+================================================================================
+
+************* Module pyretailscience.plots.styles.styling_helpers
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.area:[101:116]
+==pyretailscience.plots.scatter:[215:230]
+        )
+
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
+
+    if source_text is not None:
+        gu.add_source_text(ax=ax, source_text=source_text)
+
+    return gu.standard_tick_styles(ax) (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.area:[103:116]
+==pyretailscience.plots.line:[223:344]
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
+
+    if source_text is not None:
+        gu.add_source_text(ax=ax, source_text=source_text)
+
+    return gu.standard_tick_styles(ax) (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.bar:[150:163]
+==pyretailscience.plots.histogram:[120:133]
+        **kwargs,
+    )
+
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
+
+    if use_hatch: (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.area:[100:112]
+==pyretailscience.plots.bar:[150:162]
+        **kwargs,
+    )
+
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
+ (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.bar:[151:162]
+==pyretailscience.plots.scatter:[215:226]
+    )
+
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
+ (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.bar:[153:162]
+==pyretailscience.plots.line:[223:232]
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
+    )
+ (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.area:[79:86]
+==pyretailscience.plots.scatter:[175:182]
+    if group_col is None:
+        pivot_df = df.set_index(x_col if x_col is not None else df.index)[
+            [value_col] if isinstance(value_col, str) else value_col
+        ]
+    else:
+        pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
+ (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.broken_timeline:[185:193]
+==pyretailscience.plots.heatmap:[122:128]
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+    )
+
+    # Add source text if provided (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.analysis.cross_shop:[177:183]
+==pyretailscience.analysis.product_association:[195:201]
+        required_cols = [group_col, value_col]
+        missing_cols = set(required_cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            msg = f"The following columns are required but missing: {missing_cols}"
+            raise ValueError(msg)
+ (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.area:[103:108]
+==pyretailscience.plots.heatmap:[122:127]
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label, (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.bar:[153:158]
+==pyretailscience.plots.broken_timeline:[185:190]
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label, (duplicate-code)
+pyretailscience/plots/styles/styling_helpers.py:1:0: R0801: Similar lines in 2 files
+==pyretailscience.plots.line:[223:228]
+==pyretailscience.plots.price:[234:239]
+    ax = gu.standard_graph_styles(
+        ax=ax,
+        title=title,
+        x_label=x_label,
+        y_label=y_label, (duplicate-code)
+
+-----------------------------------
+Your code has been rated at 9.96/10
+
+
+================================================================================
+3. COMPLEXITY ANALYSIS
+================================================================================
+
+--- Average Complexity ---
+pyretailscience/options.py
+    F 280:0 find_project_root - A (5)
+    F 375:0 option_context - A (4)
+    M 219:4 Options.flatten_options - A (4)
+    M 254:4 Options.load_from_toml - A (4)
+    C 29:0 Options - A (3)
+    M 233:4 Options.load_from_project - A (3)
+    M 143:4 Options.set_option - A (2)
+    M 159:4 Options.get_option - A (2)
+    M 177:4 Options.reset_option - A (2)
+    M 200:4 Options.describe_option - A (2)
+    C 412:0 AggColumns - A (2)
+    C 529:0 CalcColumns - A (2)
+    C 669:0 ColumnHelper - A (2)
+    F 300:0 set_option - A (1)
+    F 315:0 get_option - A (1)
+    F 332:0 reset_option - A (1)
+    F 346:0 list_options - A (1)
+    F 357:0 describe_option - A (1)
+    M 32:4 Options.__init__ - A (1)
+    M 192:4 Options.list_options - A (1)
+    M 415:4 AggColumns.__init__ - A (1)
+    M 532:4 CalcColumns.__init__ - A (1)
+    M 678:4 ColumnHelper.__init__ - A (1)
+    M 696:4 ColumnHelper.join_options - A (1)
+pyretailscience/plugin.py
+    M 90:4 PluginManager._load_all_plugins - A (5)
+    C 12:0 PluginManager - A (3)
+    M 17:4 PluginManager.__new__ - A (2)
+    M 50:4 PluginManager.extensible - A (2)
+    M 108:4 PluginManager.apply_methods_to_instance - A (2)
+    M 116:4 PluginManager.apply_extensions_to_function_result - A (2)
+    C 131:0 ExtensibleFunctionResult - A (2)
+    M 140:4 ExtensibleFunctionResult.__getattr__ - A (2)
+    M 156:4 ExtensibleFunctionResult.__iter__ - A (2)
+    M 164:4 ExtensibleFunctionResult.__getitem__ - A (2)
+    M 172:4 ExtensibleFunctionResult.__len__ - A (2)
+    M 180:4 ExtensibleFunctionResult.__add__ - A (2)
+    M 198:4 ExtensibleFunctionResult.__eq__ - A (2)
+    M 204:4 ExtensibleFunctionResult.__lt__ - A (2)
+    M 210:4 ExtensibleFunctionResult.__gt__ - A (2)
+    M 216:4 ExtensibleFunctionResult.__le__ - A (2)
+    M 222:4 ExtensibleFunctionResult.__ge__ - A (2)
+    M 28:4 PluginManager.register_method - A (1)
+    M 39:4 PluginManager.register_function_extension - A (1)
+    M 56:4 PluginManager._make_class_extensible - A (1)
+    M 72:4 PluginManager._make_function_extensible - A (1)
+    M 134:4 ExtensibleFunctionResult.__init__ - A (1)
+    M 148:4 ExtensibleFunctionResult.__repr__ - A (1)
+    M 152:4 ExtensibleFunctionResult.__str__ - A (1)
+    M 186:4 ExtensibleFunctionResult.__radd__ - A (1)
+    M 190:4 ExtensibleFunctionResult.__mul__ - A (1)
+    M 194:4 ExtensibleFunctionResult.__rmul__ - A (1)
+pyretailscience/utils/date.py
+    F 116:0 find_overlapping_periods - B (10)
+    F 27:0 _validate_and_normalize_periods - B (9)
+    F 13:0 _normalize_datetime - A (4)
+    F 61:0 filter_and_label_by_periods - A (3)
+pyretailscience/utils/label.py
+    F 21:0 label_by_condition - A (3)
+pyretailscience/utils/filter_and_label.py
+    F 17:0 filter_and_label_by_condition - A (3)
+pyretailscience/segmentation/threshold.py
+    M 60:4 ThresholdSegmentation.__init__ - B (10)
+    C 55:0 ThresholdSegmentation - B (7)
+    M 129:4 ThresholdSegmentation.df - A (2)
+pyretailscience/segmentation/base.py
+    C 8:0 BaseSegmentation - A (3)
+    M 11:4 BaseSegmentation.add_segment - A (2)
+pyretailscience/segmentation/hml.py
+    C 57:0 HMLSegmentation - A (2)
+    M 60:4 HMLSegmentation.__init__ - A (1)
+pyretailscience/segmentation/rfm.py
+    M 133:4 RFMSegmentation._validate_segments - C (13)
+    M 171:4 RFMSegmentation._validate_monetary_filters - B (10)
+    M 187:4 RFMSegmentation._validate_frequency_filters - B (10)
+    C 34:0 RFMSegmentation - B (7)
+    M 50:4 RFMSegmentation.__init__ - B (7)
+    M 237:4 RFMSegmentation._apply_filters - A (4)
+    M 262:4 RFMSegmentation._compute_score - A (4)
+    M 303:4 RFMSegmentation.df - A (2)
+    M 203:4 RFMSegmentation._compute_rfm - A (1)
+pyretailscience/segmentation/segstats.py
+    M 382:4 SegTransactionStats._generate_grouping_sets - C (17)
+    M 325:4 SegTransactionStats._validate_grouping_sets_params - C (11)
+    M 675:4 SegTransactionStats._calc_seg_stats - C (11)
+    M 78:4 SegTransactionStats.__init__ - B (10)
+    M 851:4 SegTransactionStats.plot - B (9)
+    C 64:0 SegTransactionStats - B (8)
+    M 503:4 SegTransactionStats._execute_grouping_sets - B (8)
+    M 620:4 SegTransactionStats._build_unknown_aggs - B (7)
+    M 819:4 SegTransactionStats.df - B (6)
+    M 302:4 SegTransactionStats._validate_extra_aggs - A (5)
+    M 590:4 SegTransactionStats._build_standard_aggs - A (5)
+    M 229:4 SegTransactionStats._get_col_order - A (4)
+    M 566:4 SegTransactionStats._create_unknown_flag - A (3)
+    M 280:4 SegTransactionStats._create_typed_literals - A (2)
+pyretailscience/analysis/customer.py
+    M 82:4 PurchasesPerCustomer.plot - B (8)
+    M 260:4 DaysBetweenPurchases.plot - B (7)
+    C 54:0 PurchasesPerCustomer - A (4)
+    C 205:0 DaysBetweenPurchases - A (4)
+    C 355:0 TransactionChurn - A (4)
+    M 410:4 TransactionChurn.plot - A (3)
+    M 61:4 PurchasesPerCustomer.__init__ - A (2)
+    M 174:4 PurchasesPerCustomer.find_purchase_percentile - A (2)
+    M 212:4 DaysBetweenPurchases.__init__ - A (2)
+    M 234:4 DaysBetweenPurchases._calculate_days_between_purchases - A (2)
+    M 363:4 TransactionChurn.__init__ - A (2)
+    M 163:4 PurchasesPerCustomer.purchases_percentile - A (1)
+    M 343:4 DaysBetweenPurchases.purchases_percentile - A (1)
+pyretailscience/analysis/cohort.py
+    M 50:4 CohortAnalysis.__init__ - A (5)
+    C 45:0 CohortAnalysis - A (4)
+    M 124:4 CohortAnalysis._calculate_cohorts - A (3)
+    M 96:4 CohortAnalysis._fill_cohort_gaps - A (2)
+pyretailscience/analysis/gain_loss.py
+    M 247:4 GainLoss.plot - B (9)
+    M 97:4 GainLoss.process_customer_group - B (8)
+    C 28:0 GainLoss - B (6)
+    M 31:4 GainLoss.__init__ - B (6)
+    M 140:4 GainLoss._calc_gain_loss - A (2)
+    M 229:4 GainLoss._calc_gains_loss_table - A (2)
+pyretailscience/analysis/haversine.py
+    F 23:0 haversine_distance - A (1)
+pyretailscience/analysis/product_association.py
+    M 246:4 ProductAssociation._calc_association - B (9)
+    M 215:4 ProductAssociation._validate_minimum_values - B (8)
+    C 116:0 ProductAssociation - B (6)
+    M 157:4 ProductAssociation.__init__ - A (3)
+    M 413:4 ProductAssociation.df - A (2)
+pyretailscience/analysis/revenue_tree.py
+    F 39:0 calc_tree_kpis - C (11)
+    M 269:4 RevenueTree._agg_data - B (8)
+    C 206:0 RevenueTree - A (5)
+    M 209:4 RevenueTree.__init__ - A (5)
+    M 402:4 RevenueTree.draw_tree - A (3)
+    M 325:4 RevenueTree._get_final_col_order - A (2)
+pyretailscience/analysis/cross_shop.py
+    M 210:4 CrossShop._calc_cross_shop - C (12)
+    M 101:4 CrossShop.__init__ - C (11)
+    C 71:0 CrossShop - B (6)
+    M 90:4 CrossShop._generate_default_labels - A (2)
+    M 312:4 CrossShop.plot - A (2)
+    M 295:4 CrossShop._calc_cross_shop_table - A (1)
+pyretailscience/analysis/customer_decision_hierarchy.py
+    M 292:4 CustomerDecisionHierarchy.plot - B (7)
+    M 193:4 CustomerDecisionHierarchy._calculate_yules_q - A (5)
+    C 78:0 CustomerDecisionHierarchy - A (4)
+    M 227:4 CustomerDecisionHierarchy._get_yules_q_distances - A (3)
+    M 119:4 CustomerDecisionHierarchy.__init__ - A (2)
+    M 170:4 CustomerDecisionHierarchy._get_pairs - A (2)
+    M 269:4 CustomerDecisionHierarchy._calculate_distances - A (2)
+pyretailscience/analysis/composite_rank.py
+    M 112:4 CompositeRank.__init__ - C (11)
+    C 68:0 CompositeRank - B (8)
+    M 211:4 CompositeRank.df - A (2)
+pyretailscience/plots/time.py
+    F 46:0 plot - A (3)
+pyretailscience/plots/waterfall.py
+    F 40:0 plot - C (12)
+    F 171:0 format_data_labels - A (4)
+pyretailscience/plots/area.py
+    F 38:0 plot - C (14)
+pyretailscience/plots/index.py
+    F 155:0 plot - C (20)
+    F 107:0 filter_top_bottom_n - C (15)
+    F 358:0 get_indexes - B (6)
+    F 74:0 filter_by_value_thresholds - A (4)
+    F 49:0 filter_by_groups - A (3)
+pyretailscience/plots/cohort.py
+    F 35:0 plot - A (3)
+pyretailscience/plots/heatmap.py
+    F 42:0 plot - B (10)
+pyretailscience/plots/bar.py
+    F 46:0 plot - C (20)
+    F 185:0 _generate_bar_labels - B (7)
+    F 349:0 _apply_labels_to_container - A (5)
+    F 257:0 _generate_absolute_labels - A (3)
+    F 283:0 _generate_percentage_by_bar_group_labels - A (3)
+    F 316:0 _generate_percentage_by_series_labels - A (3)
+    F 244:0 _get_bar_value - A (2)
+pyretailscience/plots/broken_timeline.py
+    F 71:0 plot - B (8)
+    F 39:0 _validate_inputs - A (5)
+pyretailscience/plots/venn.py
+    F 41:0 plot - C (15)
+pyretailscience/plots/price.py
+    F 117:0 plot - C (16)
+    F 89:0 _validate_bins_parameter - B (7)
+    F 36:0 _validate_inputs - B (6)
+pyretailscience/plots/period_on_period.py
+    F 35:0 plot - B (10)
+pyretailscience/plots/tree_diagram.py
+    M 338:4 TreeGrid.__init__ - C (13)
+    M 412:4 TreeGrid.render - B (10)
+    C 330:0 TreeGrid - B (7)
+    C 20:0 BaseRoundedBox - A (5)
+    M 90:4 BaseRoundedBox._generate_corner - A (5)
+    C 559:0 DetailedTreeNode - A (5)
+    M 601:4 DetailedTreeNode.render - A (4)
+    C 188:0 SimpleTreeNode - A (3)
+    M 206:4 SimpleTreeNode._get_color - A (3)
+    M 583:4 DetailedTreeNode._get_color - A (3)
+    M 23:4 BaseRoundedBox.__init__ - A (2)
+    C 130:0 TreeNode - A (2)
+    M 508:4 TreeGrid._draw_connection - A (2)
+    M 141:4 TreeNode.__init__ - A (1)
+    M 160:4 TreeNode.render - A (1)
+    M 169:4 TreeNode.get_width - A (1)
+    M 178:4 TreeNode.get_height - A (1)
+    M 224:4 SimpleTreeNode.render - A (1)
+    M 483:4 TreeGrid._add_curve - A (1)
+pyretailscience/plots/line.py
+    F 77:0 _validate_highlight_parameter - C (11)
+    F 41:0 _validate_and_prepare_input - B (9)
+    F 109:0 _create_pivot_dataframe - B (6)
+    F 133:0 _categorize_columns - B (6)
+    F 156:0 _render_plot - A (5)
+    F 148:0 _generate_colors - A (4)
+    F 239:0 plot - A (3)
+    F 214:0 _apply_final_styling - A (2)
+pyretailscience/plots/histogram.py
+    F 52:0 plot - B (9)
+    F 142:0 _prepare_value_col - A (5)
+    F 164:0 _apply_range_clipping - A (5)
+    F 223:0 _plot_histogram - A (3)
+    F 204:0 _get_num_histograms - A (2)
+pyretailscience/plots/scatter.py
+    F 113:0 plot - D (22)
+    F 46:0 _add_point_labels - B (9)
+pyretailscience/plots/styles/tailwind.py
+    F 306:0 get_color_list - A (4)
+    F 354:0 get_base_cmap - A (3)
+    F 396:0 get_multi_color_cmap - A (3)
+    F 386:0 get_single_color_cmap - A (2)
+    F 323:0 get_listed_cmap - A (1)
+    F 335:0 get_linear_cmap - A (1)
+pyretailscience/plots/styles/styling_context.py
+    C 27:0 StylingContext - A (3)
+    M 44:4 StylingContext.get_font_properties - A (3)
+    F 80:0 get_styling_context - A (1)
+    C 12:0 FontConfig - A (1)
+    M 30:4 StylingContext.__init__ - A (1)
+pyretailscience/plots/styles/graph_utils.py
+    F 391:0 _extract_plot_data - C (17)
+    F 79:0 truncate_to_x_digits - B (9)
+    F 201:0 apply_hatches - B (9)
+    F 453:0 _prepare_numeric_data - B (9)
+    F 133:0 standard_graph_styles - B (8)
+    F 246:0 get_decimals - B (6)
+    F 334:0 _add_equation_text - B (6)
+    F 33:0 human_format - A (5)
+    F 231:0 not_none - A (2)
+    F 23:0 _hatches_gen - A (1)
+    F 187:0 standard_tick_styles - A (1)
+    F 267:0 add_source_text - A (1)
+    F 298:0 set_axis_percent - A (1)
+    F 506:0 add_regression_line - A (1)
+pyretailscience/plots/styles/styling_helpers.py
+    M 61:4 PlotStyler.apply_source_text - A (5)
+    M 130:4 PlotStyler.apply_legend - A (4)
+    C 9:0 PlotStyler - A (3)
+    M 36:4 PlotStyler.apply_label - A (2)
+    M 45:4 PlotStyler.apply_ticks - A (2)
+    M 12:4 PlotStyler.__init__ - A (1)
+    M 16:4 PlotStyler.apply_base_styling - A (1)
+    M 25:4 PlotStyler.apply_title - A (1)
+
+230 blocks (classes, functions, methods) analyzed.
+Average complexity: A (4.539130434782609)
+
+--- High Complexity Functions (Grade C or worse) ---
+pyretailscience/utils/date.py
+    F 116:0 find_overlapping_periods - B
+    F 27:0 _validate_and_normalize_periods - B
+pyretailscience/segmentation/threshold.py
+    M 60:4 ThresholdSegmentation.__init__ - B
+    C 55:0 ThresholdSegmentation - B
+pyretailscience/segmentation/rfm.py
+    M 133:4 RFMSegmentation._validate_segments - C
+    M 171:4 RFMSegmentation._validate_monetary_filters - B
+    M 187:4 RFMSegmentation._validate_frequency_filters - B
+    C 34:0 RFMSegmentation - B
+    M 50:4 RFMSegmentation.__init__ - B
+pyretailscience/segmentation/segstats.py
+    M 382:4 SegTransactionStats._generate_grouping_sets - C
+    M 325:4 SegTransactionStats._validate_grouping_sets_params - C
+    M 675:4 SegTransactionStats._calc_seg_stats - C
+    M 78:4 SegTransactionStats.__init__ - B
+    M 851:4 SegTransactionStats.plot - B
+    C 64:0 SegTransactionStats - B
+    M 503:4 SegTransactionStats._execute_grouping_sets - B
+    M 620:4 SegTransactionStats._build_unknown_aggs - B
+    M 819:4 SegTransactionStats.df - B
+pyretailscience/analysis/customer.py
+    M 82:4 PurchasesPerCustomer.plot - B
+    M 260:4 DaysBetweenPurchases.plot - B
+pyretailscience/analysis/gain_loss.py
+    M 247:4 GainLoss.plot - B
+    M 97:4 GainLoss.process_customer_group - B
+    C 28:0 GainLoss - B
+    M 31:4 GainLoss.__init__ - B
+pyretailscience/analysis/product_association.py
+    M 246:4 ProductAssociation._calc_association - B
+    M 215:4 ProductAssociation._validate_minimum_values - B
+    C 116:0 ProductAssociation - B
+pyretailscience/analysis/revenue_tree.py
+    F 39:0 calc_tree_kpis - C
+    M 269:4 RevenueTree._agg_data - B
+pyretailscience/analysis/cross_shop.py
+    M 210:4 CrossShop._calc_cross_shop - C
+    M 101:4 CrossShop.__init__ - C
+    C 71:0 CrossShop - B
+pyretailscience/analysis/customer_decision_hierarchy.py
+    M 292:4 CustomerDecisionHierarchy.plot - B
+pyretailscience/analysis/composite_rank.py
+    M 112:4 CompositeRank.__init__ - C
+    C 68:0 CompositeRank - B
+pyretailscience/plots/waterfall.py
+    F 40:0 plot - C
+pyretailscience/plots/area.py
+    F 38:0 plot - C
+pyretailscience/plots/index.py
+    F 155:0 plot - C
+    F 107:0 filter_top_bottom_n - C
+    F 358:0 get_indexes - B
+pyretailscience/plots/heatmap.py
+    F 42:0 plot - B
+pyretailscience/plots/bar.py
+    F 46:0 plot - C
+    F 185:0 _generate_bar_labels - B
+pyretailscience/plots/broken_timeline.py
+    F 71:0 plot - B
+pyretailscience/plots/venn.py
+    F 41:0 plot - C
+pyretailscience/plots/price.py
+    F 117:0 plot - C
+    F 89:0 _validate_bins_parameter - B
+    F 36:0 _validate_inputs - B
+pyretailscience/plots/period_on_period.py
+    F 35:0 plot - B
+pyretailscience/plots/tree_diagram.py
+    M 338:4 TreeGrid.__init__ - C
+    M 412:4 TreeGrid.render - B
+    C 330:0 TreeGrid - B
+pyretailscience/plots/line.py
+    F 77:0 _validate_highlight_parameter - C
+    F 41:0 _validate_and_prepare_input - B
+    F 109:0 _create_pivot_dataframe - B
+    F 133:0 _categorize_columns - B
+pyretailscience/plots/histogram.py
+    F 52:0 plot - B
+pyretailscience/plots/scatter.py
+    F 113:0 plot - D
+    F 46:0 _add_point_labels - B
+pyretailscience/plots/styles/graph_utils.py
+    F 391:0 _extract_plot_data - C
+    F 79:0 truncate_to_x_digits - B
+    F 201:0 apply_hatches - B
+    F 453:0 _prepare_numeric_data - B
+    F 133:0 standard_graph_styles - B
+    F 246:0 get_decimals - B
+    F 334:0 _add_equation_text - B
+
+================================================================================
+4. MAINTAINABILITY INDEX
+================================================================================
+
+pyretailscience/options.py - A (50.77)
+pyretailscience/__init__.py - A (100.00)
+pyretailscience/plugin.py - A (47.09)
+pyretailscience/utils/date.py - A (69.57)
+pyretailscience/utils/label.py - A (84.27)
+pyretailscience/utils/__init__.py - A (100.00)
+pyretailscience/utils/filter_and_label.py - A (100.00)
+pyretailscience/segmentation/threshold.py - A (72.02)
+pyretailscience/segmentation/base.py - A (99.75)
+pyretailscience/segmentation/hml.py - A (100.00)
+pyretailscience/segmentation/__init__.py - A (100.00)
+pyretailscience/segmentation/rfm.py - A (55.10)
+pyretailscience/segmentation/segstats.py - A (38.76)
+pyretailscience/analysis/customer.py - A (58.97)
+pyretailscience/analysis/cohort.py - A (79.15)
+pyretailscience/analysis/gain_loss.py - A (59.45)
+pyretailscience/analysis/haversine.py - A (78.60)
+pyretailscience/analysis/product_association.py - A (59.77)
+pyretailscience/analysis/revenue_tree.py - A (51.48)
+pyretailscience/analysis/__init__.py - A (100.00)
+pyretailscience/analysis/cross_shop.py - A (59.34)
+pyretailscience/analysis/customer_decision_hierarchy.py - A (57.08)
+pyretailscience/analysis/composite_rank.py - A (45.23)
+pyretailscience/plots/time.py - A (86.89)
+pyretailscience/plots/waterfall.py - A (72.25)
+pyretailscience/plots/area.py - A (80.73)
+pyretailscience/plots/index.py - A (55.40)
+pyretailscience/plots/cohort.py - A (87.30)
+pyretailscience/plots/heatmap.py - A (75.55)
+pyretailscience/plots/bar.py - A (60.24)
+pyretailscience/plots/broken_timeline.py - A (70.93)
+pyretailscience/plots/venn.py - A (72.07)
+pyretailscience/plots/__init__.py - A (100.00)
+pyretailscience/plots/price.py - A (66.15)
+pyretailscience/plots/period_on_period.py - A (76.92)
+pyretailscience/plots/tree_diagram.py - A (44.68)
+pyretailscience/plots/line.py - A (61.75)
+pyretailscience/plots/histogram.py - A (68.67)
+pyretailscience/plots/scatter.py - A (67.87)
+pyretailscience/plots/styles/tailwind.py - A (66.76)
+pyretailscience/plots/styles/__init__.py - A (100.00)
+pyretailscience/plots/styles/styling_context.py - A (82.87)
+pyretailscience/plots/styles/graph_utils.py - A (46.43)
+pyretailscience/plots/styles/styling_helpers.py - A (66.04)
+
+================================================================================
+5. DEAD CODE DETECTION
+================================================================================
+
+pyretailscience/plugin.py:7: unused import 'Iterator' (90% confidence)
+
+================================================================================
+6. LINTING ISSUES (RUFF)
+================================================================================
+
+Using CPython 3.11.14 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building pyretailscience @ file:///home/user/pyretailscience
+Downloading jedi (1.5MiB)
+Downloading scikit-learn (12.7MiB)
+Downloading pandas (12.4MiB)
+Downloading duckdb (17.7MiB)
+Downloading scipy (39.2MiB)
+Downloading fonttools (4.7MiB)
+Downloading ibis-framework (1.8MiB)
+Downloading matplotlib (7.9MiB)
+Downloading mkdocs-jupyter (1.4MiB)
+Downloading pyarrow (38.9MiB)
+Downloading debugpy (2.5MiB)
+Downloading mkdocs-material (8.4MiB)
+Downloading virtualenv (5.4MiB)
+Downloading kiwisolver (1.4MiB)
+Downloading pillow (4.3MiB)
+Downloading pygments (1.1MiB)
+Downloading numpy (18.4MiB)
+Downloading babel (9.2MiB)
+Downloading ruff (12.0MiB)
+Downloading setuptools (2.2MiB)
+Downloading grpcio (5.7MiB)
+Downloading mkdocs (3.7MiB)
+Downloading shapely (2.4MiB)
+Downloading jupyterlab (11.1MiB)
+      Built pyretailscience @ file:///home/user/pyretailscience
+ Downloading kiwisolver
+ Downloading mkdocs-jupyter
+ Downloading pygments
+   Building paginate==0.5.6
+ Downloading setuptools
+ Downloading shapely
+ Downloading debugpy
+ Downloading mkdocs
+ Downloading pillow
+ Downloading fonttools
+ Downloading virtualenv
+ Downloading grpcio
+      Built paginate==0.5.6
+ Downloading matplotlib
+ Downloading babel
+ Downloading jedi
+ Downloading jupyterlab
+ Downloading ruff
+ Downloading pandas
+ Downloading scikit-learn
+ Downloading ibis-framework
+ Downloading duckdb
+ Downloading numpy
+ Downloading mkdocs-material
+ Downloading scipy
+ Downloading pyarrow
+   Building pyspark==3.5.0
+      Built pyspark==3.5.0
+Installed 187 packages in 8.84s
+warning: The following rules have been removed and ignoring them has no effect:
+    - ANN101
+    - ANN102
+
+1	A005	stdlib-module-shadowing
+
+================================================================================
+7. TEST COVERAGE ANALYSIS
+================================================================================
+
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.3.2, pluggy-1.5.0
+rootdir: /home/user/pyretailscience
+configfile: pyproject.toml
+plugins: anyio-4.4.0, mock-3.14.0, cov-4.1.0
+collected 676 items
+
+tests/analysis/test_cohort.py .....                                      [  0%]
+tests/analysis/test_composite_rank.py .............                      [  2%]
+tests/analysis/test_cross_shop.py ..........................             [  6%]
+tests/analysis/test_customer.py ...                                      [  6%]
+tests/analysis/test_customer_decision_hierarchy.py .........             [  8%]
+tests/analysis/test_gain_loss.py ..............................          [ 12%]
+tests/analysis/test_haversine.py .                                       [ 12%]
+tests/analysis/test_product_association.py .................             [ 15%]
+tests/analysis/test_revenue_tree.py ......................               [ 18%]
+tests/plots/styles/test_graph_utils.py ................................. [ 23%]
+...........                                                              [ 25%]
+tests/plots/styles/test_styling_context.py ..........                    [ 26%]
+tests/plots/styles/test_styling_helper.py ........                       [ 27%]
+tests/plots/styles/test_tailwind.py ......                               [ 28%]
+tests/plots/test_area.py ......                                          [ 29%]
+tests/plots/test_bar.py ..........................                       [ 33%]
+tests/plots/test_broken_timeline.py ...................                  [ 36%]
+tests/plots/test_cohort.py .........                                     [ 37%]
+tests/plots/test_heatmap.py ..................                           [ 40%]
+tests/plots/test_histogram.py ...............                            [ 42%]
+tests/plots/test_index.py ................................               [ 47%]
+tests/plots/test_line.py ..................................              [ 52%]
+tests/plots/test_period_on_period.py .....                               [ 52%]
+tests/plots/test_price.py ......................                         [ 56%]
+tests/plots/test_scatter.py ..............                               [ 58%]
+tests/plots/test_time.py .......                                         [ 59%]
+tests/plots/test_tree_diagram.py ....................................... [ 65%]
+......                                                                   [ 65%]
+tests/plots/test_venn.py ......                                          [ 66%]
+tests/plots/test_waterfall.py .......                                    [ 67%]
+tests/segmentation/test_hml.py ......                                    [ 68%]
+tests/segmentation/test_rfm.py ......................................... [ 74%]
+....                                                                     [ 75%]
+tests/segmentation/test_segstats.py .................................... [ 80%]
+......................................                                   [ 86%]
+tests/segmentation/test_threshold.py .........                           [ 87%]
+tests/test_options.py .......................                            [ 91%]
+tests/test_plugin.py ............................                        [ 95%]
+tests/utils/test_date.py .......................                         [ 98%]
+tests/utils/test_filter_and_label.py ..                                  [ 98%]
+tests/utils/test_label.py .......                                        [100%]
+
+=============================== warnings summary ===============================
+tests/segmentation/test_segstats.py::TestSegTransactionStats::test_plot_with_multiple_segment_columns
+  /home/user/pyretailscience/tests/segmentation/test_segstats.py:399: DeprecationWarning: SegTransactionStats.plot() is deprecated and will be removed in a future version. Use pyretailscience.plots.bar instead.
+    seg_stats.plot("spend")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.11.14-final-0 ----------
+Name                                                      Stmts   Miss Branch BrPart  Cover   Missing
+-----------------------------------------------------------------------------------------------------
+pyretailscience/analysis/cohort.py                           44      0     10      1    98%   118->122
+pyretailscience/analysis/cross_shop.py                       64      0     34      1    99%   244->246
+pyretailscience/analysis/customer.py                        131     70     46      4    38%   77-78, 111-161, 172, 185-200, 228-229, 248-249, 289-341, 352, 378-379, 434-461
+pyretailscience/analysis/customer_decision_hierarchy.py      86     24     32      2    69%   215, 288, 316-356
+pyretailscience/analysis/gain_loss.py                        93      1     38      3    97%   66, 315->318, 330->exit
+pyretailscience/analysis/product_association.py              65      2     36      3    95%   199-200, 320->323, 415->417
+pyretailscience/analysis/revenue_tree.py                    113      0     52      1    99%   290->293
+pyretailscience/options.py                                  200      2     48      2    98%   245, 249
+pyretailscience/plots/bar.py                                101      2     46      2    97%   219->229, 338-339
+pyretailscience/plots/broken_timeline.py                     63      0     22      1    99%   163->162
+pyretailscience/plots/heatmap.py                             41      0     12      1    98%   75->78
+pyretailscience/plots/histogram.py                           59      3     34      4    92%   156, 184-185, 194->196, 196->198
+pyretailscience/plots/index.py                              113      0     64      3    98%   294->300, 310->313, 333->339
+pyretailscience/plots/line.py                                83      1     44      1    98%   202
+pyretailscience/plots/period_on_period.py                    38      1     16      1    96%   107
+pyretailscience/plots/price.py                               89      2     45      3    96%   83-84, 197->219, 246->276
+pyretailscience/plots/scatter.py                             57      0     28      1    99%   90->exit
+pyretailscience/plots/styles/graph_utils.py                 190     29     86     11    81%   29-30, 69-70, 214-228, 258->264, 263, 357, 363->368, 444-448, 473->480, 474->473, 477-478, 483-485, 489-490, 495
+pyretailscience/plots/styles/styling_helpers.py              59      1     10      1    97%   93
+pyretailscience/plots/styles/tailwind.py                     68      2     10      1    96%   318-319
+pyretailscience/plots/tree_diagram.py                       241      3     64      0    99%   167, 176, 185
+pyretailscience/plots/venn.py                                47      1     20      2    96%   88->91, 114
+pyretailscience/plots/waterfall.py                           46      8     28      3    72%   98->101, 144-151, 161, 178-184
+pyretailscience/segmentation/base.py                         10      1      2      1    83%   32
+pyretailscience/segmentation/rfm.py                         121      0     72      1    99%   114->117
+pyretailscience/segmentation/segstats.py                    257     29    170      5    89%   178, 358->exit, 902, 904, 908-954
+pyretailscience/segmentation/threshold.py                    39      0     20      2    97%   92->95, 131->133
+pyretailscience/utils/date.py                                65      2     38      1    97%   23-24
+-----------------------------------------------------------------------------------------------------
+TOTAL                                                      2905    184   1223     62    92%
+
+16 files skipped due to complete coverage.
+Coverage HTML written to dir htmlcov
+
+======================= 676 passed, 1 warning in 49.28s ========================
+
+================================================================================
+8. POTENTIAL DEPRECATIONS & TECHNICAL DEBT MARKERS
+================================================================================
+
+--- TODO/FIXME/XXX/HACK markers ---
+None found
+
+--- Deprecation warnings ---
+pyretailscience/segmentation/segstats.py:866:        .. deprecated::
+pyretailscience/segmentation/segstats.py:867:            This method is deprecated. Use :func:`pyretailscience.plots.bar.py` instead.
+pyretailscience/segmentation/segstats.py:895:            "SegTransactionStats.plot() is deprecated and will be removed in a future version. "
+pyretailscience/segmentation/segstats.py:897:            DeprecationWarning,
+
+--- Potentially deprecated pandas patterns ---
+pyretailscience/plugin.py:99:                    failed_plugins.append((entry_point.name, str(plugin_error)))
+pyretailscience/utils/date.py:110:        branches.append((period_condition, ibis.literal(period_name)))
+pyretailscience/segmentation/segstats.py:498:            grouping_sets_list.append(())  # Empty tuple = grand total
+pyretailscience/segmentation/segstats.py:560:            results.append(result)
+pyretailscience/segmentation/segstats.py:842:                        col_order.append(agg_name)
+pyretailscience/segmentation/segstats.py:843:                        col_order.append(f"{agg_name}_{suffix_unknown}")
+pyretailscience/segmentation/segstats.py:844:                        col_order.append(f"{agg_name}_{suffix_total}")
+pyretailscience/analysis/product_association.py:338:            join_logic.append(left_table.item_1 < right_table.item_2)
+pyretailscience/plots/scatter.py:72:        cols_to_check.append(x_col)
+pyretailscience/analysis/revenue_tree.py:59:        required_cols.append(cols.agg.unit_qty)
+pyretailscience/analysis/revenue_tree.py:250:            required_cols.append(cols.unit_qty)
+pyretailscience/analysis/revenue_tree.py:318:            result_df.set_index(group_col, inplace=True)
+pyretailscience/plots/broken_timeline.py:166:                segments.append((seg[0], width))
+pyretailscience/plots/price.py:205:            bubble_sizes.append(scaled_size)
+pyretailscience/plots/price.py:230:        formatted_labels.append(f"{left:.1f} - {right:.1f}")
+pyretailscience/plots/price.py:249:            legend_elements.append(
+pyretailscience/analysis/cross_shop.py:264:            group_cols.append("group_3")
+pyretailscience/analysis/cross_shop.py:265:            select_cols.append(group_3)
+pyretailscience/analysis/cross_shop.py:291:        cs_df.set_index(group_col, inplace=True)
+pyretailscience/plots/venn.py:77:        default_colors.append(COLORS["green"][200])
+pyretailscience/plots/waterfall.py:109:        default_colors.append(COLORS["blue"][500])
+pyretailscience/plots/waterfall.py:110:        bottom.append(0)
+pyretailscience/plots/tree_diagram.py:83:        codes.append(Path.CLOSEPOLY)
+pyretailscience/plots/tree_diagram.py:84:        verts.append((0, 0))
+pyretailscience/plots/tree_diagram.py:502:        verts.append((x, y))
+pyretailscience/plots/tree_diagram.py:503:        codes.append(Path.CURVE3)
+pyretailscience/plots/tree_diagram.py:504:        verts.append((x + x_offset, y + y_offset))
+pyretailscience/plots/tree_diagram.py:505:        codes.append(Path.CURVE3)
+pyretailscience/plots/tree_diagram.py:532:        verts.append((x1, y1))
+pyretailscience/plots/tree_diagram.py:533:        codes.append(Path.MOVETO)
+pyretailscience/plots/tree_diagram.py:536:        verts.append((x1, mid_y + curve_radius))
+pyretailscience/plots/tree_diagram.py:537:        codes.append(Path.LINETO)
+pyretailscience/plots/tree_diagram.py:543:        verts.append((x2 - (curve_sign * curve_radius), mid_y))
+pyretailscience/plots/tree_diagram.py:544:        codes.append(Path.LINETO)
+pyretailscience/plots/tree_diagram.py:550:        verts.append((x2, y2))
+pyretailscience/plots/tree_diagram.py:551:        codes.append(Path.LINETO)
+pyretailscience/plots/tree_diagram.py:785:            info_rows.append(("Contribution", contribution))
+pyretailscience/plots/bar.py:229:        all_labels.append(container_labels)
+pyretailscience/plots/bar.py:305:            division_by_zero_list.append(True)  # Track division by zero
+pyretailscience/plots/bar.py:306:            labels.append("")
+pyretailscience/plots/bar.py:312:            labels.append(truncated_value)
+pyretailscience/plots/bar.py:338:            division_by_zero_list.append(True)  # Track division by zero
+pyretailscience/plots/bar.py:339:            labels.append("")
+pyretailscience/plots/bar.py:345:            labels.append(truncated_value)
+pyretailscience/plots/styles/graph_utils.py:366:        equation_parts.append(equation)
+pyretailscience/plots/styles/graph_utils.py:370:        equation_parts.append(r2_text)
+
+================================================================================
+9. LONG FUNCTIONS (>50 LINES)
+================================================================================
+
+pyretailscience/utils/date.py:61:def filter_and_label_by_periods( (55 lines)
+pyretailscience/utils/label.py:116:def find_overlapping_periods( (77 lines)
+pyretailscience/utils/filter_and_label.py:193:def label_by_condition( (75 lines)
+pyretailscience/options.py:268:def filter_and_label_by_condition( (67 lines)
+pyretailscience/options.py:335:    def __init__(self) -> None: (111 lines)
+pyretailscience/options.py:718:    def __init__(self) -> None: (117 lines)
+pyretailscience/options.py:835:    def __init__(self) -> None: (146 lines)
+pyretailscience/segmentation/threshold.py:999:    def join_options(*args: str, sep: str = "_") -> str: (77 lines)
+pyretailscience/segmentation/threshold.py:1076:    def __init__( (69 lines)
+pyretailscience/segmentation/hml.py:1160:    def add_segment(self, df: pd.DataFrame) -> pd.DataFrame: (83 lines)
+pyretailscience/segmentation/rfm.py:1243:    def __init__( (80 lines)
+pyretailscience/segmentation/rfm.py:1323:    def __init__( (83 lines)
+pyretailscience/segmentation/segstats.py:1576:    def df(self) -> pd.DataFrame: (82 lines)
+pyretailscience/segmentation/segstats.py:1658:    def __init__( (151 lines)
+pyretailscience/segmentation/segstats.py:1809:    def _get_col_order(include_quantity: bool, include_customer: bool, include_unknown: bool = False) -> list[str]: (51 lines)
+pyretailscience/segmentation/segstats.py:1905:    def _validate_grouping_sets_params( (57 lines)
+pyretailscience/segmentation/segstats.py:1962:    def _generate_grouping_sets( (121 lines)
+pyretailscience/segmentation/segstats.py:2083:    def _execute_grouping_sets( (63 lines)
+pyretailscience/segmentation/segstats.py:2200:    def _build_unknown_aggs( (55 lines)
+pyretailscience/segmentation/segstats.py:2255:    def _calc_seg_stats( (144 lines)
+pyretailscience/analysis/customer.py:2431:    def plot( (167 lines)
+pyretailscience/analysis/customer.py:2619:    def plot( (81 lines)
+pyretailscience/analysis/customer.py:2797:    def plot( (83 lines)
+pyretailscience/analysis/cohort.py:2947:    def plot( (101 lines)
+pyretailscience/analysis/gain_loss.py:3122:    def _calculate_cohorts( (89 lines)
+pyretailscience/analysis/gain_loss.py:3211:    def __init__( (66 lines)
+pyretailscience/analysis/gain_loss.py:3320:    def _calc_gain_loss( (89 lines)
+pyretailscience/analysis/haversine.py:3427:    def plot( (111 lines)
+pyretailscience/analysis/product_association.py:3538:def haversine_distance( (184 lines)
+pyretailscience/analysis/product_association.py:3722:    def __init__( (58 lines)
+pyretailscience/analysis/product_association.py:3811:    def _calc_association( (167 lines)
+pyretailscience/analysis/revenue_tree.py:4021:def calc_tree_kpis( (170 lines)
+pyretailscience/analysis/revenue_tree.py:4191:    def __init__( (60 lines)
+pyretailscience/analysis/revenue_tree.py:4251:    def _agg_data( (56 lines)
+pyretailscience/analysis/revenue_tree.py:4307:    def _get_final_col_order(include_quantity: bool) -> list[str]: (77 lines)
+pyretailscience/analysis/cross_shop.py:4384:    def draw_tree( (236 lines)
+pyretailscience/analysis/cross_shop.py:4631:    def __init__( (109 lines)
+pyretailscience/analysis/cross_shop.py:4740:    def _calc_cross_shop( (85 lines)
+pyretailscience/analysis/customer_decision_hierarchy.py:4842:    def plot( (155 lines)
+pyretailscience/analysis/customer_decision_hierarchy.py:4997:    def __init__( (51 lines)
+pyretailscience/analysis/composite_rank.py:5170:    def plot( (176 lines)
+pyretailscience/analysis/composite_rank.py:5346:    def __init__( (99 lines)
+pyretailscience/plots/time.py:5445:    def df(self) -> pd.DataFrame: (57 lines)
+pyretailscience/plots/waterfall.py:5502:def plot( (139 lines)
+pyretailscience/plots/waterfall.py:5641:def plot( (131 lines)
+pyretailscience/plots/styles/tailwind.py:5772:def format_data_labels( (319 lines)
+pyretailscience/plots/styles/styling_context.py:6181:def get_multi_color_cmap() -> Generator[str, None, None]: (89 lines)
+pyretailscience/plots/styles/graph_utils.py:6401:def truncate_to_x_digits(num_str: str, digits: int) -> str: (54 lines)
+pyretailscience/plots/styles/graph_utils.py:6455:def standard_graph_styles( (54 lines)
+pyretailscience/plots/styles/graph_utils.py:6656:def _add_equation_text( (57 lines)
+pyretailscience/plots/styles/graph_utils.py:6713:def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]: (62 lines)
+pyretailscience/plots/styles/graph_utils.py:6775:def _prepare_numeric_data(x_data: np.ndarray, y_data: np.ndarray) -> tuple[np.ndarray, np.ndarray]: (53 lines)
+pyretailscience/plots/styles/styling_helpers.py:6828:def add_regression_line( (70 lines)
+pyretailscience/plots/styles/styling_helpers.py:6947:    def apply_source_text( (69 lines)
+pyretailscience/plots/area.py:7016:    def apply_legend(self, ax: Axes, title: str | None = None, outside: bool = False) -> None: (57 lines)
+pyretailscience/plots/index.py:7073:def plot( (127 lines)
+pyretailscience/plots/index.py:7306:def plot(  # noqa: C901, PLR0913 (203 lines)
+pyretailscience/plots/cohort.py:7509:def get_indexes( (113 lines)
+pyretailscience/plots/heatmap.py:7622:def plot( (99 lines)
+pyretailscience/plots/bar.py:7721:def plot( (138 lines)
+pyretailscience/plots/bar.py:7859:def plot( (139 lines)
+pyretailscience/plots/bar.py:7998:def _generate_bar_labels( (59 lines)
+pyretailscience/plots/broken_timeline.py:8162:def _apply_labels_to_container( (63 lines)
+pyretailscience/plots/venn.py:8257:def plot( (167 lines)
+pyretailscience/plots/price.py:8424:def plot( (120 lines)
+pyretailscience/plots/price.py:8544:def _validate_inputs( (53 lines)
+pyretailscience/plots/period_on_period.py:8625:def plot( (197 lines)
+pyretailscience/plots/tree_diagram.py:8822:def plot( (132 lines)
+pyretailscience/plots/tree_diagram.py:8954:    def __init__( (67 lines)
+pyretailscience/plots/tree_diagram.py:9021:    def _generate_corner( (51 lines)
+pyretailscience/plots/tree_diagram.py:9155:    def render(self, ax: Axes) -> None: (114 lines)
+pyretailscience/plots/tree_diagram.py:9269:    def __init__( (74 lines)
+pyretailscience/plots/tree_diagram.py:9343:    def render(self, ax: Axes | None = None) -> Axes: (71 lines)
+pyretailscience/plots/tree_diagram.py:9439:    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float) -> None: (75 lines)
+pyretailscience/plots/line.py:9532:    def render(self, ax: Axes) -> None: (252 lines)
+pyretailscience/plots/line.py:9899:def _render_plot( (58 lines)
+pyretailscience/plots/histogram.py:9982:def plot( (180 lines)
+pyretailscience/plots/histogram.py:10162:def plot( (90 lines)
+pyretailscience/plots/scatter.py:10333:def _plot_histogram( (94 lines)
+pyretailscience/plots/scatter.py:10427:def _add_point_labels( (67 lines)
+pyretailscience/plugin.py:10494:def plot( (134 lines)
+
+================================================================================
+10. DEEP NESTING (>4 INDENTATION LEVELS)
+================================================================================
+
+pyretailscience/plugin.py:65:                plugin_mgr._load_all_plugins()
+pyretailscience/plugin.py:78:                plugin_manager._load_all_plugins()
+pyretailscience/plugin.py:84:                return ExtensibleFunctionResult(result, function_name)
+pyretailscience/plugin.py:95:                try:
+pyretailscience/plugin.py:96:                    plugin_register_fn = entry_point.load()
+pyretailscience/plugin.py:97:                    plugin_register_fn(self)
+pyretailscience/plugin.py:98:                except Exception as plugin_error:  # noqa: BLE001
+pyretailscience/plugin.py:99:                    failed_plugins.append((entry_point.name, str(plugin_error)))
+pyretailscience/plugin.py:100:                    traceback.print_exc()
+pyretailscience/plugin.py:103:                print(f"Warning: {len(failed_plugins)} plugins failed to load: {failed_plugins}")  # noqa: T201
+pyretailscience/plugin.py:121:                def extension_wrapper(*args: tuple, **kwargs: dict) -> object:
+pyretailscience/plugin.py:122:                    return extension_method(wrap._result, *args, **kwargs)
+pyretailscience/plugin.py:124:                extension_wrapper.__name__ = method_name
+pyretailscience/plugin.py:125:                return extension_wrapper
+pyretailscience/options.py:88:                "The name of the column containing the total spend of the products in the transaction."
+pyretailscience/options.py:89:                "ie, unit_price * units",
+pyretailscience/options.py:92:                "The name of the column containing the total cost of the products in the transaction. "
+pyretailscience/options.py:93:                "ie, single unit cost * units",
+pyretailscience/options.py:96:                "The name of the column containing the total spend on promotion of the products in the transaction. "
+pyretailscience/options.py:97:                "ie, promotional unit price * units",
+pyretailscience/options.py:108:                "The name of the column containing the total spend of the units in the transaction."
+pyretailscience/options.py:112:                "The name of the column containing the total promotional spend of the units in the transaction."
+pyretailscience/options.py:115:                "The name of the column containing the total number of units sold on promotion."
+pyretailscience/options.py:133:                "The suffix to use for period 1 columns. Often this could represent last year for instance."
+pyretailscience/options.py:136:                "The suffix to use for period 2 columns. Often this could represent this year for instance."
+pyretailscience/options.py:227:                ret_dict.update(Options.flatten_options(sub_key, sub_value, parent_key=f"{parent_key}{k}"))
+pyretailscience/options.py:270:                if option_name in options_instance._options:
+pyretailscience/options.py:271:                    options_instance.set_option(option_name, option_value)
+pyretailscience/options.py:272:                else:
+pyretailscience/options.py:273:                    msg = f"Unknown option in TOML file: {option_name}"
+pyretailscience/options.py:274:                    raise ValueError(msg)
+pyretailscience/plots/scatter.py:168:                "label_col is not supported when value_col is a list. "
+pyretailscience/plots/scatter.py:169:                "Please use a single value_col or create separate plots.",
+pyretailscience/segmentation/segstats.py:93:                customer_id, unit_spend and transaction_id. If the dataframe contains the column unit_quantity, then
+pyretailscience/segmentation/segstats.py:94:                the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
+pyretailscience/segmentation/segstats.py:95:                units_per_transaction.
+pyretailscience/segmentation/segstats.py:97:                Defaults to "segment_name".
+pyretailscience/segmentation/segstats.py:99:                None. Cannot be used with grouping_sets parameter.
+pyretailscience/segmentation/segstats.py:100:                Note: This parameter is planned for deprecation. Use grouping_sets parameter for new code.
+pyretailscience/segmentation/segstats.py:102:                The keys in the dictionary will be the column names for the aggregation results.
+pyretailscience/segmentation/segstats.py:103:                The values are tuples with (column_name, aggregation_function), where:
+pyretailscience/segmentation/segstats.py:104:                - column_name is the name of the column to aggregate
+pyretailscience/segmentation/segstats.py:105:                - aggregation_function is a string name of an Ibis aggregation function (e.g., "nunique", "sum")
+pyretailscience/segmentation/segstats.py:106:                Example: {"stores": ("store_id", "nunique")} would count unique store_ids.
+pyretailscience/segmentation/segstats.py:108:                is None. When True and multiple segment columns are provided, the method generates subtotal rows for
+pyretailscience/segmentation/segstats.py:109:                both:
+pyretailscience/segmentation/segstats.py:110:                - Prefix rollups: progressively aggregating left-to-right (e.g., [A, B, Total], [A, Total, Total]).
+pyretailscience/segmentation/segstats.py:111:                - Suffix rollups: progressively aggregating right-to-left (e.g., [Total, B, C], [Total, Total, C]).
+pyretailscience/segmentation/segstats.py:112:                A grand total row is also included when calc_total is True.
+pyretailscience/segmentation/segstats.py:113:                Note: This differs from grouping_sets='rollup' which generates only prefix rollups (SQL standard).
+pyretailscience/segmentation/segstats.py:114:                Performance: adds O(n) extra aggregation passes where n is the number of segment
+pyretailscience/segmentation/segstats.py:115:                columns. For large hierarchies, consider disabling rollups or reducing columns.
+pyretailscience/segmentation/segstats.py:116:                Cannot be used with grouping_sets parameter.
+pyretailscience/segmentation/segstats.py:117:                Note: This parameter is planned for deprecation. Use grouping_sets parameter for new code.
+pyretailscience/segmentation/segstats.py:119:                applied to all columns or a list of values matching the length of segment_col, with each value
+pyretailscience/segmentation/segstats.py:120:                cast to match the corresponding column type. Defaults to "Total".
+pyretailscience/segmentation/segstats.py:122:                Value or expression identifying unknown customers for separate tracking. When provided,
+pyretailscience/segmentation/segstats.py:123:                metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
+pyretailscience/segmentation/segstats.py:124:                ibis literals, or boolean expressions (e.g., data["customer_id"] < 0). Requires customer_id column.
+pyretailscience/segmentation/segstats.py:125:                Defaults to None.
+pyretailscience/segmentation/segstats.py:127:                Grouping sets mode. Mutually exclusive with calc_total/calc_rollup when explicitly set.
+pyretailscience/segmentation/segstats.py:128:                - "rollup": SQL ROLLUP (hierarchical aggregation from right to left). Generates [A,B,C], [A,B], [A], [].
+pyretailscience/segmentation/segstats.py:129:                - "cube": SQL CUBE (all possible combinations). Generates 2^n grouping sets for n dimensions.
+pyretailscience/segmentation/segstats.py:130:                - list: Custom grouping sets (list of lists/tuples). Specify arbitrary dimension combinations.
+pyretailscience/segmentation/segstats.py:131:                  Each element must be a list or tuple of column names from segment_col. Empty list/tuple ()
+pyretailscience/segmentation/segstats.py:132:                  represents grand total. Automatically deduplicates and validates column names.
+pyretailscience/segmentation/segstats.py:133:                - None: Use calc_total/calc_rollup behavior (default).
+pyretailscience/segmentation/segstats.py:134:                Defaults to None.
+pyretailscience/segmentation/segstats.py:257:                (cols.agg.unit_spend_unknown, True),
+pyretailscience/segmentation/segstats.py:258:                (cols.agg.transaction_id_unknown, True),
+pyretailscience/segmentation/segstats.py:259:                (cols.agg.unit_qty_unknown, include_quantity),
+pyretailscience/segmentation/segstats.py:260:                (cols.calc.spend_per_trans_unknown, True),
+pyretailscience/segmentation/segstats.py:261:                (cols.calc.price_per_unit_unknown, include_quantity),
+pyretailscience/segmentation/segstats.py:262:                (cols.calc.units_per_trans_unknown, include_quantity),
+pyretailscience/segmentation/segstats.py:268:                (cols.agg.unit_spend_total, True),
+pyretailscience/segmentation/segstats.py:269:                (cols.agg.transaction_id_total, True),
+pyretailscience/segmentation/segstats.py:270:                (cols.agg.unit_qty_total, include_quantity),
+pyretailscience/segmentation/segstats.py:271:                (cols.calc.spend_per_trans_total, True),
+pyretailscience/segmentation/segstats.py:272:                (cols.calc.price_per_unit_total, include_quantity),
+pyretailscience/segmentation/segstats.py:273:                (cols.calc.units_per_trans_total, include_quantity),
+pyretailscience/segmentation/segstats.py:318:                msg = f"Column '{col}' specified in extra_aggs does not exist in the data"
+pyretailscience/segmentation/segstats.py:319:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:321:                msg = f"Aggregation function '{func}' not available for column '{col}'"
+pyretailscience/segmentation/segstats.py:322:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:348:                "Cannot use grouping_sets with calc_total or calc_rollup. "
+pyretailscience/segmentation/segstats.py:349:                "When using grouping_sets, leave calc_total and calc_rollup as None (default)."
+pyretailscience/segmentation/segstats.py:356:                msg = f"grouping_sets must be 'rollup', 'cube', a list of lists/tuples, or None. Got: '{grouping_sets}'"
+pyretailscience/segmentation/segstats.py:357:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:361:                msg = "grouping_sets list cannot be empty. Provide at least one grouping set."
+pyretailscience/segmentation/segstats.py:362:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:366:                if not isinstance(gs, list | tuple):
+pyretailscience/segmentation/segstats.py:367:                    # Provide helpful error message for common string mistake
+pyretailscience/segmentation/segstats.py:368:                    if isinstance(gs, str):
+pyretailscience/segmentation/segstats.py:369:                        msg = (
+pyretailscience/segmentation/segstats.py:370:                            f"Each grouping set must be a list or tuple of column names, not a string. "
+pyretailscience/segmentation/segstats.py:371:                            f"Got: '{gs}'. Did you mean ['{gs}'] or ('{gs}',)?"
+pyretailscience/segmentation/segstats.py:372:                        )
+pyretailscience/segmentation/segstats.py:373:                        raise TypeError(msg)
+pyretailscience/segmentation/segstats.py:375:                    msg = (
+pyretailscience/segmentation/segstats.py:376:                        f"Each grouping set must be a list or tuple of column names. "
+pyretailscience/segmentation/segstats.py:377:                        f"Got type: {type(gs).__name__} with value: {gs}"
+pyretailscience/segmentation/segstats.py:378:                    )
+pyretailscience/segmentation/segstats.py:379:                    raise TypeError(msg)
+pyretailscience/segmentation/segstats.py:398:                column names to group by for that grouping set. Empty tuple () represents
+pyretailscience/segmentation/segstats.py:399:                grand total.
+pyretailscience/segmentation/segstats.py:408:                ("region", "store", "product"),  # full detail
+pyretailscience/segmentation/segstats.py:409:                ("region", "store"),             # rollup level 1
+pyretailscience/segmentation/segstats.py:410:                ("region",),                     # rollup level 2
+pyretailscience/segmentation/segstats.py:411:                (),                              # grand total
+pyretailscience/segmentation/segstats.py:420:                ("region", "product"),  # Regional product performance
+pyretailscience/segmentation/segstats.py:421:                ("product",),           # Product-only totals
+pyretailscience/segmentation/segstats.py:422:                (),                     # Grand total
+pyretailscience/segmentation/segstats.py:428:                ("region", "store", "product"),  # base grouping
+pyretailscience/segmentation/segstats.py:429:                ("region", "store"),             # prefix rollup
+pyretailscience/segmentation/segstats.py:430:                ("region",),                     # prefix rollup
+pyretailscience/segmentation/segstats.py:431:                ("store", "product"),            # suffix rollup
+pyretailscience/segmentation/segstats.py:432:                ("product",),                    # suffix rollup
+pyretailscience/segmentation/segstats.py:433:                (),                              # grand total
+pyretailscience/segmentation/segstats.py:447:                warnings.warn(
+pyretailscience/segmentation/segstats.py:448:                    f"CUBE mode with {len(segment_col)} dimensions will generate {num_grouping_sets} grouping sets, "
+pyretailscience/segmentation/segstats.py:449:                    f"which may be computationally expensive. Consider using ROLLUP mode or limiting to "
+pyretailscience/segmentation/segstats.py:450:                    f"{MAX_CUBE_DIMENSIONS_WITHOUT_WARNING} dimensions.",
+pyretailscience/segmentation/segstats.py:451:                    UserWarning,
+pyretailscience/segmentation/segstats.py:452:                    stacklevel=3,
+pyretailscience/segmentation/segstats.py:453:                )
+pyretailscience/segmentation/segstats.py:456:                chain.from_iterable(combinations(segment_col, size) for size in range(len(segment_col), -1, -1)),
+pyretailscience/segmentation/segstats.py:466:                msg = (
+pyretailscience/segmentation/segstats.py:467:                    f"Columns {sorted(invalid_cols)} in grouping_sets not found in segment_col {segment_col}. "
+pyretailscience/segmentation/segstats.py:468:                    f"All grouping set columns must be in segment_col."
+pyretailscience/segmentation/segstats.py:469:                )
+pyretailscience/segmentation/segstats.py:470:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:475:                msg = (
+pyretailscience/segmentation/segstats.py:476:                    f"Columns {sorted(unmentioned_cols)} in segment_col are not mentioned in any grouping set. "
+pyretailscience/segmentation/segstats.py:477:                    f"All segment_col columns must appear in at least one grouping set. "
+pyretailscience/segmentation/segstats.py:478:                    f"Either remove these columns from segment_col or include them in at least one grouping set."
+pyretailscience/segmentation/segstats.py:479:                )
+pyretailscience/segmentation/segstats.py:480:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:495:                grouping_sets_list.extend(tuple(segment_col[i:]) for i in range(1, len(segment_col)))
+pyretailscience/segmentation/segstats.py:522:                Each tuple contains column names to group by. Empty tuple () means grand total.
+pyretailscience/segmentation/segstats.py:543:                # Grand total: aggregate all data, no GROUP BY
+pyretailscience/segmentation/segstats.py:544:                result = data.aggregate(**aggs)
+pyretailscience/segmentation/segstats.py:545:                # Mutate ALL segment columns to rollup_value
+pyretailscience/segmentation/segstats.py:546:                mutations = SegTransactionStats._create_typed_literals(data, segment_col, rollup_value)
+pyretailscience/segmentation/segstats.py:547:                result = result.mutate(**mutations)
+pyretailscience/segmentation/segstats.py:549:                # Regular grouping: group by specified columns
+pyretailscience/segmentation/segstats.py:550:                group_cols = list(gs)
+pyretailscience/segmentation/segstats.py:551:                result = data.group_by(group_cols).aggregate(**aggs)
+pyretailscience/segmentation/segstats.py:553:                # Mutate columns NOT in this grouping set to rollup_value
+pyretailscience/segmentation/segstats.py:554:                mutation_cols = [col for col in segment_col if col not in gs]
+pyretailscience/segmentation/segstats.py:555:                if len(mutation_cols) > 0:
+pyretailscience/segmentation/segstats.py:556:                    mutation_values = [rollup_value[segment_col.index(col)] for col in mutation_cols]
+pyretailscience/segmentation/segstats.py:557:                    mutations = SegTransactionStats._create_typed_literals(data, mutation_cols, mutation_values)
+pyretailscience/segmentation/segstats.py:558:                    result = result.mutate(**mutations)
+pyretailscience/segmentation/segstats.py:575:                The value or expression identifying unknown customers
+pyretailscience/segmentation/segstats.py:664:                # Use coalesce with 0 for count functions, 0.0 for others
+pyretailscience/segmentation/segstats.py:665:                coalesce_value = 0 if func in ("nunique", "count") else 0.0
+pyretailscience/segmentation/segstats.py:666:                aggs[agg_name] = getattr(data[col], func)(where=~unknown_flag).coalesce(coalesce_value)
+pyretailscience/segmentation/segstats.py:667:                aggs[f"{agg_name}_{suffix_unknown}"] = getattr(data[col], func)(where=unknown_flag).coalesce(
+pyretailscience/segmentation/segstats.py:668:                    coalesce_value,
+pyretailscience/segmentation/segstats.py:669:                )
+pyretailscience/segmentation/segstats.py:670:                aggs[f"{agg_name}_{suffix_total}"] = getattr(data[col], func)()
+pyretailscience/segmentation/segstats.py:692:                The keys in the dictionary will be the column names for the aggregation results.
+pyretailscience/segmentation/segstats.py:693:                The values are tuples with (column_name, aggregation_function).
+pyretailscience/segmentation/segstats.py:695:                None). When True with multiple segment columns, subtotal rows are added for all non-empty prefixes and
+pyretailscience/segmentation/segstats.py:696:                suffixes of the hierarchy. For example, with [A, B, C], prefixes include [A, B, Total], [A, Total,
+pyretailscience/segmentation/segstats.py:697:                Total]; suffixes include [Total, B, C], [Total, Total, C]. Performance: O(n) additional aggregation
+pyretailscience/segmentation/segstats.py:698:                passes for suffixes, where n is the number of segment columns.
+pyretailscience/segmentation/segstats.py:700:                applied to all columns or a list of values matching the length of segment_col, with each value
+pyretailscience/segmentation/segstats.py:701:                cast to match the corresponding column type. Defaults to "Total".
+pyretailscience/segmentation/segstats.py:703:                Value or expression identifying unknown customers for separate tracking. When provided,
+pyretailscience/segmentation/segstats.py:704:                metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
+pyretailscience/segmentation/segstats.py:705:                ibis literals, or boolean expressions. Defaults to None.
+pyretailscience/segmentation/segstats.py:707:                ('rollup', 'cube', list of tuples, or None). Defaults to None.
+pyretailscience/segmentation/segstats.py:730:                msg = f"Column '{cols.customer_id}' is required when unknown_customer_value parameter is specified"
+pyretailscience/segmentation/segstats.py:731:                raise ValueError(msg)
+pyretailscience/segmentation/segstats.py:761:                cols.calc.spend_per_trans: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.transaction_id],
+pyretailscience/segmentation/segstats.py:767:                **{
+pyretailscience/segmentation/segstats.py:768:                    cols.calc.price_per_unit: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.unit_qty].nullif(0),
+pyretailscience/segmentation/segstats.py:769:                    cols.calc.units_per_trans: ibis._[cols.agg.unit_qty]
+pyretailscience/segmentation/segstats.py:770:                    / ibis._[cols.agg.transaction_id].cast("float"),
+pyretailscience/segmentation/segstats.py:771:                },
+pyretailscience/segmentation/segstats.py:776:                **{
+pyretailscience/segmentation/segstats.py:777:                    cols.calc.spend_per_cust: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.customer_id],
+pyretailscience/segmentation/segstats.py:778:                    cols.calc.trans_per_cust: ibis._[cols.agg.transaction_id]
+pyretailscience/segmentation/segstats.py:779:                    / ibis._[cols.agg.customer_id].cast("float"),
+pyretailscience/segmentation/segstats.py:780:                },
+pyretailscience/segmentation/segstats.py:787:                **{
+pyretailscience/segmentation/segstats.py:788:                    cols.calc.spend_per_trans_unknown: ibis._[cols.agg.unit_spend_unknown]
+pyretailscience/segmentation/segstats.py:789:                    / ibis._[cols.agg.transaction_id_unknown],
+pyretailscience/segmentation/segstats.py:790:                },
+pyretailscience/segmentation/segstats.py:795:                **{
+pyretailscience/segmentation/segstats.py:796:                    cols.calc.spend_per_trans_total: ibis._[cols.agg.unit_spend_total]
+pyretailscience/segmentation/segstats.py:797:                    / ibis._[cols.agg.transaction_id_total],
+pyretailscience/segmentation/segstats.py:798:                },
+pyretailscience/segmentation/segstats.py:803:                final_metrics = final_metrics.mutate(
+pyretailscience/segmentation/segstats.py:804:                    **{
+pyretailscience/segmentation/segstats.py:805:                        cols.calc.price_per_unit_unknown: ibis._[cols.agg.unit_spend_unknown]
+pyretailscience/segmentation/segstats.py:806:                        / ibis._[cols.agg.unit_qty_unknown].nullif(0),
+pyretailscience/segmentation/segstats.py:807:                        cols.calc.units_per_trans_unknown: ibis._[cols.agg.unit_qty_unknown]
+pyretailscience/segmentation/segstats.py:808:                        / ibis._[cols.agg.transaction_id_unknown].cast("float"),
+pyretailscience/segmentation/segstats.py:809:                        cols.calc.price_per_unit_total: ibis._[cols.agg.unit_spend_total]
+pyretailscience/segmentation/segstats.py:810:                        / ibis._[cols.agg.unit_qty_total].nullif(0),
+pyretailscience/segmentation/segstats.py:811:                        cols.calc.units_per_trans_total: ibis._[cols.agg.unit_qty_total]
+pyretailscience/segmentation/segstats.py:812:                        / ibis._[cols.agg.transaction_id_total].cast("float"),
+pyretailscience/segmentation/segstats.py:813:                    },
+pyretailscience/segmentation/segstats.py:814:                )
+pyretailscience/segmentation/segstats.py:827:                *self.segment_col,
+pyretailscience/segmentation/segstats.py:828:                *SegTransactionStats._get_col_order(
+pyretailscience/segmentation/segstats.py:829:                    include_quantity=include_quantity,
+pyretailscience/segmentation/segstats.py:830:                    include_customer=include_customer,
+pyretailscience/segmentation/segstats.py:831:                    include_unknown=include_unknown,
+pyretailscience/segmentation/segstats.py:832:                ),
+pyretailscience/segmentation/segstats.py:837:                if include_unknown:
+pyretailscience/segmentation/segstats.py:838:                    # Add identified, unknown, and total variants for each extra agg
+pyretailscience/segmentation/segstats.py:839:                    suffix_unknown = get_option("column.suffix.unknown_customer")
+pyretailscience/segmentation/segstats.py:840:                    suffix_total = get_option("column.suffix.total")
+pyretailscience/segmentation/segstats.py:841:                    for agg_name in self.extra_aggs:
+pyretailscience/segmentation/segstats.py:842:                        col_order.append(agg_name)
+pyretailscience/segmentation/segstats.py:843:                        col_order.append(f"{agg_name}_{suffix_unknown}")
+pyretailscience/segmentation/segstats.py:844:                        col_order.append(f"{agg_name}_{suffix_total}")
+pyretailscience/segmentation/segstats.py:845:                else:
+pyretailscience/segmentation/segstats.py:846:                    col_order.extend(self.extra_aggs.keys())
+pyretailscience/segmentation/segstats.py:873:                orientation is horizontal. When the orientation is vertical it is set to the `value_col` in title case.
+pyretailscience/segmentation/segstats.py:875:                `value_col` in title case when the orientation is horizontal. Then the orientation is vertical it is
+pyretailscience/segmentation/segstats.py:876:                set to blank
+pyretailscience/segmentation/segstats.py:879:                "vertical".
+pyretailscience/segmentation/segstats.py:881:                Defaults to None. If None, the segments are plotted in the order they appear in the dataframe.
+pyretailscience/utils/filter_and_label.py:33:                "toys": data["category"] == "toys",
+pyretailscience/utils/filter_and_label.py:34:                "shoes": data["category"] == "shoes"
+pyretailscience/analysis/composite_rank.py:124:                Examples for product ranging:
+pyretailscience/analysis/composite_rank.py:125:                - ("sales_units", "desc") - Higher sales are better
+pyretailscience/analysis/composite_rank.py:126:                - ("days_inventory", "asc") - Lower inventory days are better
+pyretailscience/analysis/composite_rank.py:127:                - ("margin_pct", "desc") - Higher margins are better
+pyretailscience/analysis/composite_rank.py:128:                - ("return_rate", "asc") - Lower returns are better
+pyretailscience/analysis/composite_rank.py:129:                If just a string is provided, ascending order is assumed.
+pyretailscience/analysis/composite_rank.py:131:                - "mean": Balanced scorecard (most common for range reviews)
+pyretailscience/analysis/composite_rank.py:132:                - "sum": Total performance score (for bonus calculations)
+pyretailscience/analysis/composite_rank.py:133:                - "min": Worst-case performance (for risk assessment)
+pyretailscience/analysis/composite_rank.py:134:                - "max": Best-case performance (for opportunity identification)
+pyretailscience/analysis/composite_rank.py:136:                - False (default): Products with same sales get same rank (fair comparison)
+pyretailscience/analysis/composite_rank.py:137:                - True: Force unique ranks even for ties (strict ordering needed)
+pyretailscience/analysis/composite_rank.py:166:                col_name = col_spec
+pyretailscience/analysis/composite_rank.py:167:                sort_order = "asc"
+pyretailscience/analysis/composite_rank.py:169:                if len(col_spec) != 2:  # noqa: PLR2004 - Error message below explains the value
+pyretailscience/analysis/composite_rank.py:170:                    msg = (
+pyretailscience/analysis/composite_rank.py:171:                        f"Column specification must be a string or a tuple of (column_name, sort_order). Got {col_spec}"
+pyretailscience/analysis/composite_rank.py:172:                    )
+pyretailscience/analysis/composite_rank.py:173:                    raise ValueError(msg)
+pyretailscience/analysis/composite_rank.py:174:                col_name, sort_order = col_spec
+pyretailscience/analysis/composite_rank.py:177:                msg = f"Column '{col_name}' not found in the DataFrame."
+pyretailscience/analysis/composite_rank.py:178:                raise ValueError(msg)
+pyretailscience/analysis/composite_rank.py:181:                msg = f"Sort order must be one of {valid_sort_orders}. Got '{sort_order}'"
+pyretailscience/analysis/composite_rank.py:182:                raise ValueError(msg)
+pyretailscience/analysis/composite_rank.py:216:                - Original metrics (sales, margin, etc.)
+pyretailscience/analysis/composite_rank.py:217:                - Individual rank columns (e.g., sales_rank, margin_rank)
+pyretailscience/analysis/composite_rank.py:218:                - composite_rank: Final combined ranking for decisions
+pyretailscience/analysis/product_association.py:175:                to option column.unit_spend.
+pyretailscience/analysis/product_association.py:177:                associations for all products are calculated. Defaults to None.
+pyretailscience/analysis/product_association.py:179:                association analysis. Defaults to 1. Must be at least 1.
+pyretailscience/analysis/product_association.py:181:                the association analysis. Defaults to 1. Must be at least 1.
+pyretailscience/analysis/product_association.py:183:                0.0. Must be between 0 and 1.
+pyretailscience/analysis/product_association.py:185:                to 0.0. Must be between 0 and 1.
+pyretailscience/analysis/product_association.py:187:                Must be greater or equal to 0.
+pyretailscience/analysis/product_association.py:266:                to option column.unit_spend.
+pyretailscience/analysis/product_association.py:268:                associations for all products are calculated. Defaults to None.
+pyretailscience/analysis/product_association.py:270:                association analysis. Defaults to 1. Must be at least 1.
+pyretailscience/analysis/product_association.py:272:                the association analysis. Defaults to 1. Must be at least 1.
+pyretailscience/analysis/product_association.py:274:                0.0. Must be between 0 and 1.
+pyretailscience/analysis/product_association.py:276:                to 0.0. Must be between 0 and 1.
+pyretailscience/analysis/product_association.py:278:                Must be greater or equal to 0.
+pyretailscience/analysis/product_association.py:308:                target_item = [target_item]
+pyretailscience/analysis/product_association.py:312:                if not isinstance(item, str | float):
+pyretailscience/analysis/product_association.py:313:                    msg = f"target_item must contain only str or float values. Got {type(item)}"
+pyretailscience/analysis/product_association.py:314:                    raise TypeError(msg)
+pyretailscience/analysis/product_association.py:318:                raise ValueError("target_item cannot be an empty list")
+pyretailscience/analysis/product_association.py:341:                [
+pyretailscience/analysis/product_association.py:342:                    left_table.item_1 != right_table.item_2,
+pyretailscience/analysis/product_association.py:343:                    left_table.item_1.isin(target_item),
+pyretailscience/analysis/product_association.py:344:                ],
+pyretailscience/analysis/product_association.py:366:                confidence=_.cooccurrences / _.occurrences_1,
+pyretailscience/analysis/product_association.py:367:                uplift=_.support / (_.prob_1 * _.prob_2),
+pyretailscience/analysis/product_association.py:374:                "item_1",
+pyretailscience/analysis/product_association.py:375:                "item_2",
+pyretailscience/analysis/product_association.py:376:                "occurrences_1",
+pyretailscience/analysis/product_association.py:377:                "occurrences_2",
+pyretailscience/analysis/product_association.py:378:                "cooccurrences",
+pyretailscience/analysis/product_association.py:379:                "support",
+pyretailscience/analysis/product_association.py:380:                "confidence",
+pyretailscience/analysis/product_association.py:381:                "uplift",
+pyretailscience/analysis/product_association.py:384:                item_1=result.item_2,
+pyretailscience/analysis/product_association.py:385:                item_2=result.item_1,
+pyretailscience/analysis/product_association.py:386:                occurrences_1=result.occurrences_2,
+pyretailscience/analysis/product_association.py:387:                occurrences_2=result.occurrences_1,
+pyretailscience/analysis/product_association.py:388:                prob_1=result.prob_2,
+pyretailscience/analysis/product_association.py:389:                prob_2=result.prob_1,
+pyretailscience/analysis/product_association.py:390:                confidence=result.cooccurrences / result.occurrences_2,
+pyretailscience/analysis/product_association.py:401:                f"{value_col}_1",
+pyretailscience/analysis/product_association.py:402:                f"{value_col}_2",
+pyretailscience/analysis/product_association.py:403:                "occurrences_1",
+pyretailscience/analysis/product_association.py:404:                "occurrences_2",
+pyretailscience/analysis/product_association.py:405:                "cooccurrences",
+pyretailscience/analysis/product_association.py:406:                "support",
+pyretailscience/analysis/product_association.py:407:                "confidence",
+pyretailscience/analysis/product_association.py:408:                "uplift",
+pyretailscience/analysis/cross_shop.py:126:                Defaults to alphabetical labels [A, B, C].
+pyretailscience/analysis/cross_shop.py:129:                Defaults to spend column from options.
+pyretailscience/analysis/cross_shop.py:131:                Defaults to "sum" for total opportunity sizing.
+pyretailscience/analysis/cross_shop.py:271:                **{col: cs_df[col].max().name(col) for col in group_cols},
+pyretailscience/analysis/cross_shop.py:272:                **{temp_value_col: getattr(cs_df[temp_value_col], agg_func)().name(temp_value_col)},
+pyretailscience/analysis/cross_shop.py:328:                True = larger segments appear bigger. Defaults to False.
+pyretailscience/analysis/cross_shop.py:332:                Default shows one decimal place (e.g., "34.5%").
+pyretailscience/plots/broken_timeline.py:164:                # Width should be number of periods * typical period duration
+pyretailscience/plots/broken_timeline.py:165:                width = len(seg) * base_width
+pyretailscience/plots/broken_timeline.py:166:                segments.append((seg[0], width))
+pyretailscience/analysis/customer_decision_hierarchy.py:131:                Must contain: customer_id, transaction_id, and product identifier.
+pyretailscience/analysis/customer_decision_hierarchy.py:133:                (e.g., "product_name", "sku", "brand", "subcategory").
+pyretailscience/analysis/customer_decision_hierarchy.py:135:                together in one transaction should be considered non-substitutes.
+pyretailscience/analysis/customer_decision_hierarchy.py:136:                True = If customer buys milk and eggs together, they're not substitutes.
+pyretailscience/analysis/customer_decision_hierarchy.py:137:                False = Include all purchase patterns.
+pyretailscience/analysis/customer_decision_hierarchy.py:138:                Defaults to True (recommended for most retail contexts).
+pyretailscience/analysis/customer_decision_hierarchy.py:140:                substitutability. "yules_q" measures association strength between
+pyretailscience/analysis/customer_decision_hierarchy.py:141:                binary purchase patterns. Defaults to "yules_q".
+pyretailscience/analysis/customer_decision_hierarchy.py:143:                Important for consistent range planning decisions. Defaults to 42.
+pyretailscience/analysis/customer_decision_hierarchy.py:175:                pairs_df.groupby(cols.transaction_id)
+pyretailscience/analysis/customer_decision_hierarchy.py:176:                .filter(lambda x: len(x) > 1)[[cols.customer_id, product_col]]
+pyretailscience/analysis/customer_decision_hierarchy.py:177:                .drop_duplicates()
+pyretailscience/analysis/customer_decision_hierarchy.py:181:                pairs_to_exclude_df,
+pyretailscience/analysis/customer_decision_hierarchy.py:182:                on=[cols.customer_id, product_col],
+pyretailscience/analysis/customer_decision_hierarchy.py:183:                how="left",
+pyretailscience/analysis/customer_decision_hierarchy.py:184:                indicator=True,
+pyretailscience/analysis/customer_decision_hierarchy.py:198:                customer bought the product and 0 if they didn't.
+pyretailscience/analysis/customer_decision_hierarchy.py:200:                customer bought the product and 0 if they didn't.
+pyretailscience/analysis/customer_decision_hierarchy.py:239:                [True] * len(self.pairs_df),
+pyretailscience/analysis/customer_decision_hierarchy.py:240:                (
+pyretailscience/analysis/customer_decision_hierarchy.py:241:                    self.pairs_df[self.product_col].cat.codes,
+pyretailscience/analysis/customer_decision_hierarchy.py:242:                    self.pairs_df[get_option("column.customer_id")].cat.codes,
+pyretailscience/analysis/customer_decision_hierarchy.py:243:                ),
+pyretailscience/analysis/customer_decision_hierarchy.py:258:                # Calculate the yules q value for the pair of products
+pyretailscience/analysis/customer_decision_hierarchy.py:259:                arr_j = product_matrix[j].toarray()
+pyretailscience/analysis/customer_decision_hierarchy.py:260:                yules_q_dist = 1 - self._calculate_yules_q(arr_i, arr_j)
+pyretailscience/analysis/customer_decision_hierarchy.py:262:                # Store the yules q value in the matrix
+pyretailscience/analysis/customer_decision_hierarchy.py:263:                yules_q_matrix[i, j] = yules_q_dist
+pyretailscience/analysis/customer_decision_hierarchy.py:264:                yules_q_matrix[j, i] = yules_q_dist
+pyretailscience/utils/label.py:67:                return_col: (_.label_condition.max() == 1).ifelse(contains_label, not_contains_label),
+pyretailscience/utils/label.py:74:                ((_.label_condition.max() == 1) & (_.label_condition.min() == 1), contains_label),
+pyretailscience/utils/label.py:75:                ((_.label_condition.max() == 1) & (_.label_condition.min() == 0), mixed_label),
+pyretailscience/utils/label.py:76:                else_=not_contains_label,
+pyretailscience/segmentation/hml.py:79:                customers with zero spend. Defaults to "separate_segment".
+pyretailscience/analysis/customer.py:66:                contain customer_id and transaction_id columns, which must be non-null.
+pyretailscience/analysis/customer.py:70:                are null.
+pyretailscience/analysis/customer.py:101:                line is drawn.
+pyretailscience/analysis/customer.py:148:                raise ValueError("Percentile line must be between 0 and 1")
+pyretailscience/analysis/customer.py:150:                x=self.purchases_percentile(percentile_line),
+pyretailscience/analysis/customer.py:151:                color=COLORS["red"][500],
+pyretailscience/analysis/customer.py:152:                linestyle="--",
+pyretailscience/analysis/customer.py:153:                lw=2,
+pyretailscience/analysis/customer.py:154:                label=f"{percentile_line:.1%} of customers",
+pyretailscience/analysis/customer.py:180:                less_than, less_than_equal_to, equal_to, not_equal_to, greater_than, or greater_than_equal_to.
+pyretailscience/analysis/customer.py:196:                "Comparison must be one of 'less_than', 'less_than_equal_to', 'equal_to', 'not_equal_to',",
+pyretailscience/analysis/customer.py:197:                "'greater_than', 'greater_than_equal_to'",
+pyretailscience/analysis/customer.py:217:                and transaction_date, which must be non-null.
+pyretailscience/analysis/customer.py:221:                columns are null.
+pyretailscience/analysis/customer.py:239:                and transaction_date, which must be non-null.
+pyretailscience/analysis/customer.py:279:                line is drawn.
+pyretailscience/analysis/customer.py:325:                raise ValueError("Percentile line must be between 0 and 1")
+pyretailscience/analysis/customer.py:327:                x=self.purchases_percentile(percentile_line),
+pyretailscience/analysis/customer.py:328:                color=COLORS["red"][500],
+pyretailscience/analysis/customer.py:329:                linestyle="--",
+pyretailscience/analysis/customer.py:330:                lw=2,
+pyretailscience/analysis/customer.py:331:                label=f"{percentile_line:.1%} of customers",
+pyretailscience/analysis/customer.py:332:                ymax=0.96,
+pyretailscience/analysis/customer.py:368:                and transaction_date.
+pyretailscience/analysis/customer.py:437:                color=COLORS["green"][500],
+pyretailscience/analysis/customer.py:438:                **kwargs,
+pyretailscience/analysis/customer.py:443:                rot=0,
+pyretailscience/analysis/customer.py:444:                color=COLORS["green"][500],
+pyretailscience/analysis/customer.py:445:                width=0.8,
+pyretailscience/analysis/customer.py:446:                **kwargs,
+pyretailscience/segmentation/rfm.py:66:                Must include the following columns:
+pyretailscience/segmentation/rfm.py:67:                - customer_id
+pyretailscience/segmentation/rfm.py:68:                - transaction_date
+pyretailscience/segmentation/rfm.py:69:                - unit_spend
+pyretailscience/segmentation/rfm.py:70:                - transaction_id
+pyretailscience/segmentation/rfm.py:72:                Can be a string (format: "YYYY-MM-DD"), a date object, or None (defaults to the current system date).
+pyretailscience/segmentation/rfm.py:74:                Defaults to 10 bins.
+pyretailscience/segmentation/rfm.py:76:                Defaults to 10 bins.
+pyretailscience/segmentation/rfm.py:78:                Defaults to 10 bins.
+pyretailscience/segmentation/rfm.py:80:                Customers with total spend below this value will be excluded from the analysis.
+pyretailscience/segmentation/rfm.py:82:                Customers with total spend above this value will be excluded from the analysis.
+pyretailscience/segmentation/rfm.py:84:                Customers with fewer transactions will be excluded from the analysis.
+pyretailscience/segmentation/rfm.py:86:                Customers with more transactions will be excluded from the analysis.
+pyretailscience/segmentation/rfm.py:90:                       or invalid filter parameters.
+pyretailscience/segmentation/rfm.py:149:                msg = f"{param_name} must be between {max_segments} and {max_segments_int} when specified as an integer"
+pyretailscience/segmentation/rfm.py:150:                raise ValueError(msg)
+pyretailscience/segmentation/rfm.py:153:                msg = f"{param_name} must contain between {max_segments} and {max_segments_list} cut points when specified as a list"
+pyretailscience/segmentation/rfm.py:154:                raise ValueError(msg)
+pyretailscience/segmentation/rfm.py:156:                msg = f"All cut points in {param_name} must be numeric"
+pyretailscience/segmentation/rfm.py:157:                raise ValueError(msg)
+pyretailscience/segmentation/rfm.py:159:                msg = f"All cut points in {param_name} must be between 0 and 1"
+pyretailscience/segmentation/rfm.py:160:                raise ValueError(msg)
+pyretailscience/segmentation/rfm.py:162:                msg = f"Cut points in {param_name} must be unique"
+pyretailscience/segmentation/rfm.py:163:                raise ValueError(msg)
+pyretailscience/segmentation/rfm.py:165:                msg = f"Cut points in {param_name} must be in ascending order"
+pyretailscience/segmentation/rfm.py:166:                raise ValueError(msg)
+pyretailscience/segmentation/rfm.py:174:                raise TypeError("min_monetary must be a numeric value")
+pyretailscience/segmentation/rfm.py:176:                raise ValueError("min_monetary must be non-negative")
+pyretailscience/segmentation/rfm.py:180:                raise TypeError("max_monetary must be a numeric value")
+pyretailscience/segmentation/rfm.py:182:                raise ValueError("max_monetary must be non-negative")
+pyretailscience/segmentation/rfm.py:190:                raise TypeError("min_frequency must be an integer")
+pyretailscience/segmentation/rfm.py:192:                raise ValueError("min_frequency must be at least 1")
+pyretailscience/segmentation/rfm.py:196:                raise TypeError("max_frequency must be an integer")
+pyretailscience/segmentation/rfm.py:198:                raise ValueError("max_frequency must be at least 1")
+pyretailscience/segmentation/rfm.py:218:                "int32",
+pyretailscience/segmentation/rfm.py:255:                filtered_table = filtered_table.filter(filtered_table[column_name] >= min_val)
+pyretailscience/segmentation/rfm.py:258:                filtered_table = filtered_table.filter(filtered_table[column_name] <= max_val)
+pyretailscience/segmentation/rfm.py:296:                ibis.literal(i + 1).cast("int32"),
+pyretailscience/segmentation/rfm.py:297:                case_expr,
+pyretailscience/analysis/gain_loss.py:67:                "p1_index, p2_index, focus_group_index, and comparison_group_index should have the same length",
+pyretailscience/analysis/gain_loss.py:173:                df[focus_group_index & p1_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
+pyretailscience/analysis/gain_loss.py:174:                df[comparison_group_index & p1_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
+pyretailscience/analysis/gain_loss.py:175:                df[(focus_group_index | comparison_group_index) & p1_index]
+pyretailscience/analysis/gain_loss.py:176:                .groupby(grp_cols, observed=False)[value_col]
+pyretailscience/analysis/gain_loss.py:177:                .agg(agg_func),
+pyretailscience/analysis/gain_loss.py:185:                df[focus_group_index & p2_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
+pyretailscience/analysis/gain_loss.py:186:                df[comparison_group_index & p2_index].groupby(grp_cols, observed=False)[value_col].agg(agg_func),
+pyretailscience/analysis/gain_loss.py:187:                df[(focus_group_index | comparison_group_index) & p2_index]
+pyretailscience/analysis/gain_loss.py:188:                .groupby(grp_cols, observed=False)[value_col]
+pyretailscience/analysis/gain_loss.py:189:                .agg(agg_func),
+pyretailscience/analysis/gain_loss.py:213:                lambda x: GainLoss.process_customer_group(
+pyretailscience/analysis/gain_loss.py:214:                    focus_p1=x["focus_p1"],
+pyretailscience/analysis/gain_loss.py:215:                    comparison_p1=x["comparison_p1"],
+pyretailscience/analysis/gain_loss.py:216:                    focus_p2=x["focus_p2"],
+pyretailscience/analysis/gain_loss.py:217:                    comparison_p2=x["comparison_p2"],
+pyretailscience/analysis/gain_loss.py:218:                    focus_diff=x["focus_diff"],
+pyretailscience/analysis/gain_loss.py:219:                    comparison_diff=x["comparison_diff"],
+pyretailscience/analysis/gain_loss.py:220:                ),
+pyretailscience/analysis/gain_loss.py:221:                axis=1,
+pyretailscience/analysis/gain_loss.py:304:                patch.set_color(color_dict[col_name])
+pyretailscience/plots/line.py:52:                "When df is a pd.Series, value_col must be None. The Series itself represents the values to plot.",
+pyretailscience/plots/line.py:56:                "When df is a pd.Series, x_col must be None. The Series index is used as the x-axis.",
+pyretailscience/plots/line.py:60:                "When df is a pd.Series, group_col must be None. Cannot group a single series.",
+pyretailscience/plots/bar.py:69:                                               create grouped bars. Defaults to None.
+pyretailscience/plots/bar.py:79:                                                                             "horizontal", "h", "vertical", or "v".
+pyretailscience/plots/bar.py:80:                                                                             Defaults to "vertical".
+pyretailscience/plots/bar.py:82:                                                                          "ascending" or "descending". Defaults to None.
+pyretailscience/plots/bar.py:84:                                                                                "absolute" shows raw values,
+pyretailscience/plots/bar.py:85:                                                                                "percentage" shows percentage.
+pyretailscience/plots/bar.py:86:                                                                                Defaults to None.
+pyretailscience/plots/bar.py:213:                container,
+pyretailscience/plots/bar.py:214:                group_totals,
+pyretailscience/plots/bar.py:215:                plot_kind,
+pyretailscience/plots/bar.py:216:                num_digits,
+pyretailscience/plots/bar.py:217:                division_by_zero_list,
+pyretailscience/plots/bar.py:222:                container,
+pyretailscience/plots/bar.py:223:                column_total,
+pyretailscience/plots/bar.py:224:                plot_kind,
+pyretailscience/plots/bar.py:225:                num_digits,
+pyretailscience/plots/bar.py:226:                division_by_zero_list,
+pyretailscience/plots/index.py:296:                by=group_col if sort_by == "group" else "index",
+pyretailscience/plots/index.py:297:                ascending=sort_order == "ascending",
+pyretailscience/segmentation/threshold.py:80:                customers with zero spend. Defaults to "separate_segment".
+pyretailscience/segmentation/threshold.py:84:                columns contain null values.
+pyretailscience/analysis/revenue_tree.py:162:                df[col + "_" + get_option("column.suffix.period_2")]
+pyretailscience/analysis/revenue_tree.py:163:                - df[col + "_" + get_option("column.suffix.period_1")]
+pyretailscience/analysis/revenue_tree.py:172:                df[col + "_" + get_option("column.suffix.difference")]
+pyretailscience/analysis/revenue_tree.py:173:                / df[col + "_" + get_option("column.suffix.period_1")]
+pyretailscience/analysis/revenue_tree.py:178:                (
+pyretailscience/analysis/revenue_tree.py:179:                    df[cols.calc.spend_per_trans_p2]
+pyretailscience/analysis/revenue_tree.py:180:                    - (df[cols.calc.price_per_unit_p1] * df[cols.calc.units_per_trans_p2])
+pyretailscience/analysis/revenue_tree.py:181:                    - ((df[cols.calc.units_per_trans_diff] * df[cols.calc.price_per_unit_diff]) / 2)
+pyretailscience/analysis/revenue_tree.py:182:                )
+pyretailscience/analysis/revenue_tree.py:183:                * df[cols.calc.trans_per_cust_p2]
+pyretailscience/analysis/revenue_tree.py:190:                (
+pyretailscience/analysis/revenue_tree.py:191:                    df[cols.calc.spend_per_trans_p2]
+pyretailscience/analysis/revenue_tree.py:192:                    - (df[cols.calc.units_per_trans_p1] * df[cols.calc.price_per_unit_p2])
+pyretailscience/analysis/revenue_tree.py:193:                    - ((df[cols.calc.units_per_trans_diff] * df[cols.calc.price_per_unit_diff]) / 2)
+pyretailscience/analysis/revenue_tree.py:194:                )
+pyretailscience/analysis/revenue_tree.py:195:                * df[cols.calc.trans_per_cust_p2]
+pyretailscience/analysis/revenue_tree.py:225:                column name (str) or a list of column names (list[str]). Defaults to None.
+pyretailscience/analysis/revenue_tree.py:232:                tree = RevenueTree(df, period_col="year", p1_value="2023", p2_value="2024", group_col="store")
+pyretailscience/analysis/revenue_tree.py:235:                tree = RevenueTree(df, period_col="year", p1_value="2023", p2_value="2024",
+pyretailscience/analysis/revenue_tree.py:236:                                   group_col=["region", "store"])
+pyretailscience/analysis/revenue_tree.py:320:                result_df.index = pd.CategoricalIndex(result_df.index)
+pyretailscience/analysis/revenue_tree.py:377:                [
+pyretailscience/analysis/revenue_tree.py:378:                    # Unit Quantity
+pyretailscience/analysis/revenue_tree.py:379:                    cols.agg.unit_qty_p1,
+pyretailscience/analysis/revenue_tree.py:380:                    cols.agg.unit_qty_p2,
+pyretailscience/analysis/revenue_tree.py:381:                    cols.agg.unit_qty_diff,
+pyretailscience/analysis/revenue_tree.py:382:                    cols.agg.unit_qty_pct_diff,
+pyretailscience/analysis/revenue_tree.py:383:                    # Quantity / Transaction
+pyretailscience/analysis/revenue_tree.py:384:                    cols.calc.units_per_trans_p1,
+pyretailscience/analysis/revenue_tree.py:385:                    cols.calc.units_per_trans_p2,
+pyretailscience/analysis/revenue_tree.py:386:                    cols.calc.units_per_trans_diff,
+pyretailscience/analysis/revenue_tree.py:387:                    cols.calc.units_per_trans_pct_diff,
+pyretailscience/analysis/revenue_tree.py:388:                    cols.calc.units_per_trans_contrib,
+pyretailscience/analysis/revenue_tree.py:389:                    # Price / Unit
+pyretailscience/analysis/revenue_tree.py:390:                    cols.calc.price_per_unit_p1,
+pyretailscience/analysis/revenue_tree.py:391:                    cols.calc.price_per_unit_p2,
+pyretailscience/analysis/revenue_tree.py:392:                    cols.calc.price_per_unit_diff,
+pyretailscience/analysis/revenue_tree.py:393:                    cols.calc.price_per_unit_pct_diff,
+pyretailscience/analysis/revenue_tree.py:394:                    cols.calc.price_per_unit_contrib,
+pyretailscience/analysis/revenue_tree.py:395:                    # Price Elasticity
+pyretailscience/analysis/revenue_tree.py:396:                    cols.calc.price_elasticity,
+pyretailscience/analysis/revenue_tree.py:397:                ],
+pyretailscience/analysis/revenue_tree.py:418:                Useful when the RevenueTree has multiple groups (e.g., by region, store, etc.).
+pyretailscience/analysis/revenue_tree.py:420:                If provided, should be a tuple of (current_label, previous_label).
+pyretailscience/analysis/revenue_tree.py:445:                "header": unit_spend_label,
+pyretailscience/analysis/revenue_tree.py:446:                "percent": graph_data[cols.agg.unit_spend_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:447:                "current_period": gu.human_format(graph_data[cols.agg.unit_spend_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:448:                "previous_period": gu.human_format(graph_data[cols.agg.unit_spend_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:449:                "diff": gu.human_format(graph_data[cols.agg.unit_spend_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:450:                # Contribution omitted for root node (would be same as diff)
+pyretailscience/analysis/revenue_tree.py:451:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:452:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:453:                "position": (1, 0),
+pyretailscience/analysis/revenue_tree.py:454:                "children": ["customers", "spend_per_customer"],
+pyretailscience/analysis/revenue_tree.py:457:                "header": customer_id_label,
+pyretailscience/analysis/revenue_tree.py:458:                "percent": graph_data[cols.agg.customer_id_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:459:                "current_period": gu.human_format(graph_data[cols.agg.customer_id_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:460:                "previous_period": gu.human_format(graph_data[cols.agg.customer_id_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:461:                "diff": gu.human_format(graph_data[cols.agg.customer_id_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:462:                "contribution": gu.human_format(graph_data[cols.agg.customer_id_contrib], decimals=2),
+pyretailscience/analysis/revenue_tree.py:463:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:464:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:465:                "position": (0, 1),
+pyretailscience/analysis/revenue_tree.py:466:                "children": [],
+pyretailscience/analysis/revenue_tree.py:469:                "header": spend_per_customer_label,
+pyretailscience/analysis/revenue_tree.py:470:                "percent": graph_data[cols.calc.spend_per_cust_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:471:                "current_period": gu.human_format(graph_data[cols.calc.spend_per_cust_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:472:                "previous_period": gu.human_format(graph_data[cols.calc.spend_per_cust_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:473:                "diff": gu.human_format(graph_data[cols.calc.spend_per_cust_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:474:                "contribution": gu.human_format(graph_data[cols.calc.spend_per_cust_contrib], decimals=2),
+pyretailscience/analysis/revenue_tree.py:475:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:476:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:477:                "position": (2, 1),
+pyretailscience/analysis/revenue_tree.py:478:                "children": ["visits_per_customer", "spend_per_visit"],
+pyretailscience/analysis/revenue_tree.py:481:                "header": transactions_per_customer_label,
+pyretailscience/analysis/revenue_tree.py:482:                "percent": graph_data[cols.calc.trans_per_cust_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:483:                "current_period": gu.human_format(graph_data[cols.calc.trans_per_cust_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:484:                "previous_period": gu.human_format(graph_data[cols.calc.trans_per_cust_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:485:                "diff": gu.human_format(graph_data[cols.calc.trans_per_cust_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:486:                "contribution": gu.human_format(graph_data[cols.calc.trans_per_cust_contrib], decimals=2),
+pyretailscience/analysis/revenue_tree.py:487:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:488:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:489:                "position": (1, 2),
+pyretailscience/analysis/revenue_tree.py:490:                "children": [],
+pyretailscience/analysis/revenue_tree.py:493:                "header": spend_per_transaction_label,
+pyretailscience/analysis/revenue_tree.py:494:                "percent": graph_data[cols.calc.spend_per_trans_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:495:                "current_period": gu.human_format(graph_data[cols.calc.spend_per_trans_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:496:                "previous_period": gu.human_format(graph_data[cols.calc.spend_per_trans_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:497:                "diff": gu.human_format(graph_data[cols.calc.spend_per_trans_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:498:                "contribution": gu.human_format(graph_data[cols.calc.spend_per_trans_contrib], decimals=2),
+pyretailscience/analysis/revenue_tree.py:499:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:500:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:501:                "position": (3, 2),
+pyretailscience/analysis/revenue_tree.py:502:                "children": [],
+pyretailscience/analysis/revenue_tree.py:516:                "header": units_per_transaction_label,
+pyretailscience/analysis/revenue_tree.py:517:                "percent": graph_data[cols.calc.units_per_trans_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:518:                "current_period": gu.human_format(graph_data[cols.calc.units_per_trans_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:519:                "previous_period": gu.human_format(graph_data[cols.calc.units_per_trans_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:520:                "diff": gu.human_format(graph_data[cols.calc.units_per_trans_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:521:                "contribution": gu.human_format(graph_data[cols.calc.units_per_trans_contrib], decimals=2),
+pyretailscience/analysis/revenue_tree.py:522:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:523:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:524:                "position": (2, 3),
+pyretailscience/analysis/revenue_tree.py:525:                "children": [],
+pyretailscience/analysis/revenue_tree.py:528:                "header": price_per_unit_label,
+pyretailscience/analysis/revenue_tree.py:529:                "percent": graph_data[cols.calc.price_per_unit_pct_diff] * 100,
+pyretailscience/analysis/revenue_tree.py:530:                "current_period": gu.human_format(graph_data[cols.calc.price_per_unit_p2], decimals=2),
+pyretailscience/analysis/revenue_tree.py:531:                "previous_period": gu.human_format(graph_data[cols.calc.price_per_unit_p1], decimals=2),
+pyretailscience/analysis/revenue_tree.py:532:                "diff": gu.human_format(graph_data[cols.calc.price_per_unit_diff], decimals=2),
+pyretailscience/analysis/revenue_tree.py:533:                "contribution": gu.human_format(graph_data[cols.calc.price_per_unit_contrib], decimals=2),
+pyretailscience/analysis/revenue_tree.py:534:                "current_label": current_label,
+pyretailscience/analysis/revenue_tree.py:535:                "previous_label": previous_label,
+pyretailscience/analysis/revenue_tree.py:536:                "position": (4, 3),
+pyretailscience/analysis/revenue_tree.py:537:                "children": [],
+pyretailscience/utils/date.py:55:                overlap_msg = f"Periods '{name1}' ({start1.date()}-{end1.date()}) and '{name2}' ({start2.date()}-{end2.date()}) overlap"
+pyretailscience/utils/date.py:56:                raise ValueError(overlap_msg)
+pyretailscience/utils/date.py:137:                                     If False, returns datetime objects. Defaults to True.
+pyretailscience/plots/price.py:250:                Line2D(
+pyretailscience/plots/price.py:251:                    [0],
+pyretailscience/plots/price.py:252:                    [0],
+pyretailscience/plots/price.py:253:                    marker="o",
+pyretailscience/plots/price.py:254:                    color="w",
+pyretailscience/plots/price.py:255:                    markerfacecolor=colors[i],
+pyretailscience/plots/price.py:256:                    markersize=8,
+pyretailscience/plots/price.py:257:                    markeredgecolor="white",
+pyretailscience/plots/price.py:258:                    markeredgewidth=1,
+pyretailscience/plots/price.py:259:                    alpha=0.8,
+pyretailscience/plots/price.py:260:                    linestyle="None",
+pyretailscience/plots/price.py:261:                ),
+pyretailscience/plots/price.py:266:                legend_elements,
+pyretailscience/plots/price.py:267:                groups,
+pyretailscience/plots/price.py:268:                title=legend_title,
+pyretailscience/plots/price.py:269:                bbox_to_anchor=(1.05, 1),
+pyretailscience/plots/price.py:270:                loc="upper left",
+pyretailscience/plots/price.py:271:                frameon=False,
+pyretailscience/plots/tree_diagram.py:55:                x + width - bottom_radius,
+pyretailscience/plots/tree_diagram.py:56:                y + bottom_radius,
+pyretailscience/plots/tree_diagram.py:57:                bottom_radius,
+pyretailscience/plots/tree_diagram.py:58:                3 * np.pi / 2,
+pyretailscience/plots/tree_diagram.py:59:                2 * np.pi,
+pyretailscience/plots/tree_diagram.py:60:                (x + width, y),
+pyretailscience/plots/tree_diagram.py:61:                False,
+pyretailscience/plots/tree_diagram.py:72:                center_x=center_x,
+pyretailscience/plots/tree_diagram.py:73:                center_y=center_y,
+pyretailscience/plots/tree_diagram.py:74:                radius=radius,
+pyretailscience/plots/tree_diagram.py:75:                start_angle=start_angle,
+pyretailscience/plots/tree_diagram.py:76:                end_angle=end_angle,
+pyretailscience/plots/tree_diagram.py:77:                fallback_point=fallback_point,
+pyretailscience/plots/tree_diagram.py:78:                is_first=is_first,
+pyretailscience/plots/tree_diagram.py:351:                depending on the node_class being used.
+pyretailscience/plots/tree_diagram.py:356:                node_height + 0.6 gap.
+pyretailscience/plots/tree_diagram.py:358:                node_width - 1.0 overlap for compact layout.
+pyretailscience/plots/tree_diagram.py:362:                or if node positions are out of bounds.
+pyretailscience/plots/tree_diagram.py:396:                error_msg = f"Node '{node_id}' is missing required 'position' key"
+pyretailscience/plots/tree_diagram.py:397:                raise ValueError(error_msg)
+pyretailscience/plots/tree_diagram.py:401:                error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
+pyretailscience/plots/tree_diagram.py:402:                raise ValueError(error_msg)
+pyretailscience/plots/tree_diagram.py:404:                error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
+pyretailscience/plots/tree_diagram.py:405:                raise ValueError(error_msg)
+pyretailscience/plots/tree_diagram.py:446:                data=data_dict,
+pyretailscience/plots/tree_diagram.py:447:                x=x,
+pyretailscience/plots/tree_diagram.py:448:                y=y,
+pyretailscience/plots/tree_diagram.py:454:                "x": x + self.node_width / 2,
+pyretailscience/plots/tree_diagram.py:455:                "y_bottom": y,
+pyretailscience/plots/tree_diagram.py:456:                "y_top": y + self.node_height,
+pyretailscience/plots/tree_diagram.py:462:                parent = node_centers[node_id]
+pyretailscience/plots/tree_diagram.py:463:                for child_id in node_data["children"]:
+pyretailscience/plots/tree_diagram.py:464:                    if child_id not in node_centers:
+pyretailscience/plots/tree_diagram.py:465:                        available_nodes = list(node_centers.keys())
+pyretailscience/plots/tree_diagram.py:466:                        error_msg = (
+pyretailscience/plots/tree_diagram.py:467:                            f"Child node '{child_id}' referenced by '{node_id}' not found in tree_structure. "
+pyretailscience/plots/tree_diagram.py:468:                            f"Available nodes: {available_nodes}"
+pyretailscience/plots/tree_diagram.py:469:                        )
+pyretailscience/plots/tree_diagram.py:470:                        raise ValueError(error_msg)
+pyretailscience/plots/tree_diagram.py:471:                    child = node_centers[child_id]
+pyretailscience/plots/tree_diagram.py:472:                    self._draw_connection(
+pyretailscience/plots/tree_diagram.py:473:                        ax=ax,
+pyretailscience/plots/tree_diagram.py:474:                        x1=parent["x"],
+pyretailscience/plots/tree_diagram.py:475:                        y1=parent["y_bottom"],
+pyretailscience/plots/tree_diagram.py:476:                        x2=child["x"],
+pyretailscience/plots/tree_diagram.py:477:                        y2=child["y_top"],
+pyretailscience/plots/tree_diagram.py:478:                    )
+pyretailscience/plots/tree_diagram.py:638:                "padding_left": 0.2,
+pyretailscience/plots/tree_diagram.py:639:                "padding_right": 0.2,
+pyretailscience/plots/tree_diagram.py:642:                "padding_top": 0.2,  # Space above period labels
+pyretailscience/plots/tree_diagram.py:643:                "padding_bottom": 0.1,  # Space below last info row
+pyretailscience/plots/tree_diagram.py:644:                "period_subsection": {
+pyretailscience/plots/tree_diagram.py:645:                    "previous_period_x": (self.NODE_WIDTH / 2) + 0.2,  # X position for "Previous Period" column
+pyretailscience/plots/tree_diagram.py:646:                    "label_row_gap": 0.25,  # Vertical gap from labels to metrics
+pyretailscience/plots/tree_diagram.py:647:                    "bottom_margin": 0.25,  # Space below period metrics before divider
+pyretailscience/plots/tree_diagram.py:648:                },
+pyretailscience/plots/tree_diagram.py:649:                "divider": {
+pyretailscience/plots/tree_diagram.py:650:                    "horizontal_inset": 0.2,  # Padding on left/right of divider line
+pyretailscience/plots/tree_diagram.py:651:                    "vertical_offset": 0.025,  # Fine-tune vertical position
+pyretailscience/plots/tree_diagram.py:652:                },
+pyretailscience/plots/tree_diagram.py:653:                "info_subsection": {
+pyretailscience/plots/tree_diagram.py:654:                    "row_count": 3,  # Number of info rows
+pyretailscience/plots/tree_diagram.py:655:                    "row_spacing_scale": 0.75,  # Scale factor for vertical spacing between rows
+pyretailscience/plots/tree_diagram.py:656:                },
+pyretailscience/plots/tree_diagram.py:747:                x_pos,
+pyretailscience/plots/tree_diagram.py:748:                period_labels_y,
+pyretailscience/plots/tree_diagram.py:749:                label,
+pyretailscience/plots/tree_diagram.py:750:                ha="left",
+pyretailscience/plots/tree_diagram.py:751:                va="center",
+pyretailscience/plots/tree_diagram.py:752:                fontproperties=regular_font,
+pyretailscience/plots/tree_diagram.py:753:                fontsize=styling_context.fonts.tick_size,
+pyretailscience/plots/tree_diagram.py:754:                color=label_color,
+pyretailscience/plots/tree_diagram.py:758:                x_pos,
+pyretailscience/plots/tree_diagram.py:759:                period_metrics_y,
+pyretailscience/plots/tree_diagram.py:760:                metric,
+pyretailscience/plots/tree_diagram.py:761:                ha="left",
+pyretailscience/plots/tree_diagram.py:762:                va="center",
+pyretailscience/plots/tree_diagram.py:763:                fontproperties=semi_bold_font,
+pyretailscience/plots/tree_diagram.py:764:                fontsize=styling_context.fonts.label_size,
+pyretailscience/plots/tree_diagram.py:765:                color=data_text_color,
+pyretailscience/plots/tree_diagram.py:789:                i + layout["data_section"]["info_subsection"]["row_spacing_scale"]
+pyretailscience/plots/tree_diagram.py:793:                content_left_x,
+pyretailscience/plots/tree_diagram.py:794:                info_row_y,
+pyretailscience/plots/tree_diagram.py:795:                label,
+pyretailscience/plots/tree_diagram.py:796:                ha="left",
+pyretailscience/plots/tree_diagram.py:797:                va="center",
+pyretailscience/plots/tree_diagram.py:798:                fontproperties=regular_font,
+pyretailscience/plots/tree_diagram.py:799:                fontsize=styling_context.fonts.tick_size,
+pyretailscience/plots/tree_diagram.py:800:                color=label_color,
+pyretailscience/plots/tree_diagram.py:804:                content_right_x,
+pyretailscience/plots/tree_diagram.py:805:                info_row_y,
+pyretailscience/plots/tree_diagram.py:806:                metric,
+pyretailscience/plots/tree_diagram.py:807:                ha="right",
+pyretailscience/plots/tree_diagram.py:808:                va="center",
+pyretailscience/plots/tree_diagram.py:809:                fontproperties=semi_bold_font,
+pyretailscience/plots/tree_diagram.py:810:                fontsize=styling_context.fonts.tick_size,
+pyretailscience/plots/tree_diagram.py:811:                color=data_text_color,
+pyretailscience/plots/styles/styling_helpers.py:78:                If True, `x_norm` and `y_norm` will be set to fixed values. Defaults to False.
+pyretailscience/plots/styles/styling_helpers.py:93:                x_norm, y_norm = 0.01, 0.02
+pyretailscience/plots/styles/styling_helpers.py:95:                # Get y coordinate of the text
+pyretailscience/plots/styles/styling_helpers.py:96:                xlabel_box = ax.xaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+pyretailscience/plots/styles/styling_helpers.py:98:                top_of_label_px = xlabel_box.y0
+pyretailscience/plots/styles/styling_helpers.py:99:                padding_px = vertical_padding * effective_font_size
+pyretailscience/plots/styles/styling_helpers.py:100:                y_disp = top_of_label_px - padding_px - (xlabel_box.height)
+pyretailscience/plots/styles/styling_helpers.py:102:                # Convert display coordinates to normalized figure coordinates
+pyretailscience/plots/styles/styling_helpers.py:103:                y_norm = y_disp / ax.figure.bbox.height
+pyretailscience/plots/styles/styling_helpers.py:105:                # Get x coordinate of the text
+pyretailscience/plots/styles/styling_helpers.py:106:                ylabel_box = ax.yaxis.label.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+pyretailscience/plots/styles/styling_helpers.py:107:                title_box = ax.title.get_window_extent(renderer=ax.figure.canvas.get_renderer())
+pyretailscience/plots/styles/styling_helpers.py:108:                min_x0 = min(ylabel_box.x0, title_box.x0)
+pyretailscience/plots/styles/styling_helpers.py:109:                x_norm = ax.figure.transFigure.inverted().transform((min_x0, 0))[0]
+pyretailscience/plots/styles/styling_context.py:54:                - A built-in font name (e.g., 'poppins_regular')
+pyretailscience/plots/styles/styling_context.py:55:                - A system font family name (e.g., 'Arial', 'Times New Roman')
+pyretailscience/plots/styles/styling_context.py:59:                for text rendering.
+pyretailscience/plots/styles/graph_utils.py:420:                is_vertical = container.orientation == "vertical"
+pyretailscience/plots/styles/graph_utils.py:421:                break
+pyretailscience/plots/styles/graph_utils.py:441:                x_data = offset_data[:, 0]
+pyretailscience/plots/styles/graph_utils.py:442:                y_data = offset_data[:, 1]
+pyretailscience/plots/styles/graph_utils.py:444:                raise ValueError("No data points found in the collection.")
+pyretailscience/plots/styles/graph_utils.py:475:                is_datetime = isinstance(val, datetime | pd.Timestamp)
+pyretailscience/plots/styles/graph_utils.py:476:                break
+
+================================================================================
+SUMMARY
+================================================================================
+
+Review complete!
+
+KEY ACTIONS:
+1. Review code duplication section for extract-to-function opportunities
+2. Address high complexity functions (Grade C or worse)
+3. Investigate dead code findings (min confidence: 80%)
+4. Fix any ruff violations
+5. Improve test coverage in areas below 80%
+6. Refactor long functions (>50 lines) and deeply nested code
+7. Address deprecated patterns and technical debt markers
+
+NEXT STEPS:
+- Review this report in detail
+- Categorize findings using the framework (TECHNICAL_DEBT_FRAMEWORK.md)
+- Create GitHub issues for Quick Wins
+- Prioritize using Effort vs Impact matrix
+- Start with 2-3 Quick Wins this week
+
+Coverage report: htmlcov/index.html
+Full report: /home/user/pyretailscience/technical_debt_report.txt
+
+Report generation complete: Mon Nov 17 10:46:35 UTC 2025
