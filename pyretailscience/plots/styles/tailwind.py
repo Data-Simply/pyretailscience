@@ -11,6 +11,7 @@ https://raw.githubusercontent.com/tailwindlabs/tailwindcss/a1e74f055b13a7ef5775b
 from collections.abc import Generator
 from itertools import cycle
 
+import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 COLORS = {
@@ -384,50 +385,86 @@ def get_base_cmap() -> ListedColormap:
 
 
 def get_single_color_cmap() -> Generator[str, None, None]:
-    """Returns a generator for Tailwind green shades.
+    """Returns a generator for monochromatic palette colors from options.
 
     Returns:
-        Generator: A generator yielding green shades in a looping fashion.
+        Generator: A generator yielding colors in a looping fashion.
     """
-    color_numbers = [500, 300, 700]
-    return cycle([COLORS["green"][shade] for shade in color_numbers])
+    from pyretailscience.options import get_option
+
+    return cycle(get_option("plot.color.mono_palette"))
 
 
 def get_multi_color_cmap() -> Generator[str, None, None]:
-    """Returns a generator for multiple Tailwind colors and shades.
+    """Returns a generator for multi-color palette from options.
 
     Returns:
-        Generator: A generator yielding the required colors in a looping fashion.
+        Generator: A generator yielding colors in a looping fashion.
     """
-    color_order = ["green", "blue", "red", "orange", "yellow", "violet", "pink"]
-    color_numbers = [500, 300, 700]
+    from pyretailscience.options import get_option
 
-    return cycle([COLORS[color][color_number] for color_number in color_numbers for color in color_order])
+    return cycle(get_option("plot.color.multi_color_palette"))
 
 
 def get_plot_colors(num_series: int) -> list[str]:
     """Get appropriate colors for the given number of series.
 
-    Automatically selects between single-color (monochromatic) and multi-color
-    palettes based on the number of series requested.
+    Automatically selects between monochromatic and multi-color palettes based on
+    the number of series requested and the length of the monochromatic palette.
 
     Args:
         num_series: Number of series/groups being plotted
 
     Returns:
-        List of color hex strings
+        List of hex color strings
 
     Examples:
-        >>> get_plot_colors(2)  # Returns 2 colors from green palette
+        >>> get_plot_colors(2)  # Returns 2 colors from mono palette
         ['#22c55e', '#86efac']
 
         >>> get_plot_colors(5)  # Returns 5 colors from multi-color palette
         ['#22c55e', '#3b82f6', '#ef4444', '#f97316', '#eab308']
     """
-    threshold = 4
+    from pyretailscience.options import get_option
 
-    color_gen = get_single_color_cmap() if num_series < threshold else get_multi_color_cmap()
-    return [next(color_gen) for _ in range(num_series)]
+    mono_palette = get_option("plot.color.mono_palette")
+    multi_palette = get_option("plot.color.multi_color_palette")
+
+    if num_series <= len(mono_palette):
+        # Use monochromatic palette (no cycling needed - we have enough colors)
+        return mono_palette[:num_series]
+
+    # Use multi-color palette (cycle if needed)
+    return [multi_palette[i % len(multi_palette)] for i in range(num_series)]
+
+
+def get_named_color(color_type: str) -> str:
+    """Get a named color from options.
+
+    Args:
+        color_type: One of 'positive', 'negative', 'neutral', 'context', 'primary'
+
+    Returns:
+        Hex color string
+    """
+    from pyretailscience.options import get_option
+
+    return get_option(f"plot.color.{color_type}")
+
+
+def get_heatmap_cmap() -> ListedColormap | LinearSegmentedColormap:
+    """Get heatmap colormap from options.
+
+    Supports both Tailwind color names (e.g., 'green', 'blue') and
+    matplotlib colormap names (e.g., 'Greens', 'viridis').
+
+    Returns:
+        Matplotlib colormap object
+    """
+    from pyretailscience.options import get_option
+
+    cmap_name = get_option("plot.color.heatmap")
+    return get_listed_cmap(cmap_name) if cmap_name in COLORS else plt.get_cmap(cmap_name)
 
 
 slate_cmap = get_listed_cmap("slate")

@@ -31,6 +31,9 @@ class Options:
 
     def __init__(self) -> None:
         """Initializes the options with default values."""
+        # Import COLORS here to avoid circular imports
+        from pyretailscience.plots.styles.tailwind import COLORS
+
         self._options: dict[str, OptionTypes] = {
             # Database columns
             "column.customer_id": "customer_id",
@@ -74,6 +77,23 @@ class Options:
             "column.suffix.period_2": "p2",
             "column.suffix.unknown_customer": "unknown",
             "column.suffix.total": "total",
+            # Color palettes
+            "plot.color.mono_palette": [
+                COLORS["green"][500],
+                COLORS["green"][300],
+                COLORS["green"][700],
+            ],
+            "plot.color.multi_color_palette": [
+                COLORS[color][shade]
+                for shade in [500, 300, 700]
+                for color in ["green", "blue", "red", "orange", "yellow", "violet", "pink"]
+            ],
+            "plot.color.positive": COLORS["green"][500],
+            "plot.color.negative": COLORS["red"][500],
+            "plot.color.neutral": COLORS["blue"][500],
+            "plot.color.context": COLORS["gray"][400],
+            "plot.color.primary": COLORS["green"][500],
+            "plot.color.heatmap": "green",
         }
         self._descriptions: dict[str, str] = {
             # Database columns
@@ -137,6 +157,15 @@ class Options:
             ),
             "column.suffix.unknown_customer": "The suffix to use for unknown customer columns.",
             "column.suffix.total": "The suffix to use for total columns.",
+            # Color options
+            "plot.color.mono_palette": "Monochromatic palette for plots with few series (default: 3 green shades). Set to [] to disable.",
+            "plot.color.multi_color_palette": "Multi-color palette for plots with many series (default: 21 Tailwind colors)",
+            "plot.color.positive": "Color for positive values (e.g., gains, increases)",
+            "plot.color.negative": "Color for negative values (e.g., losses, decreases)",
+            "plot.color.neutral": "Color for neutral values (e.g., net amounts)",
+            "plot.color.context": "Color for de-emphasized context lines",
+            "plot.color.primary": "Default color for single-series plots",
+            "plot.color.heatmap": "Tailwind color name (e.g., 'green', 'blue') or matplotlib colormap name (e.g., 'Greens', 'viridis') for heatmaps",
         }
         self._default_options: dict[str, OptionTypes] = self._options.copy()
 

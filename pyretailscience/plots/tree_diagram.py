@@ -14,7 +14,7 @@ from matplotlib.axes import Axes
 from matplotlib.path import Path
 
 from pyretailscience.plots.styles.styling_context import get_styling_context
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.styles.tailwind import get_named_color
 
 
 class BaseRoundedBox(mpatches.PathPatch):
@@ -216,10 +216,10 @@ class SimpleTreeNode(TreeNode):
 
         """
         if percent_change >= SimpleTreeNode.GREEN_THRESHOLD:
-            return COLORS["green"][500]
+            return get_named_color("positive")
         if percent_change <= SimpleTreeNode.RED_THRESHOLD:
-            return COLORS["red"][500]
-        return COLORS["gray"][500]
+            return get_named_color("negative")
+        return get_named_color("neutral")
 
     def render(self, ax: Axes) -> None:
         """Render the node on the given axes.
@@ -237,7 +237,7 @@ class SimpleTreeNode(TreeNode):
         # Styling constants
         corner_radius = 0.15
         header_height_ratio = 0.4
-        header_color = COLORS["blue"][800]  # "#1E3A8A"
+        header_color = get_named_color("primary")  # Default primary color
         text_color = "white"
         value_vertical_offset = 0.175
 
@@ -593,10 +593,10 @@ class DetailedTreeNode(TreeNode):
 
         """
         if percent_change >= DetailedTreeNode.GREEN_THRESHOLD:
-            return COLORS["green"][500]
+            return get_named_color("positive")
         if percent_change <= DetailedTreeNode.RED_THRESHOLD:
-            return COLORS["red"][500]
-        return COLORS["gray"][500]
+            return get_named_color("negative")
+        return get_named_color("neutral")
 
     def render(self, ax: Axes) -> None:
         """Render the detailed node on the given axes.
@@ -618,9 +618,9 @@ class DetailedTreeNode(TreeNode):
         header_color = self._get_color(percent)
         header_text_color = "white"
         data_bg_color = "white"
-        data_text_color = COLORS["gray"][600]  # Dark gray for better readability
-        label_color = COLORS["gray"][500]  # Medium gray for labels
-        border_color = COLORS["gray"][200]  # Light gray for borders
+        data_text_color = get_named_color("context")  # Dark gray for better readability
+        label_color = get_named_color("context")  # Medium gray for labels
+        border_color = get_named_color("context")  # Light gray for borders
 
         styling_context = get_styling_context()
 
