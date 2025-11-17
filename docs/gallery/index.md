@@ -175,24 +175,25 @@ use a consistent API and come pre-styled with retail-friendly color schemes and 
     </div>
   </a>
 
-</div>
+  <a href="plots/index_plot/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Index Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/index_thumbnail.png" alt="Index Plot">
+    </div>
+  </a>
 
-### Coming Soon
+  <a href="plots/scatter/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Scatter Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/scatter_thumbnail.png" alt="Scatter Plot">
+    </div>
+  </a>
 
-<div class="glr-gallery">
+  <a href="plots/price/" class="glr-thumbcontainer">
+    <div class="glr-thumb-title">Price Plot</div>
+    <div class="glr-thumb">
+      <img src="../assets/gallery/price_thumbnail.png" alt="Price Plot">
+    </div>
+  </a>
 
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Scatter Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Index Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
-
-  <div class="glr-thumbcontainer coming-soon-container">
-    <div class="coming-soon-title">Price Plot</div>
-    <div class="coming-soon-thumb">Preview</div>
-  </div>
 </div>

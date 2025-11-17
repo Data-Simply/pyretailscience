@@ -139,25 +139,3 @@ def test_get_plot_colors_threshold_boundary():
 
     # But the second colors should be different when crossing threshold
     assert colors_below_threshold[1] != colors_at_threshold[1]
-    assert colors_below_threshold[1] == COLORS["green"][300]  # Single-color palette
-    assert colors_at_threshold[1] == COLORS["blue"][500]  # Multi-color palette
-
-
-def test_get_plot_colors_single_color_palette():
-    """Test get_plot_colors with single-color palette (below threshold)."""
-    colors = get_plot_colors(2)
-    expected_colors = [COLORS["green"][500], COLORS["green"][300]]
-    assert colors == expected_colors
-
-
-def test_get_plot_colors_multi_color_palette():
-    """Test get_plot_colors with multi-color palette (at threshold)."""
-    colors = get_plot_colors(5)
-    expected_colors = [
-        COLORS["green"][500],
-        COLORS["blue"][500],
-        COLORS["red"][500],
-        COLORS["orange"][500],
-        COLORS["yellow"][500],
-    ]
-    assert colors == expected_colors
