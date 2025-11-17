@@ -328,7 +328,7 @@ class SimpleTreeNode(TreeNode):
 
 
 class TreeGrid:
-    """Grid-based tree diagram renderer with configurable node types."""
+    """Grid-based tree diagram renderer with automatic layout using Reingold-Tilford algorithm."""
 
     # Connection styling constants
     CONNECTION_CURVE_RADIUS = 0.15
@@ -338,36 +338,26 @@ class TreeGrid:
     def __init__(
         self,
         tree_structure: dict[str, dict],
-        num_rows: int,
-        num_cols: int,
         node_class: type[TreeNode],
         vertical_spacing: float | None = None,
         horizontal_spacing: float | None = None,
+        grid_spacing: int = 2,
     ) -> None:
-        """Initialize the tree grid.
+        """Initialize the tree grid with automatic layout.
 
         Args:
-            tree_structure: Dictionary mapping node IDs to node data with required keys
-                depending on the node_class being used.
-            num_rows: Number of rows in the grid.
-            num_cols: Number of columns in the grid.
+            tree_structure: Dictionary mapping node IDs to node data. Each node must include a
+                'children' key (list[str]) listing child node IDs. Use empty list for leaf nodes.
             node_class: The TreeNode subclass to use for rendering nodes.
-            vertical_spacing: Vertical spacing between rows. If None, automatically calculated as
-                node_height + 0.6 gap.
-            horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
-                node_width - 1.0 overlap for compact layout.
+            vertical_spacing: Vertical spacing between rows. If None, automatically calculated.
+            horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated.
+            grid_spacing: Minimum spacing between sibling nodes. Default is 2.
 
         Raises:
-            ValueError: If grid dimensions are not positive, if tree_structure is empty,
-                or if node positions are out of bounds.
+            ValueError: If tree_structure is empty.
             TypeError: If node_class is not a TreeNode subclass.
 
         """
-        # Validate grid dimensions
-        if num_rows <= 0 or num_cols <= 0:
-            error_msg = f"Grid dimensions must be positive: num_rows={num_rows}, num_cols={num_cols}"
-            raise ValueError(error_msg)
-
         # Validate node_class is a TreeNode subclass
         if not issubclass(node_class, TreeNode):
             error_msg = f"node_class must be a TreeNode subclass, got {node_class}"
@@ -378,36 +368,154 @@ class TreeGrid:
             raise ValueError("tree_structure cannot be empty")
 
         self.tree_structure = tree_structure
-        self.num_rows = num_rows
-        self.num_cols = num_cols
         self.node_class = node_class
+        self.grid_spacing = grid_spacing
 
         # Get node dimensions from the node class
-        self.node_width = node_class.NODE_WIDTH
-        self.node_height = node_class.NODE_HEIGHT
+        node_width = node_class.NODE_WIDTH
+        node_height = node_class.NODE_HEIGHT
 
         # Auto-calculate spacing if not provided
-        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
-        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width - 1.0
+        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else node_height + 0.8
+        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else node_width * 1.1
 
-        # Validate positions are within grid bounds
-        for node_id, node_data in tree_structure.items():
-            if "position" not in node_data:
-                error_msg = f"Node '{node_id}' is missing required 'position' key"
-                raise ValueError(error_msg)
+        # Compute positions using Reingold-Tilford algorithm
+        self._positions, num_rows, num_cols = self._compute_positions()
 
-            col_idx, row_idx = node_data["position"]
-            if not (0 <= col_idx < num_cols):
-                error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
-                raise ValueError(error_msg)
-            if not (0 <= row_idx < num_rows):
-                error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
-                raise ValueError(error_msg)
-
-        # Generate row and column positions
-        # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
+        # Generate row positions (row 0 at top, increasing downward)
         self.row = {i: (num_rows - 1 - i) * self.vertical_spacing for i in range(num_rows)}
-        self.col = {i: i * self.horizontal_spacing for i in range(num_cols)}
+
+    def _compute_positions(self) -> tuple[dict[str, tuple[float, int]], int, int]:  # noqa: C901
+        """Compute node positions using Reingold-Tilford algorithm.
+
+        The Reingold-Tilford algorithm produces aesthetically pleasing tree layouts with:
+        - Parents centered over their children
+        - Compact subtrees with minimal width
+        - Consistent depth for all nodes at the same level
+
+        Returns:
+            positions: Mapping of node_id -> (x_position, depth) where x is float for centering
+            num_rows: Total number of levels in the tree
+            max_width: Maximum width of the tree
+
+        """
+        from collections import deque
+
+        # Build parent-child relationships
+        children_map: dict[str, list[str]] = {}
+        referenced_as_child: set[str] = set()
+        for node_id, node_data in self.tree_structure.items():
+            children = node_data.get("children", []) or []
+            children_map[node_id] = list(children)
+            for c in children:
+                referenced_as_child.add(c)
+
+        # Find root nodes (never referenced as children)
+        roots = [nid for nid in self.tree_structure if nid not in referenced_as_child]
+        if not roots:
+            # Fallback: use first node as root
+            roots = [sorted(self.tree_structure.keys())[0]]
+
+        # Assign depths using BFS
+        depths: dict[str, int] = {}
+        queue: deque[tuple[str, int]] = deque()
+        for r in roots:
+            queue.append((r, 0))
+        visited: set[str] = set()
+
+        while queue:
+            nid, depth = queue.popleft()
+            if nid in visited:
+                continue
+            visited.add(nid)
+            depths[nid] = depth
+            for child in children_map.get(nid, []):
+                queue.append((child, depth + 1))
+
+        num_rows = max(depths.values()) + 1 if depths else 1
+
+        # Reingold-Tilford algorithm
+        # Step 1: Post-order traversal - assign preliminary x-coordinates
+        prelim_x: dict[str, float] = {}
+        modifier: dict[str, float] = {}
+
+        def first_walk(node_id: str) -> None:
+            """Post-order traversal to assign preliminary x-coordinates."""
+            children = children_map.get(node_id, [])
+
+            if not children:
+                # Leaf node - check if it has a left sibling
+                parent = self._find_parent(node_id, children_map)
+                if parent:
+                    siblings = children_map[parent]
+                    left_sibling_idx = siblings.index(node_id) - 1 if node_id in siblings else -1
+                    if left_sibling_idx >= 0:
+                        left_sibling = siblings[left_sibling_idx]
+                        prelim_x[node_id] = prelim_x.get(left_sibling, 0) + self.grid_spacing
+                    else:
+                        prelim_x[node_id] = 0
+                else:
+                    prelim_x[node_id] = 0
+                modifier[node_id] = 0
+            else:
+                # Process children first
+                for child in children:
+                    first_walk(child)
+
+                # Center parent over children
+                leftmost = prelim_x[children[0]]
+                rightmost = prelim_x[children[-1]]
+                mid = (leftmost + rightmost) / 2
+
+                # Check for left sibling
+                parent = self._find_parent(node_id, children_map)
+                if parent:
+                    siblings = children_map[parent]
+                    left_sibling_idx = siblings.index(node_id) - 1 if node_id in siblings else -1
+                    if left_sibling_idx >= 0:
+                        left_sibling = siblings[left_sibling_idx]
+                        prelim_x[node_id] = prelim_x.get(left_sibling, 0) + self.grid_spacing
+                        modifier[node_id] = prelim_x[node_id] - mid
+                    else:
+                        prelim_x[node_id] = mid
+                        modifier[node_id] = 0
+                else:
+                    prelim_x[node_id] = mid
+                    modifier[node_id] = 0
+
+        # Step 2: Pre-order traversal - compute final x-coordinates
+        final_x: dict[str, float] = {}
+
+        def second_walk(node_id: str, modsum: float) -> None:
+            """Pre-order traversal to compute final x-coordinates."""
+            final_x[node_id] = prelim_x.get(node_id, 0) + modsum
+            for child in children_map.get(node_id, []):
+                second_walk(child, modsum + modifier.get(node_id, 0))
+
+        # Execute algorithm for each root
+        for root in roots:
+            first_walk(root)
+            second_walk(root, 0)
+
+        # Normalize x-coordinates to start at 0
+        if final_x:
+            min_x = min(final_x.values())
+            final_x = {k: v - min_x for k, v in final_x.items()}
+
+        # Build positions dict
+        positions = {node_id: (final_x.get(node_id, 0.0), depths.get(node_id, 0)) for node_id in self.tree_structure}
+
+        # Calculate max width
+        max_width = int(max(final_x.values())) + 1 if final_x else 1
+
+        return positions, num_rows, max_width
+
+    def _find_parent(self, node_id: str, children_map: dict[str, list[str]]) -> str | None:
+        """Find the parent of a given node."""
+        for parent_id, children in children_map.items():
+            if node_id in children:
+                return parent_id
+        return None
 
     def render(self, ax: Axes | None = None) -> Axes:
         """Render the tree diagram.
@@ -421,9 +529,10 @@ class TreeGrid:
         """
         if ax is None:
             # Calculate plot dimensions based on layout
-            plot_width = self.col[self.num_cols - 1] + self.node_width
+            max_x = max(x_pos * self.horizontal_spacing for x_pos, _ in self._positions.values())
+            plot_width = max_x + self.node_class.NODE_WIDTH
             # Row 0 is at the top with the highest y-value after coordinate inversion
-            plot_height = self.row[0] + self.node_height
+            plot_height = self.row[0] + self.node_class.NODE_HEIGHT
 
             _, ax = plt.subplots(figsize=(plot_width, plot_height))
             ax.set_xlim(0, plot_width)
@@ -433,13 +542,13 @@ class TreeGrid:
         # First pass: create all nodes and store their centers
         node_centers = {}
         for node_id, node_data in self.tree_structure.items():
-            # Convert grid coordinates to absolute positions
-            col_idx, row_idx = node_data["position"]
-            x = self.col[col_idx]
-            y = self.row[row_idx]
+            # Get computed position from auto-layout
+            x_pos, depth = self._positions[node_id]
+            x = x_pos * self.horizontal_spacing
+            y = self.row[depth]
 
-            # Extract data for the node (exclude position and children which are structural)
-            data_dict = {k: v for k, v in node_data.items() if k not in ("position", "children")}
+            # Extract data for the node (exclude children which is structural)
+            data_dict = {k: v for k, v in node_data.items() if k != "children"}
 
             # Create and render the node
             node = self.node_class(
@@ -451,9 +560,9 @@ class TreeGrid:
 
             # Store center positions for connections
             node_centers[node_id] = {
-                "x": x + self.node_width / 2,
+                "x": x + self.node_class.NODE_WIDTH / 2,
                 "y_bottom": y,
-                "y_top": y + self.node_height,
+                "y_top": y + self.node_class.NODE_HEIGHT,
             }
 
         # Second pass: draw connections

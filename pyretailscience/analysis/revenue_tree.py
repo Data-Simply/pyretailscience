@@ -450,7 +450,6 @@ class RevenueTree:
                 # Contribution omitted for root node (would be same as diff)
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (1, 0),
                 "children": ["customers", "spend_per_customer"],
             },
             "customers": {
@@ -462,7 +461,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.agg.customer_id_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (0, 1),
                 "children": [],
             },
             "spend_per_customer": {
@@ -474,7 +472,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.spend_per_cust_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (2, 1),
                 "children": ["visits_per_customer", "spend_per_visit"],
             },
             "visits_per_customer": {
@@ -486,7 +483,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.trans_per_cust_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (1, 2),
                 "children": [],
             },
             "spend_per_visit": {
@@ -498,19 +494,13 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.spend_per_trans_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (3, 2),
                 "children": [],
             },
         }
 
-        grid_rows = 3
-        grid_cols = 4
-
         # Add quantity-related nodes if data is available
         has_quantity = cols.agg.unit_qty_p1 in graph_data
         if has_quantity:
-            grid_rows = 4
-            grid_cols = 5
             tree_structure["spend_per_visit"]["children"] = ["units_per_visit", "price_per_unit"]
             tree_structure["units_per_visit"] = {
                 "header": units_per_transaction_label,
@@ -521,7 +511,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.units_per_trans_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (2, 3),
                 "children": [],
             }
             tree_structure["price_per_unit"] = {
@@ -533,15 +522,12 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.price_per_unit_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (4, 3),
                 "children": [],
             }
 
-        # Create and render the tree grid
+        # Create and render the tree grid with automatic Reingold-Tilford layout
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=grid_rows,
-            num_cols=grid_cols,
             node_class=DetailedTreeNode,
         )
 

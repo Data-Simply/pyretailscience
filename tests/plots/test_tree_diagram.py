@@ -310,7 +310,7 @@ class TestTreeGrid:
     """Test the TreeGrid class."""
 
     def test_complete_tree_rendering(self):
-        """Test rendering a complete 5-node tree with connections."""
+        """Test rendering a complete 5-node tree with connections using auto-layout."""
         # Create a 5-node tree: root with 2 children, each with 1 child
         tree_structure = {
             "root": {
@@ -318,7 +318,6 @@ class TestTreeGrid:
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (1, 2),
                 "children": ["child1", "child2"],
             },
             "child1": {
@@ -326,7 +325,6 @@ class TestTreeGrid:
                 "percent": 3.0,
                 "value1": "$50K",
                 "value2": "$48.5K",
-                "position": (0, 1),
                 "children": ["grandchild1"],
             },
             "child2": {
@@ -334,7 +332,6 @@ class TestTreeGrid:
                 "percent": 7.0,
                 "value1": "$50K",
                 "value2": "$46.5K",
-                "position": (2, 1),
                 "children": ["grandchild2"],
             },
             "grandchild1": {
@@ -342,7 +339,6 @@ class TestTreeGrid:
                 "percent": 2.0,
                 "value1": "$25K",
                 "value2": "$24.5K",
-                "position": (0, 0),
                 "children": [],
             },
             "grandchild2": {
@@ -350,15 +346,12 @@ class TestTreeGrid:
                 "percent": 4.0,
                 "value1": "$25K",
                 "value2": "$24K",
-                "position": (2, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=3,
-            num_cols=3,
             node_class=SimpleTreeNode,
         )
 
@@ -379,15 +372,12 @@ class TestTreeGrid:
                 "percent": 1.0,
                 "value1": "$10K",
                 "value2": "$9.9K",
-                "position": (0, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
@@ -395,22 +385,19 @@ class TestTreeGrid:
         assert returned_ax is ax
 
     def test_single_node_tree(self):
-        """Test rendering a single node tree with no connections."""
+        """Test rendering a single node tree with no connections using auto-layout."""
         tree_structure = {
             "root": {
                 "header": "Root",
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (0, 0),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
@@ -421,14 +408,13 @@ class TestTreeGrid:
         assert len(ax.patches) == patches_per_node
 
     def test_wide_tree(self):
-        """Test rendering a wide tree with 1 parent and 5 children."""
+        """Test rendering a wide tree with 1 parent and 5 children using auto-layout."""
         tree_structure = {
             "parent": {
                 "header": "Parent",
                 "percent": 5.0,
                 "value1": "$100K",
                 "value2": "$95K",
-                "position": (2, 1),
                 "children": ["child0", "child1", "child2", "child3", "child4"],
             },
         }
@@ -440,14 +426,11 @@ class TestTreeGrid:
                 "percent": 2.0,
                 "value1": "$20K",
                 "value2": "$19.6K",
-                "position": (i, 0),
                 "children": [],
             }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=2,
-            num_cols=5,
             node_class=SimpleTreeNode,
         )
 
@@ -468,51 +451,17 @@ class TestTreeGrid:
                 "percent": 15.3,
                 "value1": "£1.2M",
                 "value2": "£1.04M",
-                "position": (0, 0),
                 "children": ["nonexistent_child"],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=1,
-            num_cols=1,
             node_class=SimpleTreeNode,
         )
 
         with pytest.raises(ValueError, match="not found in tree_structure"):
             grid.render()
-
-    def test_invalid_grid_dimensions(self):
-        """Test that invalid grid dimensions raise ValueError."""
-        tree_structure = {
-            "total_revenue": {
-                "header": "Total Revenue",
-                "percent": 8.5,
-                "value1": "£850K",
-                "value2": "£784K",
-                "position": (0, 0),
-                "children": [],
-            },
-        }
-
-        # Test negative rows
-        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=-1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
-
-        # Test zero columns
-        with pytest.raises(ValueError, match="Grid dimensions must be positive"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=0,
-                node_class=SimpleTreeNode,
-            )
 
     def test_invalid_node_class(self):
         """Test that invalid node_class raises TypeError."""
@@ -522,7 +471,6 @@ class TestTreeGrid:
                 "percent": 12.4,
                 "value1": "25,450",
                 "value2": "22,640",
-                "position": (0, 0),
                 "children": [],
             },
         }
@@ -530,8 +478,6 @@ class TestTreeGrid:
         with pytest.raises(TypeError, match="must be a TreeNode subclass"):
             TreeGrid(
                 tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
                 node_class=str,  # Not a TreeNode subclass
             )
 
@@ -540,73 +486,32 @@ class TestTreeGrid:
         with pytest.raises(ValueError, match="tree_structure cannot be empty"):
             TreeGrid(
                 tree_structure={},
-                num_rows=1,
-                num_cols=1,
                 node_class=SimpleTreeNode,
             )
 
-    def test_missing_position_key(self):
-        """Test that missing position key raises ValueError."""
+    def test_missing_children_key_defaults_to_leaf(self):
+        """Test that missing children key is treated as empty list (leaf node)."""
         tree_structure = {
             "avg_basket": {
                 "header": "Average Basket Value",
                 "percent": 6.2,
                 "value1": "£45.80",
                 "value2": "£43.12",
-                # Missing 'position' key
-                "children": [],
+                # Missing 'children' key - should be treated as leaf node with empty children list
             },
         }
 
-        with pytest.raises(ValueError, match="missing required 'position' key"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        # Should not raise an error - missing children defaults to empty list
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
 
-    def test_out_of_bounds_position(self):
-        """Test that out of bounds positions raise ValueError."""
-        # Test column out of bounds (trying to use column 1 when only column 0 exists)
-        tree_structure = {
-            "transaction_freq": {
-                "header": "Transaction Frequency",
-                "percent": 4.8,
-                "value1": "3.2",
-                "value2": "3.05",
-                "position": (1, 0),  # Column 1 is out of bounds for 1 column grid (0-indexed)
-                "children": [],
-            },
-        }
+        ax = grid.render()
 
-        with pytest.raises(ValueError, match="column index .* is out of bounds"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
-
-        # Test row out of bounds (trying to use row 1 when only row 0 exists)
-        tree_structure = {
-            "items_per_basket": {
-                "header": "Items per Basket",
-                "percent": -2.3,
-                "value1": "4.8",
-                "value2": "4.9",
-                "position": (0, 1),  # Row 1 is out of bounds for 1 row grid (0-indexed)
-                "children": [],
-            },
-        }
-
-        with pytest.raises(ValueError, match="row index .* is out of bounds"):
-            TreeGrid(
-                tree_structure=tree_structure,
-                num_rows=1,
-                num_cols=1,
-                node_class=SimpleTreeNode,
-            )
+        # 1 node * 2 patches = 2 patches, no connection lines
+        patches_per_node = 2
+        assert len(ax.patches) == patches_per_node
 
 
 class TestDetailedTreeNode:
@@ -746,11 +651,208 @@ class TestDetailedTreeNode:
             node.render(ax)
 
 
+class TestTreeGridLayout:
+    """Test Reingold-Tilford layout algorithm."""
+
+    def test_single_root_position(self):
+        """Test that a single root node is positioned at (0, 0)."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        # Single root should be at x=0, depth=0
+        assert grid._positions["root"] == (0.0, 0)
+
+    def test_parent_centered_over_two_children(self):
+        """Test that parent is centered over two children."""
+        tree_structure = {
+            "parent": {
+                "header": "Parent",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["left", "right"],
+            },
+            "left": {
+                "header": "Left",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": [],
+            },
+            "right": {
+                "header": "Right",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            grid_spacing=2,
+        )
+
+        # Children should be at x=0 and x=2
+        assert grid._positions["left"] == (0.0, 1)
+        assert grid._positions["right"] == (2.0, 1)
+
+        # Parent should be centered at x=1 (midpoint of 0 and 2)
+        assert grid._positions["parent"] == (1.0, 0)
+
+    def test_sibling_spacing(self):
+        """Test that siblings are spaced according to grid_spacing."""
+        tree_structure = {
+            "parent": {
+                "header": "Parent",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["child1", "child2", "child3"],
+            },
+        }
+
+        for i in range(1, 4):
+            tree_structure[f"child{i}"] = {
+                "header": f"Child {i}",
+                "percent": 2.0,
+                "value1": "$20K",
+                "value2": "$19.6K",
+                "children": [],
+            }
+
+        grid_spacing = 3
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            grid_spacing=grid_spacing,
+        )
+
+        # Children should be spaced grid_spacing apart
+        assert grid._positions["child1"] == (0.0, 1)
+        assert grid._positions["child2"] == (3.0, 1)
+        assert grid._positions["child3"] == (6.0, 1)
+
+        # Parent should be centered at x=3 (midpoint of 0 and 6)
+        assert grid._positions["parent"] == (3.0, 0)
+
+    def test_deep_tree_depths(self):
+        """Test that depths are correctly assigned in a multi-level tree."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["level1_a"],
+            },
+            "level1_a": {
+                "header": "Level 1A",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": ["level2_a"],
+            },
+            "level2_a": {
+                "header": "Level 2A",
+                "percent": 2.0,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": ["level3_a"],
+            },
+            "level3_a": {
+                "header": "Level 3A",
+                "percent": 1.0,
+                "value1": "$12.5K",
+                "value2": "$12.4K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        # Verify depths increase correctly
+        assert grid._positions["root"][1] == 0
+        assert grid._positions["level1_a"][1] == 1
+        assert grid._positions["level2_a"][1] == 2  # noqa: PLR2004
+        assert grid._positions["level3_a"][1] == 3  # noqa: PLR2004
+
+    def test_asymmetric_tree_layout(self):
+        """Test layout of an asymmetric tree where one branch is deeper than another."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["left_branch", "right_leaf"],
+            },
+            "left_branch": {
+                "header": "Left Branch",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": ["deep_leaf"],
+            },
+            "deep_leaf": {
+                "header": "Deep Leaf",
+                "percent": 2.0,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": [],
+            },
+            "right_leaf": {
+                "header": "Right Leaf",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            grid_spacing=2,
+        )
+
+        # Verify depths
+        assert grid._positions["root"][1] == 0
+        assert grid._positions["left_branch"][1] == 1
+        assert grid._positions["right_leaf"][1] == 1
+        assert grid._positions["deep_leaf"][1] == 2  # noqa: PLR2004
+
+        # Verify x positions - left branch should be at 0, right at grid_spacing
+        # deep_leaf should be at 0 (under left_branch)
+        # left_branch should be at 0 (centered over deep_leaf)
+        assert grid._positions["deep_leaf"][0] == 0.0
+        assert grid._positions["left_branch"][0] == 0.0
+        assert grid._positions["right_leaf"][0] == 2.0  # noqa: PLR2004
+        # Root should be centered over children at x=0 and x=2, so x=1
+        assert grid._positions["root"][0] == 1.0
+
+
 class TestDetailedTreeNodeIntegration:
     """Integration tests for DetailedTreeNode with TreeGrid."""
 
     def test_tree_with_detailed_nodes(self):
-        """Test rendering a complete tree with DetailedTreeNode instances."""
+        """Test rendering a complete tree with DetailedTreeNode instances using auto-layout."""
         tree_structure = {
             "revenue": {
                 "header": "Total Revenue",
@@ -759,7 +861,6 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "£1.04M",
                 "diff": "+£160K",
                 "contribution": "100%",
-                "position": (1, 2),
                 "children": ["customers", "avg_value"],
             },
             "customers": {
@@ -769,7 +870,6 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "9,200",
                 "diff": "-660",
                 "contribution": "35.8%",
-                "position": (0, 1),
                 "children": [],
             },
             "avg_value": {
@@ -779,15 +879,12 @@ class TestDetailedTreeNodeIntegration:
                 "previous_period": "£141.22",
                 "diff": "+£1.13",
                 "contribution": "64.2%",
-                "position": (2, 1),
                 "children": [],
             },
         }
 
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=3,
-            num_cols=3,
             node_class=DetailedTreeNode,
         )
 
