@@ -59,7 +59,9 @@ from pyretailscience.plots.styles.tailwind import COLORS
 
 __all__ = ["SegTransactionStats", "cube", "rollup"]
 
-# Maximum number of dimensions for CUBE mode before warning about exponential growth
+# Maximum number of dimensions for CUBE mode before warning about exponential growth.
+# CUBE generates 2^n grouping sets, so 6 dimensions = 64 sets (reasonable), but 7+ dimensions
+# = 128+ sets (potentially expensive). This threshold balances flexibility with performance awareness.
 MAX_CUBE_DIMENSIONS_WITHOUT_WARNING = 6
 
 
@@ -211,7 +213,7 @@ class SegTransactionStats:
         calc_rollup: bool | None = None,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
         unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
-        grouping_sets: (Literal["rollup", "cube"] | list[tuple[str, ...] | tuple[list | str, ...]] | None) = None,
+        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
 
@@ -527,6 +529,15 @@ class SegTransactionStats:
                 ("store", "date"),
                 ("date",)
             ]
+            >>>
+            >>> # Invalid: Multiple cube()/rollup() calls
+            >>> _flatten_item((cube("region"), rollup("store")))  # ValueError
+            >>>
+            >>> # Invalid: Mixed types (integers not allowed)
+            >>> _flatten_item((cube("region"), 123))  # TypeError
+            >>>
+            >>> # Invalid: Empty cube()/rollup() result
+            >>> _flatten_item(([],))  # ValueError
         """
         # Check if tuple contains a list (cube()/rollup() result)
         has_list = any(isinstance(elem, list) for elem in item)

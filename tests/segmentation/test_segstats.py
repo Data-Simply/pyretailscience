@@ -1562,6 +1562,11 @@ class TestComposableGroupingSets:
             (),  # Grand total
         }
 
+    def test_cube_function_warns_on_many_dimensions(self):
+        """Test cube() helper warns when using more than 6 dimensions."""
+        with pytest.warns(UserWarning, match="CUBE with 7 dimensions will generate 128 grouping sets"):
+            cube("region", "category", "brand", "channel", "store_type", "price_tier", "promotion")
+
     def test_rollup_function_returns_list(self):
         """Test rollup() helper returns list of tuples for hierarchical levels."""
         result = rollup("year", "quarter", "month")
@@ -1723,7 +1728,7 @@ class TestComposableGroupingSets:
             {
                 cols.customer_id: [1, 1, 2, 2, 3, 3, 4, 4],
                 cols.transaction_id: [101, 102, 103, 104, 105, 106, 107, 108],
-                "store": ["A", "A", "B", "B", "A", "A", "B", "B"],
+                "store": ["Store_A", "Store_A", "Store_B", "Store_B", "Store_A", "Store_A", "Store_B", "Store_B"],
                 "region": ["North", "North", "South", "South", "North", "North", "South", "South"],
                 "date": ["2024-01", "2024-01", "2024-01", "2024-01", "2024-02", "2024-02", "2024-02", "2024-02"],
                 cols.unit_spend: [100, 150, 200, 250, 300, 350, 400, 450],
@@ -1747,14 +1752,14 @@ class TestComposableGroupingSets:
         expected = pd.DataFrame(
             {
                 "store": [
-                    "A",
-                    "B",
-                    "A",
-                    "B",  # Full detail for 2024-01 and 2024-02
-                    "A",
-                    "B",
-                    "A",
-                    "B",  # Store totals by date
+                    "Store_A",
+                    "Store_B",
+                    "Store_A",
+                    "Store_B",  # Full detail for 2024-01 and 2024-02
+                    "Store_A",
+                    "Store_B",
+                    "Store_A",
+                    "Store_B",  # Store totals by date
                     "Total",
                     "Total",
                     "Total",
