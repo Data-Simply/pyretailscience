@@ -58,8 +58,8 @@ def _validate_size_col(df: pd.DataFrame, size_col: str | None) -> None:
     """Validate size_col parameter.
 
     Args:
-        df: DataFrame containing the data.
-        size_col: Column name containing values to determine point sizes.
+        df (pd.DataFrame): DataFrame containing the data.
+        size_col (str | None): Column name containing values to determine point sizes.
 
     Raises:
         KeyError: If size_col doesn't exist in DataFrame.
@@ -87,14 +87,14 @@ def _process_size_data(
     """Process size data for bubble charts.
 
     Args:
-        df: DataFrame containing the data.
-        size_col: Column name containing values to determine point sizes.
-        size_scale: Scaling factor for point sizes.
-        x_col: Column name for x-values. If None, uses index.
-        group_col: Column name for grouping. If None, treats as single series.
+        df (pd.DataFrame): DataFrame containing the data.
+        size_col (str | None): Column name containing values to determine point sizes.
+        size_scale (float): Scaling factor for point sizes.
+        x_col (str | None): Column name for x-values. If None, uses index.
+        group_col (str | None): Column name for grouping. If None, treats as single series.
 
     Returns:
-        Processed size data aligned with plot structure, or None if no size_col.
+        pd.DataFrame | pd.Series | None: Processed size data aligned with plot structure, or None if no size_col.
     """
     if size_col is None:
         return None
@@ -121,13 +121,13 @@ def _create_scatter_plot(
     """Create scatter plots for each column in pivot_df.
 
     Args:
-        ax: Matplotlib axes object to plot on.
-        pivot_df: DataFrame with pivoted data for plotting.
-        colors: List of colors for each column.
-        size_data: Processed size data for bubble charts.
-        group_col: Column name for grouping.
-        is_multi_scatter: Whether this is a multi-series scatter plot.
-        alpha: Alpha transparency value.
+        ax (Axes): Matplotlib axes object to plot on.
+        pivot_df (pd.DataFrame): DataFrame with pivoted data for plotting.
+        colors (list): List of colors for each column.
+        size_data (pd.DataFrame | pd.Series | None): Processed size data for bubble charts.
+        group_col (str | None): Column name for grouping.
+        is_multi_scatter (bool): Whether this is a multi-series scatter plot.
+        alpha (float): Alpha transparency value.
         **kwargs: Additional keyword arguments for matplotlib scatter function.
     """
     for col, color_val in zip(pivot_df.columns, colors, strict=False):
@@ -174,13 +174,13 @@ def _add_point_labels(
     """Add text labels to scatter plot points with automatic positioning.
 
     Args:
-        ax: Matplotlib axes object to add labels to.
-        df: DataFrame containing the data.
-        value_col: Column name for y-values.
-        label_col: Column name containing text labels.
-        x_col: Column name for x-values. If None, uses index.
-        group_col: Column name for grouping. If None, treats as single series.
-        label_kwargs: Additional arguments passed to textalloc.allocate().
+        ax (Axes): Matplotlib axes object to add labels to.
+        df (pd.DataFrame): DataFrame containing the data.
+        value_col (str): Column name for y-values.
+        label_col (str): Column name containing text labels.
+        x_col (str | None): Column name for x-values. If None, uses index.
+        group_col (str | None): Column name for grouping. If None, treats as single series.
+        label_kwargs (dict[str, any] | None): Additional arguments passed to textalloc.allocate().
     """
     # Get style configuration for label styling
     style = PlotStyleHelper()
