@@ -452,7 +452,7 @@ class SegTransactionStats:
 
     @staticmethod
     def _validate_grouping_sets_params(
-        grouping_sets: (Literal["rollup", "cube"] | list[tuple[str, ...] | tuple[list | str, ...]] | None),
+        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None,
         calc_total: bool | None,
         calc_rollup: bool | None,
     ) -> None:
