@@ -94,6 +94,31 @@ class Options:
             "plot.color.context": COLORS["gray"][400],
             "plot.color.primary": COLORS["green"][500],
             "plot.color.heatmap": "green",
+            # Plot font options
+            "plot.font.title_font": "poppins_semi_bold",
+            "plot.font.label_font": "poppins_regular",
+            "plot.font.tick_font": "poppins_regular",
+            "plot.font.source_font": "poppins_light_italic",
+            "plot.font.data_label_font": "poppins_regular",
+            "plot.font.title_size": 20.0,
+            "plot.font.label_size": 12.0,
+            "plot.font.tick_size": 10.0,
+            "plot.font.source_size": 10.0,
+            "plot.font.data_label_size": 8.0,
+            # Plot spacing options
+            "plot.spacing.title_pad": 10,
+            "plot.spacing.x_label_pad": 10,
+            "plot.spacing.y_label_pad": 10,
+            # Plot style options
+            "plot.style.background_color": "white",
+            "plot.style.grid_color": "#DAD8D7",
+            "plot.style.grid_alpha": 0.5,
+            "plot.style.show_top_spine": False,
+            "plot.style.show_right_spine": False,
+            "plot.style.show_bottom_spine": True,
+            "plot.style.show_left_spine": True,
+            "plot.style.legend_bbox_to_anchor": [1.05, 1.0],
+            "plot.style.legend_loc": "upper left",
         }
         self._descriptions: dict[str, str] = {
             # Database columns
@@ -167,6 +192,31 @@ class Options:
             "plot.color.context": "Color for de-emphasized context lines",
             "plot.color.primary": "Default color for single-series plots",
             "plot.color.heatmap": "Tailwind color name (e.g., 'green', 'blue') or matplotlib colormap name (e.g., 'Greens', 'viridis') for heatmaps",
+            # Plot font descriptions
+            "plot.font.title_font": "The font family to use for plot titles.",
+            "plot.font.label_font": "The font family to use for axis labels.",
+            "plot.font.tick_font": "The font family to use for axis tick labels.",
+            "plot.font.source_font": "The font family to use for source text.",
+            "plot.font.data_label_font": "The font family to use for data point labels.",
+            "plot.font.title_size": "The font size for plot titles (in points).",
+            "plot.font.label_size": "The font size for axis labels (in points).",
+            "plot.font.tick_size": "The font size for axis tick labels (in points).",
+            "plot.font.source_size": "The font size for source text (in points).",
+            "plot.font.data_label_size": "The font size for data point labels (in points).",
+            # Plot spacing descriptions
+            "plot.spacing.title_pad": "The padding above the title (in points).",
+            "plot.spacing.x_label_pad": "The padding below the x-axis label (in points).",
+            "plot.spacing.y_label_pad": "The padding to the left of the y-axis label (in points).",
+            # Plot style descriptions
+            "plot.style.background_color": "The background color of the plot area.",
+            "plot.style.grid_color": "The color of the grid lines.",
+            "plot.style.grid_alpha": "The transparency of the grid lines (0.0 to 1.0).",
+            "plot.style.show_top_spine": "Whether to show the top border of the plot.",
+            "plot.style.show_right_spine": "Whether to show the right border of the plot.",
+            "plot.style.show_bottom_spine": "Whether to show the bottom border of the plot.",
+            "plot.style.show_left_spine": "Whether to show the left border of the plot.",
+            "plot.style.legend_bbox_to_anchor": "The bounding box anchor for legend positioning when moved outside.",
+            "plot.style.legend_loc": "The location of the legend when moved outside the plot.",
         }
         self._default_options: dict[str, OptionTypes] = self._options.copy()
 

@@ -14,7 +14,7 @@ from matplotlib.axes import Axes
 from matplotlib.path import Path
 
 from pyretailscience.plots.styles.colors import get_named_color
-from pyretailscience.plots.styles.styling_context import get_styling_context
+from pyretailscience.plots.styles.font_utils import get_font_config, get_font_properties
 
 
 class BaseRoundedBox(mpatches.PathPatch):
@@ -246,11 +246,11 @@ class SimpleTreeNode(TreeNode):
         percent_text_x_fraction = 4 / 16
         value_text_x_fraction = 11 / 16
 
-        styling_context = get_styling_context()
+        font_config = get_font_config()
 
         # Get standard font properties
-        semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
-        regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+        semi_bold_font = get_font_properties(font_config["title_font"])
+        regular_font = get_font_properties(font_config["label_font"])
 
         # Determine color based on percent change
         color = self._get_color(percent)
@@ -290,7 +290,7 @@ class SimpleTreeNode(TreeNode):
             ha="center",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_config["label_size"],
             color=text_color,
         )
 
@@ -301,7 +301,7 @@ class SimpleTreeNode(TreeNode):
             ha="center",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.title_size,
+            fontsize=font_config["title_size"],
             color=text_color,
         )
 
@@ -312,7 +312,7 @@ class SimpleTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_config["label_size"],
             color=text_color,
         )
         ax.text(
@@ -322,7 +322,7 @@ class SimpleTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_config["label_size"],
             color=text_color,
         )
 
@@ -622,11 +622,11 @@ class DetailedTreeNode(TreeNode):
         label_color = get_named_color("context")  # Medium gray for labels
         border_color = get_named_color("context")  # Light gray for borders
 
-        styling_context = get_styling_context()
+        font_config = get_font_config()
 
         # Get standard font properties
-        semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
-        regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+        semi_bold_font = get_font_properties(font_config["title_font"])
+        regular_font = get_font_properties(font_config["label_font"])
 
         # Title section (colored header)
         title_section_height = self.NODE_HEIGHT * header_height_ratio
@@ -695,7 +695,7 @@ class DetailedTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=font_config["label_size"],
             color=header_text_color,
         )
 
@@ -750,7 +750,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=regular_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=font_config["tick_size"],
                 color=label_color,
             )
             # Period metric
@@ -761,7 +761,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=semi_bold_font,
-                fontsize=styling_context.fonts.label_size,
+                fontsize=font_config["label_size"],
                 color=data_text_color,
             )
 
@@ -796,7 +796,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=regular_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=font_config["tick_size"],
                 color=label_color,
             )
             # Metric on right
@@ -807,6 +807,6 @@ class DetailedTreeNode(TreeNode):
                 ha="right",
                 va="center",
                 fontproperties=semi_bold_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=font_config["tick_size"],
                 color=data_text_color,
             )

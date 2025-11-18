@@ -3,6 +3,7 @@
 import pytest
 from matplotlib import pyplot as plt
 
+from pyretailscience.options import get_option
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 
@@ -26,9 +27,12 @@ class TestPlotStyler:
         _, ax = fig_ax
         styler.apply_base_styling(ax)
 
-        assert ax.get_facecolor() == (1.0, 1.0, 1.0, 1)
+        # Test default style configuration
+        assert ax.get_facecolor() == (1.0, 1.0, 1.0, 1.0)  # white background
         assert not ax.spines["top"].get_visible()
         assert not ax.spines["right"].get_visible()
+        assert ax.spines["bottom"].get_visible()
+        assert ax.spines["left"].get_visible()
         assert ax.get_axisbelow()
 
     def test_apply_title(self, fig_ax, styler):
@@ -37,7 +41,7 @@ class TestPlotStyler:
         styler.apply_title(ax, "Test Title", pad=15)
 
         assert ax.get_title() == "Test Title"
-        assert ax.title.get_fontsize() == styler.context.fonts.title_size
+        assert ax.title.get_fontsize() == get_option("plot.font.title_size")
 
     @pytest.mark.parametrize(
         ("label_text", "axis", "get_label_func"),
@@ -53,7 +57,7 @@ class TestPlotStyler:
 
         assert get_label_func(ax) == label_text
         label_obj = ax.xaxis.label if axis == "x" else ax.yaxis.label
-        assert label_obj.get_fontsize() == styler.context.fonts.label_size
+        assert label_obj.get_fontsize() == get_option("plot.font.label_size")
 
     def test_apply_ticks(self, fig_ax, styler):
         """Test tick styling application."""
@@ -64,7 +68,7 @@ class TestPlotStyler:
         tick_labels = ax.get_xticklabels() + ax.get_yticklabels()
         assert len(tick_labels) > 0
         for label in tick_labels:
-            assert label.get_fontsize() == styler.context.fonts.tick_size
+            assert label.get_fontsize() == get_option("plot.font.tick_size")
 
     def test_apply_source_text(self, fig_ax, styler):
         """Test source text styling."""
@@ -73,7 +77,7 @@ class TestPlotStyler:
 
         assert source_text.get_text() == "Test Source"
         assert source_text.get_color() == "dimgray"
-        assert source_text.get_fontsize() == styler.context.fonts.source_size
+        assert source_text.get_fontsize() == get_option("plot.font.source_size")
 
     @pytest.mark.parametrize(
         ("outside", "expected_title"),

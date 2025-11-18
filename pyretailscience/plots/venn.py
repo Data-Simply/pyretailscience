@@ -32,6 +32,7 @@ from matplotlib_set_diagrams import EulerDiagram, VennDiagram
 
 from pyretailscience.plots.styles import graph_utils as gu
 from pyretailscience.plots.styles.colors import get_plot_colors
+from pyretailscience.plots.styles.font_utils import get_font_config, get_font_properties
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 MAX_SUPPORTED_SETS = 3
@@ -99,8 +100,8 @@ def plot(
     center_x, center_y, displacement = 0.5, 0.5, 0.1
     styler = PlotStyler()
     for text in diagram.set_label_artists:
-        text.set_fontproperties(styler.context.get_font_properties(styler.context.fonts.label_font))
-        text.set_fontsize(styler.context.fonts.label_size)
+        text.set_fontproperties(get_font_properties(get_font_config()["label_font"]))
+        text.set_fontsize(get_font_config()["label_size"])
         if num_sets == MAX_SUPPORTED_SETS and not vary_size:
             x, y = text.get_position()
             direction_x, direction_y = x - center_x, y - center_y
@@ -111,10 +112,10 @@ def plot(
         if subset_id not in diagram.subset_label_artists:
             continue
         text = diagram.subset_label_artists[subset_id]
-        text.set_fontproperties(styler.context.get_font_properties(styler.context.fonts.label_font))
+        text.set_fontproperties(get_font_properties(get_font_config()["label_font"]))
 
     if title:
-        styler.apply_title(ax, title, pad=styler.context.fonts.title_size + 20)
+        styler.apply_title(ax, title, pad=get_font_config()["title_size"] + 20)
 
     if source_text is not None:
         ax.set_xticklabels([], visible=False)

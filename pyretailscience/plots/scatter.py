@@ -40,7 +40,7 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.colors import get_plot_colors
-from pyretailscience.plots.styles.styling_context import get_styling_context
+from pyretailscience.plots.styles.font_utils import get_font_config
 
 
 def _add_point_labels(
@@ -63,8 +63,8 @@ def _add_point_labels(
         group_col: Column name for grouping. If None, treats as single series.
         label_kwargs: Additional arguments passed to textalloc.allocate().
     """
-    # Get styling context for font properties
-    styling_context = get_styling_context()
+    # Get font configuration for label styling
+    font_config = get_font_config()
 
     # Prepare data for labeling - drop rows with NaN in value_col, label_col, or x_col
     cols_to_check = [value_col, label_col]
@@ -90,7 +90,7 @@ def _add_point_labels(
     if len(all_x_coords) > 0 and len(all_y_coords) > 0 and len(all_labels) > 0:
         # Set default textalloc parameters
         allocate_kwargs = {
-            "textsize": styling_context.fonts.data_label_size,
+            "textsize": font_config["data_label_size"],
             "x_scatter": all_x_coords,
             "y_scatter": all_y_coords,
             "nbr_candidates": 50,  # More candidates for better positioning

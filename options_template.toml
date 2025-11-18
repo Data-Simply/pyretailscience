@@ -40,3 +40,38 @@ percent            = "pct"
 percent_difference = "pct_diff"
 period_1           = "p1"
 period_2           = "p2"
+
+# Plot Font Customization Options
+[plot.font]
+# Font family options: bundled fonts (poppins_regular, poppins_bold, poppins_semi_bold,
+# poppins_medium, poppins_light_italic) or system fonts (Arial, Times New Roman, etc.)
+data_label_font = "poppins_regular"
+label_font      = "poppins_regular"
+source_font     = "poppins_light_italic"
+tick_font       = "poppins_regular"
+title_font      = "poppins_semi_bold"
+
+# Font size options (in points)
+data_label_size = 8.0
+label_size      = 12.0
+source_size     = 10.0
+tick_size       = 10.0
+title_size      = 20.0
+
+# Plot Spacing & Padding Options
+[plot.spacing]
+title_pad   = 10 # Padding above title (in points)
+x_label_pad = 10 # Padding below x-axis label (in points)
+y_label_pad = 10 # Padding left of y-axis label (in points)
+
+# Plot Style Options
+[plot.style]
+background_color      = "white"       # Background color (matplotlib color names or hex)
+grid_alpha            = 0.5           # Grid transparency (0.0-1.0)
+grid_color            = "#DAD8D7"     # Grid line color
+legend_bbox_to_anchor = [ 1.0, 1.05 ] # Legend position when moved outside
+legend_loc            = "upper left"  # Legend location
+show_bottom_spine     = true          # Show bottom border
+show_left_spine       = true          # Show left border
+show_right_spine      = false         # Show right border
+show_top_spine        = false         # Show top border
