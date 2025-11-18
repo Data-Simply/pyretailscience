@@ -386,136 +386,123 @@ class TreeGrid:
         self.row = {i: (num_rows - 1 - i) * self.vertical_spacing for i in range(num_rows)}
 
     def _compute_positions(self) -> tuple[dict[str, tuple[float, int]], int, int]:  # noqa: C901
-        """Compute node positions using Reingold-Tilford algorithm.
+        """Compute node positions using adapted tree layout algorithm.
 
-        The Reingold-Tilford algorithm produces aesthetically pleasing tree layouts with:
-        - Parents centered over their children
-        - Compact subtrees with minimal width
-        - Consistent depth for all nodes at the same level
+        Uses a two-pass approach inspired by Reingold-Tilford:
+        - Post-order pass: Assign preliminary x-coordinates
+        - Pre-order pass: Apply modifiers for final coordinates
+        - Parents are centered over their children
+        - Siblings respect grid_spacing
 
         Returns:
             positions: Mapping of node_id -> (x_position, depth) where x is float for centering
             num_rows: Total number of levels in the tree
             max_width: Maximum width of the tree
-
         """
         from collections import deque
 
-        # Build parent-child relationships
+        # Build tree relationships
         children_map: dict[str, list[str]] = {}
-        referenced_as_child: set[str] = set()
+        parent_map: dict[str, str | None] = {}
+
         for node_id, node_data in self.tree_structure.items():
             children = node_data.get("children", []) or []
             children_map[node_id] = list(children)
-            for c in children:
-                referenced_as_child.add(c)
+            parent_map[node_id] = None  # Will be set when we find parents
 
-        # Find root nodes (never referenced as children)
-        roots = [nid for nid in self.tree_structure if nid not in referenced_as_child]
+        # Map children to parents
+        for parent_id, children in children_map.items():
+            for child_id in children:
+                parent_map[child_id] = parent_id
+
+        # Find root nodes
+        roots = [nid for nid, parent in parent_map.items() if parent is None]
         if not roots:
-            # Fallback: use first node as root
             roots = [sorted(self.tree_structure.keys())[0]]
 
-        # Assign depths using BFS
+        # Calculate depths using BFS
         depths: dict[str, int] = {}
-        queue: deque[tuple[str, int]] = deque()
-        for r in roots:
-            queue.append((r, 0))
+        queue: deque[tuple[str, int]] = deque((r, 0) for r in roots)
         visited: set[str] = set()
 
         while queue:
-            nid, depth = queue.popleft()
-            if nid in visited:
+            node_id, depth = queue.popleft()
+            if node_id in visited:
                 continue
-            visited.add(nid)
-            depths[nid] = depth
-            for child in children_map.get(nid, []):
-                queue.append((child, depth + 1))
+            visited.add(node_id)
+            depths[node_id] = depth
+            queue.extend((child, depth + 1) for child in children_map.get(node_id, []))
 
-        num_rows = max(depths.values()) + 1 if depths else 1
+        num_rows = max(depths.values(), default=0) + 1
 
-        # Reingold-Tilford algorithm
-        # Step 1: Post-order traversal - assign preliminary x-coordinates
+        # Two-pass layout algorithm
         prelim_x: dict[str, float] = {}
         modifier: dict[str, float] = {}
 
-        def first_walk(node_id: str) -> None:
-            """Post-order traversal to assign preliminary x-coordinates."""
+        def layout_subtree(node_id: str) -> None:
+            """Post-order: assign preliminary x-coordinates based on tree structure order."""
             children = children_map.get(node_id, [])
 
             if not children:
-                # Leaf node - check if it has a left sibling
-                parent = self._find_parent(node_id, children_map)
+                # Leaf: position relative to left sibling if exists
+                parent = parent_map[node_id]
                 if parent:
                     siblings = children_map[parent]
-                    left_sibling_idx = siblings.index(node_id) - 1 if node_id in siblings else -1
-                    if left_sibling_idx >= 0:
-                        left_sibling = siblings[left_sibling_idx]
-                        prelim_x[node_id] = prelim_x.get(left_sibling, 0) + self.grid_spacing
+                    idx = siblings.index(node_id)
+                    if idx > 0:
+                        left_sibling = siblings[idx - 1]
+                        prelim_x[node_id] = prelim_x[left_sibling] + self.grid_spacing
                     else:
-                        prelim_x[node_id] = 0
+                        prelim_x[node_id] = 0.0
                 else:
-                    prelim_x[node_id] = 0
-                modifier[node_id] = 0
+                    prelim_x[node_id] = 0.0
+                modifier[node_id] = 0.0
             else:
-                # Process children first
+                # Internal: process children, then center over them
                 for child in children:
-                    first_walk(child)
+                    layout_subtree(child)
 
-                # Center parent over children
-                leftmost = prelim_x[children[0]]
-                rightmost = prelim_x[children[-1]]
-                mid = (leftmost + rightmost) / 2
+                # Center over children
+                child_center = (prelim_x[children[0]] + prelim_x[children[-1]]) / 2
 
-                # Check for left sibling
-                parent = self._find_parent(node_id, children_map)
+                # Position relative to left sibling if exists
+                parent = parent_map[node_id]
                 if parent:
                     siblings = children_map[parent]
-                    left_sibling_idx = siblings.index(node_id) - 1 if node_id in siblings else -1
-                    if left_sibling_idx >= 0:
-                        left_sibling = siblings[left_sibling_idx]
-                        prelim_x[node_id] = prelim_x.get(left_sibling, 0) + self.grid_spacing
-                        modifier[node_id] = prelim_x[node_id] - mid
+                    idx = siblings.index(node_id)
+                    if idx > 0:
+                        left_sibling = siblings[idx - 1]
+                        prelim_x[node_id] = prelim_x[left_sibling] + self.grid_spacing
+                        modifier[node_id] = prelim_x[node_id] - child_center
                     else:
-                        prelim_x[node_id] = mid
-                        modifier[node_id] = 0
+                        prelim_x[node_id] = child_center
+                        modifier[node_id] = 0.0
                 else:
-                    prelim_x[node_id] = mid
-                    modifier[node_id] = 0
+                    prelim_x[node_id] = child_center
+                    modifier[node_id] = 0.0
 
-        # Step 2: Pre-order traversal - compute final x-coordinates
-        final_x: dict[str, float] = {}
-
-        def second_walk(node_id: str, modsum: float) -> None:
-            """Pre-order traversal to compute final x-coordinates."""
-            final_x[node_id] = prelim_x.get(node_id, 0) + modsum
+        def apply_modifiers(node_id: str, mod_sum: float) -> None:
+            """Pre-order: compute final x-coordinates by applying accumulated modifiers."""
+            final_x[node_id] = prelim_x[node_id] + mod_sum
             for child in children_map.get(node_id, []):
-                second_walk(child, modsum + modifier.get(node_id, 0))
+                apply_modifiers(child, mod_sum + modifier[node_id])
 
-        # Execute algorithm for each root
+        # Execute layout
+        final_x: dict[str, float] = {}
         for root in roots:
-            first_walk(root)
-            second_walk(root, 0)
+            layout_subtree(root)
+            apply_modifiers(root, 0.0)
 
-        # Normalize x-coordinates to start at 0
+        # Normalize to start at x=0
         if final_x:
             min_x = min(final_x.values())
             final_x = {k: v - min_x for k, v in final_x.items()}
 
-        # Build positions dict
-        positions = {node_id: (final_x.get(node_id, 0.0), depths.get(node_id, 0)) for node_id in self.tree_structure}
-
-        # Calculate max width
-        max_width = int(max(final_x.values())) + 1 if final_x else 1
+        # Build final positions
+        positions = {nid: (final_x.get(nid, 0.0), depths.get(nid, 0)) for nid in self.tree_structure}
+        max_width = int(max(final_x.values(), default=0)) + 1
 
         return positions, num_rows, max_width
-
-    def _find_parent(self, node_id: str, children_map: dict[str, list[str]]) -> str | None:
-        """Find the parent of a given node."""
-        for parent_id, children in children_map.items():
-            if node_id in children:
-                return parent_id
-        return None
 
     def render(self, ax: Axes | None = None) -> Axes:
         """Render the tree diagram.
