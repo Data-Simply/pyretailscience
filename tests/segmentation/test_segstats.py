@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from pyretailscience.options import ColumnHelper, get_option, option_context
-from pyretailscience.segmentation.segstats import SegTransactionStats
+from pyretailscience.segmentation.segstats import SegTransactionStats, cube, rollup
 
 cols = ColumnHelper()
 
@@ -1384,7 +1384,7 @@ class TestGroupingSetsRollupMode:
         )
 
         # Should warn about 7 dimensions generating 128 grouping sets
-        with pytest.warns(UserWarning, match="CUBE mode with 7 dimensions will generate 128 grouping sets"):
+        with pytest.warns(UserWarning, match="CUBE with 7 dimensions will generate 128 grouping sets"):
             SegTransactionStats(
                 data=data,
                 segment_col=["region", "category", "brand", "channel", "store_type", "price_tier", "promotion"],
@@ -1407,21 +1407,6 @@ class TestGroupingSetsCustomMode:
         )
         # Verify content (order not guaranteed due to set deduplication)
         assert set(result) == {("region", "product"), ("product",), ()}
-
-    def test_generate_custom_grouping_sets_mixed_types(self):
-        """Test custom grouping sets accepts both lists and tuples."""
-        result = SegTransactionStats._generate_grouping_sets(
-            segment_col=["region", "product"],
-            grouping_sets=[
-                ["region", "product"],  # list
-                ("product",),  # tuple
-                [],  # empty list
-            ],
-        )
-        # Verify content and that both lists and tuples are normalized to tuples
-        assert set(result) == {("region", "product"), ("product",), ()}
-        # Verify all elements are tuples (normalized)
-        assert all(isinstance(gs, tuple) for gs in result)
 
     def test_generate_custom_grouping_sets_deduplicates(self):
         """Test custom grouping sets removes duplicate grouping sets."""
@@ -1471,10 +1456,10 @@ class TestGroupingSetsCustomMode:
         """Test custom grouping sets raises error when element is a string."""
         with pytest.raises(
             TypeError,
-            match="Each grouping set must be a list or tuple of column names, not a string. Got: 'region'",
+            match="Each element must be a tuple",
         ):
             SegTransactionStats._validate_grouping_sets_params(
-                grouping_sets=["region"],  # Wrong: string instead of list/tuple
+                grouping_sets=["region"],  # Wrong: string instead of tuple
                 calc_total=None,
                 calc_rollup=None,
             )
@@ -1484,10 +1469,10 @@ class TestGroupingSetsCustomMode:
         # Test with integer
         with pytest.raises(
             TypeError,
-            match="Each grouping set must be a list or tuple of column names. Got type: int",
+            match="Each element must be a tuple",
         ):
             SegTransactionStats._validate_grouping_sets_params(
-                grouping_sets=[("region",), 123],  # Wrong: integer instead of list/tuple
+                grouping_sets=[("region",), 123],  # Wrong: integer instead of tuple
                 calc_total=None,
                 calc_rollup=None,
             )
@@ -1495,10 +1480,10 @@ class TestGroupingSetsCustomMode:
         # Test with None
         with pytest.raises(
             TypeError,
-            match="Each grouping set must be a list or tuple of column names. Got type: NoneType",
+            match="Each element must be a tuple",
         ):
             SegTransactionStats._validate_grouping_sets_params(
-                grouping_sets=[("region",), None],  # Wrong: None instead of list/tuple
+                grouping_sets=[("region",), None],  # Wrong: None instead of tuple
                 calc_total=None,
                 calc_rollup=None,
             )
@@ -1559,3 +1544,285 @@ class TestGroupingSetsCustomMode:
 
         # Compare using pandas assert_frame_equal
         pd.testing.assert_frame_equal(result_subset, expected_sorted)
+
+
+class TestComposableGroupingSets:
+    """Test composable grouping sets with cube() and rollup() helper functions."""
+
+    def test_cube_function_returns_list(self):
+        """Test cube() helper returns list of tuples for all combinations."""
+        result = cube("region", "store")
+        assert isinstance(result, list)
+        # CUBE(region, store) with 2 columns generates 2^2 = 4 grouping sets
+        assert len(result) == 2**2
+        assert set(result) == {
+            ("region", "store"),  # Full detail
+            ("region",),  # Region totals
+            ("store",),  # Store totals
+            (),  # Grand total
+        }
+
+    def test_rollup_function_returns_list(self):
+        """Test rollup() helper returns list of tuples for hierarchical levels."""
+        result = rollup("year", "quarter", "month")
+        assert isinstance(result, list)
+        # ROLLUP(year, quarter, month) should generate hierarchical levels from right to left
+        assert result == [
+            ("year", "quarter", "month"),  # Full detail
+            ("year", "quarter"),  # Monthly rollup
+            ("year",),  # Quarterly rollup
+            (),  # Grand total
+        ]
+
+    def test_cube_with_fixed_columns(self):
+        """Test CUBE with fixed date column for time-consistent geographic analysis."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "date"],
+            grouping_sets=[(cube("region", "store"), "date")],
+        )
+
+        expected = [
+            ("region", "store", "date"),  # Full detail with date
+            ("region", "date"),  # Regional totals with date
+            ("store", "date"),  # Store totals with date
+            ("date",),  # Date-only totals
+        ]
+
+        # CUBE(region, store) with 2 columns generates 2^2 = 4 grouping sets (each with "date" appended)
+        assert set(result) == set(expected)
+        assert len(result) == 2**2
+
+    def test_rollup_with_fixed_columns(self):
+        """Test ROLLUP with fixed segment for time hierarchy analysis by customer type."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["year", "quarter", "customer_segment", "channel"],
+            grouping_sets=[(rollup("year", "quarter"), "customer_segment", "channel")],
+        )
+
+        expected = [
+            ("year", "quarter", "customer_segment", "channel"),  # Full detail
+            ("year", "customer_segment", "channel"),  # Quarterly rollup
+            ("customer_segment", "channel"),  # Yearly rollup
+        ]
+
+        # Use set comparison since deduplication doesn't preserve order
+        assert set(result) == set(expected)
+        assert len(result) == len(expected)
+
+    def test_cube_direct_without_list(self):
+        """Test CUBE generates all combinations for three retail dimensions."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "category", "brand"],
+            grouping_sets=cube("region", "category", "brand"),
+        )
+
+        # CUBE with 3 columns generates 2^3 = 8 grouping sets
+        assert len(result) == 2**3
+        assert ("region", "category", "brand") in result  # Full detail
+        assert () in result  # Grand total
+        # Verify all single-dimension combinations exist
+        assert ("region",) in result
+        assert ("category",) in result
+        assert ("brand",) in result
+
+    def test_multiple_cube_rollup_calls_rejected(self):
+        """Test that mixing CUBE and ROLLUP in same specification raises error."""
+        with pytest.raises(ValueError, match="Only one cube\\(\\)/rollup\\(\\) call allowed"):
+            SegTransactionStats._generate_grouping_sets(
+                segment_col=["region", "store", "product"],
+                grouping_sets=[(cube("region"), rollup("store"), "product")],
+            )
+
+    def test_mix_composable_with_explicit_tuples(self):
+        """Test mixing CUBE analysis with grand total."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            grouping_sets=[
+                (cube("region", "store"), "product"),  # Geographic CUBE with fixed product
+                (),  # Grand total across all dimensions
+            ],
+        )
+
+        expected = [
+            ("region", "store", "product"),  # Full detail
+            ("region", "product"),  # Regional product totals
+            ("store", "product"),  # Store product totals
+            ("product",),  # Product-only totals
+            (),  # Grand total
+        ]
+
+        # CUBE(region, store) generates 2^2 = 4 sets, plus 1 grand total = 5 total
+        cube_sets = 2**2  # 4 sets from CUBE
+        grand_total_sets = 1
+        expected_total = cube_sets + grand_total_sets  # 4 + 1 = 5
+
+        assert set(result) == set(expected)
+        assert len(result) == expected_total
+
+    def test_specification_tuple_with_empty_list_rejected(self):
+        """Test that specification tuples with empty lists are rejected."""
+        with pytest.raises(
+            ValueError,
+            match="Specification tuple must contain non-empty cube\\(\\) or rollup\\(\\) result",
+        ):
+            SegTransactionStats._generate_grouping_sets(
+                segment_col=["region", "store", "product"],
+                grouping_sets=[([], "product")],  # Empty list in tuple - invalid
+            )
+
+    def test_cube_empty_error(self):
+        """Test cube() raises error when called with no columns."""
+        with pytest.raises(ValueError, match="cube\\(\\) requires at least one column"):
+            cube()
+
+    def test_rollup_empty_error(self):
+        """Test rollup() raises error when called with no columns."""
+        with pytest.raises(ValueError, match="rollup\\(\\) requires at least one column"):
+            rollup()
+
+    def test_multiple_composable_specifications(self):
+        """Test combining geographic CUBE with time ROLLUP, both with fixed customer segment."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "quarter", "customer_segment"],
+            grouping_sets=[
+                (cube("region", "store"), "customer_segment"),  # Geographic CUBE by segment
+                (rollup("quarter"), "customer_segment"),  # Time ROLLUP by segment
+            ],
+        )
+
+        expected_cube = [
+            ("region", "store", "customer_segment"),  # Full geographic detail
+            ("region", "customer_segment"),  # Regional totals
+            ("store", "customer_segment"),  # Store totals
+            ("customer_segment",),  # Segment-only totals
+        ]
+
+        expected_rollup = [
+            ("quarter", "customer_segment"),  # Quarterly detail
+            ("customer_segment",),  # Segment-only totals (deduplicated)
+        ]
+
+        # Combine and dedupe (customer_segment appears in both)
+        expected = list(set(expected_cube + expected_rollup))
+
+        # CUBE(region, store) = 2^2 = 4 sets
+        # ROLLUP(quarter) = 1+1 = 2 sets
+        # Deduplication: ("customer_segment",) appears in both = -1
+        # Total: 4 + 2 - 1 = 5 unique sets
+        cube_sets = 2**2  # 4 sets from CUBE
+        rollup_sets = 1 + 1  # n+1 sets from ROLLUP (n=1)
+        deduplicated_sets = 1  # ("customer_segment",) appears in both
+        expected_unique_sets = cube_sets + rollup_sets - deduplicated_sets  # 4 + 2 - 1 = 5
+
+        assert set(result) == set(expected)
+        assert len(result) == expected_unique_sets
+
+    def test_composable_grouping_sets_integration(self):
+        """Test composable grouping sets produce correct aggregations with fixed columns."""
+        data = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3, 4, 4],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106, 107, 108],
+                "store": ["A", "A", "B", "B", "A", "A", "B", "B"],
+                "region": ["North", "North", "South", "South", "North", "North", "South", "South"],
+                "date": ["2024-01", "2024-01", "2024-01", "2024-01", "2024-02", "2024-02", "2024-02", "2024-02"],
+                cols.unit_spend: [100, 150, 200, 250, 300, 350, 400, 450],
+            },
+        )
+
+        stats = SegTransactionStats(
+            data=data,
+            segment_col=["store", "region", "date"],
+            grouping_sets=[(cube("store", "region"), "date")],
+        )
+
+        result = stats.df
+
+        # CUBE(store, region) with "date" fixed generates 4 grouping sets, each for both dates:
+        # 1. (store, region, date) - 4 detail rows (2 for 2024-01, 2 for 2024-02)
+        # 2. (store, date) - 4 store totals (2 stores x 2 dates)
+        # 3. (region, date) - 4 region totals (2 regions x 2 dates)
+        # 4. (date) - 2 date-only totals (2 dates)
+        # Total: 14 rows
+        expected = pd.DataFrame(
+            {
+                "store": [
+                    "A",
+                    "B",
+                    "A",
+                    "B",  # Full detail for 2024-01 and 2024-02
+                    "A",
+                    "B",
+                    "A",
+                    "B",  # Store totals by date
+                    "Total",
+                    "Total",
+                    "Total",
+                    "Total",  # Region totals by date
+                    "Total",
+                    "Total",
+                ],  # Date-only totals
+                "region": [
+                    "North",
+                    "South",
+                    "North",
+                    "South",  # Full detail
+                    "Total",
+                    "Total",
+                    "Total",
+                    "Total",  # Store totals
+                    "North",
+                    "South",
+                    "North",
+                    "South",  # Region totals
+                    "Total",
+                    "Total",
+                ],  # Date-only totals
+                "date": [
+                    "2024-01",
+                    "2024-01",
+                    "2024-02",
+                    "2024-02",  # Full detail
+                    "2024-01",
+                    "2024-01",
+                    "2024-02",
+                    "2024-02",  # Store totals
+                    "2024-01",
+                    "2024-01",
+                    "2024-02",
+                    "2024-02",  # Region totals
+                    "2024-01",
+                    "2024-02",
+                ],  # Date-only totals
+                cols.agg.unit_spend: [
+                    250,
+                    450,
+                    650,
+                    850,  # Full detail: A/North (100+150), B/South (200+250), etc.
+                    250,
+                    450,
+                    650,
+                    850,  # Store totals (same values - only one region per store in data)
+                    250,
+                    450,
+                    650,
+                    850,  # Region totals (same values - only one store per region in data)
+                    700,
+                    1500,
+                ],  # Date totals: 2024-01 (250+450), 2024-02 (650+850)
+            },
+        )
+
+        # Sort both dataframes for consistent comparison
+        result_subset = (
+            result[["store", "region", "date", cols.agg.unit_spend]]
+            .sort_values(["store", "region", "date"])
+            .reset_index(drop=True)
+        )
+        expected_sorted = expected.sort_values(["store", "region", "date"]).reset_index(drop=True)
+
+        # Compare using pandas assert_frame_equal
+        pd.testing.assert_frame_equal(result_subset, expected_sorted)
+
+        # Verify "date" appears in every row (never "Total") - key composability requirement
+        assert (result["date"] != "Total").all()
