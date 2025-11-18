@@ -14,6 +14,7 @@ from matplotlib.dates import date2num
 from matplotlib.text import Text
 from scipy import stats
 
+from pyretailscience.plots.styles.font_utils import get_font_config, get_font_properties
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
@@ -356,7 +357,7 @@ def _add_equation_text(
     if not (show_equation or show_r2):
         return
 
-    plot_styler = PlotStyler()
+    font_config = get_font_config()
 
     equation_parts = []
 
@@ -382,8 +383,8 @@ def _add_equation_text(
         text_y,
         text,
         color=color,
-        fontsize=plot_styler.context.fonts.label_size,
-        fontproperties=plot_styler.context.get_font_properties(plot_styler.context.fonts.source_font),
+        fontsize=font_config["label_size"],
+        fontproperties=get_font_properties(font_config["source_font"]),
         bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
     )
 
