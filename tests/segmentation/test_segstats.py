@@ -1685,6 +1685,21 @@ class TestComposableGroupingSets:
         with pytest.raises(ValueError, match="rollup\\(\\) requires at least one column"):
             rollup()
 
+    def test_cube_non_string_column_error(self):
+        """Test cube() raises TypeError when passed non-string columns."""
+        with pytest.raises(TypeError, match="All column names must be strings"):
+            cube("region", 123, "store")
+
+    def test_rollup_non_string_column_error(self):
+        """Test rollup() raises TypeError when passed non-string columns."""
+        with pytest.raises(TypeError, match="All column names must be strings"):
+            rollup("year", "quarter", 456)
+
+    def test_flatten_item_invalid_type_error(self):
+        """Test _flatten_item() raises TypeError for invalid types in specification tuple."""
+        with pytest.raises(TypeError, match="Invalid type in specification tuple"):
+            SegTransactionStats._flatten_item((cube("region"), 123))
+
     def test_multiple_composable_specifications(self):
         """Test combining geographic CUBE with time ROLLUP, both with fixed customer segment."""
         result = SegTransactionStats._generate_grouping_sets(
