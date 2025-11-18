@@ -189,6 +189,12 @@ class SpeedDrill:
         fig, ax = plt.subplots(figsize=figsize)
         ax = grid.render(ax=ax)
 
+        # Set axes limits to show the full tree
+        plot_width = grid.col[grid.num_cols - 1] + grid.node_width
+        plot_height = grid.row[0] + grid.node_height
+        ax.set_xlim(0, plot_width)
+        ax.set_ylim(0, plot_height)
+
         ax.axis("off")
 
         fig.suptitle("LightGBM Decision Tree", fontsize=16, fontweight="bold")
