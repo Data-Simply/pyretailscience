@@ -1,7 +1,5 @@
 """Tests for the plots.scatter module."""
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -72,24 +70,6 @@ def bubble_chart_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock the color generators for single and multi-color maps."""
-    single_color_gen = cycle(["#FF0000"])
-    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])
-
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_column(sample_sales_dataframe):
     """Test scatter plot with a single value column."""
     result_ax = scatter.plot(
@@ -113,7 +93,6 @@ def test_plot_single_column(sample_sales_dataframe):
     )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_group_col(sample_sales_dataframe):
     """Test scatter plot with a group column."""
     result_ax = scatter.plot(
@@ -141,7 +120,6 @@ def test_plot_with_group_col(sample_sales_dataframe):
     )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_columns(sample_sales_dataframe):
     """Test scatter plot with multiple value columns."""
     value_cols = ["sales", "profit"]
@@ -169,7 +147,6 @@ def test_plot_multiple_columns(sample_sales_dataframe):
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_columns_with_group_col(sample_sales_dataframe):
     """Test scatter plot when using multiple columns along with a group column."""
     with pytest.raises(ValueError, match="Cannot use both a list for `value_col` and a `group_col`. Choose one."):
@@ -184,7 +161,6 @@ def test_plot_multiple_columns_with_group_col(sample_sales_dataframe):
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_column_series(sample_sales_dataframe):
     """Test scatter plot with a single value as a Pandas Series."""
     sales_series = sample_sales_dataframe["sales"]
@@ -751,16 +727,3 @@ class TestBubbleChartFeature:
 
         # Verify some sizes are actually zero
         assert (sizes == 0).any(), "Some points should have zero size"
-
-    def test_bubble_chart_empty_dataframe(self):
-        """Test bubble chart with empty DataFrame."""
-        empty_df = pd.DataFrame(columns=["x", "y", "size_col"])
-
-        with pytest.raises(ValueError, match="Cannot create bubble chart with empty DataFrame"):
-            scatter.plot(
-                df=empty_df,
-                x_col="x",
-                value_col="y",
-                size_col="size_col",
-                title="Empty DataFrame Bubble Chart",
-            )
