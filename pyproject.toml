@@ -2,6 +2,7 @@
 dependencies = [
     "duckdb>=1.0.0,<2",
     "ibis-framework[duckdb]>=10.0.0,<11",
+    "lightgbm>=4.0.0,<5",
     "matplotlib-set-diagrams~=0.0.2",
     "matplotlib>=3.9.1,<4",
     "numpy>=1.26.3,<=2",
