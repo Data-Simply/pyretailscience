@@ -40,7 +40,7 @@ from matplotlib.container import BarContainer
 from matplotlib.patches import Rectangle
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_single_color_cmap
+from pyretailscience.plots.styles.tailwind import get_plot_colors
 
 
 def plot(
@@ -132,12 +132,11 @@ def plot(
 
     df = df.sort_values(by=value_col[0], ascending=sort_order == "ascending") if sort_order is not None else df
 
-    color_gen_threshold = 4
-    cmap = get_single_color_cmap() if len(value_col) < color_gen_threshold else get_multi_color_cmap()
-    default_colors = [next(cmap) for _ in range(len(value_col))]
+    default_colors = get_plot_colors(len(value_col))
 
     plot_kind = "bar" if orientation in ["vertical", "v"] else "barh"
     color = kwargs.pop("color", default_colors)
+    legend = kwargs.pop("legend", (len(value_col) > 1))
 
     ax = df.plot(
         kind=plot_kind,
@@ -146,7 +145,7 @@ def plot(
         ax=ax,
         width=width,
         color=color,
-        legend=(len(value_col) > 1),
+        legend=legend,
         **kwargs,
     )
 

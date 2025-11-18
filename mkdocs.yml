@@ -10,6 +10,22 @@ nav:
       - Options & Configuration: getting_started/options_guide.md
   - Analysis Modules:
       - analysis_modules.md
+  - Plot Gallery:
+      - Overview: gallery/index.md
+      - Area Plot: gallery/plots/area.ipynb
+      - Bar Plot: gallery/plots/bar.ipynb
+      - Broken Timeline Plot: gallery/plots/broken_timeline.ipynb
+      - Cohort Plot: gallery/plots/cohort.ipynb
+      - Heatmap Plot: gallery/plots/heatmap.ipynb
+      - Histogram Plot: gallery/plots/histogram.ipynb
+      - Line Plot: gallery/plots/line.ipynb
+      - Period on Period Plot: gallery/plots/period_on_period.ipynb
+      - Time Plot: gallery/plots/time.ipynb
+      - Venn Diagram: gallery/plots/venn.ipynb
+      - Waterfall Plot: gallery/plots/waterfall.ipynb
+      - Index Plot: gallery/plots/index_plot.ipynb
+      - Scatter Plot: gallery/plots/scatter.ipynb
+      - Price Plot: gallery/plots/price.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
@@ -57,7 +73,6 @@ nav:
               - Styling Helpers: api/plots/styles/styling_helpers.md
       - Utils:
           - Date Utils: api/utils/date.md
-          - Columns Utils: api/utils/columns.md
           - Filter & Label Utils: api/utils/filter_and_label.md
           - Label Utils: api/utils/label.md
 
