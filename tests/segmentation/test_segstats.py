@@ -1,5 +1,7 @@
 """Tests for the SegTransactionStats class."""
 
+import warnings
+
 import ibis
 import numpy as np
 import pandas as pd
@@ -11,6 +13,7 @@ from pyretailscience.segmentation.segstats import SegTransactionStats, cube, rol
 cols = ColumnHelper()
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 class TestCalcSegStats:
     """Tests for the _calc_seg_stats method."""
 
@@ -168,6 +171,7 @@ class TestCalcSegStats:
         pd.testing.assert_frame_equal(segment_stats, expected_output)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 class TestSegTransactionStats:
     """Tests for the SegTransactionStats class."""
 
@@ -732,6 +736,7 @@ class TestSegTransactionStats:
         assert "Total" not in result_df["subcategory"].values
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 class TestUnknownCustomerTracking:
     """Tests for unknown customer tracking functionality."""
 
@@ -1177,19 +1182,62 @@ class TestGroupingSetsRollupMode:
 
     def test_legacy_mode_validation_passes(self):
         """Test that validation passes in legacy mode (grouping_sets=None) regardless of calc_total/calc_rollup."""
-        # Should not raise - legacy mode doesn't validate calc_total/calc_rollup
-        SegTransactionStats._validate_grouping_sets_params(
-            grouping_sets=None,
-            calc_total=None,
-            calc_rollup=None,
-        )
+        # Should warn when relying on implicit calc_total=True default
+        with pytest.warns(FutureWarning, match="calc_total parameter is deprecated"):
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=None,
+                calc_total=None,
+                calc_rollup=None,
+            )
 
-        # Should also not raise with explicit values in legacy mode
-        SegTransactionStats._validate_grouping_sets_params(
-            grouping_sets=None,
-            calc_total=False,
-            calc_rollup=True,
-        )
+        # Should not warn with explicit values in legacy mode
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # Turn warnings into errors to ensure no warning
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=None,
+                calc_total=False,
+                calc_rollup=True,
+            )
+
+    def test_legacy_mode_no_warning_when_calc_total_explicit(self):
+        """Test no deprecation warning when calc_total is explicitly set."""
+        # No warning when calc_total=True explicitly
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=None,
+                calc_total=True,
+                calc_rollup=None,
+            )
+
+        # No warning when calc_total=False explicitly
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=None,
+                calc_total=False,
+                calc_rollup=None,
+            )
+
+    def test_legacy_mode_no_warning_when_calc_rollup_explicit(self):
+        """Test no deprecation warning when calc_rollup is explicitly set."""
+        # No warning when calc_rollup=True explicitly
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=None,
+                calc_total=None,
+                calc_rollup=True,
+            )
+
+        # No warning when calc_rollup=False explicitly
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            SegTransactionStats._validate_grouping_sets_params(
+                grouping_sets=None,
+                calc_total=None,
+                calc_rollup=False,
+            )
 
     def test_rollup_mode_integration(self):
         """Test ROLLUP mode produces correct aggregations."""

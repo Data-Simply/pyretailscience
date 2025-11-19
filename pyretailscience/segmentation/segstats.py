@@ -471,6 +471,15 @@ class SegTransactionStats:
             TypeError: If grouping_sets has invalid type
         """
         if grouping_sets is None:
+            # Warn if relying on implicit calc_total=True default (calc_total will be removed)
+            if calc_total is None and calc_rollup is None:
+                warnings.warn(
+                    "The calc_total parameter is deprecated and will be removed in a future version. "
+                    "To maintain the current behavior of including a grand total, use grouping_sets=[()] instead. "
+                    "See documentation for more flexible aggregation control with the grouping_sets parameter.",
+                    FutureWarning,
+                    stacklevel=3,
+                )
             return
 
         # Mutual exclusivity check
