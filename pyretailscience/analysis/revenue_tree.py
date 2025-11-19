@@ -25,6 +25,8 @@ for retail businesses, helping to identify key drivers of revenue changes and
 inform strategic decision-making.
 """
 
+from typing import Any
+
 import ibis
 import pandas as pd
 from matplotlib.axes import Axes
@@ -439,91 +441,116 @@ class RevenueTree:
         # Set period labels
         current_label, previous_label = value_labels if value_labels else ("Current Period", "Previous Period")
 
+        # Helper function to build standardized node data
+        def build_node(
+            header: str,
+            pct_diff_key: str,
+            p2_key: str,
+            p1_key: str,
+            diff_key: str,
+            children: list[str],
+            contrib_key: str | None = None,
+        ) -> dict[str, Any]:
+            """Build standardized node data dictionary.
+
+            Args:
+                header: Node header text.
+                pct_diff_key: Column key for percentage difference.
+                p2_key: Column key for current period value.
+                p1_key: Column key for previous period value.
+                diff_key: Column key for absolute difference.
+                children: List of child node IDs.
+                contrib_key: Optional column key for contribution value.
+
+            Returns:
+                dict[str, Any]: Node data dictionary.
+
+            """
+            node = {
+                "header": header,
+                "percent": graph_data[pct_diff_key] * 100,
+                "current_period": gu.human_format(graph_data[p2_key], decimals=2),
+                "previous_period": gu.human_format(graph_data[p1_key], decimals=2),
+                "diff": gu.human_format(graph_data[diff_key], decimals=2),
+                "current_label": current_label,
+                "previous_label": previous_label,
+                "children": children,
+            }
+            if contrib_key is not None:
+                node["contribution"] = gu.human_format(graph_data[contrib_key], decimals=2)
+            return node
+
         # Build tree structure - always include base 5 nodes
         tree_structure = {
-            "revenue": {
-                "header": unit_spend_label,
-                "percent": graph_data[cols.agg.unit_spend_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.agg.unit_spend_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.agg.unit_spend_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.agg.unit_spend_diff], decimals=2),
+            "revenue": build_node(
+                header=unit_spend_label,
+                pct_diff_key=cols.agg.unit_spend_pct_diff,
+                p2_key=cols.agg.unit_spend_p2,
+                p1_key=cols.agg.unit_spend_p1,
+                diff_key=cols.agg.unit_spend_diff,
+                children=["customers", "spend_per_customer"],
                 # Contribution omitted for root node (would be same as diff)
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": ["customers", "spend_per_customer"],
-            },
-            "customers": {
-                "header": customer_id_label,
-                "percent": graph_data[cols.agg.customer_id_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.agg.customer_id_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.agg.customer_id_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.agg.customer_id_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.agg.customer_id_contrib], decimals=2),
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": [],
-            },
-            "spend_per_customer": {
-                "header": spend_per_customer_label,
-                "percent": graph_data[cols.calc.spend_per_cust_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc.spend_per_cust_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc.spend_per_cust_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc.spend_per_cust_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc.spend_per_cust_contrib], decimals=2),
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": ["visits_per_customer", "spend_per_visit"],
-            },
-            "visits_per_customer": {
-                "header": transactions_per_customer_label,
-                "percent": graph_data[cols.calc.trans_per_cust_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc.trans_per_cust_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc.trans_per_cust_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc.trans_per_cust_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc.trans_per_cust_contrib], decimals=2),
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": [],
-            },
-            "spend_per_visit": {
-                "header": spend_per_transaction_label,
-                "percent": graph_data[cols.calc.spend_per_trans_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc.spend_per_trans_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc.spend_per_trans_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc.spend_per_trans_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc.spend_per_trans_contrib], decimals=2),
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": [],
-            },
+            ),
+            "customers": build_node(
+                header=customer_id_label,
+                pct_diff_key=cols.agg.customer_id_pct_diff,
+                p2_key=cols.agg.customer_id_p2,
+                p1_key=cols.agg.customer_id_p1,
+                diff_key=cols.agg.customer_id_diff,
+                children=[],
+                contrib_key=cols.agg.customer_id_contrib,
+            ),
+            "spend_per_customer": build_node(
+                header=spend_per_customer_label,
+                pct_diff_key=cols.calc.spend_per_cust_pct_diff,
+                p2_key=cols.calc.spend_per_cust_p2,
+                p1_key=cols.calc.spend_per_cust_p1,
+                diff_key=cols.calc.spend_per_cust_diff,
+                children=["visits_per_customer", "spend_per_visit"],
+                contrib_key=cols.calc.spend_per_cust_contrib,
+            ),
+            "visits_per_customer": build_node(
+                header=transactions_per_customer_label,
+                pct_diff_key=cols.calc.trans_per_cust_pct_diff,
+                p2_key=cols.calc.trans_per_cust_p2,
+                p1_key=cols.calc.trans_per_cust_p1,
+                diff_key=cols.calc.trans_per_cust_diff,
+                children=[],
+                contrib_key=cols.calc.trans_per_cust_contrib,
+            ),
+            "spend_per_visit": build_node(
+                header=spend_per_transaction_label,
+                pct_diff_key=cols.calc.spend_per_trans_pct_diff,
+                p2_key=cols.calc.spend_per_trans_p2,
+                p1_key=cols.calc.spend_per_trans_p1,
+                diff_key=cols.calc.spend_per_trans_diff,
+                children=[],
+                contrib_key=cols.calc.spend_per_trans_contrib,
+            ),
         }
 
         # Add quantity-related nodes if data is available
         has_quantity = cols.agg.unit_qty_p1 in graph_data
         if has_quantity:
             tree_structure["spend_per_visit"]["children"] = ["units_per_visit", "price_per_unit"]
-            tree_structure["units_per_visit"] = {
-                "header": units_per_transaction_label,
-                "percent": graph_data[cols.calc.units_per_trans_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc.units_per_trans_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc.units_per_trans_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc.units_per_trans_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc.units_per_trans_contrib], decimals=2),
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": [],
-            }
-            tree_structure["price_per_unit"] = {
-                "header": price_per_unit_label,
-                "percent": graph_data[cols.calc.price_per_unit_pct_diff] * 100,
-                "current_period": gu.human_format(graph_data[cols.calc.price_per_unit_p2], decimals=2),
-                "previous_period": gu.human_format(graph_data[cols.calc.price_per_unit_p1], decimals=2),
-                "diff": gu.human_format(graph_data[cols.calc.price_per_unit_diff], decimals=2),
-                "contribution": gu.human_format(graph_data[cols.calc.price_per_unit_contrib], decimals=2),
-                "current_label": current_label,
-                "previous_label": previous_label,
-                "children": [],
-            }
+            tree_structure["units_per_visit"] = build_node(
+                header=units_per_transaction_label,
+                pct_diff_key=cols.calc.units_per_trans_pct_diff,
+                p2_key=cols.calc.units_per_trans_p2,
+                p1_key=cols.calc.units_per_trans_p1,
+                diff_key=cols.calc.units_per_trans_diff,
+                children=[],
+                contrib_key=cols.calc.units_per_trans_contrib,
+            )
+            tree_structure["price_per_unit"] = build_node(
+                header=price_per_unit_label,
+                pct_diff_key=cols.calc.price_per_unit_pct_diff,
+                p2_key=cols.calc.price_per_unit_p2,
+                p1_key=cols.calc.price_per_unit_p1,
+                diff_key=cols.calc.price_per_unit_diff,
+                children=[],
+                contrib_key=cols.calc.price_per_unit_contrib,
+            )
 
         # Create and render the tree grid with automatic Reingold-Tilford layout
         grid = TreeGrid(
