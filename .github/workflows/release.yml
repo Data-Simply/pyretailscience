@@ -71,14 +71,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build PySpark Test Image
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv Package
         run: |
-          docker build -f tests/integration/pyspark/Dockerfile -t pyspark-it .
+          pip install --upgrade pip
+          pip install uv==0.5.30
+      - name: Install Dependencies
+        run: |
+          uv sync
       - name: Run PySpark Integration Tests
         run: |
-          docker run --rm pyspark-it uv run pytest tests/integration -k "pyspark" -v
+          uv run pytest tests/integration -k "pyspark" -v
 
   build:
     name: Build

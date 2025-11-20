@@ -233,21 +233,20 @@ BigQuery). These tests ensure the Ibis-based code paths function properly across
 
 #### PySpark Integration Tests
 
-The PySpark integration tests run in a Docker container with a pre-configured Spark environment.
+The PySpark integration tests run locally using the same pytest framework as other tests.
 
 **Prerequisites:**
 
-- Docker installed and running
-- Docker Buildx plugin (usually included with Docker Desktop)
+- Python environment with dependencies installed (`uv sync`)
 
 **Running locally:**
 
 ```bash
-# Build the PySpark test image
-docker build -f tests/integration/pyspark/Dockerfile -t pyspark-it .
-
 # Run all PySpark tests
-docker run --rm pyspark-it uv run pytest tests/integration -k "pyspark" -v
+uv run pytest tests/integration -k "pyspark" -v
+
+# Run specific PySpark test
+uv run pytest tests/integration/test_cohort_analysis.py -k "pyspark" -v
 ```
 
 #### BigQuery Integration Tests
