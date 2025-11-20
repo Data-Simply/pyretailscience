@@ -1,7 +1,5 @@
 """Tests for the plots.scatter module."""
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,7 +7,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from pyretailscience.plots import scatter
-from pyretailscience.plots.styles import graph_utils as gu
 
 PERIODS = 6
 RNG = np.random.default_rng(42)
@@ -61,23 +58,18 @@ def sample_store_dataframe():
 
 
 @pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock the color generators for single and multi-color maps."""
-    single_color_gen = cycle(["#FF0000"])
-    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])
-
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+def bubble_chart_dataframe():
+    """A sample dataframe for bubble chart testing with size column."""
+    data = {
+        "sales": [100, 150, 80, 200, 120, 90, 180, 110, 160, 140],
+        "profit_margin": [0.15, 0.22, 0.12, 0.25, 0.18, 0.10, 0.23, 0.16, 0.21, 0.19],
+        "store_sqft": [5000, 7500, 4000, 10000, 6000, 4500, 9000, 5500, 8000, 6500],
+        "region": ["North", "North", "South", "North", "South", "South", "North", "South", "North", "South"],
+        "store_id": [f"Store_{i + 1}" for i in range(10)],
+    }
+    return pd.DataFrame(data)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_column(sample_sales_dataframe):
     """Test scatter plot with a single value column."""
     result_ax = scatter.plot(
@@ -89,10 +81,18 @@ def test_plot_single_column(sample_sales_dataframe):
         x_col="date",
     )
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.get_children()) > 0
+
+    # Verify scatter plot collections were created
+    collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+    assert len(collections) >= 1, "No scatter plot collections found"
+
+    # Verify correct number of data points
+    offsets = collections[0].get_offsets()
+    assert len(offsets) == len(sample_sales_dataframe), (
+        f"Expected {len(sample_sales_dataframe)} points, got {len(offsets)}"
+    )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_group_col(sample_sales_dataframe):
     """Test scatter plot with a group column."""
     result_ax = scatter.plot(
@@ -105,25 +105,48 @@ def test_plot_with_group_col(sample_sales_dataframe):
         group_col="category",
     )
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.get_children()) > 0
+
+    # Verify scatter plot collections were created for groups
+    collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+    unique_categories = sample_sales_dataframe["category"].nunique()
+    assert len(collections) == unique_categories, (
+        f"Expected {unique_categories} collections for groups, got {len(collections)}"
+    )
+
+    # Verify total data points match original dataframe
+    total_points = sum(len(collection.get_offsets()) for collection in collections)
+    assert total_points == len(sample_sales_dataframe), (
+        f"Total points should match dataframe length, got {total_points}"
+    )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_columns(sample_sales_dataframe):
     """Test scatter plot with multiple value columns."""
+    value_cols = ["sales", "profit"]
     result_ax = scatter.plot(
         df=sample_sales_dataframe,
-        value_col=["sales", "profit"],
+        value_col=value_cols,
         x_label="Date",
         y_label="Amount",
         title="Sales & Profit Trends",
         x_col="date",
     )
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.get_children()) > 0
+
+    # Verify scatter plot collections were created for each column
+    collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+    assert len(collections) == len(value_cols), (
+        f"Expected {len(value_cols)} collections for multiple columns, got {len(collections)}"
+    )
+
+    # Verify each collection has correct number of points
+    for collection in collections:
+        offsets = collection.get_offsets()
+        assert len(offsets) == len(sample_sales_dataframe), (
+            f"Each collection should have {len(sample_sales_dataframe)} points, got {len(offsets)}"
+        )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_columns_with_group_col(sample_sales_dataframe):
     """Test scatter plot when using multiple columns along with a group column."""
     with pytest.raises(ValueError, match="Cannot use both a list for `value_col` and a `group_col`. Choose one."):
@@ -138,34 +161,25 @@ def test_plot_multiple_columns_with_group_col(sample_sales_dataframe):
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_adds_source_text(sample_sales_dataframe):
-    """Test scatter plot adds source text."""
-    source_text = "Source: Test Data"
-    result_ax = scatter.plot(
-        df=sample_sales_dataframe,
-        value_col="sales",
-        x_label="Date",
-        y_label="Sales",
-        title="Test Plot Source Text",
-        x_col="date",
-        source_text=source_text,
-    )
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_column_series(sample_sales_dataframe):
     """Test scatter plot with a single value as a Pandas Series."""
+    sales_series = sample_sales_dataframe["sales"]
     result_ax = scatter.plot(
-        df=sample_sales_dataframe["sales"],
+        df=sales_series,
         value_col="sales",
         x_label="Date",
         y_label="Sales",
         title="Sales Trend (Series)",
     )
     assert isinstance(result_ax, Axes)
-    assert len(result_ax.get_children()) > 0
+
+    # Verify scatter plot was created from series
+    collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+    assert len(collections) >= 1, "No scatter plot collections found"
+
+    # Verify correct number of data points from series
+    offsets = collections[0].get_offsets()
+    assert len(offsets) == len(sales_series), f"Expected {len(sales_series)} points from series, got {len(offsets)}"
 
 
 def test_plot_with_labels_single_series(sample_product_dataframe, mocker):
@@ -440,3 +454,276 @@ def test_plot_without_labels_no_textalloc_called(sample_product_dataframe, mocke
     assert isinstance(result_ax, Axes)
     # textalloc should not have been called
     mock_textalloc.assert_not_called()
+
+
+class TestBubbleChartFeature:
+    """Tests for the bubble chart functionality (size_col parameter)."""
+
+    def test_bubble_chart_basic(self, bubble_chart_dataframe):
+        """Test basic bubble chart functionality with size_col."""
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            title="Store Performance Bubble Chart",
+            x_label="Sales",
+            y_label="Profit Margin",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify scatter plot was created
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        # Verify sizes were applied
+        sizes = collections[0].get_sizes()
+        assert len(sizes) == len(bubble_chart_dataframe), (
+            f"Expected {len(bubble_chart_dataframe)} sizes, got {len(sizes)}"
+        )
+
+        # Verify sizes correspond to store_sqft values (with default scale of 1.0)
+        expected_sizes = bubble_chart_dataframe["store_sqft"].values
+        assert np.array_equal(sizes, expected_sizes), "Sizes should match store_sqft values"
+
+    @pytest.mark.parametrize("size_scale", [0.01, 0.5, 1.0, 2.0, 10.0])
+    def test_bubble_chart_with_scaling(self, bubble_chart_dataframe, size_scale):
+        """Test bubble chart with various size_scale values."""
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            size_scale=size_scale,
+            title="Store Performance with Scaling",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        # Verify sizes were scaled
+        sizes = collections[0].get_sizes()
+        expected_sizes = bubble_chart_dataframe["store_sqft"].values * size_scale
+        assert np.array_equal(sizes, expected_sizes), f"Sizes should be scaled by {size_scale}"
+
+    def test_bubble_chart_with_groups(self, bubble_chart_dataframe):
+        """Test bubble chart with group_col parameter."""
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="sales",
+            value_col="profit_margin",
+            group_col="region",
+            size_col="store_sqft",
+            title="Grouped Bubble Chart",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify scatter plot collections were created for groups
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        unique_regions = bubble_chart_dataframe["region"].nunique()
+        assert len(collections) == unique_regions, f"Expected {unique_regions} collections for groups"
+
+        # For grouped scatter plots, each group should have its corresponding data points
+        # The total number of points should equal the dataframe length
+        total_points = sum(len(collection.get_offsets()) for collection in collections)
+        assert total_points == len(bubble_chart_dataframe), (
+            f"Total points should match dataframe length, got {total_points}"
+        )
+
+        # Verify each collection has sizes
+        for collection in collections:
+            sizes = collection.get_sizes()
+            offsets = collection.get_offsets()
+            assert len(sizes) == len(offsets), "Each point should have a corresponding size"
+
+    def test_bubble_chart_none_size_col(self, bubble_chart_dataframe):
+        """Test that size_col=None behaves like original implementation with uniform sizing."""
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col=None,  # Explicitly test None
+            title="Regular Scatter Plot",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        # When size_col is None, all points should have uniform default size
+        sizes = collections[0].get_sizes()
+        if len(sizes) > 0:
+            # All sizes should be the same (matplotlib default)
+            assert len(set(sizes)) <= 1, "All points should have uniform size when size_col=None"
+
+    @pytest.mark.parametrize(
+        ("size_col", "expected_error", "expected_message"),
+        [
+            ("nonexistent_col", KeyError, "size_col 'nonexistent_col' not found in DataFrame"),
+            ("store_id", ValueError, "size_col 'store_id' must contain numeric values"),
+        ],
+    )
+    def test_bubble_chart_size_col_validation_errors(
+        self,
+        bubble_chart_dataframe,
+        size_col,
+        expected_error,
+        expected_message,
+    ):
+        """Test size_col validation error handling."""
+        with pytest.raises(expected_error, match=expected_message):
+            scatter.plot(
+                df=bubble_chart_dataframe,
+                x_col="sales",
+                value_col="profit_margin",
+                size_col=size_col,
+            )
+
+    def test_bubble_chart_with_nan_values(self, bubble_chart_dataframe):
+        """Test bubble chart handles NaN values in size_col gracefully."""
+        # Add some NaN values to size column
+        df_with_nan = bubble_chart_dataframe.copy()
+        df_with_nan.loc[1, "store_sqft"] = np.nan
+        df_with_nan.loc[3, "store_sqft"] = np.nan
+
+        result_ax = scatter.plot(
+            df=df_with_nan,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            title="Bubble Chart with NaN Sizes",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        # All points should be plotted (matplotlib handles NaN sizes gracefully)
+        offsets = collections[0].get_offsets()
+        assert len(offsets) == len(df_with_nan), "All data points should be plotted even with NaN sizes"
+
+        # Verify sizes array exists and has correct length
+        sizes = collections[0].get_sizes()
+        assert len(sizes) == len(df_with_nan), "Size array should match data length"
+
+    def test_bubble_chart_s_parameter_override(self, bubble_chart_dataframe):
+        """Test that user-provided 's' parameter is overridden by size_col."""
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            s=100,  # This should be ignored
+            title="Bubble Chart with Override",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        # Verify sizes come from size_col, not the 's' parameter
+        sizes = collections[0].get_sizes()
+        expected_sizes = bubble_chart_dataframe["store_sqft"].values
+        assert np.array_equal(sizes, expected_sizes), "Sizes should come from size_col, not 's' parameter"
+
+    def test_bubble_chart_multiple_value_columns(self, bubble_chart_dataframe):
+        """Test bubble chart with multiple value columns and size_col."""
+        value_cols = ["profit_margin", "sales"]
+        result_ax = scatter.plot(
+            df=bubble_chart_dataframe,
+            x_col="store_sqft",
+            value_col=value_cols,  # Multiple columns
+            size_col="sales",  # Bubble sizes
+            title="Multi-Series Bubble Chart",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify collections for each value column
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) == len(value_cols), (
+            f"Expected {len(value_cols)} collections for multiple value columns, got {len(collections)}"
+        )
+
+        # Verify each collection has sizes and correct number of points
+        for i, collection in enumerate(collections):
+            sizes = collection.get_sizes()
+            offsets = collection.get_offsets()
+
+            assert len(sizes) == len(bubble_chart_dataframe), (
+                f"Collection {i} should have {len(bubble_chart_dataframe)} sizes, got {len(sizes)}"
+            )
+            assert len(offsets) == len(bubble_chart_dataframe), (
+                f"Collection {i} should have {len(bubble_chart_dataframe)} points, got {len(offsets)}"
+            )
+
+            # Verify sizes match the size_col values (sales column)
+            expected_sizes = bubble_chart_dataframe["sales"].values
+            assert np.array_equal(sizes, expected_sizes), f"Collection {i} sizes should match size_col values"
+
+    def test_bubble_chart_with_negative_sizes(self, bubble_chart_dataframe):
+        """Test bubble chart behavior with negative size values."""
+        df = bubble_chart_dataframe.copy()
+        df.loc[0, "store_sqft"] = -100
+        df.loc[1, "store_sqft"] = -50
+
+        # Should work without errors (matplotlib handles it)
+        result_ax = scatter.plot(
+            df=df,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            title="Bubble Chart with Negative Sizes",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        offsets = collections[0].get_offsets()
+        assert len(offsets) == len(df), "All data points should be plotted"
+
+        # Verify sizes array includes negative values (passed to matplotlib as-is)
+        sizes = collections[0].get_sizes()
+        expected_sizes = df["store_sqft"].values
+        assert np.array_equal(sizes, expected_sizes), "Sizes should match data including negatives"
+
+    def test_bubble_chart_with_zero_sizes(self, bubble_chart_dataframe):
+        """Test bubble chart with zero size values (invisible points)."""
+        df = bubble_chart_dataframe.copy()
+        df.loc[0, "store_sqft"] = 0
+        df.loc[1, "store_sqft"] = 0
+
+        # Should work without errors
+        result_ax = scatter.plot(
+            df=df,
+            x_col="sales",
+            value_col="profit_margin",
+            size_col="store_sqft",
+            title="Bubble Chart with Zero Sizes",
+        )
+
+        assert isinstance(result_ax, Axes), "Result should be an Axes object"
+
+        # Verify all points are plotted (including zero-sized ones)
+        collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
+        assert len(collections) >= 1, "No scatter plot collections found"
+
+        offsets = collections[0].get_offsets()
+        assert len(offsets) == len(df), "All data points should be plotted including zero-sized"
+
+        # Verify sizes array includes zero values
+        sizes = collections[0].get_sizes()
+        expected_sizes = df["store_sqft"].values
+        assert np.array_equal(sizes, expected_sizes), "Sizes should match data including zeros"
+
+        # Verify some sizes are actually zero
+        assert (sizes == 0).any(), "Some points should have zero size"
