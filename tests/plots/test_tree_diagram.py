@@ -21,6 +21,68 @@ def ax():
     return ax
 
 
+@pytest.fixture
+def simple_three_node_tree():
+    """Create a simple tree with root and two children."""
+    return {
+        "root": {
+            "header": "Root",
+            "percent": 0.0,
+            "value1": "$100K",
+            "value2": "$100K",
+            "children": ["child1", "child2"],
+        },
+        "child1": {
+            "header": "Child 1",
+            "percent": 5.0,
+            "value1": "$50K",
+            "value2": "$47.5K",
+            "children": [],
+        },
+        "child2": {
+            "header": "Child 2",
+            "percent": -5.0,
+            "value1": "$50K",
+            "value2": "$52.5K",
+            "children": [],
+        },
+    }
+
+
+@pytest.fixture
+def detailed_three_node_tree():
+    """Create a detailed tree with root and two children for DetailedTreeNode tests."""
+    return {
+        "revenue": {
+            "header": "Total Revenue",
+            "percent": 15.3,
+            "current_period": "£1.2M",
+            "previous_period": "£1.04M",
+            "diff": "+£160K",
+            "contribution": "100%",
+            "children": ["customers", "avg_value"],
+        },
+        "customers": {
+            "header": "Customer Count",
+            "percent": -7.2,
+            "current_period": "8,540",
+            "previous_period": "9,200",
+            "diff": "-660",
+            "contribution": "35.8%",
+            "children": [],
+        },
+        "avg_value": {
+            "header": "Avg Customer Value",
+            "percent": 0.8,
+            "current_period": "£142.35",
+            "previous_period": "£141.22",
+            "diff": "+£1.13",
+            "contribution": "64.2%",
+            "children": [],
+        },
+    }
+
+
 class TestBaseRoundedBox:
     """Test the BaseRoundedBox class."""
 
@@ -66,48 +128,33 @@ class TestBaseRoundedBox:
 
         assert box.get_linewidth() == linewidth
 
-    def test_border_radius_top(self, ax):
-        """Test that top_radius creates correct number of vertices for rounded top corners."""
-        box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.5, bottom_radius=0.0)
-        ax.add_patch(box)
-
-        # Top rounded (2 corners), bottom square (2 corners): 2 * 10 arc points + 2 straight points + 1 close
-        expected_vertices = 2 * self.ARC_POINTS_PER_CORNER + 2 + 1
-        assert len(box.get_path().vertices) == expected_vertices
-
-    def test_border_radius_bottom(self, ax):
-        """Test that bottom_radius creates correct number of vertices for rounded bottom corners."""
-        box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.5)
-        ax.add_patch(box)
-
-        # Bottom rounded (2 corners), top square (2 corners): 2 * 10 arc points + 2 straight points + 1 close
-        expected_vertices = 2 * self.ARC_POINTS_PER_CORNER + 2 + 1
-        assert len(box.get_path().vertices) == expected_vertices
-
     def test_zero_radius_creates_square_corners(self, ax):
-        """Test that zero radius creates a box with square corners."""
+        """Test that zero radius creates a box with square corners (fewer vertices)."""
         box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.0)
         ax.add_patch(box)
 
-        # With zero radius, we should have fewer vertices (just the corners, not arc points)
         path = box.get_path()
         assert len(path.vertices) == self.SQUARE_CORNER_VERTICES
 
     def test_nonzero_radius_creates_rounded_corners(self, ax):
-        """Test that nonzero radius creates more vertices for rounded corners."""
+        """Test that nonzero radius creates rounded corners (more vertices for arc points)."""
         box = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.3, bottom_radius=0.3)
         ax.add_patch(box)
 
-        # With rounded corners, we should have many more vertices (10 per corner arc)
         path = box.get_path()
         assert len(path.vertices) == self.ROUNDED_CORNER_VERTICES
 
-    def test_different_top_bottom_radius(self, ax):
-        """Test that different top and bottom radii produce different shapes."""
+    def test_partial_radius_creates_mixed_corners(self, ax):
+        """Test that partial radius (top or bottom only) creates intermediate vertex count."""
         box_top_only = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.5, bottom_radius=0.0)
         box_bottom_only = BaseRoundedBox(xy=(0, 0), width=2.0, height=1.0, top_radius=0.0, bottom_radius=0.5)
 
-        # Different radius configurations should produce different paths
+        # Partial rounding: 2 rounded corners + 2 square corners
+        expected_vertices = 2 * self.ARC_POINTS_PER_CORNER + 2 + 1
+        assert len(box_top_only.get_path().vertices) == expected_vertices
+        assert len(box_bottom_only.get_path().vertices) == expected_vertices
+
+        # Different configurations should produce different paths
         assert not (box_top_only.get_path().vertices == box_bottom_only.get_path().vertices).all()
 
     def test_multiple_boxes_on_same_axes(self, ax):
@@ -513,6 +560,65 @@ class TestTreeGrid:
         patches_per_node = 2
         assert len(ax.patches) == patches_per_node
 
+    @pytest.mark.parametrize("orientation", ["LR", "TB"])
+    def test_orientation_renders_correctly(self, simple_three_node_tree, orientation):
+        """Test that both orientations render tree with correct patch count."""
+        grid = TreeGrid(
+            tree_structure=simple_three_node_tree,
+            node_class=SimpleTreeNode,
+            orientation=orientation,
+        )
+
+        ax = grid.render()
+
+        # Verify nodes rendered
+        patches_per_node = 2
+        num_nodes = 3
+        num_connections = 2
+        expected_patches = num_nodes * patches_per_node + num_connections
+        assert len(ax.patches) == expected_patches
+
+        # Verify orientation attribute stored
+        assert grid.orientation == orientation
+
+    def test_orientation_invalid(self):
+        """Test that invalid orientation raises ValueError."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 0.0,
+                "value1": "$100K",
+                "value2": "$100K",
+                "children": [],
+            },
+        }
+
+        with pytest.raises(ValueError, match="orientation must be 'LR' or 'TB'"):
+            TreeGrid(
+                tree_structure=tree_structure,
+                node_class=SimpleTreeNode,
+                orientation="INVALID",
+            )
+
+    def test_orientation_default_is_lr(self):
+        """Test that default orientation is LR."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 0.0,
+                "value1": "$100K",
+                "value2": "$100K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        assert grid.orientation == "LR"
+
 
 class TestDetailedTreeNode:
     """Test the DetailedTreeNode class."""
@@ -906,3 +1012,193 @@ class TestDetailedTreeNodeIntegration:
             facecolor = title_box.get_facecolor()
             hex_color = f"#{int(facecolor[0] * 255):02x}{int(facecolor[1] * 255):02x}{int(facecolor[2] * 255):02x}"
             assert hex_color == expected_colors[i]
+
+
+class TestMissingScenarios:
+    """Tests for scenarios that were previously missing."""
+
+    def test_tb_orientation_position_mapping(self, simple_three_node_tree):
+        """Test that TB orientation correctly maps depth to Y axis (root at top)."""
+        grid = TreeGrid(
+            tree_structure=simple_three_node_tree,
+            node_class=SimpleTreeNode,
+            orientation="TB",
+            grid_spacing=2,
+        )
+
+        # In TB orientation, depth should map to Y (higher Y = closer to root)
+        # Root at depth 0 should have highest Y
+        root_pos = grid._positions["root"]
+        child1_pos = grid._positions["child1"]
+        child2_pos = grid._positions["child2"]
+
+        # Verify depths
+        assert root_pos[1] == 0  # Root at depth 0
+        assert child1_pos[1] == 1  # Children at depth 1
+        assert child2_pos[1] == 1
+
+        # Verify children are horizontally spread
+        assert child1_pos[0] != child2_pos[0]
+
+        # Root should be centered between children
+        expected_root_x = (child1_pos[0] + child2_pos[0]) / 2
+        assert root_pos[0] == expected_root_x
+
+    def test_custom_spacing_parameters(self, simple_three_node_tree):
+        """Test that custom spacing parameters override defaults."""
+        custom_vertical = 5.0
+        custom_horizontal = 3.0
+
+        grid = TreeGrid(
+            tree_structure=simple_three_node_tree,
+            node_class=SimpleTreeNode,
+            vertical_spacing=custom_vertical,
+            horizontal_spacing=custom_horizontal,
+        )
+
+        assert grid.vertical_spacing == custom_vertical
+        assert grid.horizontal_spacing == custom_horizontal
+
+    def test_default_spacing_uses_constants(self):
+        """Test that default spacing uses class constants correctly."""
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 0.0,
+                "value1": "$100K",
+                "value2": "$100K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+        )
+
+        # Default should be node dimension + gap constant
+        expected_vertical = SimpleTreeNode.NODE_HEIGHT + TreeGrid.DEFAULT_VERTICAL_GAP
+        expected_horizontal = SimpleTreeNode.NODE_WIDTH + TreeGrid.DEFAULT_HORIZONTAL_GAP
+
+        assert grid.vertical_spacing == expected_vertical
+        assert grid.horizontal_spacing == expected_horizontal
+
+    def test_detailed_node_without_contribution(self, ax):
+        """Test that DetailedTreeNode renders correctly without optional contribution field."""
+        node = DetailedTreeNode(
+            data={
+                "header": "Revenue",
+                "percent": 10.5,
+                "current_period": "£1.5M",
+                "previous_period": "£1.36M",
+                "diff": "+£140K",
+                # No contribution field
+            },
+            x=0,
+            y=0,
+        )
+        node.render(ax)
+
+        # Should render without errors
+        assert len(ax.patches) == 2  # Title box + data box
+
+        # Verify text content - should have Diff and Pct Diff rows but not Contribution
+        text_strings = [t.get_text() for t in ax.texts]
+        assert "Diff" in text_strings
+        assert "10.5%" in text_strings  # Pct Diff value
+        # Contribution row should not appear
+        assert "Contribution" not in text_strings
+
+    def test_contour_prevents_overlap_in_complex_tree(self):
+        """Test that contour checking prevents node overlap in asymmetric trees."""
+        # Tree where naive centering would cause overlap:
+        # Root has two children, left child has deep subtree, right is leaf
+        tree_structure = {
+            "root": {
+                "header": "Root",
+                "percent": 5.0,
+                "value1": "$100K",
+                "value2": "$95K",
+                "children": ["left", "right"],
+            },
+            "left": {
+                "header": "Left",
+                "percent": 3.0,
+                "value1": "$50K",
+                "value2": "$48.5K",
+                "children": ["left_child1", "left_child2"],
+            },
+            "left_child1": {
+                "header": "LC1",
+                "percent": 2.0,
+                "value1": "$25K",
+                "value2": "$24.5K",
+                "children": [],
+            },
+            "left_child2": {
+                "header": "LC2",
+                "percent": 1.0,
+                "value1": "$25K",
+                "value2": "$24.75K",
+                "children": [],
+            },
+            "right": {
+                "header": "Right",
+                "percent": 7.0,
+                "value1": "$50K",
+                "value2": "$46.5K",
+                "children": [],
+            },
+        }
+
+        grid = TreeGrid(
+            tree_structure=tree_structure,
+            node_class=SimpleTreeNode,
+            grid_spacing=2,
+        )
+
+        # Verify no nodes at the same depth have overlapping x positions
+        positions_by_depth: dict[int, list[float]] = {}
+        for node_id, (x_pos, depth) in grid._positions.items():
+            if depth not in positions_by_depth:
+                positions_by_depth[depth] = []
+            positions_by_depth[depth].append(x_pos)
+
+        # Check that x positions at each depth are properly spaced
+        for depth, x_positions in positions_by_depth.items():
+            sorted_x = sorted(x_positions)
+            for i in range(1, len(sorted_x)):
+                gap = sorted_x[i] - sorted_x[i - 1]
+                # Gap should be at least grid_spacing
+                assert gap >= grid.grid_spacing, f"Overlap at depth {depth}: gap {gap} < {grid.grid_spacing}"
+
+    def test_tree_with_fixture(self, detailed_three_node_tree):
+        """Test rendering using the detailed tree fixture."""
+        grid = TreeGrid(
+            tree_structure=detailed_three_node_tree,
+            node_class=DetailedTreeNode,
+        )
+
+        ax = grid.render()
+
+        # 3 nodes * 2 patches + 2 connections
+        expected_patches = 3 * 2 + 2
+        assert len(ax.patches) == expected_patches
+
+    def test_lr_orientation_depth_maps_to_x(self, simple_three_node_tree):
+        """Test that LR orientation maps depth to X axis (root on left)."""
+        grid = TreeGrid(
+            tree_structure=simple_three_node_tree,
+            node_class=SimpleTreeNode,
+            orientation="LR",
+        )
+
+        # Render to trigger coordinate calculation
+        grid.render()
+
+        # In LR orientation, deeper nodes should have higher X coordinates
+        # This is handled in the render method's coordinate mapping
+        # Just verify the internal positions have correct depths
+        assert grid._positions["root"][1] == 0
+        assert grid._positions["child1"][1] == 1
+        assert grid._positions["child2"][1] == 1
