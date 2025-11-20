@@ -490,11 +490,11 @@ class TreeGrid:
                 child_contours = [get_contour(child, mod_sum + modifier[node_id], get_leftmost) for child in children]
                 for child_contour in child_contours:
                     for depth, x in child_contour.items():
-                        if depth not in contour:
-                            contour[depth] = x
-                        elif get_leftmost and x < contour[depth]:
-                            contour[depth] = x
-                        elif not get_leftmost and x > contour[depth]:
+                        if (
+                            depth not in contour
+                            or (get_leftmost and x < contour[depth])
+                            or (not get_leftmost and x > contour[depth])
+                        ):
                             contour[depth] = x
             return contour
 
@@ -700,9 +700,7 @@ class TreeGrid:
         codes.append(Path.CURVE3)
 
     @staticmethod
-    def _draw_connection(
-        ax: Axes, x1: float, y1: float, x2: float, y2: float, orientation: str = "LR"
-    ) -> None:
+    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float, orientation: str = "LR") -> None:
         """Draw connection line between nodes with orientation-appropriate styling.
 
         Args:

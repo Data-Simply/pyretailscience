@@ -1,5 +1,9 @@
 """Tests for the plots.tree_diagram module."""
 
+import matplotlib as mpl
+
+mpl.use("Agg")  # Use non-interactive backend before importing pyplot
+
 import matplotlib.pyplot as plt
 import pytest
 
@@ -1100,7 +1104,8 @@ class TestMissingScenarios:
         node.render(ax)
 
         # Should render without errors
-        assert len(ax.patches) == 2  # Title box + data box
+        patches_per_node = 2  # Title box + data box
+        assert len(ax.patches) == patches_per_node
 
         # Verify text content - should have Diff and Pct Diff rows but not Contribution
         text_strings = [t.get_text() for t in ax.texts]
@@ -1159,7 +1164,7 @@ class TestMissingScenarios:
 
         # Verify no nodes at the same depth have overlapping x positions
         positions_by_depth: dict[int, list[float]] = {}
-        for node_id, (x_pos, depth) in grid._positions.items():
+        for x_pos, depth in grid._positions.values():
             if depth not in positions_by_depth:
                 positions_by_depth[depth] = []
             positions_by_depth[depth].append(x_pos)
