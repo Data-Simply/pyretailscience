@@ -410,8 +410,14 @@ class RevenueTree:
         spend_per_transaction_label: str = "Spend / Visit",
         units_per_transaction_label: str = "Units / Visit",
         price_per_unit_label: str = "Price / Unit",
+        node_width: float | None = None,
+        node_height: float | None = None,
+        vertical_spacing: float | None = None,
+        horizontal_spacing: float | None = None,
     ) -> Axes:
         """Draw the Revenue Tree graph as a matplotlib visualization.
+
+        Node positions are computed automatically from the tree structure using a layered layout algorithm.
 
         Args:
             row_index: Index of the row to visualize from the RevenueTree DataFrame. Defaults to 0.
@@ -425,6 +431,10 @@ class RevenueTree:
             spend_per_transaction_label: Label for the Spend / Visit node. Defaults to "Spend / Visit".
             units_per_transaction_label: Label for the Units / Visit node. Defaults to "Units / Visit".
             price_per_unit_label: Label for the Price / Unit node. Defaults to "Price / Unit".
+            node_width: Override the default node width. Defaults to None (use DetailedTreeNode.NODE_WIDTH).
+            node_height: Override the default node height. Defaults to None (use DetailedTreeNode.NODE_HEIGHT).
+            vertical_spacing: Override vertical spacing between rows. Defaults to None (node_height + 0.6).
+            horizontal_spacing: Override horizontal spacing between columns. Defaults to None (node_width + 0.5).
 
         Returns:
             matplotlib.axes.Axes: The matplotlib axes containing the tree visualization.
@@ -439,7 +449,7 @@ class RevenueTree:
         # Set period labels
         current_label, previous_label = value_labels if value_labels else ("Current Period", "Previous Period")
 
-        # Build tree structure - always include base 5 nodes
+        # Build tree structure - positions computed automatically by TreeGrid
         tree_structure = {
             "revenue": {
                 "header": unit_spend_label,
@@ -450,7 +460,6 @@ class RevenueTree:
                 # Contribution omitted for root node (would be same as diff)
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (1, 0),
                 "children": ["customers", "spend_per_customer"],
             },
             "customers": {
@@ -462,7 +471,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.agg.customer_id_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (0, 1),
                 "children": [],
             },
             "spend_per_customer": {
@@ -474,7 +482,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.spend_per_cust_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (2, 1),
                 "children": ["visits_per_customer", "spend_per_visit"],
             },
             "visits_per_customer": {
@@ -486,7 +493,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.trans_per_cust_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (1, 2),
                 "children": [],
             },
             "spend_per_visit": {
@@ -498,19 +504,13 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.spend_per_trans_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (3, 2),
                 "children": [],
             },
         }
 
-        grid_rows = 3
-        grid_cols = 4
-
         # Add quantity-related nodes if data is available
         has_quantity = cols.agg.unit_qty_p1 in graph_data
         if has_quantity:
-            grid_rows = 4
-            grid_cols = 5
             tree_structure["spend_per_visit"]["children"] = ["units_per_visit", "price_per_unit"]
             tree_structure["units_per_visit"] = {
                 "header": units_per_transaction_label,
@@ -521,7 +521,6 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.units_per_trans_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (2, 3),
                 "children": [],
             }
             tree_structure["price_per_unit"] = {
@@ -533,16 +532,17 @@ class RevenueTree:
                 "contribution": gu.human_format(graph_data[cols.calc.price_per_unit_contrib], decimals=2),
                 "current_label": current_label,
                 "previous_label": previous_label,
-                "position": (4, 3),
                 "children": [],
             }
 
-        # Create and render the tree grid
+        # Create and render the tree grid with automatic layout
         grid = TreeGrid(
             tree_structure=tree_structure,
-            num_rows=grid_rows,
-            num_cols=grid_cols,
             node_class=DetailedTreeNode,
+            node_width=node_width,
+            node_height=node_height,
+            vertical_spacing=vertical_spacing,
+            horizontal_spacing=horizontal_spacing,
         )
 
         return grid.render()
