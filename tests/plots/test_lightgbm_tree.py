@@ -13,6 +13,28 @@ mpl.use("Agg")
 from pyretailscience.plots.styles.tailwind import COLORS
 from pyretailscience.plots.tree_diagram import LightGBMTreeNode, TreeGrid, lightgbm_tree_to_grid
 
+# Test constants for tree structure validation
+PATCHES_PER_NODE = 2  # header box + content box
+TEXTS_FOR_SPLIT_NODE = 4  # header, condition, samples, avg
+TEXTS_FOR_LEAF_NODE = 3  # header, samples, avg (no condition)
+POSITION_TUPLE_LENGTH = 2  # (col_idx, row_idx)
+VALUE_RANGE_TUPLE_LENGTH = 2  # (min, max)
+RESULT_TUPLE_LENGTH = 3  # (tree_structure, num_rows, num_cols)
+
+# Thresholds for deep tree fixture
+AGE_THRESHOLD = 45
+INCOME_THRESHOLD = 55000
+
+# Tree dimension bounds
+MIN_ROWS_SIMPLE_TREE = 2
+MAX_ROWS_SIMPLE_TREE = 4
+MIN_ROWS_DEEP_TREE = 3
+MIN_COLS_DEEP_TREE = 2
+MIN_NODES_DEEP_TREE = 5
+
+# Classification threshold
+FEATURE_THRESHOLD = 0.5
+
 
 @pytest.fixture(autouse=True)
 def cleanup_figures():
@@ -59,7 +81,7 @@ def deep_lgbm_tree():
             "score": np.random.rand(100) * 100,  # noqa: NPY002
         },
     )
-    y = pd.Series((X["age"] > 45).astype(int) & (X["income"] > 55000).astype(int))
+    y = pd.Series((X["age"] > AGE_THRESHOLD).astype(int) & (X["income"] > INCOME_THRESHOLD).astype(int))
 
     model = lgb.LGBMClassifier(n_estimators=1, max_depth=4, min_child_samples=5, random_state=42)
     model.fit(X, y)
@@ -85,10 +107,10 @@ class TestLightGBMTreeNode:
         node.render(ax)
 
         # Should create 2 patches: header box + content box
-        assert len(ax.patches) == 2
+        assert len(ax.patches) == PATCHES_PER_NODE
 
         # Should create 4 text objects: header, condition, samples, avg
-        assert len(ax.texts) == 4
+        assert len(ax.texts) == TEXTS_FOR_SPLIT_NODE
 
         # Verify header text
         header_text = ax.texts[0]
@@ -108,10 +130,10 @@ class TestLightGBMTreeNode:
         node.render(ax)
 
         # Should create 2 patches: header box + content box
-        assert len(ax.patches) == 2
+        assert len(ax.patches) == PATCHES_PER_NODE
 
         # Should create 3 text objects: "Leaf" header, samples, avg (no condition)
-        assert len(ax.texts) == 3
+        assert len(ax.texts) == TEXTS_FOR_LEAF_NODE
 
         # Verify header text is "Leaf"
         header_text = ax.texts[0]
@@ -190,8 +212,8 @@ class TestLightGBMTreeNode:
         node.render(ax)
 
         # Check node dimensions match class constants
-        assert node.NODE_WIDTH == 3.5
-        assert node.NODE_HEIGHT == 1.7
+        assert node.NODE_WIDTH == LightGBMTreeNode.NODE_WIDTH
+        assert node.NODE_HEIGHT == LightGBMTreeNode.NODE_HEIGHT
 
     def test_node_content_box_white(self, ax):
         """Test that content box has white background."""
@@ -205,10 +227,9 @@ class TestLightGBMTreeNode:
         node = LightGBMTreeNode(data=node_data, x=0, y=0)
         node.render(ax)
 
-        # Content box should be white
+        # Content box should be white (RGB values should all be 1.0)
         content_box = ax.patches[1]
         facecolor = content_box.get_facecolor()
-        # White is (1.0, 1.0, 1.0, 1.0) in RGBA
         assert facecolor[0] == pytest.approx(1.0, abs=0.01)
         assert facecolor[1] == pytest.approx(1.0, abs=0.01)
         assert facecolor[2] == pytest.approx(1.0, abs=0.01)
@@ -277,7 +298,7 @@ class TestLightgbmTreeToGrid:
         result = lightgbm_tree_to_grid(booster, feature_names)
 
         assert isinstance(result, tuple)
-        assert len(result) == 3
+        assert len(result) == RESULT_TUPLE_LENGTH
 
         tree_structure, num_rows, num_cols = result
         assert isinstance(tree_structure, dict)
@@ -353,7 +374,7 @@ class TestLightgbmTreeToGrid:
 
         for node_data in tree_structure.values():
             assert "avg_value" in node_data
-            assert isinstance(node_data["avg_value"], (int, float))
+            assert isinstance(node_data["avg_value"], int | float)
 
     def test_value_range_included(self, simple_lgbm_tree):
         """Test that value_range is included for color normalization."""
@@ -369,7 +390,7 @@ class TestLightgbmTreeToGrid:
         for node_data in nodes_with_range:
             value_range = node_data["value_range"]
             assert isinstance(value_range, tuple)
-            assert len(value_range) == 2
+            assert len(value_range) == VALUE_RANGE_TUPLE_LENGTH
             assert value_range[0] <= value_range[1]
 
     def test_num_rows_matches_tree_depth(self, simple_lgbm_tree):
@@ -379,8 +400,8 @@ class TestLightgbmTreeToGrid:
         _, num_rows, _ = lightgbm_tree_to_grid(booster, feature_names)
 
         # Simple tree with max_depth=2 should have num_rows=3 (depth 0, 1, 2)
-        assert num_rows >= 2
-        assert num_rows <= 4  # Should be reasonable for simple tree
+        assert num_rows >= MIN_ROWS_SIMPLE_TREE
+        assert num_rows <= MAX_ROWS_SIMPLE_TREE  # Should be reasonable for simple tree
 
     def test_feature_names_used_in_splits(self, simple_lgbm_tree):
         """Test that feature names appear in split conditions."""
@@ -412,7 +433,7 @@ class TestLightgbmTreeToGrid:
         for node_id, node_data in tree_structure.items():
             position = node_data["position"]
             assert isinstance(position, tuple)
-            assert len(position) == 2
+            assert len(position) == POSITION_TUPLE_LENGTH
 
             col_idx, row_idx = position
             assert 0 <= col_idx < num_cols, f"Node {node_id} col {col_idx} out of bounds [0, {num_cols})"
@@ -436,9 +457,9 @@ class TestLightgbmTreeToGrid:
         tree_structure, num_rows, num_cols = lightgbm_tree_to_grid(booster, feature_names)
 
         # Deep tree with max_depth=4 should have more rows
-        assert num_rows >= 3, "Deep tree should have at least 3 rows"
-        assert num_cols >= 2, "Tree should have at least 2 columns"
-        assert len(tree_structure) >= 5, "Deep tree should have multiple nodes"
+        assert num_rows >= MIN_ROWS_DEEP_TREE, "Deep tree should have at least 3 rows"
+        assert num_cols >= MIN_COLS_DEEP_TREE, "Tree should have at least 2 columns"
+        assert len(tree_structure) >= MIN_NODES_DEEP_TREE, "Deep tree should have multiple nodes"
 
     def test_conversion_without_feature_names(self, simple_lgbm_tree):
         """Test that conversion works without explicit feature names."""
@@ -461,7 +482,7 @@ class TestLightgbmTreeToGrid:
                 "feat2": np.random.rand(50),  # noqa: NPY002
             },
         )
-        y = pd.Series((X["feat1"] > 0.5).astype(int))
+        y = pd.Series((X["feat1"] > FEATURE_THRESHOLD).astype(int))
 
         model = lgb.LGBMClassifier(n_estimators=3, random_state=42)  # 3 trees!
         model.fit(X, y)
