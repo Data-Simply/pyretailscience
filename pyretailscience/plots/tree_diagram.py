@@ -810,3 +810,328 @@ class DetailedTreeNode(TreeNode):
                 fontsize=styling_context.fonts.tick_size,
                 color=data_text_color,
             )
+
+
+class LightGBMTreeNode(TreeNode):
+    """Tree node for visualizing LightGBM decision tree nodes.
+
+    Displays decision tree information including split conditions, leaf values,
+    sample counts, and average values. Uses a two-section layout with colored
+    header and content area.
+    """
+
+    NODE_WIDTH = 3.5
+    NODE_HEIGHT = 1.7
+    HEADER_HEIGHT_FRACTION = 0.25
+
+    # Default dimensions used for responsive font scaling
+    DEFAULT_WIDTH = 3.5
+    DEFAULT_HEIGHT = 1.7
+
+    def render(self, ax: Axes) -> None:
+        """Render the LightGBM tree node on the given axes.
+
+        Args:
+            ax (matplotlib.axes.Axes): Matplotlib axes object to render on.
+        """
+        data = self._data
+        header_height = self.NODE_HEIGHT * self.HEADER_HEIGHT_FRACTION
+        content_height = self.NODE_HEIGHT - header_height
+
+        # Determine node color based on value (red -> yellow -> green)
+        node_value = data.get("value", 0)
+        value_range = data.get("value_range", (node_value, node_value))
+        min_val, max_val = value_range
+
+        # Normalize value to 0-1 range
+        normalized = (node_value - min_val) / (max_val - min_val) if max_val != min_val else 0.5
+
+        # Color gradient: red (0) -> yellow (0.5) -> green (1)
+        mid_point = 0.5
+        color_threshold_low = 0.33
+        color_threshold_high = 0.67
+
+        if normalized < mid_point:
+            # Red to yellow
+            t = normalized * 2
+            color = (
+                COLORS["red"][500]
+                if t < color_threshold_low
+                else COLORS["orange"][500]
+                if t < color_threshold_high
+                else COLORS["yellow"][500]
+            )
+        else:
+            # Yellow to green
+            t = (normalized - mid_point) * 2
+            color = (
+                COLORS["yellow"][500]
+                if t < color_threshold_low
+                else COLORS["lime"][500]
+                if t < color_threshold_high
+                else COLORS["green"][500]
+            )
+
+        # Draw header box with colored background
+        header_box = BaseRoundedBox(
+            xy=(self.x, self.y + content_height),
+            width=self.NODE_WIDTH,
+            height=header_height,
+            top_radius=0.15,
+            bottom_radius=0,
+            facecolor=color,
+            edgecolor=COLORS["gray"][700],
+            linewidth=1.5,
+        )
+        ax.add_patch(header_box)
+
+        # Draw content box
+        content_box = BaseRoundedBox(
+            xy=(self.x, self.y),
+            width=self.NODE_WIDTH,
+            height=content_height,
+            top_radius=0,
+            bottom_radius=0.15,
+            facecolor="white",
+            edgecolor=COLORS["gray"][700],
+            linewidth=1.5,
+        )
+        ax.add_patch(content_box)
+
+        # Get responsive font sizes
+        font_sizes = self._get_responsive_font_sizes()
+
+        # Header text (feature name or "Leaf")
+        header_text = data.get("split_feature", "Leaf")
+        ax.text(
+            self.x + self.NODE_WIDTH / 2,
+            self.y + content_height + header_height / 2,
+            header_text,
+            ha="center",
+            va="center",
+            fontsize=font_sizes["header_size"],
+            fontweight="bold",
+            color="white",
+        )
+
+        # Content area text
+        y_offset = self.y + content_height * 0.85
+        line_height = content_height * 0.18
+
+        # Split condition or leaf value
+        if "split_condition" in data:
+            condition_text = data["split_condition"]
+            ax.text(
+                self.x + self.NODE_WIDTH / 2,
+                y_offset,
+                condition_text,
+                ha="center",
+                va="center",
+                fontsize=font_sizes["content_size"],
+                color=COLORS["gray"][900],
+            )
+            y_offset -= line_height
+
+        # Sample count
+        if "sample_count" in data:
+            count_text = f"Samples: {data['sample_count']:,}"
+            ax.text(
+                self.x + self.NODE_WIDTH * 0.1,
+                y_offset,
+                count_text,
+                ha="left",
+                va="center",
+                fontsize=font_sizes["label_size"],
+                color=COLORS["gray"][700],
+            )
+            y_offset -= line_height
+
+        # Average value
+        if "avg_value" in data:
+            avg_text = (
+                f"Avg: {data['avg_value']:.2%}" if abs(data["avg_value"]) < 1 else f"Avg: {data['avg_value']:.2f}"
+            )
+            ax.text(
+                self.x + self.NODE_WIDTH * 0.1,
+                y_offset,
+                avg_text,
+                ha="left",
+                va="center",
+                fontsize=font_sizes["label_size"],
+                color=COLORS["gray"][700],
+            )
+
+    def _get_responsive_font_sizes(self) -> dict[str, float]:
+        """Calculate responsive font sizes based on node dimensions.
+
+        Scales fonts relative to the default dimensions to maintain readability
+        when node sizes are customized.
+
+        Returns:
+            dict[str, float]: Dictionary with header_size, content_size, and label_size.
+        """
+        width_scale = self.NODE_WIDTH / self.DEFAULT_WIDTH
+        height_scale = self.NODE_HEIGHT / self.DEFAULT_HEIGHT
+        scale_factor = min(width_scale, height_scale)
+
+        return {
+            "header_size": 12 * scale_factor,
+            "content_size": 11 * scale_factor,
+            "label_size": 9 * scale_factor,
+        }
+
+    def get_width(self) -> float:
+        """Return the node width.
+
+        Returns:
+            float: Node width in data coordinates.
+        """
+        return self.NODE_WIDTH
+
+    def get_height(self) -> float:
+        """Return the node height.
+
+        Returns:
+            float: Node height in data coordinates.
+        """
+        return self.NODE_HEIGHT
+
+
+def lightgbm_tree_to_grid(  # noqa: C901
+    booster: Any,  # noqa: ANN401
+    feature_names: list[str] | None = None,
+) -> tuple[dict[str, dict], int, int]:
+    """Convert LightGBM single-tree booster to TreeGrid format.
+
+    Parses the LightGBM tree structure and creates a dictionary compatible with TreeGrid.
+    Automatically calculates value ranges for color normalization and tree dimensions.
+
+    Args:
+        booster: LightGBM Booster object (must have single tree, n_estimators=1).
+        feature_names (list[str] | None): Optional list of feature names for display. If None, uses split indices.
+
+    Returns:
+        tuple[dict[str, dict], int, int]: Tuple of (tree_structure, num_rows, num_cols) where:
+            - tree_structure: Dict mapping node_id -> node data with children list
+            - num_rows: Number of levels in the tree (tree depth + 1)
+            - num_cols: Maximum width of the tree at any level
+
+    Raises:
+        ValueError: If booster doesn't have exactly one tree.
+
+    Example:
+        >>> from lightgbm import LGBMRegressor
+        >>> model = LGBMRegressor(n_estimators=1, max_depth=3)
+        >>> model.fit(X_train, y_train)
+        >>> tree_structure, num_rows, num_cols = lightgbm_tree_to_grid(
+        ...     model.booster_, feature_names=X_train.columns
+        ... )
+        >>> grid = TreeGrid(
+        ...     tree_structure=tree_structure,
+        ...     num_rows=num_rows,
+        ...     num_cols=num_cols,
+        ...     node_class=LightGBMTreeNode
+        ... )
+        >>> grid.render()
+    """
+    import numpy as np
+
+    # Get tree structure from booster
+    tree_dump = booster.dump_model()
+    tree_info_list = tree_dump["tree_info"]
+
+    if len(tree_info_list) != 1:
+        msg = f"Expected single tree (n_estimators=1), got {len(tree_info_list)} trees"
+        raise ValueError(msg)
+
+    tree_structure_raw = tree_info_list[0]["tree_structure"]
+
+    # Collect all node values for normalization
+    all_values: list[float] = []
+
+    def collect_values(node: dict[str, Any]) -> None:
+        if "leaf_value" in node:
+            all_values.append(node["leaf_value"])
+        elif "internal_value" in node:
+            all_values.append(node["internal_value"])
+        if "left_child" in node:
+            collect_values(node["left_child"])
+        if "right_child" in node:
+            collect_values(node["right_child"])
+
+    collect_values(tree_structure_raw)
+
+    if not all_values:
+        all_values = [0]
+
+    value_range = (float(np.min(all_values)), float(np.max(all_values)))
+
+    # Convert tree structure to TreeGrid format and track positions
+    tree_structure: dict[str, dict] = {}
+    node_counter = [0]  # Use list for mutable counter
+    node_positions: dict[str, tuple[int, int]] = {}  # node_id -> (row, col)
+
+    def convert_node(lgbm_node: dict[str, Any], row: int, col: int) -> str:
+        """Recursively convert LightGBM node to TreeGrid format."""
+        node_id = f"node_{node_counter[0]}"
+        node_counter[0] += 1
+
+        # Track position
+        node_positions[node_id] = (row, col)
+
+        # Extract node data
+        is_leaf = "leaf_value" in lgbm_node
+        node_value = lgbm_node.get("leaf_value", lgbm_node.get("internal_value", 0))
+        sample_count = lgbm_node.get("leaf_count", lgbm_node.get("internal_count", 0))
+
+        # Build node data dict
+        node_data = {
+            "value": float(node_value),
+            "sample_count": int(sample_count),
+            "avg_value": float(node_value),
+            "value_range": value_range,
+            "position": (col, row),  # TreeGrid expects (col_idx, row_idx) tuple
+            "children": [],
+        }
+
+        if is_leaf:
+            # Leaf node
+            node_data["split_feature"] = "Leaf"
+        else:
+            # Internal node with split
+            split_feature_idx = lgbm_node.get("split_feature")
+            threshold = lgbm_node.get("threshold")
+            decision_type = lgbm_node.get("decision_type", "<=")
+
+            # Get feature name
+            if feature_names and split_feature_idx < len(feature_names):
+                feature_name = feature_names[split_feature_idx]
+            else:
+                feature_name = f"Feature {split_feature_idx}"
+
+            node_data["split_feature"] = feature_name
+            node_data["split_condition"] = f"{decision_type} {threshold:.4f}" if threshold is not None else ""
+
+            # Process children (left goes to next row, col*2; right goes to next row, col*2+1)
+            if "left_child" in lgbm_node:
+                left_child_id = convert_node(lgbm_node["left_child"], row + 1, col * 2)
+                node_data["children"].append(left_child_id)
+
+            if "right_child" in lgbm_node:
+                right_child_id = convert_node(lgbm_node["right_child"], row + 1, col * 2 + 1)
+                node_data["children"].append(right_child_id)
+
+        tree_structure[node_id] = node_data
+        return node_id
+
+    # Convert starting from root at row=0, col=0
+    convert_node(tree_structure_raw, row=0, col=0)
+
+    # Calculate tree dimensions
+    max_row = max(row for row, _ in node_positions.values())
+    max_col = max(col for _, col in node_positions.values())
+
+    num_rows = max_row + 1
+    num_cols = max_col + 1
+
+    return tree_structure, num_rows, num_cols
