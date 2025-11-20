@@ -302,6 +302,14 @@ COLORS = {
     },
 }
 
+# Semantic colors for plot elements
+# These represent meaning rather than arbitrary styling choices
+POSITIVE_COLOR = COLORS["green"][500]  # Used for positive values, growth, good performance
+NEGATIVE_COLOR = COLORS["red"][500]    # Used for negative values, decline, poor performance
+NEUTRAL_COLOR = COLORS["blue"][500]    # Used for neutral/total values, neither positive nor negative
+CONTEXT_COLOR = COLORS["gray"][400]    # Used for de-emphasized/background lines
+PRIMARY_COLOR = COLORS["green"][500]   # Default single-series plot color (non-semantic usage)
+
 
 def get_color_list(name: str, starting_color_code: int = 50, ending_color_code: int = 950) -> list[str]:
     """Returns a filtered list of colors from the Tailwind color palette based on the given range.

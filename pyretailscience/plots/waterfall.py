@@ -34,7 +34,7 @@ from matplotlib.axes import Axes
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.styles.tailwind import NEGATIVE_COLOR, NEUTRAL_COLOR, POSITIVE_COLOR
 
 
 def plot(
@@ -100,13 +100,13 @@ def plot(
 
     amount_total = df["amounts"].sum()
 
-    default_colors = df["amounts"].apply(lambda x: COLORS["green"][500] if x > 0 else COLORS["red"][500]).to_list()
+    default_colors = df["amounts"].apply(lambda x: POSITIVE_COLOR if x > 0 else NEGATIVE_COLOR).to_list()
     bottom = df["amounts"].cumsum().shift(1).fillna(0).to_list()
 
     if display_net_bar:
         # Append a row for the net amount
         df.loc[len(df)] = ["Net", amount_total]
-        default_colors.append(COLORS["blue"][500])
+        default_colors.append(NEUTRAL_COLOR)
         bottom.append(0)
 
     # Create the plot

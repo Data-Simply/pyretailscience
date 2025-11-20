@@ -4,7 +4,17 @@ from itertools import islice
 
 import pytest
 
-from pyretailscience.plots.styles.tailwind import COLORS, get_multi_color_cmap, get_plot_colors, get_single_color_cmap
+from pyretailscience.plots.styles.tailwind import (
+    COLORS,
+    CONTEXT_COLOR,
+    NEGATIVE_COLOR,
+    NEUTRAL_COLOR,
+    POSITIVE_COLOR,
+    PRIMARY_COLOR,
+    get_multi_color_cmap,
+    get_plot_colors,
+    get_single_color_cmap,
+)
 
 
 def test_get_single_color_cmap_three_colors():
@@ -139,3 +149,12 @@ def test_get_plot_colors_threshold_boundary():
 
     # But the second colors should be different when crossing threshold
     assert colors_below_threshold[1] != colors_at_threshold[1]
+
+
+def test_semantic_colors_are_defined():
+    """Test that semantic color constants are defined."""
+    assert POSITIVE_COLOR is not None
+    assert NEGATIVE_COLOR is not None
+    assert NEUTRAL_COLOR is not None
+    assert CONTEXT_COLOR is not None
+    assert PRIMARY_COLOR is not None

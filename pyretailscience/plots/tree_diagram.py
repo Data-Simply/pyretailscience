@@ -14,7 +14,7 @@ from matplotlib.axes import Axes
 from matplotlib.path import Path
 
 from pyretailscience.plots.styles.styling_context import get_styling_context
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.styles.tailwind import COLORS, NEGATIVE_COLOR, POSITIVE_COLOR
 
 
 class BaseRoundedBox(mpatches.PathPatch):
@@ -216,9 +216,9 @@ class SimpleTreeNode(TreeNode):
 
         """
         if percent_change >= SimpleTreeNode.GREEN_THRESHOLD:
-            return COLORS["green"][500]
+            return POSITIVE_COLOR
         if percent_change <= SimpleTreeNode.RED_THRESHOLD:
-            return COLORS["red"][500]
+            return NEGATIVE_COLOR
         return COLORS["gray"][500]
 
     def render(self, ax: Axes) -> None:
@@ -593,9 +593,9 @@ class DetailedTreeNode(TreeNode):
 
         """
         if percent_change >= DetailedTreeNode.GREEN_THRESHOLD:
-            return COLORS["green"][500]
+            return POSITIVE_COLOR
         if percent_change <= DetailedTreeNode.RED_THRESHOLD:
-            return COLORS["red"][500]
+            return NEGATIVE_COLOR
         return COLORS["gray"][500]
 
     def render(self, ax: Axes) -> None:

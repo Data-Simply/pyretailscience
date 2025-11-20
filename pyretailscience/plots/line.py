@@ -35,7 +35,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import COLORS, get_plot_colors
+from pyretailscience.plots.styles.tailwind import CONTEXT_COLOR, get_plot_colors
 
 
 def _validate_and_prepare_input(
@@ -162,7 +162,7 @@ def _render_plot(
 ) -> Axes:
     """Render the actual plot with context and highlighted lines."""
     # Context line styling
-    context_color = COLORS["gray"][400]  # #9ca3af
+    context_color = CONTEXT_COLOR
     context_alpha = 0.6
     context_linewidth = 1.5
 
