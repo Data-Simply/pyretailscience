@@ -14,6 +14,8 @@ from itertools import cycle
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
+from pyretailscience.options import get_option
+
 COLORS = {
     "slate": {
         50: "#f8fafc",
@@ -390,8 +392,6 @@ def get_single_color_cmap() -> Generator[str, None, None]:
     Returns:
         Generator: A generator yielding colors in a looping fashion.
     """
-    from pyretailscience.options import get_option
-
     return cycle(get_option("plot.color.mono_palette"))
 
 
@@ -401,8 +401,6 @@ def get_multi_color_cmap() -> Generator[str, None, None]:
     Returns:
         Generator: A generator yielding colors in a looping fashion.
     """
-    from pyretailscience.options import get_option
-
     return cycle(get_option("plot.color.multi_color_palette"))
 
 
@@ -425,8 +423,6 @@ def get_plot_colors(num_series: int) -> list[str]:
         >>> get_plot_colors(5)  # Returns 5 colors from multi-color palette
         ['#22c55e', '#3b82f6', '#ef4444', '#f97316', '#eab308']
     """
-    from pyretailscience.options import get_option
-
     mono_palette = get_option("plot.color.mono_palette")
     multi_palette = get_option("plot.color.multi_color_palette")
 
@@ -442,13 +438,11 @@ def get_named_color(color_type: str) -> str:
     """Get a named color from options.
 
     Args:
-        color_type: One of 'positive', 'negative', 'neutral', 'context', 'primary'
+        color_type: One of 'positive', 'negative', 'neutral', 'difference', 'context', 'primary'
 
     Returns:
         Hex color string
     """
-    from pyretailscience.options import get_option
-
     return get_option(f"plot.color.{color_type}")
 
 
@@ -461,8 +455,6 @@ def get_heatmap_cmap() -> ListedColormap | LinearSegmentedColormap:
     Returns:
         Matplotlib colormap object
     """
-    from pyretailscience.options import get_option
-
     cmap_name = get_option("plot.color.heatmap")
     return get_listed_cmap(cmap_name) if cmap_name in COLORS else plt.get_cmap(cmap_name)
 

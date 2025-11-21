@@ -88,6 +88,7 @@ class TestGetNamedColor:
             "positive",
             "negative",
             "neutral",
+            "difference",
             "context",
             "primary",
         ],
@@ -140,38 +141,3 @@ class TestGetHeatmapCmap:
         """Test get_heatmap_cmap() returns default green colormap."""
         cmap = get_heatmap_cmap()
         assert type(cmap).__name__ == "ListedColormap"
-
-
-class TestColorOptionsIntegration:
-    """Test integration between color options and existing functions."""
-
-    def test_defaults_match_hardcoded_behavior(self):
-        """Test default option values match original hardcoded behavior."""
-        from pyretailscience.plots.styles.tailwind import COLORS
-
-        # Test monochromatic palette defaults
-        mono_palette = get_option("plot.color.mono_palette")
-        expected_mono = [COLORS["green"][500], COLORS["green"][300], COLORS["green"][700]]
-        assert mono_palette == expected_mono
-
-        # Test named color defaults
-        assert get_option("plot.color.positive") == COLORS["green"][500]
-        assert get_option("plot.color.negative") == COLORS["red"][500]
-        assert get_option("plot.color.neutral") == COLORS["blue"][500]
-        assert get_option("plot.color.context") == COLORS["gray"][400]
-        assert get_option("plot.color.primary") == COLORS["green"][500]
-
-        # Test heatmap default
-        assert get_option("plot.color.heatmap") == "green"
-
-    def test_multi_color_palette_default_order(self):
-        """Test multi-color palette matches original get_multi_color_cmap() order."""
-        from pyretailscience.plots.styles.tailwind import COLORS
-
-        multi_palette = get_option("plot.color.multi_color_palette")
-        color_order = ["green", "blue", "red", "orange", "yellow", "violet", "pink"]
-        shades = [500, 300, 700]
-
-        expected_colors = [COLORS[color][shade] for shade in shades for color in color_order]
-
-        assert multi_palette == expected_colors

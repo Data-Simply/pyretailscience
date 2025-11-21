@@ -112,7 +112,7 @@ def plot(
     if display_net_bar:
         # Append a row for the net amount
         df.loc[len(df)] = ["Net", amount_total]
-        default_colors.append(get_named_color("neutral"))
+        default_colors.append(get_named_color("difference"))
         bottom.append(0)
 
     # Create the plot

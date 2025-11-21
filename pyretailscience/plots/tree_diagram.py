@@ -206,7 +206,7 @@ class SimpleTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Blue otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -219,7 +219,7 @@ class SimpleTreeNode(TreeNode):
             return get_named_color("positive")
         if percent_change <= SimpleTreeNode.RED_THRESHOLD:
             return get_named_color("negative")
-        return get_named_color("neutral")
+        return get_named_color("difference")
 
     def render(self, ax: Axes) -> None:
         """Render the node on the given axes.
@@ -583,7 +583,7 @@ class DetailedTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Blue otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -596,7 +596,7 @@ class DetailedTreeNode(TreeNode):
             return get_named_color("positive")
         if percent_change <= DetailedTreeNode.RED_THRESHOLD:
             return get_named_color("negative")
-        return get_named_color("neutral")
+        return get_named_color("difference")
 
     def render(self, ax: Axes) -> None:
         """Render the detailed node on the given axes.

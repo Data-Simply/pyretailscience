@@ -201,7 +201,7 @@ class TestSimpleTreeNode:
             (-8.3, "red"),  # Significant decline (percent <= -1.0)
             (1.0, "green"),  # At green threshold (percent == 1.0)
             (-1.0, "red"),  # At red threshold (percent == -1.0)
-            (0.5, "gray"),  # Neutral (between thresholds)
+            (0.5, "blue"),  # Difference (between thresholds)
         ],
     )
     def test_color_selection_based_on_percent(self, ax, percent, expected_color_name):
@@ -226,7 +226,7 @@ class TestSimpleTreeNode:
         color_name_mapping = {
             "green": "positive",
             "red": "negative",
-            "gray": "neutral",
+            "blue": "difference",
         }
         option_name = color_name_mapping[expected_color_name]
         expected_color = get_option(f"plot.color.{option_name}")
@@ -679,7 +679,7 @@ class TestDetailedTreeNode:
             (-15.7, "red"),  # Significant decline (percent <= -1.0)
             (1.0, "green"),  # At green threshold
             (-1.0, "red"),  # At red threshold
-            (0.5, "gray"),  # Neutral (between thresholds)
+            (0.5, "blue"),  # Difference (between thresholds)
         ],
     )
     def test_header_color_selection(self, ax, percent, expected_color_name):
@@ -705,7 +705,7 @@ class TestDetailedTreeNode:
         color_name_mapping = {
             "green": "positive",
             "red": "negative",
-            "gray": "neutral",
+            "blue": "difference",
         }
         option_name = color_name_mapping[expected_color_name]
         expected_color = get_option(f"plot.color.{option_name}")
