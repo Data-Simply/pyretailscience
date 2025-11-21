@@ -1,7 +1,7 @@
 """Utility functions for time-related operations in retail analysis."""
 
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import ibis
 import numpy as np
@@ -14,11 +14,11 @@ def _normalize_datetime(date_val: datetime | str) -> datetime:
     """Convert string or datetime to timezone-aware datetime object."""
     if isinstance(date_val, str):
         # Convert string to timezone-aware datetime
-        return datetime.strptime(date_val, "%Y-%m-%d").replace(tzinfo=UTC)
+        return datetime.strptime(date_val, "%Y-%m-%d").replace(tzinfo=timezone.utc)
     if isinstance(date_val, datetime):
         # If datetime is timezone-naive, make it timezone-aware (UTC)
         if date_val.tzinfo is None:
-            return date_val.replace(tzinfo=UTC)
+            return date_val.replace(tzinfo=timezone.utc)
         return date_val
     error_msg = f"Expected str or datetime, got {type(date_val)}"
     raise TypeError(error_msg)
