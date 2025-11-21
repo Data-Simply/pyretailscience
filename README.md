@@ -226,6 +226,26 @@ uv run pytest tests/test_file.py
 uv run pytest --cov=pyretailscience
 ```
 
+### Multi-Python Version Testing
+
+PyRetailScience supports Python 3.10, 3.11, 3.12, and 3.13. You can test across all supported versions locally using tox:
+
+```bash
+# Test all supported Python versions
+tox -e py310,py311,py312,py313
+
+# Test specific Python version
+tox -e py313
+
+# Run tests in parallel across versions
+tox -p auto
+```
+
+**Prerequisites:**
+
+- Multiple Python versions installed on your system
+- tox installed (`uv sync` installs it automatically)
+
 ### Integration Tests
 
 Integration tests verify that all analysis modules work correctly with distributed computing engines (PySpark and
