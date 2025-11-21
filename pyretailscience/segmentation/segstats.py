@@ -57,8 +57,137 @@ import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.plots.styles.tailwind import COLORS
 
-# Maximum number of dimensions for CUBE mode before warning about exponential growth
+__all__ = ["SegTransactionStats", "cube", "rollup"]
+
+# Maximum number of dimensions for CUBE mode before warning about exponential growth.
+# CUBE generates 2^n grouping sets, so 6 dimensions = 64 sets (reasonable), but 7+ dimensions
+# = 128+ sets (potentially expensive). This threshold balances flexibility with performance awareness.
 MAX_CUBE_DIMENSIONS_WITHOUT_WARNING = 6
+
+
+def cube(*columns: str) -> list[tuple[str, ...]]:
+    """Generate CUBE grouping sets (all possible combinations).
+
+    CUBE generates all 2^n combinations of the specified columns, from full detail down to
+    grand total. Returns a list of tuples that can be passed directly to grouping_sets,
+    or used with fixed columns in a nested list specification.
+
+    This matches SQL's GROUP BY CUBE(A, B), C syntax.
+
+    Args:
+        *columns (str): Column names to include in the CUBE operation
+
+    Returns:
+        list[tuple[str, ...]]: List of tuples representing all CUBE combinations
+
+    Raises:
+        ValueError: If no columns are provided
+        TypeError: If any column is not a string
+        UserWarning: If more than MAX_CUBE_DIMENSIONS_WITHOUT_WARNING columns
+
+    Example:
+        >>> from pyretailscience.segmentation import cube
+        >>>
+        >>> # Simple CUBE - returns list of tuples
+        >>> cube("store", "region")
+        [("store", "region"), ("store",), ("region",), ()]
+        >>>
+        >>> # Use directly (equivalent to explicit list of tuples)
+        >>> stats = SegTransactionStats(
+        ...     data=df,
+        ...     segment_col=["store", "region", "date"],
+        ...     grouping_sets=cube("store", "region", "date")
+        ... )
+        >>>
+        >>> # CUBE with fixed columns - wrap in tuple
+        >>> stats = SegTransactionStats(
+        ...     data=df,
+        ...     segment_col=["store", "region", "date"],
+        ...     grouping_sets=[(cube("store", "region"), "date")]
+        ... )
+        >>> # Produces 4 grouping sets (2^2 from CUBE):
+        >>> # [("store", "region", "date"), ("store", "date"), ("region", "date"), ("date",)]
+    """
+    if len(columns) == 0:
+        raise ValueError("cube() requires at least one column")
+
+    # Validate all columns are strings
+    for col in columns:
+        if not isinstance(col, str):
+            msg = f"All column names must be strings. Got {type(col).__name__}: {col}"
+            raise TypeError(msg)
+
+    # Validation: warn if too many dimensions
+    num_grouping_sets = 2 ** len(columns)
+    if len(columns) > MAX_CUBE_DIMENSIONS_WITHOUT_WARNING:
+        warnings.warn(
+            f"CUBE with {len(columns)} dimensions will generate {num_grouping_sets} grouping sets, "
+            f"which may be computationally expensive. Consider using ROLLUP mode or limiting to "
+            f"{MAX_CUBE_DIMENSIONS_WITHOUT_WARNING} dimensions.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    # Expansion: generate all 2^n combinations and return as list
+    return list(
+        chain.from_iterable(combinations(columns, size) for size in range(len(columns), -1, -1)),
+    )
+
+
+def rollup(*columns: str) -> list[tuple[str, ...]]:
+    """Generate ROLLUP grouping sets (hierarchical aggregation levels).
+
+    ROLLUP generates n+1 hierarchical levels from right to left. Returns a list of tuples
+    that can be passed directly to grouping_sets, or used with fixed columns in a nested
+    list specification.
+
+    This matches SQL's GROUP BY ROLLUP(A, B), C syntax.
+
+    Args:
+        *columns (str): Column names in hierarchical order (left = highest level)
+
+    Returns:
+        list[tuple[str, ...]]: List of tuples representing ROLLUP hierarchy levels
+
+    Raises:
+        ValueError: If no columns are provided
+        TypeError: If any column is not a string
+
+    Example:
+        >>> from pyretailscience.segmentation import rollup
+        >>>
+        >>> # Simple ROLLUP - returns list of tuples
+        >>> rollup("year", "quarter", "month")
+        [("year", "quarter", "month"), ("year", "quarter"), ("year",), ()]
+        >>>
+        >>> # Use directly (equivalent to explicit list of tuples)
+        >>> stats = SegTransactionStats(
+        ...     data=df,
+        ...     segment_col=["year", "quarter", "month"],
+        ...     grouping_sets=rollup("year", "quarter", "month")
+        ... )
+        >>>
+        >>> # ROLLUP with fixed column - wrap in tuple
+        >>> stats = SegTransactionStats(
+        ...     data=df,
+        ...     segment_col=["year", "quarter", "month", "store"],
+        ...     grouping_sets=[(rollup("year", "quarter", "month"), "store")]
+        ... )
+        >>> # Produces 4 grouping sets (3+1 from ROLLUP):
+        >>> # [("year", "quarter", "month", "store"), ("year", "quarter", "store"),
+        >>> #  ("year", "store"), ("store",)]
+    """
+    if len(columns) == 0:
+        raise ValueError("rollup() requires at least one column")
+
+    # Validate all columns are strings
+    for col in columns:
+        if not isinstance(col, str):
+            msg = f"All column names must be strings. Got {type(col).__name__}: {col}"
+            raise TypeError(msg)
+
+    # Expansion: generate n+1 hierarchical levels and return as list
+    return [tuple(columns[:i]) for i in range(len(columns), -1, -1)]
 
 
 class SegTransactionStats:
@@ -84,7 +213,7 @@ class SegTransactionStats:
         calc_rollup: bool | None = None,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
         unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
-        grouping_sets: Literal["rollup", "cube"] | list[list[str] | tuple[str, ...]] | None = None,
+        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
 
@@ -323,11 +452,13 @@ class SegTransactionStats:
 
     @staticmethod
     def _validate_grouping_sets_params(
-        grouping_sets: Literal["rollup", "cube"] | list[list[str] | tuple[str, ...]] | None,
+        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None,
         calc_total: bool | None,
         calc_rollup: bool | None,
     ) -> None:
-        """Validate grouping_sets parameter and mutual exclusivity.
+        """Validate grouping_sets parameter (type checking only).
+
+        Column validation happens in _generate_grouping_sets() since it requires segment_col.
 
         Args:
             grouping_sets: The grouping_sets parameter value
@@ -340,50 +471,121 @@ class SegTransactionStats:
             TypeError: If grouping_sets has invalid type
         """
         if grouping_sets is None:
-            return  # Legacy mode - no validation needed
+            # Warn if relying on implicit calc_total=True default (calc_total will be removed)
+            if calc_total is None and calc_rollup is None:
+                warnings.warn(
+                    "The calc_total parameter is deprecated and will be removed in a future version. "
+                    "To maintain the current behavior of including a grand total, use grouping_sets=[()] instead. "
+                    "See documentation for more flexible aggregation control with the grouping_sets parameter.",
+                    FutureWarning,
+                    stacklevel=3,
+                )
+            return
 
-        # Ensure mutual exclusivity
+        # Mutual exclusivity check
         if calc_total is not None or calc_rollup is not None:
-            msg = (
-                "Cannot use grouping_sets with calc_total or calc_rollup. "
-                "When using grouping_sets, leave calc_total and calc_rollup as None (default)."
-            )
-            raise ValueError(msg)
+            raise ValueError("Cannot use grouping_sets with calc_total or calc_rollup")
 
-        # Validate grouping_sets type
+        # String validation
         if isinstance(grouping_sets, str):
             if grouping_sets not in ["rollup", "cube"]:
-                msg = f"grouping_sets must be 'rollup', 'cube', a list of lists/tuples, or None. Got: '{grouping_sets}'"
+                msg = f"grouping_sets must be 'rollup', 'cube', a list of tuples, or None. Got: '{grouping_sets}'"
                 raise ValueError(msg)
+
+        # List validation - only accept tuples for consistency (Ticket 5 design)
         elif isinstance(grouping_sets, list):
-            # Validate custom grouping sets
             if len(grouping_sets) == 0:
-                msg = "grouping_sets list cannot be empty. Provide at least one grouping set."
-                raise ValueError(msg)
+                raise ValueError("grouping_sets list cannot be empty")
 
-            # Validate each element is a list or tuple (fail fast)
-            for gs in grouping_sets:
-                if not isinstance(gs, list | tuple):
-                    # Provide helpful error message for common string mistake
-                    if isinstance(gs, str):
-                        msg = (
-                            f"Each grouping set must be a list or tuple of column names, not a string. "
-                            f"Got: '{gs}'. Did you mean ['{gs}'] or ('{gs}',)?"
-                        )
-                        raise TypeError(msg)
-
-                    msg = (
-                        f"Each grouping set must be a list or tuple of column names. "
-                        f"Got type: {type(gs).__name__} with value: {gs}"
-                    )
+            # Validate each element is a tuple (consistency: always list of tuples)
+            for item in grouping_sets:
+                if not isinstance(item, tuple):
+                    msg = f"Each element must be a tuple. Got: {type(item).__name__}"
                     raise TypeError(msg)
+
+    @staticmethod
+    def _flatten_item(item: tuple) -> list[tuple[str, ...]]:
+        """Flatten a single item into grouping sets.
+
+        Uses structural detection to distinguish explicit sets from specifications:
+        - Tuple of strings only → explicit grouping set (return as-is)
+        - Tuple containing a list → specification to expand (cube()/rollup() result + optional fixed columns)
+
+        The cube()/rollup() functions return lists, so we detect them by checking if the tuple
+        contains a list element.
+
+        Args:
+            item (tuple): A tuple that is either an explicit grouping set or a specification
+
+        Returns:
+            list[tuple[str, ...]]: List of one or more grouping sets
+
+        Raises:
+            ValueError: If specification tuple contains multiple cube()/rollup() calls or is empty
+            TypeError: If specification tuple contains invalid types
+
+        Example:
+            >>> # Explicit set (tuple of strings only)
+            >>> _flatten_item(("region", "store"))
+            [("region", "store")]
+            >>>
+            >>> # Specification (tuple containing cube() result + fixed column)
+            >>> cube_result = [("region", "store"), ("region",), ("store",), ()]
+            >>> _flatten_item((cube_result, "date"))
+            [
+                ("region", "store", "date"),
+                ("region", "date"),
+                ("store", "date"),
+                ("date",)
+            ]
+            >>>
+            >>> # Invalid: Multiple cube()/rollup() calls
+            >>> _flatten_item((cube("region"), rollup("store")))  # ValueError
+            >>>
+            >>> # Invalid: Mixed types (integers not allowed)
+            >>> _flatten_item((cube("region"), 123))  # TypeError
+            >>>
+            >>> # Invalid: Empty cube()/rollup() result
+            >>> _flatten_item(([],))  # ValueError
+        """
+        # Check if tuple contains a list (cube()/rollup() result)
+        has_list = any(isinstance(elem, list) for elem in item)
+
+        if not has_list:
+            # Explicit grouping set - all elements are strings
+            return [item]
+
+        # Specification to flatten - must contain exactly one cube()/rollup() result + optional fixed columns
+        grouping_sets_list = None
+        fixed_cols = []
+
+        for element in item:
+            if isinstance(element, list):
+                # This is a cube()/rollup() result (list of tuples)
+                if grouping_sets_list is not None:
+                    raise ValueError("Only one cube()/rollup() call allowed per specification")
+                grouping_sets_list = element
+            elif isinstance(element, str):
+                # Fixed column
+                fixed_cols.append(element)
+            else:
+                msg = f"Invalid type in specification tuple: {type(element).__name__}"
+                raise TypeError(msg)
+
+        # Validate cube()/rollup() result is not empty
+        if len(grouping_sets_list) == 0:
+            raise ValueError("Specification tuple must contain non-empty cube() or rollup() result")
+
+        # Flatten: append fixed columns to each set
+        fixed_suffix = tuple(fixed_cols)
+        return [gs + fixed_suffix for gs in grouping_sets_list]
 
     @staticmethod
     def _generate_grouping_sets(
         segment_col: list[str],
         calc_total: bool | None = None,
         calc_rollup: bool | None = None,
-        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None = None,
+        grouping_sets: (Literal["rollup", "cube"] | list[tuple[str, ...] | tuple[list | str, ...]] | None) = None,
     ) -> list[tuple[str, ...]]:
         """Generate grouping sets based on grouping_sets parameter or calc_total/calc_rollup settings.
 
@@ -433,34 +635,24 @@ class SegTransactionStats:
                 (),                              # grand total
             ]
         """
-        # Handle grouping_sets parameter
+        # Handle string shortcuts - delegate to helper functions
         if grouping_sets == "rollup":
-            # SQL ROLLUP: hierarchical aggregation from right to left
-            # For [A, B, C]: generates [A,B,C], [A,B], [A], []
-            return [tuple(segment_col[:i]) for i in range(len(segment_col), -1, -1)]
+            return rollup(*segment_col)
 
         if grouping_sets == "cube":
-            # SQL CUBE: all possible combinations (2^n groupings)
-            # Warn if too many dimensions (exponential growth)
-            num_grouping_sets = 2 ** len(segment_col)
-            if len(segment_col) > MAX_CUBE_DIMENSIONS_WITHOUT_WARNING:
-                warnings.warn(
-                    f"CUBE mode with {len(segment_col)} dimensions will generate {num_grouping_sets} grouping sets, "
-                    f"which may be computationally expensive. Consider using ROLLUP mode or limiting to "
-                    f"{MAX_CUBE_DIMENSIONS_WITHOUT_WARNING} dimensions.",
-                    UserWarning,
-                    stacklevel=3,
-                )
-            # Generate all subsets from size n down to 0
-            return list(
-                chain.from_iterable(combinations(segment_col, size) for size in range(len(segment_col), -1, -1)),
-            )
+            return cube(*segment_col)
 
+        # Handle list of tuples - flatten each item
         if isinstance(grouping_sets, list):
-            # Custom grouping sets: validate columns, normalize to tuples, and deduplicate
+            expanded = []
+            for item in grouping_sets:
+                expanded.extend(SegTransactionStats._flatten_item(item))
 
-            # Collect all unique columns mentioned and validate they exist in segment_col
-            all_mentioned_cols = {col for gs in grouping_sets for col in gs}
+            # Deduplicate (order not preserved, but not needed)
+            expanded = list(set(expanded))
+
+            # Validate columns (applies to list modes)
+            all_mentioned_cols = {col for gs in expanded for col in gs}
             invalid_cols = all_mentioned_cols - set(segment_col)
             if invalid_cols:
                 msg = (
@@ -469,7 +661,6 @@ class SegTransactionStats:
                 )
                 raise ValueError(msg)
 
-            # Validate all segment_col columns are mentioned (SQL convention)
             unmentioned_cols = set(segment_col) - all_mentioned_cols
             if unmentioned_cols:
                 msg = (
@@ -479,9 +670,7 @@ class SegTransactionStats:
                 )
                 raise ValueError(msg)
 
-            # Deduplicate and normalize to tuples using set comprehension
-            # Note: Order is not preserved, but database doesn't guarantee order anyway
-            return list({tuple(gs) for gs in grouping_sets})
+            return expanded
 
         # Existing logic for calc_total/calc_rollup
         grouping_sets_list = [tuple(segment_col)]  # Base grouping always included
