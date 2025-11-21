@@ -16,7 +16,7 @@
 - uv sync: ✅ SUCCESS
 - Dependencies: pyarrow 22.0.0, pandas 2.2.3, scipy 1.14.1
 - Tests: ✅ PASSED
-- **Key**: Use `uv run` to execute in correct environment
+- **Key**: Fixed datetime.UTC compatibility issue for Python 3.10
 
 ### Python 3.11: ✅ FULLY COMPATIBLE (current CI/CD version)
 

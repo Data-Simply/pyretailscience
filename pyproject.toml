@@ -67,7 +67,7 @@ show-fixes     = true
 target-version = "py311"
 
 [tool.ruff.lint]
-ignore = [ "ANN101", "ANN102", "EM101", "PT011", "PTH123", "SLF001", "TRY003" ]
+ignore = [ "ANN101", "ANN102", "EM101", "PT011", "PTH123", "SLF001", "TRY003", "UP017" ]
 select = [
     "A",
     "ANN",
