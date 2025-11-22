@@ -893,7 +893,7 @@ class SegTransactionStats:
         calc_rollup: bool | None = None,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
         unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
-        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None = None,
+        grouping_sets: Literal["rollup", "cube", "total"] | list[tuple[str, ...]] | None = None,
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
 
