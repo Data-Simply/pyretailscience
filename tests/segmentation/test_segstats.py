@@ -1108,6 +1108,59 @@ class TestGenerateGroupingSets:
         ]
         assert result == expected
 
+    def test_total_mode_generates_full_detail_plus_grand_total(self):
+        """Test 'total' mode produces full segment detail plus grand total."""
+        result = SegTransactionStats._generate_grouping_sets(
+            segment_col=["region", "store", "product"],
+            grouping_sets="total",
+        )
+
+        expected = [
+            ("region", "store", "product"),  # Full detail
+            (),  # Grand total
+        ]
+
+        assert set(result) == set(expected)
+        assert len(result) == len(expected)
+
+    def test_total_mode_integration(self):
+        """Test 'total' mode produces correct aggregations with real data."""
+        cols = ColumnHelper()
+        data = pd.DataFrame(
+            {
+                cols.customer_id: [1, 1, 2, 2, 3, 3],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "region": ["North", "North", "South", "South", "North", "South"],
+                "store": ["Store_A", "Store_A", "Store_B", "Store_B", "Store_A", "Store_B"],
+                cols.unit_spend: [100, 150, 200, 250, 300, 350],
+            },
+        )
+
+        stats = SegTransactionStats(
+            data=data,
+            segment_col=["region", "store"],
+            grouping_sets="total",
+        )
+
+        result = stats.df
+
+        # Expected: North/Store_A detail + South/Store_B detail + grand total
+        expected = pd.DataFrame(
+            {
+                "region": ["North", "South", "Total"],
+                "store": ["Store_A", "Store_B", "Total"],
+                cols.agg.unit_spend: [550, 800, 1350],
+            },
+        )
+
+        # Sort and compare
+        result_subset = (
+            result[["region", "store", cols.agg.unit_spend]].sort_values(["region", "store"]).reset_index(drop=True)
+        )
+        expected_sorted = expected.sort_values(["region", "store"]).reset_index(drop=True)
+
+        pd.testing.assert_frame_equal(result_subset, expected_sorted)
+
 
 class TestGroupingSetsRollupMode:
     """Test ROLLUP mode grouping_sets parameter."""
