@@ -213,7 +213,7 @@ class SegTransactionStats:
         calc_rollup: bool | None = None,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
         unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
-        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None = None,
+        grouping_sets: Literal["rollup", "cube", "total"] | list[tuple[str, ...]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
 
@@ -452,7 +452,7 @@ class SegTransactionStats:
 
     @staticmethod
     def _validate_grouping_sets_params(
-        grouping_sets: Literal["rollup", "cube"] | list[tuple[str, ...]] | None,
+        grouping_sets: Literal["rollup", "cube", "total"] | list[tuple[str, ...]] | None,
         calc_total: bool | None,
         calc_rollup: bool | None,
     ) -> None:
@@ -475,7 +475,8 @@ class SegTransactionStats:
             if calc_total is None and calc_rollup is None:
                 warnings.warn(
                     "The calc_total parameter is deprecated and will be removed in a future version. "
-                    "To maintain the current behavior of including a grand total, use grouping_sets=[()] instead. "
+                    "To maintain the current behavior of including a grand total, use grouping_sets='total' "
+                    "or grouping_sets=[()] instead. "
                     "See documentation for more flexible aggregation control with the grouping_sets parameter.",
                     FutureWarning,
                     stacklevel=3,
@@ -488,8 +489,8 @@ class SegTransactionStats:
 
         # String validation
         if isinstance(grouping_sets, str):
-            if grouping_sets not in ["rollup", "cube"]:
-                msg = f"grouping_sets must be 'rollup', 'cube', a list of tuples, or None. Got: '{grouping_sets}'"
+            if grouping_sets not in ["rollup", "cube", "total"]:
+                msg = f"grouping_sets must be 'rollup', 'cube', 'total', a list of tuples, or None. Got: '{grouping_sets}'"
                 raise ValueError(msg)
 
         # List validation - only accept tuples for consistency (Ticket 5 design)
@@ -585,7 +586,9 @@ class SegTransactionStats:
         segment_col: list[str],
         calc_total: bool | None = None,
         calc_rollup: bool | None = None,
-        grouping_sets: (Literal["rollup", "cube"] | list[tuple[str, ...] | tuple[list | str, ...]] | None) = None,
+        grouping_sets: (
+            Literal["rollup", "cube", "total"] | list[tuple[str, ...] | tuple[list | str, ...]] | None
+        ) = None,
     ) -> list[tuple[str, ...]]:
         """Generate grouping sets based on grouping_sets parameter or calc_total/calc_rollup settings.
 
@@ -642,6 +645,9 @@ class SegTransactionStats:
         if grouping_sets == "cube":
             return cube(*segment_col)
 
+        if grouping_sets == "total":
+            return [tuple(segment_col), ()]
+
         # Handle list of tuples - flatten each item
         if isinstance(grouping_sets, list):
             expanded = []
@@ -672,7 +678,25 @@ class SegTransactionStats:
 
             return expanded
 
-        # Existing logic for calc_total/calc_rollup
+        # Legacy mode - delegate to helper
+        return SegTransactionStats._generate_legacy_grouping_sets(segment_col, calc_total, calc_rollup)
+
+    @staticmethod
+    def _generate_legacy_grouping_sets(
+        segment_col: list[str],
+        calc_total: bool | None,
+        calc_rollup: bool | None,
+    ) -> list[tuple[str, ...]]:
+        """Generate grouping sets using legacy calc_total/calc_rollup parameters.
+
+        Args:
+            segment_col (list[str]): The segment columns
+            calc_total (bool | None): Whether to include grand total
+            calc_rollup (bool | None): Whether to generate rollup subtotals
+
+        Returns:
+            list[tuple[str, ...]]: List of grouping set tuples
+        """
         grouping_sets_list = [tuple(segment_col)]  # Base grouping always included
 
         if calc_rollup:
