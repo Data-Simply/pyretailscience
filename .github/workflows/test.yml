@@ -61,7 +61,7 @@ jobs:
 
       - name: Run tests (excluding integration)
         run: |
-          uv run pytest tests/ --ignore=tests/integration --tb=short -v --cov=pyretailscience
+          uv run pytest tests/ --tb=short -v --cov-report=xml
         env:
           PYTHONDONTWRITEBYTECODE: 1
 
