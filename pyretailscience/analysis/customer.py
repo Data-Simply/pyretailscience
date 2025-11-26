@@ -47,8 +47,8 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper
+from pyretailscience.plots.styles.colors import COLORS
 from pyretailscience.plots.styles.graph_utils import human_format, standard_graph_styles
-from pyretailscience.plots.styles.tailwind import COLORS
 
 
 class PurchasesPerCustomer:

@@ -23,6 +23,8 @@ from pathlib import Path
 
 import toml
 
+from pyretailscience.plots.styles.colors import COLORS
+
 OptionTypes = str | int | float | bool | list | dict | None
 
 
@@ -31,9 +33,6 @@ class Options:
 
     def __init__(self) -> None:
         """Initializes the options with default values."""
-        # Import COLORS here to avoid circular imports
-        from pyretailscience.plots.styles.tailwind import COLORS
-
         self._options: dict[str, OptionTypes] = {
             # Database columns
             "column.customer_id": "customer_id",
@@ -90,7 +89,8 @@ class Options:
             ],
             "plot.color.positive": COLORS["green"][500],
             "plot.color.negative": COLORS["red"][500],
-            "plot.color.neutral": COLORS["blue"][500],
+            "plot.color.neutral": COLORS["gray"][500],
+            "plot.color.difference": COLORS["blue"][500],
             "plot.color.context": COLORS["gray"][400],
             "plot.color.primary": COLORS["green"][500],
             "plot.color.heatmap": "green",
@@ -163,6 +163,7 @@ class Options:
             "plot.color.positive": "Color for positive values (e.g., gains, increases)",
             "plot.color.negative": "Color for negative values (e.g., losses, decreases)",
             "plot.color.neutral": "Color for neutral values (e.g., net amounts)",
+            "plot.color.difference": "Color for difference values (e.g., waterfall transitions, tree differences)",
             "plot.color.context": "Color for de-emphasized context lines",
             "plot.color.primary": "Default color for single-series plots",
             "plot.color.heatmap": "Tailwind color name (e.g., 'green', 'blue') or matplotlib colormap name (e.g., 'Greens', 'viridis') for heatmaps",

@@ -219,7 +219,7 @@ class SimpleTreeNode(TreeNode):
             return get_named_color("positive")
         if percent_change <= SimpleTreeNode.RED_THRESHOLD:
             return get_named_color("negative")
-        return get_named_color("neutral")
+        return get_named_color("difference")
 
     def render(self, ax: Axes) -> None:
         """Render the node on the given axes.
@@ -596,7 +596,7 @@ class DetailedTreeNode(TreeNode):
             return get_named_color("positive")
         if percent_change <= DetailedTreeNode.RED_THRESHOLD:
             return get_named_color("negative")
-        return get_named_color("neutral")
+        return get_named_color("difference")
 
     def render(self, ax: Axes) -> None:
         """Render the detailed node on the given axes.
