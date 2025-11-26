@@ -4,7 +4,8 @@ from itertools import islice
 
 import pytest
 
-from pyretailscience.plots.styles.tailwind import COLORS, get_multi_color_cmap, get_plot_colors, get_single_color_cmap
+from pyretailscience.plots.styles.colors import COLORS
+from pyretailscience.plots.styles.tailwind import get_multi_color_cmap, get_plot_colors, get_single_color_cmap
 
 
 def test_get_single_color_cmap_three_colors():

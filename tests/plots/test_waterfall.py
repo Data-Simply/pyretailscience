@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.styles.colors import COLORS
 from pyretailscience.plots.waterfall import plot
 
 
