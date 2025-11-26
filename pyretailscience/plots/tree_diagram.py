@@ -206,7 +206,7 @@ class SimpleTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Blue otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -583,7 +583,7 @@ class DetailedTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Blue otherwise.
 
         Args:
             percent_change: Percentage change value.
