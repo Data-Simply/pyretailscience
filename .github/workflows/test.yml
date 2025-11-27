@@ -2,6 +2,7 @@ name: Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, closed]
     branches: [main]
   push:
     branches: [main]
@@ -14,6 +15,7 @@ jobs:
   pre-commit:
     name: Pre-Commit
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged != true)
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +36,7 @@ jobs:
   test-matrix:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
