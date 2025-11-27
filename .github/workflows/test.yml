@@ -34,11 +34,12 @@ jobs:
   test-matrix:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.11"]') || fromJSON('["3.10", "3.11", "3.12", "3.13"]') }}
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         experimental: [false]
 
     steps:
@@ -82,8 +83,12 @@ jobs:
         run: |
           echo "Pre-commit result: ${{ needs.pre-commit.result }}"
           echo "Test matrix result: ${{ needs.test-matrix.result }}"
-          if [[ "${{ needs.pre-commit.result }}" == "failure" || "${{ needs.test-matrix.result }}" == "failure" ]]; then
-            echo "Tests failed"
+          if [[ "${{ needs.pre-commit.result }}" == "failure" ]]; then
+            echo "Pre-commit failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test-matrix.result }}" == "failure" ]]; then
+            echo "Test matrix failed"
             exit 1
           fi
           echo "All tests passed"
