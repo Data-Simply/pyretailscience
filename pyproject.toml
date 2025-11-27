@@ -1,14 +1,23 @@
 [project]
+classifiers = [
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "duckdb>=1.0.0,<2",
     "ibis-framework[duckdb]>=10.0.0,<11",
     "matplotlib-set-diagrams~=0.0.2",
     "matplotlib>=3.9.1,<4",
     "numpy>=1.26.3,<=2",
-    "pandas>=2.2.2,<3",
-    "pyarrow>=16.0.0,<17",
+    "pandas>=2.2.3,<3",
+    "pyarrow>=18.0.0,<23",
     "scikit-learn>=1.4.2,<2",
-    "scipy>=1.13.0,<2",
+    "scipy>=1.14.1,<2",
     "textalloc>=1.2.1",
     "toml>=0.10.2,<0.11",
     "tqdm>=4.66.1,<5",
@@ -17,7 +26,7 @@ description = "Retail Data Science Tools"
 license = "Elastic-2.0"
 name = "pyretailscience"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.10,<3.14"
 version = "0.41.0"
 [[project.authors]]
 email = "2493311+mvanwyk@users.noreply.github.com"
@@ -35,6 +44,7 @@ dev = [
     "python-dotenv>=1.0.0,<2",
     "ruff>=0.9,<0.10",
     "tomlkit>=0.12,<1",
+    "tox>=4.0.0,<5",
 ]
 docs = [
     "mkdocs-jupyter>=0.24.6,<0.25",
@@ -57,7 +67,7 @@ show-fixes     = true
 target-version = "py311"
 
 [tool.ruff.lint]
-ignore = [ "ANN101", "ANN102", "EM101", "PT011", "PTH123", "SLF001", "TRY003" ]
+ignore = [ "ANN101", "ANN102", "EM101", "PT011", "PTH123", "SLF001", "TRY003", "UP017" ]
 select = [
     "A",
     "ANN",
