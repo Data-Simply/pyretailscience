@@ -35,7 +35,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_named_color, get_plot_colors
+from pyretailscience.plots.styles.colors import get_named_color, get_plot_colors
 
 
 def _validate_and_prepare_input(

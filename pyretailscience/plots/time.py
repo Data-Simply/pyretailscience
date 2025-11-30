@@ -40,7 +40,7 @@ from pandas.tseries.offsets import BaseOffset
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import get_option
-from pyretailscience.plots.styles.tailwind import get_linear_cmap, get_named_color
+from pyretailscience.plots.styles.colors import get_linear_cmap, get_named_color
 
 
 def plot(

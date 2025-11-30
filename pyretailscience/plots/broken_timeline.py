@@ -27,7 +27,7 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import get_option
-from pyretailscience.plots.styles.tailwind import get_named_color
+from pyretailscience.plots.styles.colors import get_named_color
 
 # Period configurations: gap threshold and duration (in days)
 PERIOD_CONFIG = {

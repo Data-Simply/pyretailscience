@@ -33,8 +33,8 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.plots.styles.colors import get_named_color
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
-from pyretailscience.plots.styles.tailwind import get_named_color
 
 
 def plot(

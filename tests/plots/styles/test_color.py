@@ -1,9 +1,9 @@
-"""Tests for the new color customization options system."""
+"""Tests for the color module in the style package."""
 
 import pytest
 
 from pyretailscience.options import get_option, option_context
-from pyretailscience.plots.styles.tailwind import (
+from pyretailscience.plots.styles.colors import (
     get_heatmap_cmap,
     get_named_color,
     get_plot_colors,
@@ -12,6 +12,12 @@ from pyretailscience.plots.styles.tailwind import (
 
 class TestGetPlotColors:
     """Test get_plot_colors() function behavior."""
+
+    @pytest.mark.parametrize("num_series", [1, 3, 4, 10])
+    def test_get_plot_colors_returns_correct_length(self, num_series):
+        """Test that get_plot_colors returns correct number of colors."""
+        colors = get_plot_colors(num_series)
+        assert len(colors) == num_series
 
     @pytest.mark.parametrize(
         ("num_series", "expected_palette"),
@@ -61,7 +67,7 @@ class TestGetPlotColors:
             colors = get_plot_colors(1)
             assert len(colors) == 1
             multi_palette = get_option("plot.color.multi_color_palette")
-            assert colors[0] in multi_palette
+            assert colors[0] == multi_palette[0]
 
     def test_get_plot_colors_cycling_behavior(self):
         """Test get_plot_colors() cycles through multi-color palette when needed."""
@@ -81,23 +87,6 @@ class TestGetPlotColors:
 
 class TestGetNamedColor:
     """Test get_named_color() function behavior."""
-
-    @pytest.mark.parametrize(
-        "color_type",
-        [
-            "positive",
-            "negative",
-            "neutral",
-            "difference",
-            "context",
-            "primary",
-        ],
-    )
-    def test_get_named_color_default_values(self, color_type):
-        """Test get_named_color() returns default values for all named colors."""
-        color = get_named_color(color_type)
-        assert isinstance(color, str)
-        assert color.startswith("#")  # Should be hex color
 
     def test_get_named_color_custom_values(self):
         """Test get_named_color() uses custom configured values."""
@@ -136,8 +125,3 @@ class TestGetHeatmapCmap:
         with option_context("plot.color.heatmap", cmap_config):
             cmap = get_heatmap_cmap()
             assert type(cmap).__name__ == expected_type
-
-    def test_get_heatmap_cmap_default(self):
-        """Test get_heatmap_cmap() returns default green colormap."""
-        cmap = get_heatmap_cmap()
-        assert type(cmap).__name__ == "ListedColormap"

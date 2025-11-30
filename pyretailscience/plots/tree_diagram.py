@@ -13,8 +13,8 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.path import Path
 
+from pyretailscience.plots.styles.colors import get_named_color
 from pyretailscience.plots.styles.styling_context import get_styling_context
-from pyretailscience.plots.styles.tailwind import get_named_color
 
 
 class BaseRoundedBox(mpatches.PathPatch):
@@ -206,7 +206,7 @@ class SimpleTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Blue otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Gray otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -219,7 +219,7 @@ class SimpleTreeNode(TreeNode):
             return get_named_color("positive")
         if percent_change <= SimpleTreeNode.RED_THRESHOLD:
             return get_named_color("negative")
-        return get_named_color("difference")
+        return get_named_color("neutral")
 
     def render(self, ax: Axes) -> None:
         """Render the node on the given axes.
@@ -583,7 +583,7 @@ class DetailedTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Blue otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Gray otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -596,7 +596,7 @@ class DetailedTreeNode(TreeNode):
             return get_named_color("positive")
         if percent_change <= DetailedTreeNode.RED_THRESHOLD:
             return get_named_color("negative")
-        return get_named_color("difference")
+        return get_named_color("neutral")
 
     def render(self, ax: Axes) -> None:
         """Render the detailed node on the given axes.

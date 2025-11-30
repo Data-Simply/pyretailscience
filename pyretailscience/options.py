@@ -23,7 +23,7 @@ from pathlib import Path
 
 import toml
 
-from pyretailscience.plots.styles.colors import COLORS
+from pyretailscience.constants import COLORS
 
 OptionTypes = str | int | float | bool | list | dict | None
 

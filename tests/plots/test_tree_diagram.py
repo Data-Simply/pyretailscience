@@ -113,7 +113,7 @@ class TestBaseRoundedBox:
     def test_multiple_boxes_on_same_axes(self, ax):
         """Test creating multiple boxes on the same axes."""
         box1 = BaseRoundedBox(xy=(0, 0), width=1.0, height=1.0, facecolor="red")
-        box2 = BaseRoundedBox(xy=(2, 0), width=1.0, height=1.0, facecolor="blue")
+        box2 = BaseRoundedBox(xy=(2, 0), width=1.0, height=1.0, facecolor="gray")
         box3 = BaseRoundedBox(xy=(4, 0), width=1.0, height=1.0, facecolor="green")
 
         ax.add_patch(box1)
@@ -201,7 +201,7 @@ class TestSimpleTreeNode:
             (-8.3, "red"),  # Significant decline (percent <= -1.0)
             (1.0, "green"),  # At green threshold (percent == 1.0)
             (-1.0, "red"),  # At red threshold (percent == -1.0)
-            (0.5, "blue"),  # Difference (between thresholds)
+            (0.5, "gray"),  # Neutral (between thresholds)
         ],
     )
     def test_color_selection_based_on_percent(self, ax, percent, expected_color_name):
@@ -226,7 +226,7 @@ class TestSimpleTreeNode:
         color_name_mapping = {
             "green": "positive",
             "red": "negative",
-            "blue": "difference",
+            "gray": "neutral",
         }
         option_name = color_name_mapping[expected_color_name]
         expected_color = get_option(f"plot.color.{option_name}")
@@ -304,7 +304,7 @@ class TestSimpleTreeNodeIntegration:
         assert len(ax.patches) == expected_patches
 
         # Verify colors: green (>= 1.0), red (<= -1.0), gray (between)
-        expected_option_names = ["positive", "negative", "difference"]  # Map to option names
+        expected_option_names = ["positive", "negative", "neutral"]  # Map to option names
         expected_colors = [get_option(f"plot.color.{name}") for name in expected_option_names]
         data_boxes = [ax.patches[1], ax.patches[3], ax.patches[5]]  # Every second patch is a data box
 
@@ -679,7 +679,7 @@ class TestDetailedTreeNode:
             (-15.7, "red"),  # Significant decline (percent <= -1.0)
             (1.0, "green"),  # At green threshold
             (-1.0, "red"),  # At red threshold
-            (0.5, "blue"),  # Difference (between thresholds)
+            (0.5, "gray"),  # Neutral (between thresholds)
         ],
     )
     def test_header_color_selection(self, ax, percent, expected_color_name):
@@ -705,7 +705,7 @@ class TestDetailedTreeNode:
         color_name_mapping = {
             "green": "positive",
             "red": "negative",
-            "blue": "difference",
+            "gray": "neutral",
         }
         option_name = color_name_mapping[expected_color_name]
         expected_color = get_option(f"plot.color.{option_name}")
@@ -817,7 +817,7 @@ class TestDetailedTreeNodeIntegration:
         assert len(ax.patches) == expected_patches
 
         # Verify header colors: green (15.3%), red (-7.2%), gray (0.8%)
-        expected_option_names = ["positive", "negative", "difference"]  # Map to option names
+        expected_option_names = ["positive", "negative", "neutral"]  # Map to option names
         expected_colors = [get_option(f"plot.color.{name}") for name in expected_option_names]
         title_boxes = [ax.patches[0], ax.patches[2], ax.patches[4]]  # Every other patch is a title box
 

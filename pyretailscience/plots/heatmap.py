@@ -34,7 +34,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_heatmap_cmap
+from pyretailscience.plots.styles.colors import get_heatmap_cmap
 
 _LABEL_ROTATION_THRESHOLD = 10
 

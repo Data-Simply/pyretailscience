@@ -39,8 +39,8 @@ import textalloc as ta
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.plots.styles.colors import get_plot_colors
 from pyretailscience.plots.styles.styling_context import get_styling_context
-from pyretailscience.plots.styles.tailwind import get_plot_colors
 
 
 def _add_point_labels(
