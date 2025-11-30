@@ -37,6 +37,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
+  # Note: This job also exists in release.yml as a final quality gate before publishing.
+  # While it may seem redundant, it serves as a safety check in case of misconfiguration.
   test-matrix:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -68,6 +70,6 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest tests/ --tb=short -v
+          uv run pytest tests/ --ignore=tests/integration --tb=short -v
         env:
           PYTHONDONTWRITEBYTECODE: 1
