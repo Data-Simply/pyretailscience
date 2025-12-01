@@ -99,10 +99,16 @@ class TestPlotStyler:
         styler.apply_legend(ax, **kwargs)
 
         legend = ax.get_legend()
-        assert legend is not None
+
+        # Both inside and outside legends should have frame off
+        assert not legend.get_frame_on()
 
         if not outside:
-            assert not legend.get_frame_on()
             assert legend.get_title().get_text() == expected_title
-        else:
-            assert legend.get_bbox_to_anchor() is not None
+
+        # Verify legend text styling is applied
+        legend_texts = legend.get_texts()
+        expected_series_count = 2
+        assert len(legend_texts) == expected_series_count
+        for text in legend_texts:
+            assert text.get_fontsize() == get_option("plot.font.label_size") - 1

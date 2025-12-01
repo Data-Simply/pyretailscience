@@ -14,9 +14,12 @@ TEST_LABEL_SIZE = 14.0
 TEST_FONT_SIZE_SMALL = 13.0
 TEST_FONT_SIZE_MEDIUM = 22.0
 TEST_DATA_LABEL_SIZE = 12.0
+TEST_TITLE_PAD = 25
 TEST_X_LABEL_PAD = 20
 TEST_Y_LABEL_PAD = 15
 WHITESMOKE_RGBA = mcolors.to_rgba("whitesmoke")
+LIGHTGRAY_RGBA = mcolors.to_rgba("lightgray")
+TEST_GRID_ALPHA = 0.8
 
 
 class TestStylingOptionsIntegration:
@@ -47,9 +50,9 @@ class TestStylingOptionsIntegration:
             "plot.font.title_font",
             "poppins_bold",
             "plot.font.title_size",
-            24.0,
+            TEST_TITLE_SIZE,
             "plot.font.label_size",
-            14.0,
+            TEST_LABEL_SIZE,
         ):
             ax = scatter.plot(
                 df=sample_dataframe,
@@ -62,8 +65,10 @@ class TestStylingOptionsIntegration:
 
             # Verify title properties
             assert ax.get_title() == "Custom Font Test"
-
             assert ax.title.get_fontsize() == TEST_TITLE_SIZE
+            # Verify title font was applied
+            title_font_file = ax.title.get_fontproperties().get_file()
+            assert "Poppins-Bold.ttf" in title_font_file
 
             # Verify label properties
             assert ax.get_xlabel() == "X Axis"
@@ -75,7 +80,7 @@ class TestStylingOptionsIntegration:
         """Test that spacing options affect plot layout via context manager."""
         with option_context(
             "plot.spacing.title_pad",
-            25,
+            TEST_TITLE_PAD,
             "plot.spacing.x_label_pad",
             TEST_X_LABEL_PAD,
             "plot.spacing.y_label_pad",
@@ -90,9 +95,16 @@ class TestStylingOptionsIntegration:
                 y_label="Y Axis",
             )
 
-            # Verify label padding was applied (title_pad is not directly queryable)
+            # Verify label padding was applied
             assert ax.xaxis.labelpad == TEST_X_LABEL_PAD
             assert ax.yaxis.labelpad == TEST_Y_LABEL_PAD
+
+            # Verify title padding by measuring gap between title and axes
+            ax.figure.canvas.draw()
+            title_bbox = ax.title.get_window_extent()
+            axes_bbox = ax.get_window_extent()
+            title_gap = title_bbox.y0 - axes_bbox.y1
+            assert title_gap >= TEST_TITLE_PAD
 
     def test_style_customization_with_context(self, sample_dataframe):
         """Test that style options affect plot appearance via context manager."""
@@ -100,7 +112,7 @@ class TestStylingOptionsIntegration:
             "plot.style.background_color",
             "lightgray",
             "plot.style.grid_alpha",
-            0.8,
+            TEST_GRID_ALPHA,
             "plot.style.show_top_spine",
             True,
             "plot.style.show_right_spine",
@@ -109,12 +121,11 @@ class TestStylingOptionsIntegration:
             ax = scatter.plot(df=sample_dataframe, value_col="y", x_col="x", title="Custom Style Test")
 
             # Verify background color
-            assert ax.get_facecolor() == (
-                0.8274509803921568,
-                0.8274509803921568,
-                0.8274509803921568,
-                1.0,
-            )  # lightgray in RGBA
+            assert ax.get_facecolor() == LIGHTGRAY_RGBA
+
+            # Verify grid alpha
+            for line in ax.xaxis.get_gridlines():
+                assert line.get_alpha() == TEST_GRID_ALPHA
 
             # Verify spine visibility
             assert ax.spines["top"].get_visible() is True
@@ -147,18 +158,11 @@ class TestStylingOptionsIntegration:
         """Test that multiple styling options work together."""
         with option_context(
             # Font options
-            "plot.font.title_font",
-            "poppins_medium",
             "plot.font.title_size",
             TEST_FONT_SIZE_MEDIUM,
             "plot.font.label_size",
             TEST_FONT_SIZE_SMALL,
-            # Spacing options
-            "plot.spacing.title_pad",
-            20,
             # Style options
-            "plot.style.grid_alpha",
-            0.3,
             "plot.style.show_top_spine",
             True,
             "plot.style.background_color",
