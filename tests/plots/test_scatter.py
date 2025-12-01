@@ -66,8 +66,8 @@ def _mock_color_generators(mocker):
     single_color_gen = cycle(["#FF0000"])
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])
 
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("pyretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
+    mocker.patch("pyretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture

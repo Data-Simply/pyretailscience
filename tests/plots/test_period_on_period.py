@@ -31,7 +31,7 @@ def sample_dataframe():
 @pytest.fixture
 def _mock_color_generators(mocker):
     """Mock single color generator."""
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_single_color_cmap", return_value=cycle(["#FF0000"]))
+    mocker.patch("pyretailscience.plots.styles.colors.get_single_color_cmap", return_value=cycle(["#FF0000"]))
 
 
 @pytest.fixture

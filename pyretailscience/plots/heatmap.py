@@ -34,7 +34,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import get_listed_cmap
+from pyretailscience.plots.styles.colors import get_heatmap_cmap
 
 _LABEL_ROTATION_THRESHOLD = 10
 
@@ -75,7 +75,7 @@ def plot(
     if ax is None:
         _, ax = plt.subplots(figsize=figsize)
 
-    cmap = get_listed_cmap("green")
+    cmap = get_heatmap_cmap()
     im = ax.imshow(df, cmap=cmap, **kwargs)
 
     cbar = ax.figure.colorbar(im, ax=ax, format=cbar_format)

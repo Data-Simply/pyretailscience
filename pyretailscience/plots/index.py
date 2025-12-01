@@ -43,7 +43,7 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.tailwind import COLORS, get_linear_cmap
+from pyretailscience.plots.styles.colors import get_linear_cmap, get_named_color
 
 
 def filter_by_groups(
@@ -288,7 +288,7 @@ def plot(  # noqa: C901, PLR0913
             filter_below=filter_below,
         )
 
-        default_colors = COLORS["green"][500]
+        default_colors = get_named_color("primary")
         show_legend = False
         index_df = index_df[[group_col, "index"]].set_index(group_col)
         if sort_by in ["group", "value"]:
