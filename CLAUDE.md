@@ -106,3 +106,21 @@ Before committing test code, verify each test meets these criteria:
 5. **No substantial duplication**: Similar tests use parametrize or are combined
 6. **Uses realistic data**: Test data reflects retail domain (customer IDs, prices, stores, etc.)
 7. **Minimal mocking**: Only external dependencies are mocked, not internal package logic
+
+## GitHub PR Review Comments
+
+When asked to review a GitHub PR comment (e.g., a URL like
+`https://github.com/Data-Simply/pyretailscience/pull/414#issuecomment-3592454545`), extract the comment ID from the URL
+and fetch the comment content using the `gh` CLI:
+
+```bash
+gh api repos/Data-Simply/pyretailscience/issues/comments/<COMMENT_ID>
+```
+
+For example, given the URL `https://github.com/Data-Simply/pyretailscience/pull/414#issuecomment-3592454545`, run:
+
+```bash
+gh api repos/Data-Simply/pyretailscience/issues/comments/3592454545
+```
+
+This returns the comment body and metadata, which you can then use to review and respond to the feedback
