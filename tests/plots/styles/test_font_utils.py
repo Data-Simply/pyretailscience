@@ -23,10 +23,6 @@ TEST_SPACING_TITLE_PAD = 20
 TEST_SPACING_X_LABEL_PAD = 15
 TEST_GRID_ALPHA = 0.8
 TEST_TITLE_SIZE_LARGE = 28.0
-TEST_LABEL_SIZE = 14.0
-TEST_FONT_SIZE_SMALL = 13.0
-TEST_FONT_SIZE_MEDIUM = 22.0
-LIGHT_COLOR_THRESHOLD = 0.9
 
 
 class TestFontProperties:
@@ -43,15 +39,10 @@ class TestFontProperties:
             assert isinstance(font_props, fm.FontProperties)
 
     def test_get_system_font(self):
-        """Test loading system fonts."""
-        # Test common system fonts that should exist on most systems
-        for font_name in ["Arial", "Helvetica", "serif", "sans-serif"]:
-            try:
-                font_props = get_font_properties(font_name)
-                assert isinstance(font_props, fm.FontProperties)
-            except ValueError:
-                # Some fonts might not exist on the test system.
-                pass
+        """Test loading generic font families that matplotlib always supports."""
+        for font_name in ["serif", "sans", "monospace", "DejaVu Sans"]:
+            font_props = get_font_properties(font_name)
+            assert isinstance(font_props, fm.FontProperties)
 
     def test_font_caching(self):
         """Test that fonts are cached for performance."""

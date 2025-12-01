@@ -1,37 +1,26 @@
 """Font utilities for plot styling with options system integration."""
 
 import importlib.resources as pkg_resources
+from typing import Any
 
 import matplotlib.font_manager as fm
 
 from pyretailscience.options import get_option
 
-ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
+ASSETS_PATH = pkg_resources.files("pyretailscience") / "assets"
+FONTS_PATH = ASSETS_PATH / "fonts"
 
 # Built-in font registry - maps names to bundled font files
 _BUILTIN_FONTS = {
-    "poppins_bold": f"{ASSETS_PATH}/fonts/Poppins-Bold.ttf",
-    "poppins_semi_bold": f"{ASSETS_PATH}/fonts/Poppins-SemiBold.ttf",
-    "poppins_regular": f"{ASSETS_PATH}/fonts/Poppins-Regular.ttf",
-    "poppins_medium": f"{ASSETS_PATH}/fonts/Poppins-Medium.ttf",
-    "poppins_light_italic": f"{ASSETS_PATH}/fonts/Poppins-LightItalic.ttf",
+    "poppins_bold": FONTS_PATH / "Poppins-Bold.ttf",
+    "poppins_semi_bold": FONTS_PATH / "Poppins-SemiBold.ttf",
+    "poppins_regular": FONTS_PATH / "Poppins-Regular.ttf",
+    "poppins_medium": FONTS_PATH / "Poppins-Medium.ttf",
+    "poppins_light_italic": FONTS_PATH / "Poppins-LightItalic.ttf",
 }
 
 # Font cache for performance
 _font_cache: dict[str, fm.FontProperties] = {}
-
-
-def _raise_font_not_found_error(font_name: str) -> None:
-    """Raise a ValueError for font not found.
-
-    Args:
-        font_name (str): The name of the font that was not found.
-
-    Raises:
-        ValueError: Always raises with a descriptive error message.
-    """
-    error_msg = f"Font '{font_name}' not found in system fonts"
-    raise ValueError(error_msg)
 
 
 def get_font_properties(font_name: str) -> fm.FontProperties:
@@ -49,7 +38,7 @@ def get_font_properties(font_name: str) -> fm.FontProperties:
             - A system font family name (e.g., 'Arial', 'Times New Roman')
 
     Returns:
-        fm.FontProperties: A matplotlib FontProperties object that can be used
+        FontProperties: A matplotlib FontProperties object that can be used
             for text rendering.
 
     Raises:
@@ -65,26 +54,18 @@ def get_font_properties(font_name: str) -> fm.FontProperties:
         return font_props
 
     # Try to load as system font family - validate it exists
+    font_props = fm.FontProperties(family=font_name)
     try:
-        # Create a FontProperties object and verify the font exists
-        font_props = fm.FontProperties(family=font_name)
-
-        # Use matplotlib's font finder to validate the font exists
-        font_finder = fm.fontManager.findfont(font_props, fallback_to_default=False)
-
-        # If findfont returns the default font path, the requested font wasn't found
-        default_font_path = fm.fontManager.defaultFont["ttf"]
-        if font_finder == default_font_path:
-            _raise_font_not_found_error(font_name)
-        else:
-            _font_cache[font_name] = font_props
-            return font_props
-    except Exception as e:
+        fm.fontManager.findfont(font_props, fallback_to_default=False)
+    except ValueError as e:
         error_msg = f"Font '{font_name}' not found. Available bundled fonts: {list(_BUILTIN_FONTS.keys())}"
         raise ValueError(error_msg) from e
 
+    _font_cache[font_name] = font_props
+    return font_props
 
-def get_font_config() -> dict[str, any]:
+
+def get_font_config() -> dict[str, Any]:
     """Get current font configuration from options.
 
     Returns:
@@ -104,7 +85,7 @@ def get_font_config() -> dict[str, any]:
     }
 
 
-def get_spacing_config() -> dict[str, any]:
+def get_spacing_config() -> dict[str, Any]:
     """Get current spacing configuration from options.
 
     Returns:
@@ -117,7 +98,7 @@ def get_spacing_config() -> dict[str, any]:
     }
 
 
-def get_style_config() -> dict[str, any]:
+def get_style_config() -> dict[str, Any]:
     """Get current style configuration from options.
 
     Returns:

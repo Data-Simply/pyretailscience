@@ -1,8 +1,10 @@
 """Integration tests for styling options with actual plots."""
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from matplotlib.text import Text
 
 from pyretailscience.options import option_context
 from pyretailscience.plots import scatter
@@ -11,7 +13,10 @@ TEST_TITLE_SIZE = 24.0
 TEST_LABEL_SIZE = 14.0
 TEST_FONT_SIZE_SMALL = 13.0
 TEST_FONT_SIZE_MEDIUM = 22.0
-LIGHT_COLOR_THRESHOLD = 0.9
+TEST_DATA_LABEL_SIZE = 12.0
+TEST_X_LABEL_PAD = 20
+TEST_Y_LABEL_PAD = 15
+WHITESMOKE_RGBA = mcolors.to_rgba("whitesmoke")
 
 
 class TestStylingOptionsIntegration:
@@ -72,9 +77,9 @@ class TestStylingOptionsIntegration:
             "plot.spacing.title_pad",
             25,
             "plot.spacing.x_label_pad",
-            20,
+            TEST_X_LABEL_PAD,
             "plot.spacing.y_label_pad",
-            15,
+            TEST_Y_LABEL_PAD,
         ):
             ax = scatter.plot(
                 df=sample_dataframe,
@@ -85,9 +90,9 @@ class TestStylingOptionsIntegration:
                 y_label="Y Axis",
             )
 
-            assert ax.get_title() == "Custom Spacing Test"
-            assert ax.get_xlabel() == "X Axis"
-            assert ax.get_ylabel() == "Y Axis"
+            # Verify label padding was applied (title_pad is not directly queryable)
+            assert ax.xaxis.labelpad == TEST_X_LABEL_PAD
+            assert ax.yaxis.labelpad == TEST_Y_LABEL_PAD
 
     def test_style_customization_with_context(self, sample_dataframe):
         """Test that style options affect plot appearance via context manager."""
@@ -119,7 +124,7 @@ class TestStylingOptionsIntegration:
 
     def test_label_font_customization(self, sample_dataframe):
         """Test that data label fonts can be customized."""
-        with option_context("plot.font.data_label_size", 12.0):
+        with option_context("plot.font.data_label_size", TEST_DATA_LABEL_SIZE):
             ax = scatter.plot(
                 df=sample_dataframe,
                 value_col="y",
@@ -128,7 +133,15 @@ class TestStylingOptionsIntegration:
                 title="Custom Label Font Test",
             )
 
-            assert ax.get_title() == "Custom Label Font Test"
+            # Find data label text objects and verify their font size
+            label_values = set(sample_dataframe["labels"].values)
+            label_texts = [
+                child for child in ax.get_children() if isinstance(child, Text) and child.get_text() in label_values
+            ]
+
+            assert len(label_texts) == len(label_values), "Not all data labels were found on the plot"
+            for text in label_texts:
+                assert text.get_fontsize() == TEST_DATA_LABEL_SIZE
 
     def test_multiple_option_changes(self, sample_dataframe):
         """Test that multiple styling options work together."""
@@ -171,9 +184,7 @@ class TestStylingOptionsIntegration:
 
             # Verify style changes
             assert ax.spines["top"].get_visible() is True
-            # Background color is approximately whitesmoke
-            bg_color = ax.get_facecolor()
-            assert all(c > LIGHT_COLOR_THRESHOLD for c in bg_color[:3])  # Very light color
+            assert ax.get_facecolor() == WHITESMOKE_RGBA
 
     def test_default_behavior_unchanged(self, sample_dataframe):
         """Test that default behavior works when no options are changed."""
