@@ -33,8 +33,9 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.options import PlotStyleHelper
 from pyretailscience.plots.styles.colors import get_named_color
-from pyretailscience.plots.styles.font_utils import get_font_config, get_font_properties
+from pyretailscience.plots.styles.font_utils import get_font_properties
 
 
 def plot(
@@ -153,13 +154,14 @@ def plot(
             decimals,
         )
 
+        style = PlotStyleHelper()
         ax.bar_label(
             ax.containers[0],
             label_type="edge",
             labels=labels,
             padding=5,
-            fontsize=get_font_config()["label_size"] - 1,
-            fontproperties=get_font_properties(get_font_config()["label_font"]),
+            fontsize=style.label_size - 1,
+            fontproperties=get_font_properties(style.label_font),
         )
 
     if display_net_line:

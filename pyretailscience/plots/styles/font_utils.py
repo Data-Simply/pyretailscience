@@ -1,11 +1,8 @@
-"""Font utilities for plot styling with options system integration."""
+"""Font utilities for plot styling."""
 
 import importlib.resources as pkg_resources
-from typing import Any
 
 import matplotlib.font_manager as fm
-
-from pyretailscience.options import get_option
 
 ASSETS_PATH = pkg_resources.files("pyretailscience") / "assets"
 FONTS_PATH = ASSETS_PATH / "fonts"
@@ -63,55 +60,3 @@ def get_font_properties(font_name: str) -> fm.FontProperties:
 
     _font_cache[font_name] = font_props
     return font_props
-
-
-def get_font_config() -> dict[str, Any]:
-    """Get current font configuration from options.
-
-    Returns:
-        dict: Current font configuration with font names and sizes.
-    """
-    return {
-        "title_font": get_option("plot.font.title_font"),
-        "label_font": get_option("plot.font.label_font"),
-        "tick_font": get_option("plot.font.tick_font"),
-        "source_font": get_option("plot.font.source_font"),
-        "data_label_font": get_option("plot.font.data_label_font"),
-        "title_size": get_option("plot.font.title_size"),
-        "label_size": get_option("plot.font.label_size"),
-        "tick_size": get_option("plot.font.tick_size"),
-        "source_size": get_option("plot.font.source_size"),
-        "data_label_size": get_option("plot.font.data_label_size"),
-    }
-
-
-def get_spacing_config() -> dict[str, Any]:
-    """Get current spacing configuration from options.
-
-    Returns:
-        dict: Current spacing configuration with padding values.
-    """
-    return {
-        "title_pad": get_option("plot.spacing.title_pad"),
-        "x_label_pad": get_option("plot.spacing.x_label_pad"),
-        "y_label_pad": get_option("plot.spacing.y_label_pad"),
-    }
-
-
-def get_style_config() -> dict[str, Any]:
-    """Get current style configuration from options.
-
-    Returns:
-        dict: Current style configuration with colors, grid settings, etc.
-    """
-    return {
-        "background_color": get_option("plot.style.background_color"),
-        "grid_color": get_option("plot.style.grid_color"),
-        "grid_alpha": get_option("plot.style.grid_alpha"),
-        "show_top_spine": get_option("plot.style.show_top_spine"),
-        "show_right_spine": get_option("plot.style.show_right_spine"),
-        "show_bottom_spine": get_option("plot.style.show_bottom_spine"),
-        "show_left_spine": get_option("plot.style.show_left_spine"),
-        "legend_bbox_to_anchor": get_option("plot.style.legend_bbox_to_anchor"),
-        "legend_loc": get_option("plot.style.legend_loc"),
-    }

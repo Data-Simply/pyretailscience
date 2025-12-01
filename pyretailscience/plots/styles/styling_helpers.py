@@ -3,12 +3,8 @@
 from matplotlib.axes import Axes
 from matplotlib.text import Text
 
-from pyretailscience.plots.styles.font_utils import (
-    get_font_config,
-    get_font_properties,
-    get_spacing_config,
-    get_style_config,
-)
+from pyretailscience.options import PlotStyleHelper
+from pyretailscience.plots.styles.font_utils import get_font_properties
 
 
 class PlotStyler:
@@ -16,59 +12,50 @@ class PlotStyler:
 
     def __init__(self) -> None:
         """Initialize the PlotStyler."""
+        self._style = PlotStyleHelper()
 
     def apply_base_styling(self, ax: Axes) -> None:
         """Apply base plot styling (spines, grid, background) using options."""
-        style_config = get_style_config()
-
-        ax.set_facecolor(style_config["background_color"])
+        ax.set_facecolor(self._style.background_color)
         ax.set_axisbelow(True)
 
         # Configure spines based on options
-        ax.spines["top"].set_visible(style_config["show_top_spine"])
-        ax.spines["right"].set_visible(style_config["show_right_spine"])
-        ax.spines["bottom"].set_visible(style_config["show_bottom_spine"])
-        ax.spines["left"].set_visible(style_config["show_left_spine"])
+        ax.spines["top"].set_visible(self._style.show_top_spine)
+        ax.spines["right"].set_visible(self._style.show_right_spine)
+        ax.spines["bottom"].set_visible(self._style.show_bottom_spine)
+        ax.spines["left"].set_visible(self._style.show_left_spine)
 
         # Configure grid based on options
-        ax.grid(which="major", axis="x", color=style_config["grid_color"], alpha=style_config["grid_alpha"], zorder=1)
-        ax.grid(which="major", axis="y", color=style_config["grid_color"], alpha=style_config["grid_alpha"], zorder=1)
+        ax.grid(which="major", axis="x", color=self._style.grid_color, alpha=self._style.grid_alpha, zorder=1)
+        ax.grid(which="major", axis="y", color=self._style.grid_color, alpha=self._style.grid_alpha, zorder=1)
 
     def apply_title(self, ax: Axes, title: str, pad: int | None = None) -> None:
         """Apply title styling using options."""
-        font_config = get_font_config()
-        spacing_config = get_spacing_config()
-
-        effective_pad = pad if pad is not None else spacing_config["title_pad"]
+        effective_pad = pad if pad is not None else self._style.title_pad
 
         ax.set_title(
             title,
-            fontproperties=get_font_properties(font_config["title_font"]),
-            fontsize=font_config["title_size"],
+            fontproperties=get_font_properties(self._style.title_font),
+            fontsize=self._style.title_size,
             pad=effective_pad,
         )
 
     def apply_label(self, ax: Axes, label: str, axis: str, pad: int | None = None) -> None:
         """Apply axis label styling using options."""
-        font_config = get_font_config()
-        spacing_config = get_spacing_config()
-
         # Use appropriate default padding based on axis
         if pad is None:
-            pad = spacing_config["x_label_pad"] if axis == "x" else spacing_config["y_label_pad"]
+            pad = self._style.x_label_pad if axis == "x" else self._style.y_label_pad
 
-        font_props = get_font_properties(font_config["label_font"])
+        font_props = get_font_properties(self._style.label_font)
 
         axis_fn = ax.set_xlabel if axis == "x" else ax.set_ylabel
-        axis_fn(label, fontproperties=font_props, fontsize=font_config["label_size"], labelpad=pad)
+        axis_fn(label, fontproperties=font_props, fontsize=self._style.label_size, labelpad=pad)
 
     def apply_ticks(self, ax: Axes) -> None:
         """Apply tick styling using options."""
-        font_config = get_font_config()
+        ax.tick_params(axis="both", which="both", labelsize=self._style.tick_size)
 
-        ax.tick_params(axis="both", which="both", labelsize=font_config["tick_size"])
-
-        tick_font_props = get_font_properties(font_config["tick_font"])
+        tick_font_props = get_font_properties(self._style.tick_font)
         for tick in [
             *ax.xaxis.get_major_ticks(),
             *ax.xaxis.get_minor_ticks(),
@@ -101,9 +88,7 @@ class PlotStyler:
         Returns:
             Text: The source text object.
         """
-        font_config = get_font_config()
-
-        effective_font_size = font_size or font_config["source_size"]
+        effective_font_size = font_size or self._style.source_size
 
         # Calculate position if not provided in kwargs
         if "x" not in kwargs or "y" not in kwargs:
@@ -143,19 +128,16 @@ class PlotStyler:
             va="bottom",
             transform=ax.figure.transFigure,
             fontsize=effective_font_size,
-            fontproperties=get_font_properties(font_config["source_font"]),
+            fontproperties=get_font_properties(self._style.source_font),
             color="dimgray",
         )
 
     def apply_legend(self, ax: Axes, title: str | None = None, outside: bool = False) -> None:
         """Apply legend styling using options."""
-        font_config = get_font_config()
-        style_config = get_style_config()
-
         if outside:
             legend = ax.legend(
-                bbox_to_anchor=style_config["legend_bbox_to_anchor"],
-                loc=style_config["legend_loc"],
+                bbox_to_anchor=self._style.legend_bbox_to_anchor,
+                loc=self._style.legend_loc,
                 frameon=False,
             )
         else:
@@ -163,11 +145,11 @@ class PlotStyler:
 
         if title:
             legend.set_title(title)
-            legend.get_title().set_fontproperties(get_font_properties(font_config["label_font"]))
-            legend.get_title().set_fontsize(font_config["label_size"])
+            legend.get_title().set_fontproperties(get_font_properties(self._style.label_font))
+            legend.get_title().set_fontsize(self._style.label_size)
 
         # Apply styling to legend text
-        legend_font_props = get_font_properties(font_config["label_font"])
+        legend_font_props = get_font_properties(self._style.label_font)
         for text in legend.get_texts():
             text.set_fontproperties(legend_font_props)
-            text.set_fontsize(font_config["label_size"] - 1)
+            text.set_fontsize(self._style.label_size - 1)

@@ -4,6 +4,7 @@ import importlib.resources as pkg_resources
 from collections.abc import Generator
 from datetime import datetime
 from itertools import cycle
+from typing import Any
 
 import matplotlib.ticker as mtick
 import numpy as np
@@ -14,7 +15,8 @@ from matplotlib.dates import date2num
 from matplotlib.text import Text
 from scipy import stats
 
-from pyretailscience.plots.styles.font_utils import get_font_config, get_font_properties
+from pyretailscience.options import PlotStyleHelper
+from pyretailscience.plots.styles.font_utils import get_font_properties
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
@@ -229,7 +231,7 @@ def apply_hatches(ax: Axes, num_segments: int) -> Axes:
     return ax
 
 
-def not_none(value1: any, value2: any) -> any:
+def not_none(value1: Any, value2: Any) -> Any:  # noqa: ANN401
     """Helper function that returns the first value that is not None.
 
     Args:
@@ -357,7 +359,7 @@ def _add_equation_text(
     if not (show_equation or show_r2):
         return
 
-    font_config = get_font_config()
+    style = PlotStyleHelper()
 
     equation_parts = []
 
@@ -383,8 +385,8 @@ def _add_equation_text(
         text_y,
         text,
         color=color,
-        fontsize=font_config["label_size"],
-        fontproperties=get_font_properties(font_config["source_font"]),
+        fontsize=style.label_size,
+        fontproperties=get_font_properties(style.source_font),
         bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
     )
 
@@ -511,7 +513,7 @@ def add_regression_line(
     text_position: float = 0.6,
     show_equation: bool = True,
     show_r2: bool = True,
-    **kwargs: dict[str, any],
+    **kwargs: dict[str, Any],
 ) -> Axes:
     """Add a regression line to a plot.
 

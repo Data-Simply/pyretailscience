@@ -791,3 +791,43 @@ class ColumnHelper:
             "spend_p1"  # Assuming default options
         """
         return sep.join(map(get_option, args))
+
+
+class PlotStyleHelper:
+    """A class to help with plot styling options.
+
+    Access patterns:
+    - Font options: style.title_font, style.title_size, etc.
+    - Spacing options: style.title_pad, style.x_label_pad, etc.
+    - Style options: style.background_color, style.grid_alpha, etc.
+    """
+
+    def __init__(self) -> None:
+        """Initialize plot style helper with font, spacing, and style options."""
+        # Font options
+        self.title_font: str = get_option("plot.font.title_font")
+        self.label_font: str = get_option("plot.font.label_font")
+        self.tick_font: str = get_option("plot.font.tick_font")
+        self.source_font: str = get_option("plot.font.source_font")
+        self.data_label_font: str = get_option("plot.font.data_label_font")
+        self.title_size: float = get_option("plot.font.title_size")
+        self.label_size: float = get_option("plot.font.label_size")
+        self.tick_size: float = get_option("plot.font.tick_size")
+        self.source_size: float = get_option("plot.font.source_size")
+        self.data_label_size: float = get_option("plot.font.data_label_size")
+
+        # Spacing options
+        self.title_pad: int = get_option("plot.spacing.title_pad")
+        self.x_label_pad: int = get_option("plot.spacing.x_label_pad")
+        self.y_label_pad: int = get_option("plot.spacing.y_label_pad")
+
+        # Style options
+        self.background_color: str = get_option("plot.style.background_color")
+        self.grid_color: str = get_option("plot.style.grid_color")
+        self.grid_alpha: float = get_option("plot.style.grid_alpha")
+        self.show_top_spine: bool = get_option("plot.style.show_top_spine")
+        self.show_right_spine: bool = get_option("plot.style.show_right_spine")
+        self.show_bottom_spine: bool = get_option("plot.style.show_bottom_spine")
+        self.show_left_spine: bool = get_option("plot.style.show_left_spine")
+        self.legend_bbox_to_anchor: list = get_option("plot.style.legend_bbox_to_anchor")
+        self.legend_loc: str = get_option("plot.style.legend_loc")
