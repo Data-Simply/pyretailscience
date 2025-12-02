@@ -33,8 +33,9 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.options import PlotStyleHelper
 from pyretailscience.plots.styles.colors import get_named_color
-from pyretailscience.plots.styles.styling_helpers import PlotStyler
+from pyretailscience.plots.styles.font_utils import get_font_properties
 
 
 def plot(
@@ -145,7 +146,6 @@ def plot(
 
     # Add a black line at the y=0 position
     ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
-    styler = PlotStyler()
     if data_label_format is not None:
         labels = format_data_labels(
             df["amounts"],
@@ -154,13 +154,14 @@ def plot(
             decimals,
         )
 
+        style = PlotStyleHelper()
         ax.bar_label(
             ax.containers[0],
             label_type="edge",
             labels=labels,
             padding=5,
-            fontsize=styler.context.fonts.label_size - 1,
-            fontproperties=styler.context.get_font_properties(styler.context.fonts.label_font),
+            fontsize=style.label_size - 1,
+            fontproperties=get_font_properties(style.label_font),
         )
 
     if display_net_line:
