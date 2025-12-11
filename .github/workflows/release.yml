@@ -209,3 +209,8 @@ jobs:
           path: dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  deploy-docs:
+    name: Deploy Documentation
+    needs: pypi-publish
+    uses: ./.github/workflows/gh-page.yml
