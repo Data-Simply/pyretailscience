@@ -1,0 +1,63 @@
+name: Deploy Docs Preview to Cloudflare Pages
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv Package
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+
+      - name: Install Pre-commit in uv environment
+        run: uv run pip install pre-commit
+
+      - name: Install Dependencies
+        run: uv sync
+
+      - name: Build docs
+        run: uv run mkdocs build
+
+      - name: Publish to Cloudflare Pages
+        id: cloudflare-deploy
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: pyretailscience-docs
+          directory: site
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref || github.ref_name }}
+
+      - name: Add deployment URL comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### 🚀 Cloudflare Pages Deployment\n\n✅ Preview deployed successfully!\n\n**Preview URL:** ${{ steps.cloudflare-deploy.outputs.url }}\n\n**Deployment ID:** ${{ steps.cloudflare-deploy.outputs.id }}\n\n---\n*This preview will be updated automatically when you push new changes to this PR.*`
+            })
