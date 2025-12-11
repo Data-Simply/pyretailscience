@@ -1,11 +1,6 @@
 name: Page Deploy
 on:
-  push:
-    branches:
-      - "main"
-    paths:
-      - "**.md"
-      - "mkdocs.yml"
+  workflow_call:
   workflow_dispatch:
 
 permissions:
