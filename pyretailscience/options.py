@@ -23,6 +23,8 @@ from pathlib import Path
 
 import toml
 
+from pyretailscience.constants import COLORS
+
 OptionTypes = str | int | float | bool | list | dict | None
 
 
@@ -74,6 +76,49 @@ class Options:
             "column.suffix.period_2": "p2",
             "column.suffix.unknown_customer": "unknown",
             "column.suffix.total": "total",
+            # Color palettes
+            "plot.color.mono_palette": [
+                COLORS["green"][500],
+                COLORS["green"][300],
+                COLORS["green"][700],
+            ],
+            "plot.color.multi_color_palette": [
+                COLORS[color][shade]
+                for shade in [500, 300, 700]
+                for color in ["green", "blue", "red", "orange", "yellow", "violet", "pink"]
+            ],
+            "plot.color.positive": COLORS["green"][500],
+            "plot.color.negative": COLORS["red"][500],
+            "plot.color.neutral": COLORS["gray"][500],
+            "plot.color.difference": COLORS["blue"][500],
+            "plot.color.context": COLORS["gray"][400],
+            "plot.color.primary": COLORS["green"][500],
+            "plot.color.heatmap": "green",
+            # Plot font options
+            "plot.font.title_font": "poppins_semi_bold",
+            "plot.font.label_font": "poppins_regular",
+            "plot.font.tick_font": "poppins_regular",
+            "plot.font.source_font": "poppins_light_italic",
+            "plot.font.data_label_font": "poppins_regular",
+            "plot.font.title_size": 20.0,
+            "plot.font.label_size": 12.0,
+            "plot.font.tick_size": 10.0,
+            "plot.font.source_size": 10.0,
+            "plot.font.data_label_size": 8.0,
+            # Plot spacing options
+            "plot.spacing.title_pad": 10,
+            "plot.spacing.x_label_pad": 10,
+            "plot.spacing.y_label_pad": 10,
+            # Plot style options
+            "plot.style.background_color": "white",
+            "plot.style.grid_color": "#DAD8D7",
+            "plot.style.grid_alpha": 0.5,
+            "plot.style.show_top_spine": False,
+            "plot.style.show_right_spine": False,
+            "plot.style.show_bottom_spine": True,
+            "plot.style.show_left_spine": True,
+            "plot.style.legend_bbox_to_anchor": [1.05, 1.0],
+            "plot.style.legend_loc": "upper left",
         }
         self._descriptions: dict[str, str] = {
             # Database columns
@@ -137,6 +182,41 @@ class Options:
             ),
             "column.suffix.unknown_customer": "The suffix to use for unknown customer columns.",
             "column.suffix.total": "The suffix to use for total columns.",
+            # Color options
+            "plot.color.mono_palette": "Monochromatic palette for plots with few series (default: 3 green shades). Set to [] to disable.",
+            "plot.color.multi_color_palette": "Multi-color palette for plots with many series (default: 21 Tailwind colors)",
+            "plot.color.positive": "Color for positive values (e.g., gains, increases)",
+            "plot.color.negative": "Color for negative values (e.g., losses, decreases)",
+            "plot.color.neutral": "Color for neutral values (e.g., net amounts)",
+            "plot.color.difference": "Color for difference values (e.g., waterfall transitions, tree differences)",
+            "plot.color.context": "Color for de-emphasized context lines",
+            "plot.color.primary": "Default color for single-series plots",
+            "plot.color.heatmap": "Tailwind color name (e.g., 'green', 'blue') or matplotlib colormap name (e.g., 'Greens', 'viridis') for heatmaps",
+            # Plot font descriptions
+            "plot.font.title_font": "The font family to use for plot titles.",
+            "plot.font.label_font": "The font family to use for axis labels.",
+            "plot.font.tick_font": "The font family to use for axis tick labels.",
+            "plot.font.source_font": "The font family to use for source text.",
+            "plot.font.data_label_font": "The font family to use for data point labels.",
+            "plot.font.title_size": "The font size for plot titles (in points).",
+            "plot.font.label_size": "The font size for axis labels (in points).",
+            "plot.font.tick_size": "The font size for axis tick labels (in points).",
+            "plot.font.source_size": "The font size for source text (in points).",
+            "plot.font.data_label_size": "The font size for data point labels (in points).",
+            # Plot spacing descriptions
+            "plot.spacing.title_pad": "The padding above the title (in points).",
+            "plot.spacing.x_label_pad": "The padding below the x-axis label (in points).",
+            "plot.spacing.y_label_pad": "The padding to the left of the y-axis label (in points).",
+            # Plot style descriptions
+            "plot.style.background_color": "The background color of the plot area.",
+            "plot.style.grid_color": "The color of the grid lines.",
+            "plot.style.grid_alpha": "The transparency of the grid lines (0.0 to 1.0).",
+            "plot.style.show_top_spine": "Whether to show the top border of the plot.",
+            "plot.style.show_right_spine": "Whether to show the right border of the plot.",
+            "plot.style.show_bottom_spine": "Whether to show the bottom border of the plot.",
+            "plot.style.show_left_spine": "Whether to show the left border of the plot.",
+            "plot.style.legend_bbox_to_anchor": "The bounding box anchor for legend positioning when moved outside.",
+            "plot.style.legend_loc": "The location of the legend when moved outside the plot.",
         }
         self._default_options: dict[str, OptionTypes] = self._options.copy()
 
@@ -711,3 +791,43 @@ class ColumnHelper:
             "spend_p1"  # Assuming default options
         """
         return sep.join(map(get_option, args))
+
+
+class PlotStyleHelper:
+    """A class to help with plot styling options.
+
+    Access patterns:
+    - Font options: style.title_font, style.title_size, etc.
+    - Spacing options: style.title_pad, style.x_label_pad, etc.
+    - Style options: style.background_color, style.grid_alpha, etc.
+    """
+
+    def __init__(self) -> None:
+        """Initialize plot style helper with font, spacing, and style options."""
+        # Font options
+        self.title_font: str = get_option("plot.font.title_font")
+        self.label_font: str = get_option("plot.font.label_font")
+        self.tick_font: str = get_option("plot.font.tick_font")
+        self.source_font: str = get_option("plot.font.source_font")
+        self.data_label_font: str = get_option("plot.font.data_label_font")
+        self.title_size: float = get_option("plot.font.title_size")
+        self.label_size: float = get_option("plot.font.label_size")
+        self.tick_size: float = get_option("plot.font.tick_size")
+        self.source_size: float = get_option("plot.font.source_size")
+        self.data_label_size: float = get_option("plot.font.data_label_size")
+
+        # Spacing options
+        self.title_pad: int = get_option("plot.spacing.title_pad")
+        self.x_label_pad: int = get_option("plot.spacing.x_label_pad")
+        self.y_label_pad: int = get_option("plot.spacing.y_label_pad")
+
+        # Style options
+        self.background_color: str = get_option("plot.style.background_color")
+        self.grid_color: str = get_option("plot.style.grid_color")
+        self.grid_alpha: float = get_option("plot.style.grid_alpha")
+        self.show_top_spine: bool = get_option("plot.style.show_top_spine")
+        self.show_right_spine: bool = get_option("plot.style.show_right_spine")
+        self.show_bottom_spine: bool = get_option("plot.style.show_bottom_spine")
+        self.show_left_spine: bool = get_option("plot.style.show_left_spine")
+        self.legend_bbox_to_anchor: list = get_option("plot.style.legend_bbox_to_anchor")
+        self.legend_loc: str = get_option("plot.style.legend_loc")

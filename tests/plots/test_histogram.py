@@ -40,7 +40,7 @@ def sample_series():
 def _mock_color_generators(mocker):
     """Mock the color generator for multi color maps."""
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator
-    mocker.patch("pyretailscience.plots.styles.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("pyretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture

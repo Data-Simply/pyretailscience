@@ -33,8 +33,9 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 import pyretailscience.plots.styles.graph_utils as gu
-from pyretailscience.plots.styles.styling_helpers import PlotStyler
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.options import PlotStyleHelper
+from pyretailscience.plots.styles.colors import get_named_color
+from pyretailscience.plots.styles.font_utils import get_font_properties
 
 
 def plot(
@@ -100,13 +101,19 @@ def plot(
 
     amount_total = df["amounts"].sum()
 
-    default_colors = df["amounts"].apply(lambda x: COLORS["green"][500] if x > 0 else COLORS["red"][500]).to_list()
+    default_colors = (
+        df["amounts"]
+        .apply(
+            lambda x: get_named_color("positive") if x > 0 else get_named_color("negative"),
+        )
+        .to_list()
+    )
     bottom = df["amounts"].cumsum().shift(1).fillna(0).to_list()
 
     if display_net_bar:
         # Append a row for the net amount
         df.loc[len(df)] = ["Net", amount_total]
-        default_colors.append(COLORS["blue"][500])
+        default_colors.append(get_named_color("difference"))
         bottom.append(0)
 
     # Create the plot
@@ -139,7 +146,6 @@ def plot(
 
     # Add a black line at the y=0 position
     ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
-    styler = PlotStyler()
     if data_label_format is not None:
         labels = format_data_labels(
             df["amounts"],
@@ -148,13 +154,14 @@ def plot(
             decimals,
         )
 
+        style = PlotStyleHelper()
         ax.bar_label(
             ax.containers[0],
             label_type="edge",
             labels=labels,
             padding=5,
-            fontsize=styler.context.fonts.label_size - 1,
-            fontproperties=styler.context.get_font_properties(styler.context.fonts.label_font),
+            fontsize=style.label_size - 1,
+            fontproperties=get_font_properties(style.label_font),
         )
 
     if display_net_line:

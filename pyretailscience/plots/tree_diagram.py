@@ -13,8 +13,9 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.path import Path
 
-from pyretailscience.plots.styles.styling_context import get_styling_context
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.options import PlotStyleHelper
+from pyretailscience.plots.styles.colors import get_named_color
+from pyretailscience.plots.styles.font_utils import get_font_properties
 
 
 class BaseRoundedBox(mpatches.PathPatch):
@@ -206,7 +207,7 @@ class SimpleTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Gray otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -216,10 +217,10 @@ class SimpleTreeNode(TreeNode):
 
         """
         if percent_change >= SimpleTreeNode.GREEN_THRESHOLD:
-            return COLORS["green"][500]
+            return get_named_color("positive")
         if percent_change <= SimpleTreeNode.RED_THRESHOLD:
-            return COLORS["red"][500]
-        return COLORS["gray"][500]
+            return get_named_color("negative")
+        return get_named_color("neutral")
 
     def render(self, ax: Axes) -> None:
         """Render the node on the given axes.
@@ -237,7 +238,7 @@ class SimpleTreeNode(TreeNode):
         # Styling constants
         corner_radius = 0.15
         header_height_ratio = 0.4
-        header_color = COLORS["blue"][800]  # "#1E3A8A"
+        header_color = get_named_color("primary")  # Default primary color
         text_color = "white"
         value_vertical_offset = 0.175
 
@@ -246,11 +247,11 @@ class SimpleTreeNode(TreeNode):
         percent_text_x_fraction = 4 / 16
         value_text_x_fraction = 11 / 16
 
-        styling_context = get_styling_context()
+        style = PlotStyleHelper()
 
         # Get standard font properties
-        semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
-        regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+        semi_bold_font = get_font_properties(style.title_font)
+        regular_font = get_font_properties(style.label_font)
 
         # Determine color based on percent change
         color = self._get_color(percent)
@@ -290,7 +291,7 @@ class SimpleTreeNode(TreeNode):
             ha="center",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=style.label_size,
             color=text_color,
         )
 
@@ -301,7 +302,7 @@ class SimpleTreeNode(TreeNode):
             ha="center",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.title_size,
+            fontsize=style.title_size,
             color=text_color,
         )
 
@@ -312,7 +313,7 @@ class SimpleTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=style.label_size,
             color=text_color,
         )
         ax.text(
@@ -322,7 +323,7 @@ class SimpleTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=regular_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=style.label_size,
             color=text_color,
         )
 
@@ -583,7 +584,7 @@ class DetailedTreeNode(TreeNode):
     def _get_color(percent_change: float) -> str:
         """Return color based on percent change thresholds.
 
-        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Grey otherwise.
+        Green if >= GREEN_THRESHOLD, Red if <= RED_THRESHOLD, Gray otherwise.
 
         Args:
             percent_change: Percentage change value.
@@ -593,10 +594,10 @@ class DetailedTreeNode(TreeNode):
 
         """
         if percent_change >= DetailedTreeNode.GREEN_THRESHOLD:
-            return COLORS["green"][500]
+            return get_named_color("positive")
         if percent_change <= DetailedTreeNode.RED_THRESHOLD:
-            return COLORS["red"][500]
-        return COLORS["gray"][500]
+            return get_named_color("negative")
+        return get_named_color("neutral")
 
     def render(self, ax: Axes) -> None:
         """Render the detailed node on the given axes.
@@ -618,15 +619,15 @@ class DetailedTreeNode(TreeNode):
         header_color = self._get_color(percent)
         header_text_color = "white"
         data_bg_color = "white"
-        data_text_color = COLORS["gray"][600]  # Dark gray for better readability
-        label_color = COLORS["gray"][500]  # Medium gray for labels
-        border_color = COLORS["gray"][200]  # Light gray for borders
+        data_text_color = get_named_color("context")  # Dark gray for better readability
+        label_color = get_named_color("context")  # Medium gray for labels
+        border_color = get_named_color("context")  # Light gray for borders
 
-        styling_context = get_styling_context()
+        style = PlotStyleHelper()
 
         # Get standard font properties
-        semi_bold_font = styling_context.get_font_properties(styling_context.fonts.title_font)
-        regular_font = styling_context.get_font_properties(styling_context.fonts.label_font)
+        semi_bold_font = get_font_properties(style.title_font)
+        regular_font = get_font_properties(style.label_font)
 
         # Title section (colored header)
         title_section_height = self.NODE_HEIGHT * header_height_ratio
@@ -695,7 +696,7 @@ class DetailedTreeNode(TreeNode):
             ha="left",
             va="center",
             fontproperties=semi_bold_font,
-            fontsize=styling_context.fonts.label_size,
+            fontsize=style.label_size,
             color=header_text_color,
         )
 
@@ -750,7 +751,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=regular_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=style.tick_size,
                 color=label_color,
             )
             # Period metric
@@ -761,7 +762,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=semi_bold_font,
-                fontsize=styling_context.fonts.label_size,
+                fontsize=style.label_size,
                 color=data_text_color,
             )
 
@@ -796,7 +797,7 @@ class DetailedTreeNode(TreeNode):
                 ha="left",
                 va="center",
                 fontproperties=regular_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=style.tick_size,
                 color=label_color,
             )
             # Metric on right
@@ -807,6 +808,6 @@ class DetailedTreeNode(TreeNode):
                 ha="right",
                 va="center",
                 fontproperties=semi_bold_font,
-                fontsize=styling_context.fonts.tick_size,
+                fontsize=style.tick_size,
                 color=data_text_color,
             )

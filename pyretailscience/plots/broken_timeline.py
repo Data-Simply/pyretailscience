@@ -27,7 +27,7 @@ from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import get_option
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.plots.styles.colors import get_named_color
 
 # Period configurations: gap threshold and duration (in days)
 PERIOD_CONFIG = {
@@ -145,7 +145,7 @@ def plot(
 
     # Use module-level period configuration
     gap_threshold = PERIOD_CONFIG[period]
-    bar_color = kwargs.pop("color", COLORS["green"][500])
+    bar_color = kwargs.pop("color", get_named_color("primary"))
 
     # Process each category
     for category in categories:

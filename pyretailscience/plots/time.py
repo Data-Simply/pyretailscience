@@ -40,7 +40,7 @@ from pandas.tseries.offsets import BaseOffset
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import get_option
-from pyretailscience.plots.styles.tailwind import COLORS, get_linear_cmap
+from pyretailscience.plots.styles.colors import get_linear_cmap, get_named_color
 
 
 def plot(
@@ -96,7 +96,7 @@ def plot(
     )
 
     if group_col is None:
-        default_colors = COLORS["green"][500]
+        default_colors = get_named_color("primary")
         df = df.groupby("transaction_period")[value_col].agg(agg_func)
         default_title = "Total Sales"
         show_legend = False

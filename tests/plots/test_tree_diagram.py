@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from pyretailscience.plots.styles.tailwind import COLORS
+from pyretailscience.options import get_option
 from pyretailscience.plots.tree_diagram import BaseRoundedBox, DetailedTreeNode, SimpleTreeNode, TreeGrid, TreeNode
 
 
@@ -113,7 +113,7 @@ class TestBaseRoundedBox:
     def test_multiple_boxes_on_same_axes(self, ax):
         """Test creating multiple boxes on the same axes."""
         box1 = BaseRoundedBox(xy=(0, 0), width=1.0, height=1.0, facecolor="red")
-        box2 = BaseRoundedBox(xy=(2, 0), width=1.0, height=1.0, facecolor="blue")
+        box2 = BaseRoundedBox(xy=(2, 0), width=1.0, height=1.0, facecolor="gray")
         box3 = BaseRoundedBox(xy=(4, 0), width=1.0, height=1.0, facecolor="green")
 
         ax.add_patch(box1)
@@ -221,7 +221,15 @@ class TestSimpleTreeNode:
 
         # The data box (second patch added) should have the color based on percent
         data_box = ax.patches[-1]
-        expected_color = COLORS[expected_color_name][500]
+
+        # Map test color name to option name
+        color_name_mapping = {
+            "green": "positive",
+            "red": "negative",
+            "gray": "neutral",
+        }
+        option_name = color_name_mapping[expected_color_name]
+        expected_color = get_option(f"plot.color.{option_name}")
 
         # Convert RGBA to hex for comparison
         facecolor = data_box.get_facecolor()
@@ -296,8 +304,8 @@ class TestSimpleTreeNodeIntegration:
         assert len(ax.patches) == expected_patches
 
         # Verify colors: green (>= 1.0), red (<= -1.0), gray (between)
-        expected_color_names = ["green", "red", "gray"]
-        expected_colors = [COLORS[name][500] for name in expected_color_names]
+        expected_option_names = ["positive", "negative", "neutral"]  # Map to option names
+        expected_colors = [get_option(f"plot.color.{name}") for name in expected_option_names]
         data_boxes = [ax.patches[1], ax.patches[3], ax.patches[5]]  # Every second patch is a data box
 
         for i, data_box in enumerate(data_boxes):
@@ -692,7 +700,15 @@ class TestDetailedTreeNode:
 
         # The title box (first patch) should have the color based on percent
         title_box = ax.patches[0]
-        expected_color = COLORS[expected_color_name][500]
+
+        # Map test color name to option name
+        color_name_mapping = {
+            "green": "positive",
+            "red": "negative",
+            "gray": "neutral",
+        }
+        option_name = color_name_mapping[expected_color_name]
+        expected_color = get_option(f"plot.color.{option_name}")
 
         # Convert RGBA to hex for comparison
         facecolor = title_box.get_facecolor()
@@ -801,8 +817,8 @@ class TestDetailedTreeNodeIntegration:
         assert len(ax.patches) == expected_patches
 
         # Verify header colors: green (15.3%), red (-7.2%), gray (0.8%)
-        expected_color_names = ["green", "red", "gray"]
-        expected_colors = [COLORS[name][500] for name in expected_color_names]
+        expected_option_names = ["positive", "negative", "neutral"]  # Map to option names
+        expected_colors = [get_option(f"plot.color.{name}") for name in expected_option_names]
         title_boxes = [ax.patches[0], ax.patches[2], ax.patches[4]]  # Every other patch is a title box
 
         for i, title_box in enumerate(title_boxes):
