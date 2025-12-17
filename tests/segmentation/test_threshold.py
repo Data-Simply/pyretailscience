@@ -76,64 +76,6 @@ class TestThresholdSegmentation:
         )
         pd.testing.assert_frame_equal(my_seg.df.sort_values(cols.customer_id).reset_index(), expected_result)
 
-    def test_correctly_checks_segment_data(self):
-        """Test that the method correctly merges segment data back into the original DataFrame."""
-        df = pd.DataFrame(
-            {
-                get_option("column.customer_id"): [1, 2, 3, 4, 5],
-                cols.unit_spend: [100, 200, 0, 150, 0],
-            },
-        )
-        value_col = cols.unit_spend
-        agg_func = "sum"
-        thresholds = [0.33, 0.66, 1]
-        segments = ["Low", "Medium", "High"]
-        zero_value_customers = "separate_segment"
-
-        # Create ThresholdSegmentation instance
-        threshold_seg = ThresholdSegmentation(
-            df=df,
-            value_col=value_col,
-            agg_func=agg_func,
-            thresholds=thresholds,
-            segments=segments,
-            zero_value_customers=zero_value_customers,
-        )
-
-        # Call add_segment method
-        segmented_df = threshold_seg.add_segment(df)
-
-        # Assert the correct segment_name
-        expected_df = pd.DataFrame(
-            {
-                get_option("column.customer_id"): [1, 2, 3, 4, 5],
-                cols.unit_spend: [100, 200, 0, 150, 0],
-                "segment_name": ["Low", "High", "Zero", "Medium", "Zero"],
-            },
-        )
-        pd.testing.assert_frame_equal(segmented_df, expected_df)
-
-    def test_handles_dataframe_with_duplicate_customer_id_entries(self):
-        """Test that the method correctly handles a DataFrame with duplicate customer_id entries."""
-        df = pd.DataFrame(
-            {
-                get_option("column.customer_id"): [1, 2, 3, 1, 2, 3],
-                cols.unit_spend: [100, 200, 300, 150, 250, 350],
-            },
-        )
-
-        my_seg = ThresholdSegmentation(
-            df=df,
-            value_col=cols.unit_spend,
-            agg_func="sum",
-            thresholds=[0.5, 0.8, 1],
-            segments=["Light", "Medium", "Heavy"],
-            zero_value_customers="include_with_light",
-        )
-
-        result_df = my_seg.add_segment(df)
-        assert len(result_df) == len(df)
-
     def test_thresholds_not_unique(self):
         """Test that the method raises an error when the thresholds are not unique."""
         df = pd.DataFrame(
@@ -209,3 +151,107 @@ class TestThresholdSegmentation:
             result_df = seg.df
             assert isinstance(result_df, pd.DataFrame), "Should execute successfully with custom column names"
             assert result_df.index.name == "buyer_id", "Should use custom customer_id column name as index"
+
+
+class TestThresholdSegmentationGroupCol:
+    """Tests for ThresholdSegmentation group_col functionality."""
+
+    @pytest.fixture
+    def store_transaction_df(self):
+        """Return a DataFrame with customer transactions across multiple stores."""
+        return pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003, 1001, 1002, 1003],
+                cols.unit_spend: [500.00, 100.00, 200.00, 50.00, 400.00, 300.00],
+                cols.store_id: [2001, 2001, 2001, 2002, 2002, 2002],
+            },
+        )
+
+    def test_segments_calculated_within_each_group(self, store_transaction_df):
+        """Test that segments are calculated independently within each store group."""
+        seg = ThresholdSegmentation(
+            df=store_transaction_df,
+            value_col=cols.unit_spend,
+            thresholds=[0.5, 1.0],
+            segments=["Low", "High"],
+            group_col=cols.store_id,
+            zero_value_customers="exclude",
+        )
+
+        # With percent_rank and 3 customers per store: rank 0->0.0 (Low), rank 1->0.5 (Low), rank 2->1.0 (High)
+        # Store 2001: 1002=100 (Low), 1003=200 (Low), 1001=500 (High)
+        # Store 2002: 1001=50 (Low), 1003=300 (Low), 1002=400 (High)
+        expected_df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003, 1001, 1002, 1003],
+                cols.store_id: [2001, 2001, 2001, 2002, 2002, 2002],
+                cols.unit_spend: [500.00, 100.00, 200.00, 50.00, 400.00, 300.00],
+                "segment_name": ["High", "Low", "Low", "Low", "High", "Low"],
+            },
+        ).set_index([cols.customer_id, cols.store_id])
+
+        pd.testing.assert_frame_equal(seg.df.sort_index(), expected_df.sort_index())
+
+    def test_group_col_as_list(self, store_transaction_df):
+        """Test that group_col works when provided as a list of columns."""
+        store_transaction_df["category_id"] = [301, 301, 301, 301, 301, 301]
+
+        seg = ThresholdSegmentation(
+            df=store_transaction_df,
+            value_col=cols.unit_spend,
+            thresholds=[0.5, 1.0],
+            segments=["Low", "High"],
+            group_col=[cols.store_id, "category_id"],
+            zero_value_customers="exclude",
+        )
+
+        result_df = seg.df
+        assert result_df.index.names == [cols.customer_id, cols.store_id, "category_id"]
+
+    def test_zero_value_separate_segment_within_groups(self):
+        """Test that zero-value customers are correctly segmented within each group."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003, 1001, 1002, 1003],
+                cols.unit_spend: [500.00, 100.00, 0.00, 50.00, 400.00, 0.00],
+                cols.store_id: [2001, 2001, 2001, 2002, 2002, 2002],
+            },
+        )
+
+        seg = ThresholdSegmentation(
+            df=df,
+            value_col=cols.unit_spend,
+            thresholds=[0.5, 1.0],
+            segments=["Low", "High"],
+            group_col=cols.store_id,
+            zero_value_customers="separate_segment",
+        )
+
+        expected_df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003, 1001, 1002, 1003],
+                cols.store_id: [2001, 2001, 2001, 2002, 2002, 2002],
+                cols.unit_spend: [500.00, 100.00, 0.00, 50.00, 400.00, 0.00],
+                "segment_name": ["High", "Low", "Zero", "Low", "High", "Zero"],
+            },
+        ).set_index([cols.customer_id, cols.store_id])
+
+        pd.testing.assert_frame_equal(seg.df.sort_index(), expected_df.sort_index())
+
+    def test_missing_group_col_raises_error(self):
+        """Test that missing group_col column raises ValueError."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003],
+                cols.unit_spend: [100.00, 200.00, 300.00],
+            },
+        )
+
+        with pytest.raises(ValueError, match="missing"):
+            ThresholdSegmentation(
+                df=df,
+                value_col=cols.unit_spend,
+                thresholds=[0.5, 1.0],
+                segments=["Low", "High"],
+                group_col=cols.store_id,
+            )
