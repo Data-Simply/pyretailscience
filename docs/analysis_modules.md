@@ -1187,16 +1187,17 @@ Example:
 from pyretailscience.segmentation.segstats import SegTransactionStats
 from pyretailscience.segmentation.hml import HMLSegmentation
 
-seg = HMLSegmentation(df, zero_value_customers="include_with_light")
-
 # First, segment customers using HML segmentation
-segmentation = HMLSegmentation(df)
+segmentation = HMLSegmentation(my_table, zero_value_customers="include_with_light")
 
-# Add segment labels to the transaction data
-df_with_segments = segmentation.add_segment(df)
+# Add segment labels to the transaction data using ibis join
+table_with_segments = my_table.left_join(
+    segmentation.table,
+    "customer_id",
+)
 
 # Calculate transaction statistics by segment
-segment_stats = SegTransactionStats(df_with_segments)
+segment_stats = SegTransactionStats(table_with_segments)
 
 # Display the statistics
 segment_stats.df
