@@ -48,7 +48,7 @@ from typing import Literal
 import ibis
 import pandas as pd
 
-from pyretailscience.options import get_option
+from pyretailscience.options import ColumnHelper
 
 
 class ThresholdSegmentation:
@@ -76,7 +76,7 @@ class ThresholdSegmentation:
             thresholds (List[float]): The percentile thresholds for segmentation.
             segments (List[str]): A list of segment names for each threshold.
             value_col (str, optional): The column to use for the segmentation. Defaults to
-                get_option("column.unit_spend").
+                ColumnHelper().unit_spend.
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".
             zero_segment_name (str, optional): The name of the segment for customers with zero spend.
                 Defaults to "Zero".
@@ -96,15 +96,18 @@ class ThresholdSegmentation:
         if len(thresholds) != len(segments):
             raise ValueError("The number of thresholds must match the number of segments.")
 
+        # Initialize column helper
+        cols = ColumnHelper()
+
         # Normalize group_col to a list
         self._group_col = [group_col] if isinstance(group_col, str) else group_col
 
         if isinstance(df, pd.DataFrame):
             df: ibis.Table = ibis.memtable(df)
 
-        value_col = get_option("column.unit_spend") if value_col is None else value_col
+        value_col = cols.unit_spend if value_col is None else value_col
 
-        required_cols = [get_option("column.customer_id"), value_col]
+        required_cols = [cols.customer_id, value_col]
         if self._group_col is not None:
             required_cols.extend(self._group_col)
 
@@ -114,7 +117,7 @@ class ThresholdSegmentation:
             raise ValueError(msg)
 
         # Build group_by columns: customer_id + optional group columns
-        group_by_cols = [get_option("column.customer_id")]
+        group_by_cols = [cols.customer_id]
         if self._group_col is not None:
             group_by_cols.extend(self._group_col)
 
@@ -131,10 +134,14 @@ class ThresholdSegmentation:
             df = df.filter(df[value_col] != 0)
 
         # Create window function, partitioned by group columns if specified
+        # Order by value_col first, then customer_id to ensure deterministic ordering when values are tied
         window = (
-            ibis.window(order_by=ibis.asc(df[value_col]))
+            ibis.window(order_by=[ibis.asc(df[value_col]), ibis.asc(df[cols.customer_id])])
             if self._group_col is None
-            else ibis.window(order_by=ibis.asc(df[value_col]), group_by=self._group_col)
+            else ibis.window(
+                order_by=[ibis.asc(df[value_col]), ibis.asc(df[cols.customer_id])],
+                group_by=self._group_col,
+            )
         )
         df = df.mutate(ptile=ibis.percent_rank().over(window))
 
@@ -151,7 +158,8 @@ class ThresholdSegmentation:
     def df(self) -> pd.DataFrame:
         """Returns the dataframe with the segment names."""
         if self._df is None:
-            index_cols = [get_option("column.customer_id")]
+            cols = ColumnHelper()
+            index_cols = [cols.customer_id]
             if self._group_col is not None:
                 index_cols.extend(self._group_col)
             self._df = self.table.execute().set_index(index_cols)
