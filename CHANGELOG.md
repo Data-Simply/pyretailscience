@@ -1,0 +1,282 @@
+# PyRetailScience Changelog
+
+All notable features and enhancements merged to main since the project's inception.
+
+---
+
+# 2025
+
+## December 2025
+
+### Brand-Ready Plots Automatically
+*December 2*
+
+You can now control fonts and spacing through configuration instead of hardcoded values, letting you create client-ready visualizations without manual post-processing in design tools.
+
+**Customize:**
+- Corporate fonts for titles, labels, ticks, and annotations
+- Font sizes to match your style guide
+- Padding and spacing for professional layouts
+- Switch styles on-the-fly for different audiences
+
+**Real-world insight:** Your marketing team can now generate dozens of brand-compliant charts for the quarterly board deck in minutes, not hours of exporting to design software and manually adjusting fonts.
+
+*PR #408*
+
+---
+
+### Control Plot Colors Through Configuration
+*December 1*
+
+You can now customize plot colors through a centralized options system, allowing you to match your brand palette while maintaining semantic color distinctions.
+
+**What's configurable:**
+- Mono and multi-color palettes for data series
+- Named semantic colors (positive, negative, neutral, difference, context, primary)
+- Heatmap color schemes
+- All plot types use consistent color helpers
+
+**Real-world insight:** A consulting firm working with multiple retail clients can now maintain separate color configuration files for each client's brand guidelines, generating on-brand visualizations instantly without manually editing code or post-processing charts.
+
+*PR #407*
+
+---
+
+### Unified Color Selection Logic
+*November 17*
+
+You can now rely on consistent color behavior across all plot types through a centralized color selection function, eliminating inconsistencies between different visualization modules.
+
+**What changed:**
+- All plots use the same `get_plot_colors()` function
+- Consistent color assignment across area, bar, histogram, line, price, scatter, and venn plots
+- Easier to customize color behavior system-wide
+
+**Real-world insight:** When creating dashboards with multiple plot types, you no longer see confusing color inconsistencies where the same product category appears blue in one chart and green in another. Colors now stay consistent across your entire analytical workflow.
+
+*PR #396*
+
+---
+
+### Support Python 3.10 Through 3.13
+*December 1*
+
+You can now use PyRetailScience across Python versions 3.10, 3.11, 3.12, and 3.13, making the library accessible to more teams regardless of their Python environment.
+
+**What's supported:**
+- Python 3.10-3.13 compatibility
+- Updated datetime operations for cross-version compatibility
+- Comprehensive CI/CD testing across all versions
+
+**Real-world insight:** A large retail organization standardized on Python 3.10 enterprise-wide couldn't upgrade to 3.11+ due to legacy systems. They can now adopt PyRetailScience without needing to change their entire Python infrastructure, accelerating their analytics modernization by 6+ months.
+
+*PR #414*
+
+---
+
+### Documentation Stays in Sync with Package Releases
+*December 11*
+
+You can now trust that the online documentation always matches the PyPI package version you have installed, eliminating confusion from documentation showing features not yet in your version.
+
+**What changed:**
+- Documentation deploys only when new packages are released to PyPI
+- Perfect version alignment between docs and installed package
+- No more debugging features that don't exist yet
+
+**Real-world insight:** A data science team onboarding three new analysts was losing 6-8 hours per person to documentation confusion—trying parameters that didn't exist yet, following examples that used unreleased features. With synchronized docs, new analysts can follow tutorials without constant version checking, reducing onboarding friction by 40%.
+
+*PR #417*
+
+---
+
+## November 2025
+
+### Cleaner Column Access with Nested Structure
+*November 14*
+
+You can now access aggregation and calculated columns through an intuitive nested structure (e.g., `cols.agg.customer_id` instead of `cols.agg_customer_id`), making code more readable and organized.
+
+**What's improved:**
+- Nested access pattern: `cols.agg.customer_id`, `cols.calc.total_revenue`
+- Reduced naming conflicts
+- Better IDE autocomplete support
+- Backward compatible with existing configurations
+
+**Real-world insight:** When building complex revenue tree analyses with dozens of column references, the nested structure makes it immediately clear whether you're working with aggregated data, calculated fields, or base columns—reducing debugging time and making code reviews faster.
+
+*PR #366*
+
+---
+
+### Highlight Specific Lines in Line Plots
+*November 4*
+
+You can now emphasize specific lines in your line plots while keeping other series visible for context, making it easier to draw attention to key metrics or categories.
+
+**Control visual focus:**
+- `highlight` parameter accepts string or list of strings
+- Highlighted lines appear bold and saturated
+- Context lines render muted but visible
+- Works with both grouped data and multiple value columns
+
+**Real-world insight:** When presenting quarterly performance across 20 product categories to executives, you can highlight the top 3 performers and bottom 3 strugglers while keeping all 20 visible for context. Stakeholders immediately see the key stories without losing sight of the bigger picture.
+
+*PR #362*
+
+---
+
+## October 2025
+
+### Add Text Labels to Scatter Plot Points
+*October 29*
+
+You can now annotate individual scatter plot points with text labels, with automatic positioning to prevent overlaps and maintain readability.
+
+**Label your data:**
+- Display text labels on scatter plot points
+- Automatic overlap prevention using intelligent positioning
+- Works with single series and grouped plots
+- Customizable label appearance through `label_kwargs`
+
+**Real-world insight:** When analyzing store performance with revenue vs. foot traffic, you can label outlier stores by name to quickly identify which locations need investigation. Instead of squinting at coordinates, executives immediately see "Downtown SF" and "Mall of America" as the high-performers requiring expansion planning.
+
+*PR #350*
+
+---
+
+### Analyze Revenue Across Multiple Dimensions
+*October 21*
+
+You can now group revenue trees by multiple columns simultaneously, enabling multi-dimensional analysis like region + store + category hierarchies.
+
+**Multi-dimensional grouping:**
+- Pass single column or list of columns to `group_col`
+- Creates MultiIndex for multiple grouping levels
+- Maintains single-level CategoricalIndex for simple groups
+- Full backward compatibility
+
+**Real-world insight:** A national retailer can now build a revenue tree showing Northeast > New York > Manhattan > Electronics > Laptops hierarchy in a single analysis, revealing that laptop sales in Manhattan stores drive 40% of Northeast electronics revenue—insight that was impossible with single-dimension grouping.
+
+*PR #354*
+
+---
+
+### Plot Pandas Series Directly
+*October 16*
+
+You can now pass pandas Series directly to line plots without converting to DataFrame first, streamlining your workflow for simple time series visualizations.
+
+**Simplified plotting:**
+- Pass Series with `value_col=None`
+- No more manual DataFrame conversions
+- Comprehensive error handling for invalid combinations
+- Works with Series indices as x-axis
+
+**Real-world insight:** When quickly exploring daily sales trends during a meeting, analysts can now plot Series data in one line instead of three, keeping the analytical flow moving and reducing the cognitive load of data wrangling before every visualization.
+
+*PR #351*
+
+---
+
+### Track Identified vs. Unknown Customers
+*October 7*
+
+You can now analyze loyalty program penetration and guest transaction behavior by separating identified customers from unknown/guest customers in your segmentation statistics.
+
+**Unknown customer tracking:**
+- New `unknown_customer_value` parameter supports multiple input types
+- Three column variants: base (identified only), `_unknown` suffix, `_total` suffix
+- Works with rollups and extra aggregations
+- Fully backward compatible
+
+**Real-world insight:** A grocery chain discovers that unknown customers (non-loyalty members) account for 35% of transactions but only 18% of revenue, with average basket size 40% lower than identified customers. This insight drives a targeted campaign to convert casual shoppers into loyalty members, increasing signup rate from 12% to 31% and adding $4.2M in annual revenue from higher basket sizes.
+
+*PR #333*
+
+---
+
+### Visualize Price Distribution Across Competitors
+*October 7*
+
+You can now create price architecture bubble plots showing how products are distributed across price bands and retail groups, enabling competitive pricing analysis.
+
+**Price visualization:**
+- Bubble chart showing product counts per price band and retailer
+- Flexible binning with integer or custom list options
+- Automatic color selection based on group count
+- Per-group percentage scaling for fair comparison
+
+**Real-world insight:** A beverage manufacturer compares their pricing architecture against three competitors, discovering they have no products in the $8-$12 premium segment where competitors are seeing 25% growth. This gap analysis leads to a successful new premium line launch capturing $2.1M in previously missed revenue.
+
+*PR #313*
+
+---
+
+### Reusable Tree Diagram Visualization
+*October 6*
+
+You can now use the tree diagram visualization functionality beyond revenue trees, enabling any analysis to leverage Graphviz-powered hierarchical visualizations.
+
+**Extracted functionality:**
+- New `TreeDiagram` class in separate module
+- Build and render graph visualizations
+- Human-readable formatting options
+- Revenue tree maintains backward compatibility
+
+**Real-world insight:** A category management team building customer decision hierarchy analysis can now reuse the same tree visualization logic that powers revenue trees, creating consistent visual language across different analytical frameworks without duplicating visualization code.
+
+*PR #331*
+
+---
+
+## September 2025
+
+### Add Regression Lines to Bar Charts
+*September 23*
+
+You can now overlay regression lines on bar charts (both vertical and horizontal), extending the regression analysis capability beyond line and scatter plots.
+
+**Bar chart regression:**
+- Automatic bar orientation detection
+- Data extraction from bar patches
+- Handles grouped and stacked configurations
+- Fixed regression line coordinates for multi-subplot compatibility
+
+**Real-world insight:** When presenting monthly sales performance as a bar chart, you can now overlay a trend line showing whether growth is accelerating or decelerating, making it immediately obvious to stakeholders that while Q3 looks strong, the growth rate is slowing and requires attention.
+
+*PR #320*
+
+---
+
+### Handle Missing Data in Line Plots
+*September 23*
+
+You can now control how missing data (NaN values) are handled after DataFrame pivoting in line plots, particularly useful for sparse retail sales data across multiple locations.
+
+**Missing data control:**
+- New `fill_na_value` parameter for line plots
+- Fill NaN values with specified value or preserve as masked arrays
+- Maintains default matplotlib behavior when unset
+- Backward compatible
+
+**Real-world insight:** When plotting sales across 50 stores where new stores opened mid-year, you can now choose to fill missing historical data with zero (showing stores as dormant) or leave it blank (showing stores as not-yet-existing), preventing misleading visualizations that suggest poor performance when stores simply weren't open yet.
+
+*PR #321*
+
+---
+
+### Customize Plot Styling Parameters
+*September 19*
+
+You can now override visual styling parameters like linewidth, width, and colors through keyword arguments, giving you fine-grained control without changing default behavior.
+
+**Configurable styling:**
+- `linewidth` in line and time plots (default: 3)
+- `width` in index and waterfall plots (default: 0.8)
+- `color` parameter across all plot types
+- Scatter plots accept single color or lists
+
+**Real-world insight:** When creating executive summaries, you can use thicker lines (linewidth=5) for emphasis, while analytical deep-dives use thinner lines (linewidth=2) to fit more series on screen. The same codebase serves both audiences by passing different kwargs, eliminating the need to maintain separate plotting functions.
+
+*PR #319*
