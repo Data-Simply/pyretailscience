@@ -1,6 +1,8 @@
-# Complete 2025 PR Checklist
+# Complete PR Checklist (All Years)
 
-Total 2025 PRs Merged: 229
+Total PRs Merged: 288
+- 2025: 229 PRs
+- 2024: 59 PRs
 
 ## Status Legend
 - [ ] Not reviewed
@@ -257,3 +259,91 @@ Total 2025 PRs Merged: 229
 - [ ] #89 - feat: changed threshold seg to use ibis - 2025-02-05
 - [ ] #88 - feat: revenue tree - 2025-02-03
 - [ ] #86 - feat: standard bar plot - 2025-02-02
+
+### January 2025
+*No PRs merged in January 2025*
+
+---
+
+# 2024 PRs
+
+Total 2024 PRs Merged: 59
+
+### October 2024
+- [ ] #87 - chore: update python dependency range - 2024-10-15
+- [ ] #85 - feat: add standard histogram plot - 2024-10-03
+
+### September 2024
+- [ ] #84 - feat: add line plot - 2024-09-24
+- [T] #81 - fix: dependabot jupyerlab security update - 2024-09-18
+- [T] #80 - docs: updated analysis module docs - 2024-09-18
+
+### August 2024
+- [T] #75 - chore: linting improvements - 2024-08-14
+- [ ] #74 - feat: segment stats calc now uses duckdb to improve performance - 2024-08-09
+- [T] #73 - chore: update dependencies - 2024-08-08
+- [T] #72 - feat: add toml dependency - 2024-08-08
+- [ ] #71 - Prod assoc perf improvements - 2024-08-02
+- [ ] #70 - feat: improved performance of product assocation calculation - 2024-08-02
+
+### July 2024
+- [ ] #69 - feat: added production association rule module - 2024-07-30
+- [ ] #68 - feat: clean up data_label_format to accept None - 2024-07-29
+- [T] #67 - feat(tests): enhance Cross Shop module tests with docstrings and linting - 2024-07-23
+- [ ] #66 - Added pandas style option system and updated segmentations module to use it. - 2024-07-22
+- [T] #65 - docs: update installation guide in getting_started - 2024-07-20
+- [ ] #64 - feat: enhance timeline and waterfall plots with additional documentation - 2024-07-20
+- [ ] #63 - feat: added waterfall plot - 2024-07-18
+- [T] #62 - refactor: refactor duplicate graph styling code - 2024-07-17
+- [T] #61 - feat: updated docs and README.md - 2024-07-14
+- [T] #60 - chore: adding codecov app coverage support - 2024-07-12
+- [T] #59 - chore: removed un-needed dependencies - 2024-07-10
+- [ ] #58 - Added ThresholdSegmentation class - 2024-07-10
+- [ ] #57 - feat: add total row to SegTransactionStats calculation - 2024-07-05
+- [ ] #56 - fix: gain loss calc error with negative values - 2024-07-04
+- [ ] #55 - refactor: move data simulation to another package - 2024-07-03
+- [T] #54 - Linting improvements - 2024-07-03
+- [T] #53 - New MkDocs custom homepage - 2024-07-02
+
+### June 2024
+- [T] #52 - chore: add code coverage configuration for pytest - 2024-06-25
+- [T] #51 - chore: require conventional commit via pre-commit - 2024-06-25
+- [ ] #50 - Days between purchases performance, linting and code deplication - 2024-06-25
+- [ ] #48 - Cross shop analysis - 2024-06-13
+- [T] #46 - Bump jupyterlab from 4.0.10 to 4.0.11 - 2024-06-10
+- [ ] #42 - Gain loss module - 2024-06-10
+- [T] #39 - Added nbstripout and pre-commit hook - 2024-06-01
+
+### May 2024
+- [ ] #32 - Index graph edge cases - 2024-05-14
+- [ ] #31 - Index plot improvements - 2024-05-13
+- [ ] #30 - Added index charts - 2024-05-10
+- [ ] #29 - Added the ability to use an existing segmentation - 2024-05-10
+- [ ] #28 - HML zero cust handling - 2024-05-06
+- [ ] #27 - Updated chart styles - 2024-05-06
+- [ ] #26 - Added custom contracts support - 2024-05-05
+
+### April 2024
+- [T] #24 - standardized graph styles further - 2024-04-24
+- [ ] #23 - HML Segmentation - 2024-04-09
+
+### March 2024
+- [ ] #22 - addition of churn period and transaction churn rate determination - 2024-03-13
+- [ ] #21 - Addition of churn period and transaction churn rate determination - 2024-03-13
+- [T] #20 - Add GA tracking to docs and robots.txt - 2024-03-08
+
+### February 2024
+- [T] #19 - Update action version - 2024-02-22
+- [T] #18 - Pre commit pipeline - 2024-02-22
+- [T] #17 - updated api documentation - 2024-02-17
+- [T] #16 - updated api documentation - 2024-02-17
+- [T] #15 - updated readme to the correct tagged config file #13 - 2024-02-16
+- [ ] #14 - Fix for oscillating customer count #11 - 2024-02-16
+- [ ] #12 - First commit of the data contracts #10 - 2024-02-15
+- [ ] #9 - feat: simulation can be done via api and cleaned up coloumn naming - 2024-02-10
+
+### January 2024
+- [T] #6 - Pypi pipeline - 2024-01-29
+- [T] #5 - Testing pipeline Trigger - 2024-01-29
+- [T] #4 - Mkdocs pipeline - 2024-01-29
+- [T] #3 - mkdocs pipeline - 2024-01-29
