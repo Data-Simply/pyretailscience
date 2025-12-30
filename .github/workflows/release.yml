@@ -14,8 +14,6 @@ permissions:
   contents: write
   deployments: write
   packages: write
-  pages: write
-  id-token: write
 concurrency:
   group: "release"
   cancel-in-progress: false
@@ -215,4 +213,8 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     needs: pypi-publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     uses: ./.github/workflows/gh-page.yml
