@@ -14,6 +14,8 @@ permissions:
   contents: write
   deployments: write
   packages: write
+  pages: write
+  id-token: write
 concurrency:
   group: "release"
   cancel-in-progress: false
