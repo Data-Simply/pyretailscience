@@ -69,7 +69,6 @@ nav:
           - Styles:
               - Graph Utils: api/plots/styles/graph_utils.md
               - Tailwind Colors: api/plots/styles/tailwind.md
-              - Styling Context: api/plots/styles/styling_context.md
               - Styling Helpers: api/plots/styles/styling_helpers.md
       - Utils:
           - Date Utils: api/utils/date.md
