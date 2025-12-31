@@ -68,7 +68,6 @@ nav:
           - Waterfall Plot: api/plots/waterfall.md
           - Styles:
               - Graph Utils: api/plots/styles/graph_utils.md
-              - Tailwind Colors: api/plots/styles/tailwind.md
               - Styling Helpers: api/plots/styles/styling_helpers.md
       - Utils:
           - Date Utils: api/utils/date.md
