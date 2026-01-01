@@ -46,7 +46,6 @@ nav:
           - Revenue Tree: api/analysis/revenue_tree.md
           - Composite Rank: api/analysis/composite_rank.md
       - Segmentation:
-          - Base Segmentation: api/segmentation/base.md
           - HML Segmentation: api/segmentation/hml.md
           - RFM Segmentation: api/segmentation/rfm.md
           - SegTransactionStats Segmentation: api/segmentation/segstats.md
