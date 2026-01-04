@@ -762,6 +762,7 @@ class ColumnHelper:
         self.transaction_time = get_option("column.transaction_time")
         self.customer_id = get_option("column.customer_id")
         self.transaction_id = get_option("column.transaction_id")
+        self.store_id = get_option("column.store_id")
         self.unit_spend = get_option("column.unit_spend")
         self.unit_qty = get_option("column.unit_quantity")
         self.unit_cost = get_option("column.unit_cost")

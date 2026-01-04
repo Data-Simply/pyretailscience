@@ -48,14 +48,14 @@ from typing import Literal
 import ibis
 import pandas as pd
 
-from pyretailscience.options import get_option
-from pyretailscience.segmentation.base import BaseSegmentation
+from pyretailscience.options import ColumnHelper
 
 
-class ThresholdSegmentation(BaseSegmentation):
+class ThresholdSegmentation:
     """Segments customers based on user-defined thresholds and segments."""
 
     _df: pd.DataFrame | None = None
+    _group_col: list[str] | None = None
 
     def __init__(
         self,
@@ -66,18 +66,25 @@ class ThresholdSegmentation(BaseSegmentation):
         agg_func: str = "sum",
         zero_segment_name: str = "Zero",
         zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
+        group_col: str | list[str] | None = None,
     ) -> None:
         """Segments customers based on user-defined thresholds and segments.
 
         Args:
-            df (pd.DataFrame | ibis.Table): A dataframe with the transaction data. The dataframe must contain a customer_id column.
+            df (pd.DataFrame | ibis.Table): A dataframe with the transaction data. The dataframe must contain a
+                customer_id column.
             thresholds (List[float]): The percentile thresholds for segmentation.
             segments (List[str]): A list of segment names for each threshold.
-            value_col (str, optional): The column to use for the segmentation. Defaults to get_option("column.unit_spend").
+            value_col (str, optional): The column to use for the segmentation. Defaults to
+                ColumnHelper().unit_spend.
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".
-            zero_segment_name (str, optional): The name of the segment for customers with zero spend. Defaults to "Zero".
+            zero_segment_name (str, optional): The name of the segment for customers with zero spend.
+                Defaults to "Zero".
             zero_value_customers (Literal["separate_segment", "exclude", "include_with_light"], optional): How to handle
                 customers with zero spend. Defaults to "separate_segment".
+            group_col (str | list[str] | None, optional): Column(s) to group by when calculating segments. When
+                specified, segments are calculated within each group independently. For example, setting
+                group_col="store_id" calculates Heavy/Medium/Light segments within each store. Defaults to None.
 
         Raises:
             ValueError: If the dataframe is missing the columns option column.customer_id or `value_col`, or these
@@ -89,19 +96,32 @@ class ThresholdSegmentation(BaseSegmentation):
         if len(thresholds) != len(segments):
             raise ValueError("The number of thresholds must match the number of segments.")
 
+        # Initialize column helper
+        cols = ColumnHelper()
+
+        # Normalize group_col to a list
+        self._group_col = [group_col] if isinstance(group_col, str) else group_col
+
         if isinstance(df, pd.DataFrame):
             df: ibis.Table = ibis.memtable(df)
 
-        value_col = get_option("column.unit_spend") if value_col is None else value_col
+        value_col = cols.unit_spend if value_col is None else value_col
 
-        required_cols = [get_option("column.customer_id"), value_col]
+        required_cols = [cols.customer_id, value_col]
+        if self._group_col is not None:
+            required_cols.extend(self._group_col)
 
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        df = df.group_by(get_option("column.customer_id")).aggregate(
+        # Build group_by columns: customer_id + optional group columns
+        group_by_cols = [cols.customer_id]
+        if self._group_col is not None:
+            group_by_cols.extend(self._group_col)
+
+        df = df.group_by(*group_by_cols).aggregate(
             **{value_col: getattr(df[value_col], agg_func)()},
         )
 
@@ -113,7 +133,16 @@ class ThresholdSegmentation(BaseSegmentation):
             zero_df = df.filter(df[value_col] == 0).mutate(segment_name=ibis.literal(zero_segment_name))
             df = df.filter(df[value_col] != 0)
 
-        window = ibis.window(order_by=ibis.asc(df[value_col]))
+        # Create window function, partitioned by group columns if specified
+        # Order by value_col first, then customer_id to ensure deterministic ordering when values are tied
+        window = (
+            ibis.window(order_by=[ibis.asc(df[value_col]), ibis.asc(df[cols.customer_id])])
+            if self._group_col is None
+            else ibis.window(
+                order_by=[ibis.asc(df[value_col]), ibis.asc(df[cols.customer_id])],
+                group_by=self._group_col,
+            )
+        )
         df = df.mutate(ptile=ibis.percent_rank().over(window))
 
         case_args = [(df["ptile"] <= quantile, segment) for quantile, segment in zip(thresholds, segments, strict=True)]
@@ -129,5 +158,9 @@ class ThresholdSegmentation(BaseSegmentation):
     def df(self) -> pd.DataFrame:
         """Returns the dataframe with the segment names."""
         if self._df is None:
-            self._df = self.table.execute().set_index(get_option("column.customer_id"))
+            cols = ColumnHelper()
+            index_cols = [cols.customer_id]
+            if self._group_col is not None:
+                index_cols.extend(self._group_col)
+            self._df = self.table.execute().set_index(index_cols)
         return self._df

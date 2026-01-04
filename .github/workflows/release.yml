@@ -213,4 +213,8 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     needs: pypi-publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     uses: ./.github/workflows/gh-page.yml

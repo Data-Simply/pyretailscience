@@ -63,6 +63,7 @@ class HMLSegmentation(ThresholdSegmentation):
         value_col: str | None = None,
         agg_func: str = "sum",
         zero_value_customers: Literal["separate_segment", "exclude", "include_with_light"] = "separate_segment",
+        group_col: str | list[str] | None = None,
     ) -> None:
         """Segments customers into Heavy, Medium, Light and Zero spenders based on the total spend.
 
@@ -72,11 +73,15 @@ class HMLSegmentation(ThresholdSegmentation):
         their spend, transaction volume or quantities purchased.
 
         Args:
-            df (pd.DataFrame): A dataframe with the transaction data. The dataframe must contain a customer_id column.
-            value_col (str, optional): The column to use for the segmentation. Defaults to get_option("column.unit_spend").
+            df (pd.DataFrame | ibis.Table): A dataframe with the transaction data. The dataframe must contain a customer_id column.
+            value_col (str, optional): The column to use for the segmentation.
+                Defaults to get_option("column.unit_spend").
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".
             zero_value_customers (Literal["separate_segment", "exclude", "include_with_light"], optional): How to handle
                 customers with zero spend. Defaults to "separate_segment".
+            group_col (str | list[str] | None, optional): Column(s) to group by when calculating segments. When
+                specified, segments are calculated within each group independently. For example, setting
+                group_col="store_id" calculates Heavy/Medium/Light segments within each store. Defaults to None.
         """
         thresholds = [0.500, 0.800, 1]
         segments = ["Light", "Medium", "Heavy"]
@@ -87,4 +92,5 @@ class HMLSegmentation(ThresholdSegmentation):
             thresholds=thresholds,
             segments=segments,
             zero_value_customers=zero_value_customers,
+            group_col=group_col,
         )
