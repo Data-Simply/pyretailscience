@@ -71,6 +71,7 @@ from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.analysis.demand.aids_estimator import AIDSEstimator
 from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
@@ -121,14 +122,18 @@ class CustomerDecisionHierarchy:
         df: pd.DataFrame,
         product_col: str,
         exclude_same_transaction_products: bool = True,
-        method: Literal["yules_q"] = "yules_q",
+        method: Literal["yules_q", "aids"] = "yules_q",
         random_state: int = 42,
+        price_col: str | None = None,
+        quantity_col: str | None = None,
+        expenditure_col: str | None = None,
     ) -> None:
         """Initialize customer decision hierarchy analysis for range optimization.
 
         Args:
             df (pd.DataFrame): Transaction data with customer purchase history.
                 Must contain: customer_id, transaction_id, and product identifier.
+                For AIDS method, also requires price and quantity columns.
             product_col (str): Column containing products to analyze for substitutability
                 (e.g., "product_name", "sku", "brand", "subcategory").
             exclude_same_transaction_products (bool, optional): Whether products bought
@@ -136,26 +141,54 @@ class CustomerDecisionHierarchy:
                 True = If customer buys milk and eggs together, they're not substitutes.
                 False = Include all purchase patterns.
                 Defaults to True (recommended for most retail contexts).
-            method (Literal["yules_q"], optional): Statistical method for measuring
-                substitutability. "yules_q" measures association strength between
-                binary purchase patterns. Defaults to "yules_q".
+                Only applies to "yules_q" method.
+            method (Literal["yules_q", "aids"], optional): Statistical method for measuring
+                substitutability:
+                - "yules_q": Correlation-based measure using purchase patterns (default)
+                - "aids": Causal elasticity-based measure using Almost Ideal Demand System
+                Defaults to "yules_q".
             random_state (int, optional): Seed for reproducible clustering results.
                 Important for consistent range planning decisions. Defaults to 42.
+            price_col (str | None, optional): Column containing prices. Required for AIDS method.
+                Defaults to None.
+            quantity_col (str | None, optional): Column containing quantities. Required for AIDS method.
+                Defaults to None.
+            expenditure_col (str | None, optional): Column containing total expenditure.
+                Optional for AIDS method. Defaults to None.
 
         Raises:
             ValueError: If required columns are missing from the dataframe.
+            ValueError: If AIDS method is selected without required price/quantity columns.
 
         Business Example:
-            >>> # Analyze substitutability in coffee category
+            >>> # Analyze substitutability using correlation (Yule's Q)
             >>> cdh = CustomerDecisionHierarchy(
             ...     df=transactions,
-            ...     product_col="brand_flavor",  # e.g., "Folgers_Original"
-            ...     exclude_same_transaction_products=True  # Bought together = not substitutes
+            ...     product_col="brand_flavor",
+            ...     exclude_same_transaction_products=True,
+            ...     method="yules_q"
             ... )
-            >>> # Use results to identify which coffee SKUs can be delisted
+            >>> # Analyze substitutability using causal elasticities (AIDS)
+            >>> cdh = CustomerDecisionHierarchy(
+            ...     df=transactions,
+            ...     product_col="brand",
+            ...     method="aids",
+            ...     price_col="unit_price",
+            ...     quantity_col="units_sold"
+            ... )
         """
         cols = ColumnHelper()
         required_cols = [cols.customer_id, cols.transaction_id, product_col]
+
+        # Validate method-specific requirements
+        if method == "aids":
+            if price_col is None or quantity_col is None:
+                msg = "AIDS method requires price_col and quantity_col to be specified"
+                raise ValueError(msg)
+            required_cols.extend([price_col, quantity_col])
+            if expenditure_col is not None:
+                required_cols.append(expenditure_col)
+
         missing_cols = set(required_cols) - set(df.columns)
         if len(missing_cols) > 0:
             msg = f"The following columns are required but missing: {missing_cols}"
@@ -163,8 +196,20 @@ class CustomerDecisionHierarchy:
 
         self.random_state = random_state
         self.product_col = product_col
-        self.pairs_df = self._get_pairs(df, exclude_same_transaction_products, product_col)
-        self.distances = self._calculate_distances(method=method)
+        self.method = method
+        self.price_col = price_col
+        self.quantity_col = quantity_col
+        self.expenditure_col = expenditure_col
+
+        if method == "yules_q":
+            self.pairs_df = self._get_pairs(df, exclude_same_transaction_products, product_col)
+            self.distances = self._calculate_distances(method=method)
+        elif method == "aids":
+            self.aids_estimator = self._fit_aids_model(df)
+            self.distances = self._calculate_distances(method=method)
+        else:
+            msg = f"Invalid method: {method}. Must be 'yules_q' or 'aids'"
+            raise ValueError(msg)
 
     @staticmethod
     def _get_pairs(df: pd.DataFrame, exclude_same_transaction_products: bool, product_col: str) -> pd.DataFrame:
@@ -266,26 +311,98 @@ class CustomerDecisionHierarchy:
         # Normalize the yules q values to be between 0 and 1 and return
         return (yules_q_matrix + 1) / 2
 
+    def _fit_aids_model(self, df: pd.DataFrame) -> AIDSEstimator:
+        """Fit AIDS model to compute elasticity-based distances.
+
+        Args:
+            df (pd.DataFrame): Transaction data with prices and quantities.
+
+        Returns:
+            AIDSEstimator: Fitted AIDS estimator.
+        """
+        # Aggregate data to product level for AIDS estimation
+        # AIDS requires panel data structure: observations x products
+        estimator = AIDSEstimator(
+            df=df,
+            product_col=self.product_col,
+            price_col=self.price_col,
+            quantity_col=self.quantity_col,
+            expenditure_col=self.expenditure_col,
+            price_index_method="tornqvist",
+            enforce_constraints=True,
+        )
+        estimator.fit()
+        return estimator
+
+    def _get_aids_distances(self) -> np.ndarray:
+        """Calculate distances based on AIDS elasticities.
+
+        Uses cross-price elasticities to define product distances:
+        - Large negative elasticity = complements (far apart)
+        - Near zero elasticity = independent (moderate distance)
+        - Large positive elasticity = substitutes (close together)
+
+        Returns:
+            np.ndarray: Distance matrix based on elasticity patterns.
+        """
+        elasticities = self.aids_estimator.get_elasticities()
+
+        # Extract cross-price elasticity matrix (exclude expenditure column)
+        price_cols = [col for col in elasticities.columns if col.endswith("_price")]
+        elasticity_matrix = elasticities[price_cols].values
+
+        # Convert elasticities to distances (only for off-diagonal elements)
+        n_products = len(elasticity_matrix)
+        distances = np.zeros((n_products, n_products))
+
+        for i in range(n_products):
+            for j in range(n_products):
+                if i != j:
+                    elasticity = elasticity_matrix[i, j]
+                    if elasticity > 0:
+                        # Substitutes: closer distance for higher elasticity
+                        distances[i, j] = 1.0 / (1.0 + elasticity)
+                    else:
+                        # Complements: farther distance for more negative elasticity
+                        distances[i, j] = 1.0 + abs(elasticity)
+
+        # Normalize distances to [0, 1] range for consistency with Yule's Q
+        # Only normalize off-diagonal elements
+        non_diag_distances = distances[~np.eye(n_products, dtype=bool)]
+        if len(non_diag_distances) > 0:
+            min_dist = non_diag_distances.min()
+            max_dist = non_diag_distances.max()
+            if max_dist > min_dist:
+                # Normalize only off-diagonal elements
+                for i in range(n_products):
+                    for j in range(n_products):
+                        if i != j:
+                            distances[i, j] = (distances[i, j] - min_dist) / (max_dist - min_dist)
+
+        return distances
+
     def _calculate_distances(
         self,
-        method: Literal["yules_q"],
-    ) -> None:
+        method: Literal["yules_q", "aids"],
+    ) -> np.ndarray:
         """Calculates distances between items using the specified method.
 
         Args:
-            method (Literal["yules_q"], optional): The method to use for calculating distances.
+            method (Literal["yules_q", "aids"]): The method to use for calculating distances.
 
         Raises:
             ValueError: If the method is not valid.
 
         Returns:
-            None
+            np.ndarray: Distance matrix between products.
         """
         # Check method is valid
         if method == "yules_q":
             distances = self._get_yules_q_distances()
+        elif method == "aids":
+            distances = self._get_aids_distances()
         else:
-            raise ValueError("Method must be 'yules_q'")
+            raise ValueError("Method must be 'yules_q' or 'aids'")
 
         return distances
 
@@ -314,7 +431,14 @@ class CustomerDecisionHierarchy:
             SubplotBase: The matplotlib SubplotBase object.
         """
         linkage_matrix = linkage(self.distances, method="ward")
-        labels = self.pairs_df[self.product_col].cat.categories
+
+        if self.method == "yules_q":
+            labels = self.pairs_df[self.product_col].cat.categories
+        elif self.method == "aids":
+            labels = self.aids_estimator.products
+        else:
+            # This path should ideally not be reached due to validation in __init__
+            labels = []
 
         if ax is None:
             _, ax = plt.subplots(figsize=figsize)
