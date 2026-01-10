@@ -1947,3 +1947,152 @@ class TestComposableGroupingSets:
 
         # Verify "date" appears in every row (never "Total") - key composability requirement
         assert (result["date"] != "Total").all()
+
+
+class TestDivisionByZeroHandling:
+    """Tests for division by zero handling in derived metrics.
+
+    These tests verify that when denominators are zero (e.g., zero transactions,
+    zero customers), the code returns NULL/NaN instead of raising division by zero errors.
+    This is particularly important for SQL Server which throws errors on division by zero.
+    """
+
+    def test_zero_transactions_returns_nan_for_spend_per_trans(self):
+        """Test that zero transactions produce NaN for spend_per_trans, not an error."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003],
+                cols.unit_spend: [100.0, 200.0, 300.0],
+                cols.transaction_id: [101, 101, 101],  # All same transaction
+                "channel": ["Online", "In-Store", "In-Store"],
+            },
+        )
+
+        result = SegTransactionStats(df, "channel", calc_total=False).df
+        result = result.sort_values("channel").reset_index(drop=True)
+
+        # Verify spend_per_trans is calculated (not null) since transactions > 0
+        assert result[cols.calc.spend_per_trans].notna().all()
+
+    def test_zero_customers_returns_nan_for_spend_per_cust(self):
+        """Test that zero customers in a segment produce NaN for spend_per_cust metrics."""
+        # Create data where after rollup, some segments may have zero identified customers
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [-1, -1, -1, -1],  # All unknown customers
+                cols.unit_spend: [100.0, 200.0, 150.0, 250.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "store_id": ["S1", "S1", "S2", "S2"],
+                "week": ["W1", "W2", "W1", "W2"],
+                cols.unit_qty: [10, 20, 15, 25],
+            },
+        )
+
+        # Using grouping_sets="rollup" with multi-dimensional segments and unknown_customer_value
+        # This is the exact scenario that caused the production error
+        result = SegTransactionStats(
+            df,
+            segment_col=["store_id", "week"],
+            grouping_sets="rollup",
+            unknown_customer_value=-1,
+        ).df
+
+        # The key assertion: no division by zero error occurred (we got results)
+        assert len(result) > 0
+
+        # Verify that spend_per_cust is NaN when customer_id count is 0
+        # (all customers are unknown, so identified customer count is 0)
+        assert result[cols.calc.spend_per_cust].isna().all()
+        assert result[cols.calc.trans_per_cust].isna().all()
+
+    def test_zero_unknown_transactions_returns_nan(self):
+        """Test that zero unknown transactions produce NaN for unknown-specific metrics."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003, 1004],  # All known customers
+                cols.unit_spend: [100.0, 200.0, 150.0, 250.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
+                cols.unit_qty: [10, 20, 15, 25],
+            },
+        )
+
+        result = SegTransactionStats(
+            df,
+            segment_col="category",
+            unknown_customer_value=-1,  # No customer has this value
+        ).df.sort_values("category").reset_index(drop=True)
+
+        # Since no unknown customers exist, transaction_id_unknown is 0 for all segments
+        # spend_per_trans_unknown should be NaN (not an error)
+        assert result[cols.calc.spend_per_trans_unknown].isna().all()
+
+    def test_rollup_with_all_unknown_customers_no_division_error(self):
+        """Test rollup with all unknown customers doesn't cause division by zero errors.
+
+        This is a regression test for the production error where SQL Server
+        raised 'Divide by zero error encountered' when using:
+        - segment_col with multiple dimensions
+        - grouping_sets="rollup"
+        - unknown_customer_value=-1
+        """
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [-1, -1, -1, -1, -1, -1],
+                cols.unit_spend: [100.0, 200.0, 150.0, 250.0, 300.0, 350.0],
+                cols.transaction_id: [101, 102, 103, 104, 105, 106],
+                "store_id": ["S1", "S1", "S2", "S2", "S3", "S3"],
+                "week": ["W1", "W2", "W1", "W2", "W1", "W2"],
+                cols.unit_qty: [10, 20, 15, 25, 30, 35],
+            },
+        )
+
+        # This exact combination caused the production error
+        result = SegTransactionStats(
+            df,
+            segment_col=["store_id", "week"],
+            grouping_sets="rollup",
+            unknown_customer_value=-1,
+        ).df
+
+        # Key assertion: query executed successfully (no error raised)
+        assert len(result) > 0
+
+        # Verify derived metrics that divide by transaction/customer counts are NaN
+        # when those counts are zero (which they are for identified customers)
+        assert result[cols.calc.spend_per_cust].isna().all()
+        assert result[cols.calc.trans_per_cust].isna().all()
+
+        # But unknown customer metrics should have valid values
+        assert result[cols.calc.spend_per_trans_unknown].notna().all()
+
+    def test_mixed_zero_and_nonzero_segments(self):
+        """Test that segments with zero values return NaN while others compute correctly."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, -1, -1],  # Mix of known and unknown
+                cols.unit_spend: [100.0, 200.0, 150.0, 250.0],
+                cols.transaction_id: [101, 102, 103, 104],
+                # Loyalty has known customers, Walk-In has only unknown
+                "customer_type": ["Loyalty", "Loyalty", "Walk-In", "Walk-In"],
+                cols.unit_qty: [10, 20, 15, 25],
+            },
+        )
+
+        result = SegTransactionStats(
+            df,
+            segment_col="customer_type",
+            unknown_customer_value=-1,
+            calc_total=False,
+        ).df.sort_values("customer_type").reset_index(drop=True)
+
+        # Loyalty segment (known customers) should have valid spend_per_cust
+        loyalty_segment = result[result["customer_type"] == "Loyalty"]
+        assert loyalty_segment[cols.calc.spend_per_cust].notna().all()
+
+        # Walk-In segment (only unknown customers) should have NaN for spend_per_cust
+        walkin_segment = result[result["customer_type"] == "Walk-In"]
+        assert walkin_segment[cols.calc.spend_per_cust].isna().all()
+
+        # But Walk-In segment should have valid spend_per_trans_unknown
+        assert walkin_segment[cols.calc.spend_per_trans_unknown].notna().all()

@@ -971,7 +971,7 @@ class SegTransactionStats:
         # Calculate derived metrics
         final_metrics = final_metrics.mutate(
             **{
-                cols.calc.spend_per_trans: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.transaction_id],
+                cols.calc.spend_per_trans: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.transaction_id].nullif(0),
             },
         )
 
@@ -980,16 +980,16 @@ class SegTransactionStats:
                 **{
                     cols.calc.price_per_unit: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.unit_qty].nullif(0),
                     cols.calc.units_per_trans: ibis._[cols.agg.unit_qty]
-                    / ibis._[cols.agg.transaction_id].cast("float"),
+                    / ibis._[cols.agg.transaction_id].nullif(0).cast("float"),
                 },
             )
 
         if cols.customer_id in data.columns:
             final_metrics = final_metrics.mutate(
                 **{
-                    cols.calc.spend_per_cust: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.customer_id],
+                    cols.calc.spend_per_cust: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.customer_id].nullif(0),
                     cols.calc.trans_per_cust: ibis._[cols.agg.transaction_id]
-                    / ibis._[cols.agg.customer_id].cast("float"),
+                    / ibis._[cols.agg.customer_id].nullif(0).cast("float"),
                 },
             )
 
@@ -999,7 +999,7 @@ class SegTransactionStats:
             final_metrics = final_metrics.mutate(
                 **{
                     cols.calc.spend_per_trans_unknown: ibis._[cols.agg.unit_spend_unknown]
-                    / ibis._[cols.agg.transaction_id_unknown],
+                    / ibis._[cols.agg.transaction_id_unknown].nullif(0),
                 },
             )
 
@@ -1007,7 +1007,7 @@ class SegTransactionStats:
             final_metrics = final_metrics.mutate(
                 **{
                     cols.calc.spend_per_trans_total: ibis._[cols.agg.unit_spend_total]
-                    / ibis._[cols.agg.transaction_id_total],
+                    / ibis._[cols.agg.transaction_id_total].nullif(0),
                 },
             )
 
@@ -1018,11 +1018,11 @@ class SegTransactionStats:
                         cols.calc.price_per_unit_unknown: ibis._[cols.agg.unit_spend_unknown]
                         / ibis._[cols.agg.unit_qty_unknown].nullif(0),
                         cols.calc.units_per_trans_unknown: ibis._[cols.agg.unit_qty_unknown]
-                        / ibis._[cols.agg.transaction_id_unknown].cast("float"),
+                        / ibis._[cols.agg.transaction_id_unknown].nullif(0).cast("float"),
                         cols.calc.price_per_unit_total: ibis._[cols.agg.unit_spend_total]
                         / ibis._[cols.agg.unit_qty_total].nullif(0),
                         cols.calc.units_per_trans_total: ibis._[cols.agg.unit_qty_total]
-                        / ibis._[cols.agg.transaction_id_total].cast("float"),
+                        / ibis._[cols.agg.transaction_id_total].nullif(0).cast("float"),
                     },
                 )
 
