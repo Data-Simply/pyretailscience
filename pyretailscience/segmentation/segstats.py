@@ -969,6 +969,8 @@ class SegTransactionStats:
         )
 
         # Calculate derived metrics
+        # Note: .nullif(0) converts zero denominators to NULL, preventing division by zero errors
+        # in SQL Server and other databases that don't handle 0/0 gracefully
         final_metrics = final_metrics.mutate(
             **{
                 cols.calc.spend_per_trans: ibis._[cols.agg.unit_spend] / ibis._[cols.agg.transaction_id].nullif(0),

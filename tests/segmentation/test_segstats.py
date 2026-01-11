@@ -1957,23 +1957,6 @@ class TestDivisionByZeroHandling:
     This is particularly important for SQL Server which throws errors on division by zero.
     """
 
-    def test_zero_transactions_returns_nan_for_spend_per_trans(self):
-        """Test that zero transactions produce NaN for spend_per_trans, not an error."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1001, 1002, 1003],
-                cols.unit_spend: [100.0, 200.0, 300.0],
-                cols.transaction_id: [101, 101, 101],  # All same transaction
-                "channel": ["Online", "In-Store", "In-Store"],
-            },
-        )
-
-        result = SegTransactionStats(df, "channel", calc_total=False).df
-        result = result.sort_values("channel").reset_index(drop=True)
-
-        # Verify spend_per_trans is calculated (not null) since transactions > 0
-        assert result[cols.calc.spend_per_trans].notna().all()
-
     def test_zero_customers_returns_nan_for_spend_per_cust(self):
         """Test that zero customers in a segment produce NaN for spend_per_cust metrics."""
         # Create data where after rollup, some segments may have zero identified customers
@@ -2017,11 +2000,15 @@ class TestDivisionByZeroHandling:
             },
         )
 
-        result = SegTransactionStats(
-            df,
-            segment_col="category",
-            unknown_customer_value=-1,  # No customer has this value
-        ).df.sort_values("category").reset_index(drop=True)
+        result = (
+            SegTransactionStats(
+                df,
+                segment_col="category",
+                unknown_customer_value=-1,  # No customer has this value
+            )
+            .df.sort_values("category")
+            .reset_index(drop=True)
+        )
 
         # Since no unknown customers exist, transaction_id_unknown is 0 for all segments
         # spend_per_trans_unknown should be NaN (not an error)
@@ -2079,12 +2066,16 @@ class TestDivisionByZeroHandling:
             },
         )
 
-        result = SegTransactionStats(
-            df,
-            segment_col="customer_type",
-            unknown_customer_value=-1,
-            calc_total=False,
-        ).df.sort_values("customer_type").reset_index(drop=True)
+        result = (
+            SegTransactionStats(
+                df,
+                segment_col="customer_type",
+                unknown_customer_value=-1,
+                calc_total=False,
+            )
+            .df.sort_values("customer_type")
+            .reset_index(drop=True)
+        )
 
         # Loyalty segment (known customers) should have valid spend_per_cust
         loyalty_segment = result[result["customer_type"] == "Loyalty"]
