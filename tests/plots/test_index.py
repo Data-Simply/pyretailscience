@@ -267,12 +267,24 @@ class TestIndexPlot:
             df,
             value_col="sales",
             group_col="category",
-            index_col="category",
-            value_to_index="A",
+            index_col="region",
+            value_to_index="North",
             include_only_groups=["A", "B"],
         )
 
         assert isinstance(result_ax, plt.Axes)
+
+        # Verify that only the filtered groups appear in the plot
+        y_labels = [label.get_text() for label in result_ax.get_yticklabels()]
+        plotted_groups = set(y_labels)
+        expected_groups = {"A"}
+
+        assert plotted_groups == expected_groups, (
+            f"Found groups {plotted_groups - expected_groups} that should have been filtered out. "
+            f"Expected only groups from {expected_groups}."
+        )
+
+        assert len(plotted_groups) > 0, "No groups were plotted - filtering may have removed all data."
 
     def test_raises_value_error_for_invalid_sort_by(self, test_data):
         """Test that the function raises a ValueError for an invalid sort_by parameter."""
@@ -351,21 +363,76 @@ class TestIndexPlot:
             value_to_index="A",
             drop_na=True,
         )
-
         assert isinstance(result_ax, plt.Axes)
+        ytick_labels = [label.get_text() for label in result_ax.get_yticklabels()]
+        xtick_labels = [label.get_text() for label in result_ax.get_xticklabels()]
+        assert not any(
+            label == "" or label is None or str(label).lower() == "nan" or str(label).lower() == "na"
+            for label in ytick_labels
+        )
+        assert not any(
+            label == "" or label is None or str(label).lower() == "nan" or str(label).lower() == "na"
+            for label in xtick_labels
+        )
+        bar_values = [patch.get_width() for patch in result_ax.patches]
+        assert not any(pd.isna(val) for val in bar_values)
 
-    def test_filter_by_index_values(self, test_data):
+    def test_nan_index_values_present_in_data(self, test_data):
+        """Test that NaN index values are present in the index DataFrame when expected."""
+        df = test_data.copy()
+        df.loc[df["category"] == "A", "sales"] = np.nan
+
+        index_df = get_indexes(
+            df,
+            value_to_index="A",
+            index_col="category",
+            value_col="sales",
+            group_col="category",
+        )
+        assert index_df["index"].isna().any(), "Expected at least one NaN value in the 'index' column"
+
+    def test_filter_by_index_values(self):
         """Test that the function can filter indexes by value."""
-        df = test_data
+        df = pd.DataFrame(
+            {
+                "category": ["A", "B", "C", "D", "E"] * 10,
+                "sales": [100, 200, 50, 300, 75] * 10,
+            },
+        )
 
-        # Create plot with value-based filtering (use a reasonable value for filter_above)
+        # Calculate what the actual index values will be so we can choose a meaningful threshold
+        index_df = get_indexes(
+            df=df,
+            value_to_index="A",
+            index_col="category",
+            value_col="sales",
+            group_col="category",
+            offset=100,
+        )
+
+        # Choose a threshold that will actually filter some data
+        sorted_indexes = index_df.sort_values("index")["index"].tolist()
+
+        threshold = sorted_indexes[0] - 0.1
+
+        expected_above_threshold_groups = index_df[index_df["index"] > threshold]["category"].tolist()
+
         result_ax = plot(
             df,
             value_col="sales",
             group_col="category",
             index_col="category",
             value_to_index="A",
-            filter_above=0,  # Using a lower value that should pass
+            filter_above=threshold,
+        )
+
+        filtered_labels = [t.get_text() for t in result_ax.get_yticklabels()]
+
+        assert len(filtered_labels) == len(expected_above_threshold_groups), (
+            f"Expected {len(expected_above_threshold_groups)} groups, got {len(filtered_labels)}"
+        )
+        assert all(label in expected_above_threshold_groups for label in filtered_labels), (
+            f"Expected groups {expected_above_threshold_groups}, but got {filtered_labels}"
         )
 
         assert isinstance(result_ax, plt.Axes)
@@ -398,9 +465,14 @@ class TestIndexPlot:
             value_col="sales",
             group_col="category",
         )
+
         available_groups = result_df["category"].unique()
 
         group_count = len(available_groups)
+
+        # Sort to find expected top and bottom groups
+        expected_top_group = result_df.nlargest(1, "index")["category"].iloc[0]
+        expected_bottom_group = result_df.nsmallest(1, "index")["category"].iloc[0]
 
         # Test with top_n (making sure value is ≤ available groups)
         top_count = min(1, group_count)
@@ -414,6 +486,10 @@ class TestIndexPlot:
         )
 
         assert isinstance(result_ax, plt.Axes)
+        # For top_n=1 case
+        labels = [t.get_text() for t in result_ax.get_yticklabels()]
+        assert len(labels) == 1, f"Expected 1 group for top_n=1, got {len(labels)}"
+        assert labels[0] == expected_top_group, f"Expected top group '{expected_top_group}', got '{labels[0]}'"
 
         # Test with bottom_n (making sure value is ≤ available groups)
         bottom_count = min(1, group_count)
@@ -427,6 +503,11 @@ class TestIndexPlot:
         )
 
         assert isinstance(result_ax, plt.Axes)
+
+        # For bottom_n=1 case
+        labels = [t.get_text() for t in result_ax.get_yticklabels()]
+        assert len(labels) == 1, f"Expected 1 group for bottom_n=1, got {len(labels)}"
+        assert labels[0] == expected_bottom_group, f"Expected bottom group '{expected_bottom_group}', got '{labels[0]}'"
 
         # Test with both top_n and bottom_n if we have enough groups
         minimum_group_count = 2
@@ -442,6 +523,14 @@ class TestIndexPlot:
             )
 
             assert isinstance(result_ax, plt.Axes)
+            # For combined top_n=1 and bottom_n=1 case
+            labels = [t.get_text() for t in result_ax.get_yticklabels()]
+            expected_len = 2
+            assert len(labels) == expected_len, f"Expected 2 groups for top_n=1 and bottom_n=1, got {len(labels)}"
+            assert expected_top_group in labels, f"Expected top group '{expected_top_group}' not found in {labels}"
+            assert expected_bottom_group in labels, (
+                f"Expected bottom group '{expected_bottom_group}' not found in {labels}"
+            )
 
     def test_error_with_series_and_filtering(self, test_data):
         """Test that appropriate error is raised when using filtering with series_col."""
@@ -461,66 +550,71 @@ class TestIndexPlot:
                 top_n=2,
             )
 
-    def test_sort_values_with_series_col(self):
-        """Test that the sort_values function works correctly with [group_col, series_col]."""
-        # Create a test dataframe directly to test the sorting functionality
+    @pytest.mark.parametrize(
+        ("sort_order", "expected_pairs", "expected_y_labels"),
+        [
+            (
+                "ascending",
+                [("A", "X"), ("A", "Y"), ("B", "X"), ("B", "Y"), ("C", "X"), ("C", "Y")],
+                ["A", "B", "C"],
+            ),
+            (
+                "descending",
+                [("C", "Y"), ("C", "X"), ("B", "Y"), ("B", "X"), ("A", "Y"), ("A", "X")],
+                ["C", "B", "A"],
+            ),
+        ],
+    )
+    def test_sort_and_plot_with_series_col(
+        self,
+        sort_order,
+        expected_pairs,
+        expected_y_labels,
+    ):
+        """Combined test: validates sorting of dataframe and sorting in plot output."""
         test_df = pd.DataFrame(
             {
-                "category": ["C", "A", "B", "C", "A", "B"],
+                "category": ["A", "B", "C", "A", "B", "C"],
                 "region": ["X", "X", "X", "Y", "Y", "Y"],
-                "index": [100, 90, 110, 105, 95, 115],
+                "sales": [100, 200, 150, 120, 180, 160],
+                "baseline_category": ["A", "A", "A", "A", "A", "A"],
             },
         )
+        ascending_flag = sort_order == "ascending"
 
-        # Test ascending sort
-        sorted_asc = test_df.sort_values(by=["category", "region"], ascending=True)
-
-        # Verify sorting is correct for ascending
-        expected_order_asc = [
-            ("A", "X"),
-            ("A", "Y"),
-            ("B", "X"),
-            ("B", "Y"),
-            ("C", "X"),
-            ("C", "Y"),
-        ]
-        actual_order_asc = list(zip(sorted_asc["category"], sorted_asc["region"], strict=True))
-        assert actual_order_asc == expected_order_asc
-
-        # Test descending sort
-        sorted_desc = test_df.sort_values(by=["category", "region"], ascending=False)
-
-        # Verify sorting is correct for descending
-        expected_order_desc = [
-            ("C", "Y"),
-            ("C", "X"),
-            ("B", "Y"),
-            ("B", "X"),
-            ("A", "Y"),
-            ("A", "X"),
-        ]
-        actual_order_desc = list(zip(sorted_desc["category"], sorted_desc["region"], strict=True))
-        assert actual_order_desc == expected_order_desc
-
-        # Now test the actual implementation in the plot function
-        # Create a plot with series_col to trigger the code path we're testing
-        result_ax = plot(
-            test_df,
-            value_col="index",
-            group_col="category",
-            index_col="category",
-            value_to_index="A",
-            series_col="region",
-            sort_by="group",
-            sort_order="ascending",
+        sorted_df = test_df.sort_values(by=["category", "region"], ascending=ascending_flag)
+        actual_pairs = list(zip(sorted_df["category"], sorted_df["region"], strict=False))
+        assert actual_pairs == expected_pairs, (
+            f"{sort_order=} sort mismatch: expected {expected_pairs}, got {actual_pairs}"
         )
 
-        # Verify the plot was created
-        assert isinstance(result_ax, plt.Axes)
+        ax = plot(
+            test_df,
+            value_col="sales",
+            group_col="category",
+            index_col="baseline_category",
+            value_to_index="A",  # Compare all categories against baseline category A
+            series_col="region",
+            sort_by="group",
+            sort_order=sort_order,
+        )
 
-        # Verify legend exists
-        legend = result_ax.get_legend()
+        assert isinstance(ax, plt.Axes)
+
+        # Verify y-axis labels reflect sorted categories
+        y_labels = [t.get_text() for t in ax.get_yticklabels()]
+        assert y_labels == expected_y_labels, (
+            f"{sort_order=} y-ticks mismatch: expected {expected_y_labels}, got {y_labels}"
+        )
+
+        # Verify legend contains series_col values
+        legend = ax.get_legend()
         assert legend is not None
+        legend_labels = [t.get_text() for t in legend.get_texts()]
+        expected_legend_labels = ["X", "Y"]
+        assert set(legend_labels) == set(expected_legend_labels), (
+            f"Legend mismatch: expected {expected_legend_labels}, got {legend_labels}"
+        )
 
     def test_error_with_excessive_top_and_bottom_n(self, test_data):
         """Test that appropriate error is raised when top_n + bottom_n exceeds group count."""

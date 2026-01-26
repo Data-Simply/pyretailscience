@@ -32,9 +32,10 @@ from typing import Literal
 import pandas as pd
 from matplotlib.axes import Axes
 
-import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles
-from pyretailscience.style.tailwind import COLORS
+import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.options import PlotStyleHelper
+from pyretailscience.plots.styles.colors import get_named_color
+from pyretailscience.plots.styles.font_utils import get_font_properties
 
 
 def plot(
@@ -100,23 +101,31 @@ def plot(
 
     amount_total = df["amounts"].sum()
 
-    colors = df["amounts"].apply(lambda x: COLORS["green"][500] if x > 0 else COLORS["red"][500]).to_list()
+    default_colors = (
+        df["amounts"]
+        .apply(
+            lambda x: get_named_color("positive") if x > 0 else get_named_color("negative"),
+        )
+        .to_list()
+    )
     bottom = df["amounts"].cumsum().shift(1).fillna(0).to_list()
 
     if display_net_bar:
         # Append a row for the net amount
         df.loc[len(df)] = ["Net", amount_total]
-        colors.append(COLORS["blue"][500])
+        default_colors.append(get_named_color("difference"))
         bottom.append(0)
 
     # Create the plot
+    width = kwargs.pop("width", 0.8)
+    color = kwargs.pop("color", default_colors)
     ax = df.plot.bar(
         x="labels",
         y="amounts",
         legend=None,
         bottom=bottom,
-        color=colors,
-        width=0.8,
+        color=color,
+        width=width,
         ax=ax,
         **kwargs,
     )
@@ -127,7 +136,7 @@ def plot(
         title=title,
         y_label=gu.not_none(y_label, "Amounts"),
         x_label=x_label,
-        title_pad=GraphStyles.DEFAULT_TITLE_PAD + extra_title_pad,
+        title_pad=10 + extra_title_pad,
     )
 
     decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
@@ -137,7 +146,6 @@ def plot(
 
     # Add a black line at the y=0 position
     ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
-
     if data_label_format is not None:
         labels = format_data_labels(
             df["amounts"],
@@ -146,13 +154,14 @@ def plot(
             decimals,
         )
 
+        style = PlotStyleHelper()
         ax.bar_label(
             ax.containers[0],
             label_type="edge",
             labels=labels,
             padding=5,
-            fontsize=GraphStyles.DEFAULT_BAR_LABEL_FONT_SIZE,
-            fontproperties=GraphStyles.POPPINS_REG,
+            fontsize=style.label_size - 1,
+            fontproperties=get_font_properties(style.label_font),
         )
 
     if display_net_line:

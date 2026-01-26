@@ -517,6 +517,58 @@ cohort.plot(
 )
 ```
 
+### Heatmap Plot
+
+<div class="clear" markdown>
+
+![Heatmap Plot](assets/images/analysis_modules/plots/heatmap.svg){ align=right loading=lazy width="50%"}
+
+Heatmap plots provide a flexible way to visualize any 2D data matrix using color-coded cells. Unlike the specialized
+cohort plot, heatmaps are completely generic and can be used for various analytical purposes without domain-specific
+assumptions. They are particularly useful for:
+
+- **Migration Matrices**: Visualize customer movement between segments or quintiles
+- **Correlation Matrices**: Show relationships between variables or features
+- **Confusion Matrices**: Display classification results and model performance
+- **Geographic Analysis**: Show performance metrics across regions and time periods
+- **Any 2D Data**: Generic support for visualizing tabular data with automatic label handling
+
+Key features include automatic label rotation for long text, auto-contrast cell text, and consistent styling with
+other PyRetailScience plots. Values are displayed exactly as provided in the DataFrame without formatting assumptions.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.plots import heatmap
+
+df = pd.DataFrame({
+    'Champions': [0.65, 0.25, 0.18, 0.12, 0.08, 0.15, 0.03, 0.02],
+    'Loyal Customers': [0.15, 0.45, 0.22, 0.15, 0.12, 0.20, 0.05, 0.03],
+    'Potential Loyalists': [0.08, 0.18, 0.35, 0.28, 0.15, 0.10, 0.12, 0.08],
+    'New Customers': [0.02, 0.03, 0.08, 0.25, 0.05, 0.02, 0.08, 0.12],
+    'At Risk': [0.06, 0.05, 0.08, 0.08, 0.35, 0.15, 0.15, 0.10],
+    'Cannot Lose Them': [0.02, 0.02, 0.03, 0.02, 0.08, 0.25, 0.05, 0.03],
+    'Hibernating': [0.01, 0.01, 0.04, 0.06, 0.12, 0.08, 0.35, 0.25],
+    'Lost': [0.01, 0.01, 0.02, 0.04, 0.05, 0.05, 0.17, 0.37]
+}, index=[
+    'Champions', 'Loyal Customers', 'Potential Loyalists', 'New Customers',
+    'At Risk', 'Cannot Lose Them', 'Hibernating', 'Lost'
+])
+
+heatmap.plot(
+    df=df,
+    cbar_label="Migration Probability",
+    x_label="Current Quarter Segment",
+    y_label="Previous Quarter Segment",
+    title="Customer Segment Migration Analysis (Quarterly)",
+    figsize=(12, 8),
+    source_text="Source: PyRetailScience",
+)
+```
+
 ### Timeline Plot
 
 <div class="clear" markdown>
@@ -567,6 +619,57 @@ time.plot(
     y_label="Sales",
     legend_title="Customer Group",
     source_text="Source: PyRetailScience - Sales FY2024",
+    move_legend_outside=True,
+)
+```
+
+### Price Architecture Plot
+
+<div class="clear" markdown>
+
+![Price Plot](assets/images/analysis_modules/plots/price_plot.svg){ align=right loading=lazy width="50%"}
+
+Price architecture plots create bubble chart visualizations that display price distribution analysis across different
+categories. The chart shows price distribution as vertical layers (price bands) with bubble sizes representing the
+percentage of products in each price range for different groups like retailers, countries, or brands.
+
+This visualization is particularly useful for:
+
+- **Retailer Price Comparison**: Compare price distributions across different retailers to identify competitive
+  positioning
+- **Regional Price Analysis**: Analyze price positioning by country/region to understand market dynamics
+- **Competitive Pricing**: Identify pricing gaps and opportunities in the competitive landscape
+- **Price Architecture Visualization**: Visualize competitive pricing landscapes and market segments
+
+The plot supports both integer (equal-width bins) and custom boundary arrays for flexible price band analysis,
+with automatic percentage calculations and professional styling integration.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import numpy as np
+from pyretailscience.plots import price
+
+np.random.seed(42)
+df = pd.DataFrame({
+    "product_id": range(1, 101),
+    "unit_price": np.concatenate([np.random.uniform(*b, 25) for b in [(1,3),(2,5),(4,8),(1,10)]]),
+    "retailer": np.repeat(["Walmart","Target","Walgreens","CVS"], 25)
+})
+
+price.plot(
+    df=df,
+    value_col="unit_price",
+    group_col="retailer",
+    bins=10,
+    title="Price Distribution Analysis by Retailer",
+    x_label="Retailers",
+    y_label="Price Bands",
+    legend_title="Retailers",
+    source_text="Source: PyRetailScience",
     move_legend_outside=True,
 )
 ```
@@ -698,33 +801,32 @@ cohort.df.head()
 The product association module implements functionality for generating product association rules, a powerful technique
 in retail analytics and market basket analysis.
 
-Product association rules are used to uncover relationships between different products that customers tend to purchase
-together. These rules provide valuable insights into consumer behavior and purchasing patterns, which can be leveraged
-by retail businesses in various ways:
+Product Association Analysis (Market Basket Analysis) uncovers hidden relationships in customer purchasing behavior,
+transforming how retailers approach merchandising, marketing, and operations by revealing which products naturally
+sell together.
 
-1. Cross-selling and upselling: By identifying products frequently bought together, retailers can make targeted product
-   recommendations to increase sales and average order value.
+**Business Problem:**
 
-2. Store layout optimization: Understanding product associations helps in strategic product placement within stores,
-   potentially increasing impulse purchases and overall sales.
+Retailers lose revenue from missed cross-selling opportunities and poor product placement. Without understanding
+product associations, stores might place complementary items in different aisles, miss bundling opportunities,
+or stock out on associated items when promoting a product.
 
-3. Inventory management: Knowing which products are often bought together aids in maintaining appropriate stock levels
-   and predicting demand.
+**Real-World Applications:**
 
-4. Marketing and promotions: Association rules can guide the creation ofeffective bundle offers and promotional
-   campaigns.
+- **Strategic Merchandising**: Place chips near beer when data shows strong association
+- **Dynamic Bundle Pricing**: Create "Breakfast bundle" (Coffee + Pastry) when uplift shows synergy
+- **Personalized Recommendations**: Power "Customers who bought X also bought Y" suggestions
+- **Inventory Optimization**: Stock pasta sauce when pasta is promoted if association exists
+- **New Product Placement**: Position private label next to associated national brands
 
-5. Customer segmentation: Patterns in product associations can reveal distinct customer segments with specific
-   preferences.
+**Key Metrics Explained:**
 
-6. New product development: Insights from association rules can inform decisions about new product lines or features.
-
-The module uses metrics such as support, confidence, and uplift to quantifythe strength and significance of product
-associations:
-
-- Support: The frequency of items appearing together in transactions.
-- Confidence: The likelihood of buying one product given the purchase of another.
-- Uplift: The increase in purchase probability of one product when another is bought.
+- **Support**: Proportion of transactions containing both products (frequency indicator)
+- **Confidence**: Probability of buying B given A was purchased (predictive power)
+- **Uplift/Lift**: How much more likely products are bought together than by chance
+    - Uplift > 1: Positive association (sell better together)
+    - Uplift = 1: Independent (no relationship)
+    - Uplift < 1: Negative association (rarely bought together)
 
 Example:
 
@@ -754,20 +856,23 @@ pa.df.head()
 
 ![Cross Shop](assets/images/analysis_modules/cross_shop.svg){ align=right loading=lazy width="50%"}
 
-Cross Shop analysis visualizes the overlap between different customer groups or product categories, helping retailers
-understand cross-purchasing behaviors. This powerful visualization technique employs Venn or Euler diagrams to show how
-customers interact across different product categories or segments.
+Cross Shop analysis reveals how customers navigate between different categories, brands, or store locations,
+replacing assumptions with data-driven insights about actual purchase patterns. The Venn diagram visualization
+immediately shows which products customers buy together versus separately.
 
-Key applications include:
+**Business Problem Solved:**
 
-- Identifying opportunities for cross-selling and bundling
-- Evaluating product category relationships
-- Analyzing promotion cannibalization
-- Understanding customer shopping patterns across departments
-- Planning targeted marketing campaigns based on complementary purchasing behavior
+Retailers often make incorrect assumptions about customer behavior. They might place baby products far from beer,
+not realizing these categories have high cross-shopping rates. This analysis reveals the truth about customer
+purchase patterns.
 
-The module provides options to visualize both the proportional size of each group and the percentage of overlap, making
-it easy to identify significant patterns in customer shopping behavior.
+**Real-World Applications:**
+
+- **Store Layout Optimization**: Place frequently cross-shopped categories near each other to reduce friction
+- **Promotional Strategy**: Bundle products from highly cross-shopped categories for better lift
+- **Category Management**: Understand interdependencies and identify opportunity categories
+- **Multi-Channel Strategy**: Analyze cross-shopping between online and physical stores
+- **Competitive Analysis**: Understand customer loyalty across competing brands
 
 </div>
 
@@ -779,10 +884,10 @@ from pyretailscience.analysis import cross_shop
 
 data = {
     "customer_id": [1, 2, 3, 4, 5, 5, 6, 9, 7, 7, 8, 9, 5, 8],
-    "category_name" = [
-        "Electronics", "Clothing", "Home", "Sports", "Clothing", "Electronics", "Electronics"
+    "category_name" : [
+        "Electronics", "Clothing", "Home", "Sports", "Clothing", "Electronics", "Electronics",
         "Clothing", "Home", "Electronics", "Clothing", "Electronics", "Home", "Home"
-        ]
+        ],
     "unit_spend": [100, 200, 300, 400, 200, 500, 100, 200, 300, 350, 400, 500, 250, 360]
 }
 
@@ -792,9 +897,7 @@ cs_customers = cross_shop.CrossShop(
     df,
     group_1_col="category_name",
     group_1_val="Electronics",
-    group_2_col="category_name",
     group_2_val="Clothing",
-    group_3_col="category_name",
     group_3_val="Home",
     labels=["Electronics", "Clothing", "Home"],
 )
@@ -871,27 +974,31 @@ gain_loss.plot(
     assets/images/analysis_modules/customer_decision_hierarchy.svg
 ){ align=right loading=lazy width="50%"}
 
-A Customer Decision Hierarchy (CDH), also known as a Customer Decision Tree, is a powerful tool in retail analytics that
- visually represents the sequential steps and criteria customers use when making purchase decisions within a specific
- product category. Here's a brief summary of its purpose and utility:
+Customer Decision Hierarchy (CDH) analysis reveals how customers perceive products as substitutes or complements,
+enabling data-driven range planning decisions. By analyzing actual switching behavior rather than relying on
+product attributes or manager intuition, CDH identifies which products customers view as interchangeable versus
+essential variety.
 
-CDHs allow analysts to:
+**Business Problem Solved:**
 
-- Map out the hierarchical structure of customer decision-making processes
-- Identify key product attributes that drive purchase decisions
-- Understand product substitutions and alternatives customers consider
-- Prioritize product attributes based on their importance to customers
+Retailers struggle with range rationalization: Which products can be delisted without losing customers? When does
+variety add value versus create confusion? CDH answers these questions by examining customer purchase patterns to
+identify true substitutability.
 
-In retail contexts, CDHs are valuable for:
+**How It Works:**
 
-- Optimizing product assortments and shelf layouts
-- Developing targeted marketing strategies
-- Identifying opportunities for new product development
-- Understanding competitive dynamics within a category
+- Products rarely bought by the same customer → likely substitutes
+- Products often bought by the same customer → complements or variety-seeking
+- Uses Yule's Q coefficient to measure substitutability strength
+- Creates hierarchical clusters showing substitution relationships
 
-By visualizing the decision-making process, CDHs help retailers align their offerings and strategies with customer
-preferences, potentially increasing sales and customer satisfaction. They provide insights into how customers navigate
-choices, enabling more effective category management and merchandising decisions.
+**Real-World Applications:**
+
+- **Range Rationalization**: Identify safe delisting candidates within substitute clusters
+- **New Product Introduction**: Understand which existing products new items might cannibalize
+- **Private Label Strategy**: Identify national brand products suitable for PL alternatives
+- **Space Optimization**: Allocate more space to non-substitutable products
+- **Markdown Strategy**: Clear substitute products sequentially, not simultaneously
 
 </div>
 
@@ -1080,16 +1187,17 @@ Example:
 from pyretailscience.segmentation.segstats import SegTransactionStats
 from pyretailscience.segmentation.hml import HMLSegmentation
 
-seg = HMLSegmentation(df, zero_value_customers="include_with_light")
-
 # First, segment customers using HML segmentation
-segmentation = HMLSegmentation(df)
+segmentation = HMLSegmentation(my_table, zero_value_customers="include_with_light")
 
-# Add segment labels to the transaction data
-df_with_segments = segmentation.add_segment(df)
+# Add segment labels to the transaction data using ibis join
+table_with_segments = my_table.left_join(
+    segmentation.table,
+    "customer_id",
+)
 
 # Calculate transaction statistics by segment
-segment_stats = SegTransactionStats(df_with_segments)
+segment_stats = SegTransactionStats(table_with_segments)
 
 # Display the statistics
 segment_stats.df
@@ -1106,8 +1214,6 @@ segment_stats.df
 ### RFM Segmentation
 
 <div class="clear" markdown>
-
-![RFM Segmentation Distribution](assets/images/analysis_modules/rfm_segmentation.svg){ align=right loading=lazy width="50%"}
 
 **Recency, Frequency, Monetary (RFM) segmentation** categorizes customers based on their purchasing behavior:
 
@@ -1148,9 +1254,9 @@ rfm_results = rfm_segmenter.df
 
 | customer_id | recency_days | frequency | monetary | r_score | f_score | m_score | rfm_segment | fm_segment |
 |-------------|--------------|-----------|----------|---------|---------|---------|-------------|------------|
-| 1           | 113          | 2         | 125      | 0       | 0       | 0       | 0           | 0          |
+| 1           | 113          | 2         | 125      | 2       | 0       | 0       | 200         | 0          |
 | 2           | 127          | 2         | 250      | 1       | 1       | 1       | 111         | 11         |
-| 3           | 147          | 3         | 750      | 2       | 2       | 2       | 222         | 22         |
+| 3           | 147          | 3         | 750      | 0       | 2       | 2       | 22          | 22         |
 
 ### Purchases Per Customer
 
@@ -1243,23 +1349,30 @@ tc.plot(
 
 <div class="clear" markdown>
 
-The Composite Rank module creates a composite ranking of several columns by giving each column an individual rank and
-then combining those ranks together. Composite rankings are particularly useful for:
+The Composite Rank module enables data-driven multi-factor decision making by combining multiple performance metrics
+into a single actionable ranking. This is essential when no single metric tells the complete story - for instance,
+a product might have high sales but low margin, or a supplier might offer great prices but poor delivery reliability.
 
-- Product range reviews when multiple factors need to be considered together
-- Prioritizing actions based on multiple performance metrics
-- Creating balanced scorecards that consider multiple dimensions
-- Identifying outliers across multiple metrics
+**Real-World Applications:**
 
-This module allows you to specify different sort orders for each column (ascending or descending) and supports various
-aggregation functions to combine the ranks, such as mean, sum, min, or max.
+- **Product Range Optimization**: Balance sales velocity, margin, stock turn, and ratings for listing decisions
+- **Supplier Performance Management**: Evaluate based on price, quality, delivery, and payment terms
+- **Store Performance Assessment**: Rank stores using sales per sq ft, conversion rates, labor productivity, and NPS
+- **Category Management**: Prioritize categories for space allocation using growth, profitability, and market share
 
-Key features:
+**Business Value:**
 
-- Supports both ascending and descending sort orders
-- Handles ties in rankings with configurable options
-- Combines multiple individual ranks into a single composite rank
-- Works with both pandas DataFrames and ibis Tables
+- Removes bias through systematic multi-factor evaluation
+- Scales to thousands of products/stores/suppliers simultaneously
+- Provides transparent methodology stakeholders can trust
+- Enables clear cut-off decisions based on composite performance
+
+**Aggregation Strategies:**
+
+- **Mean**: Balanced scorecard approach, all factors equally important
+- **Min**: Conservative approach, focus on worst-performing metric
+- **Max**: Optimistic approach, highlight strength in any area
+- **Sum**: Cumulative performance across all dimensions
 
 </div>
 
@@ -1441,9 +1554,9 @@ result_df.groupby("period_name").agg(
 
 | period_name    | transaction_count | total_sales | avg_transaction_value |
 |:---------------|------------------:|------------:|----------------------:|
-| Pre-Promotion  |                31 |      1937.5 |                 62.50 |
-| Promotion      |                28 |      1750.0 |                 62.50 |
-| Post-Promotion |                31 |      1937.5 |                 62.50 |
+| Pre-Promotion  |                31 |      3050.0 |                 98.39 |
+| Promotion      |                28 |      2800.0 |                100.00 |
+| Post-Promotion |                31 |      3150.0 |                101.61 |
 
 ### Find Overlapping Periods
 
@@ -1536,3 +1649,57 @@ labeled_data = filter_and_label_by_condition(products, conditions).execute()
 | 5          | electronics | 200   | Premium Electronics |
 | 6          | toys        | 35    | Toys                |
 | 7          | shoes       | 60    | Shoes               |
+
+### Label by Condition
+
+<div class="clear" markdown>
+
+The **Label by Condition** module provides functionality to label groups (customers, transactions, stores, etc.) based
+on whether they contain items that meet specified conditions. This module is designed for group-level analysis where you
+want to classify entire entities rather than individual records. Unlike the Filter and Label by Condition function which
+filters and labels individual rows of data, this module aggregates data by groups and applies labels at the group level.
+
+The Label by Condition module allows you to:
+
+- Label groups in a table based on whether items in the group meet a specified condition
+- Support both binary labeling (contains/not_contains) and extended labeling (contains/mixed/not_contains)
+- Customize label names and return column names for flexible analysis
+- Analyze group-level patterns for customer segmentation, product categorization, and promotional analysis
+
+This functionality is particularly useful for:
+
+- Tagging transactions as containing a product, product category, or promotion
+- Tagging customers as having bought a product, product category, or promotion, or store_id
+- Segmenting customers as new, repeating or lapsed
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+import ibis
+from pyretailscience.utils.label import label_by_condition
+
+# Sample transaction data
+df = pd.DataFrame({
+    "customer_id": [1, 1, 1, 2, 2, 3, 3],
+    "product_category": ["toys", "books", "toys", "books", "clothes", "clothes", "clothes"],
+})
+
+transactions = ibis.memtable(df)
+
+# Binary labeling: Label customers who bought any toys
+toy_customers = label_by_condition(
+    table=transactions,
+    label_col="customer_id",
+    condition=transactions["product_category"] == "toys",
+    labeling_strategy="binary"
+).execute()
+```
+
+| customer_id | label_name   |
+|:------------|-------------:|
+| 1           | contains     |
+| 2           | not_contains |
+| 3           | not_contains |

@@ -1,4 +1,43 @@
-"""Classes and function to assist with customer retention analysis."""
+"""Customer Purchase Behavior Analysis for Retention and Value Optimization.
+
+## Business Context
+
+Understanding customer purchase patterns is fundamental to retail success. Some customers
+make single purchases and never return, while others become loyal repeat buyers. This
+module analyzes the distribution of purchase frequency to identify customer behavior
+segments and inform retention strategies.
+
+## The Business Problem
+
+Retailers need to understand the relationship between customer purchase frequency and
+business performance:
+- What percentage of customers are one-time buyers versus repeat customers?
+- How does purchase frequency relate to customer lifetime value?
+- Which customer segments offer the greatest growth opportunities?
+
+Without this analysis, businesses may invest equally in all customers or fail to
+identify high-potential segments for targeted retention efforts.
+
+## Real-World Applications
+
+### Customer Retention Strategy
+- Identify the percentage of one-time buyers for targeted reactivation campaigns
+- Segment customers by purchase frequency for differentiated marketing approaches
+- Develop loyalty programs based on actual behavior patterns
+
+### Resource Allocation
+- Focus retention efforts on customers showing repeat purchase potential
+- Allocate customer service resources based on customer value segments
+- Optimize marketing spend by targeting high-frequency customer characteristics
+
+### Business Performance Monitoring
+- Track changes in purchase frequency distribution over time
+- Monitor the health of customer acquisition versus retention balance
+- Identify shifts in customer behavior that may indicate market changes
+
+This module visualizes purchase frequency distribution to reveal customer behavior
+patterns and guide strategic retention decisions.
+"""
 
 import operator
 
@@ -6,10 +45,10 @@ import matplotlib.ticker as mtick
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper
-from pyretailscience.style.graph_utils import human_format, standard_graph_styles
-from pyretailscience.style.tailwind import COLORS
+from pyretailscience.plots.styles.colors import COLORS
+from pyretailscience.plots.styles.graph_utils import human_format, standard_graph_styles
 
 
 class PurchasesPerCustomer:

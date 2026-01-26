@@ -148,7 +148,7 @@ plt.show()
 
 ## Documentation
 
-Please see [here](https://pyretailscience.datasimply.co/) for full documentation, which includes:
+Please see [this site](https://pyretailscience.datasimply.co/) for full documentation, which includes:
 
 - [Analysis Modules](https://pyretailscience.datasimply.co/analysis_modules/): Overview of the framework and the
   structure of the docs.
@@ -204,71 +204,99 @@ Built with expertise doing analytics and data science for scale-ups to multi-nat
 - Attraction Tickets Direct
 - Roman Originals
 
-## License
+## Testing
 
-This project is licensed under the Elastic License 2.0 - see the [LICENSE](LICENSE) file for details.
+PyRetailScience includes comprehensive unit and integration tests to ensure reliability across different backends.
 
-# BigQuery Integration Tests
+### Unit Tests
 
-## Overview
-
-This directory contains integration tests that verify all PyRetailScience analysis modules
-work correctly with Google BigQuery as a backend. These tests confirm that the Ibis-based
-code paths function correctly when connected to BigQuery.
-
-## Test Coverage
-
-The integration tests cover the analysis modules.
-
-## Prerequisites
-
-To run these tests, you need:
-
-1. Access to a Google Cloud Platform account
-2. A service account with BigQuery permissions
-3. The service account key JSON file
-4. The test dataset must be loaded in BigQuery (dataset: `test_data`, table: `transactions`)
-
-## Running the Tests
-
-### Manual Setup
-
-- Set up authentication:
+Run unit tests using pytest:
 
 ```bash
+# Install dependencies
+uv sync
+
+# Run all unit tests
+uv run pytest
+
+# Run specific test file
+uv run pytest tests/test_file.py
+
+# Run with coverage
+uv run pytest --cov=pyretailscience
+```
+
+### Multi-Python Version Testing
+
+PyRetailScience supports Python 3.10, 3.11, 3.12, and 3.13. You can test across all supported versions locally using tox:
+
+```bash
+# Test all supported Python versions
+tox -e py310,py311,py312,py313
+
+# Test specific Python version
+tox -e py313
+
+# Run tests in parallel across versions
+tox -p auto
+```
+
+**Prerequisites:**
+
+- Multiple Python versions installed on your system
+- tox installed (`uv sync` installs it automatically)
+
+### Integration Tests
+
+Integration tests verify that all analysis modules work correctly with distributed computing engines (PySpark and
+BigQuery). These tests ensure the Ibis-based code paths function properly across different execution environments.
+
+#### PySpark Integration Tests
+
+The PySpark integration tests run locally using the same pytest framework as other tests.
+
+**Prerequisites:**
+
+- Python environment with dependencies installed (`uv sync`)
+
+**Running locally:**
+
+```bash
+# Run all PySpark tests
+uv run pytest tests/integration -k "pyspark" -v
+
+# Run specific PySpark test
+uv run pytest tests/integration/test_cohort_analysis.py -k "pyspark" -v
+```
+
+#### BigQuery Integration Tests
+
+The BigQuery integration tests verify compatibility with Google BigQuery as a backend.
+
+**Prerequisites:**
+
+- Access to a Google Cloud Platform account
+- A service account with BigQuery permissions
+- The service account key JSON file
+- The test dataset loaded in BigQuery (dataset: `test_data`, table: `transactions`)
+
+**Running locally:**
+
+```bash
+# Set up authentication
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
 export GCP_PROJECT_ID=your-project-id
-```
 
-- Install dependencies:
-
-```bash
+# Install dependencies
 uv sync
-```
 
-- Run the tests:
-
-```bash
-# Run all tests
-uv run pytest tests/integration/bigquery -v
+# Run all BigQuery tests
+uv run pytest tests/integration -k "bigquery" -v
 
 # Run specific test module
 uv run pytest tests/integration/bigquery/test_cohort_analysis.py -v
 ```
 
-## Using GitHub Actions
+## License
 
-These tests can be run manually in GitHub Actions via the "BigQuery Integration Tests" workflow. To run:
-
-1. Go to the "Actions" tab in the GitHub repository
-2. Select the "BigQuery Integration Tests" workflow
-3. Click "Run workflow"
-4. Optionally enter a test filter pattern (e.g., "test_cohort_analysis")
-5. Click "Run workflow"
-
-### Required Secrets
-
-To run the workflow in GitHub Actions, add these secrets to your repository:
-
-- `GCP_SA_KEY`: The entire JSON content of your GCP service account key file
-- `GCP_PROJECT_ID`: Your GCP project ID
+This project is licensed under the Elastic License 2.0 - see the [LICENSE](LICENSE) file for details.

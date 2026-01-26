@@ -42,9 +42,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
-import pyretailscience.style.graph_utils as gu
-from pyretailscience.style.graph_utils import GraphStyles
-from pyretailscience.style.tailwind import COLORS, get_linear_cmap
+import pyretailscience.plots.styles.graph_utils as gu
+from pyretailscience.plots.styles.colors import get_linear_cmap, get_named_color
 
 
 def filter_by_groups(
@@ -289,7 +288,7 @@ def plot(  # noqa: C901, PLR0913
             filter_below=filter_below,
         )
 
-        colors = COLORS["green"][500]
+        default_colors = get_named_color("primary")
         show_legend = False
         index_df = index_df[[group_col, "index"]].set_index(group_col)
         if sort_by in ["group", "value"]:
@@ -306,7 +305,7 @@ def plot(  # noqa: C901, PLR0913
 
     else:
         show_legend = True
-        colors = get_linear_cmap("green")(np.linspace(0, 1, df[series_col].nunique()))
+        default_colors = get_linear_cmap("green")(np.linspace(0, 1, df[series_col].nunique()))
 
         if sort_by == "group":
             index_df = index_df.sort_values(by=[group_col, series_col], ascending=sort_order == "ascending")
@@ -318,12 +317,14 @@ def plot(  # noqa: C901, PLR0913
             sort=False,
         )
 
+    width = kwargs.pop("width", 0.8)
+    color = kwargs.pop("color", default_colors)
     ax = index_df.plot.barh(
         left=100,
         legend=show_legend,
         ax=ax,
-        color=colors,
-        width=GraphStyles.DEFAULT_BAR_WIDTH,
+        color=color,
+        width=width,
         zorder=2,
         **kwargs,
     )

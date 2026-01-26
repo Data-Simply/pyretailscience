@@ -18,9 +18,103 @@ concurrency:
   group: "release"
   cancel-in-progress: false
 jobs:
+  pre-commit:
+    name: Pre-Commit Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install UV
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+          uv sync
+      - name: Install Pre-commit in uv environment
+        run: uv run pip install pre-commit
+      - name: Run Pre-commit
+        run: pre-commit run --all-files
+
+  bigquery-integration-tests:
+    name: BigQuery Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv Package
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+      - name: Install Dependencies
+        run: |
+          uv sync
+      - name: Set up GCP Authentication
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Run BigQuery Integration Tests
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          uv run pytest tests/integration -k "bigquery" -v
+
+  pyspark-integration-tests:
+    name: PySpark Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv Package
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+      - name: Install Dependencies
+        run: |
+          uv sync
+      - name: Run PySpark Integration Tests
+        run: |
+          uv run pytest tests/integration -k "pyspark" -v
+
+  multi-python-tests:
+    name: Multi-Python Version Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install UV
+        run: |
+          pip install --upgrade pip
+          pip install uv==0.5.30
+      - name: Install dependencies
+        run: |
+          uv sync
+      - name: Run tests (excluding integration)
+        run: |
+          uv run pytest tests/ --ignore=tests/integration --tb=short -v
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: [pre-commit, bigquery-integration-tests, pyspark-integration-tests, multi-python-tests]
     env:
       CI_COMMIT_MESSAGE: Continuous Integration Version Bump ${{ inputs.release }}
     steps:
@@ -115,3 +209,12 @@ jobs:
           path: dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  deploy-docs:
+    name: Deploy Documentation
+    needs: pypi-publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/gh-page.yml

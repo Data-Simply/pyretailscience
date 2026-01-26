@@ -7,8 +7,25 @@ nav:
   - Home: index.md
   - Getting Started:
       - Installation: getting_started/installation.md
+      - Options & Configuration: getting_started/options_guide.md
   - Analysis Modules:
       - analysis_modules.md
+  - Plot Gallery:
+      - Overview: gallery/index.md
+      - Area Plot: gallery/plots/area.ipynb
+      - Bar Plot: gallery/plots/bar.ipynb
+      - Broken Timeline Plot: gallery/plots/broken_timeline.ipynb
+      - Cohort Plot: gallery/plots/cohort.ipynb
+      - Heatmap Plot: gallery/plots/heatmap.ipynb
+      - Histogram Plot: gallery/plots/histogram.ipynb
+      - Line Plot: gallery/plots/line.ipynb
+      - Period on Period Plot: gallery/plots/period_on_period.ipynb
+      - Time Plot: gallery/plots/time.ipynb
+      - Venn Diagram: gallery/plots/venn.ipynb
+      - Waterfall Plot: gallery/plots/waterfall.ipynb
+      - Index Plot: gallery/plots/index_plot.ipynb
+      - Scatter Plot: gallery/plots/scatter.ipynb
+      - Price Plot: gallery/plots/price.ipynb
   - Examples:
       - Customer Retention: examples/retention.ipynb
       - Gain Loss Analysis: examples/gain_loss.ipynb
@@ -30,7 +47,6 @@ nav:
           - Composite Rank: api/analysis/composite_rank.md
           - Purchase Path: api/analysis/purchase_path.md
       - Segmentation:
-          - Base Segmentation: api/segmentation/base.md
           - HML Segmentation: api/segmentation/hml.md
           - RFM Segmentation: api/segmentation/rfm.md
           - SegTransactionStats Segmentation: api/segmentation/segstats.md
@@ -41,20 +57,22 @@ nav:
           - Broken Timeline Plot: api/plots/broken_timeline.md
           - Cohort Plot: api/plots/cohort.md
           - Histogram Plot: api/plots/histogram.md
+          - Heatmap Plot: api/plots/heatmap.md
           - Index Plot: api/plots/index.md
           - Line Plot: api/plots/line.md
           - Period On Period Plot: api/plots/period_on_period.md
           - Scatter Plot: api/plots/scatter.md
           - Time Plot: api/plots/time.md
+          - Price Plot: api/plots/price.md
           - Venn Diagram: api/plots/venn.md
           - Waterfall Plot: api/plots/waterfall.md
-          - Style:
-              - Graph Utils: api/plots/style/graph_utils.md
-              - Tailwind Colors: api/plots/style/tailwind.md
+          - Styles:
+              - Graph Utils: api/plots/styles/graph_utils.md
+              - Styling Helpers: api/plots/styles/styling_helpers.md
       - Utils:
           - Date Utils: api/utils/date.md
-          - Columns Utils: api/utils/columns.md
           - Filter & Label Utils: api/utils/filter_and_label.md
+          - Label Utils: api/utils/label.md
 
 theme:
   name: material
@@ -88,6 +106,8 @@ plugins:
   - mkdocs-jupyter
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - attr_list
   - md_in_html
   - pymdownx.highlight:

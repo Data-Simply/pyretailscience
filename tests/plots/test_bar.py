@@ -9,7 +9,7 @@ from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
 
 from pyretailscience.plots import bar
-from pyretailscience.style import graph_utils as gu
+from pyretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -41,17 +41,17 @@ def _mock_color_generators(mocker):
     """Mock the color generators for single and multi color maps."""
     single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator
-    mocker.patch("pyretailscience.style.tailwind.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.style.tailwind.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("pyretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
+    mocker.patch("pyretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture
 def _mock_gu_functions(mocker):
     """Mock the standard graph utilities functions."""
-    mocker.patch("pyretailscience.style.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.style.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.style.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-    mocker.patch("pyretailscience.style.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+    mocker.patch("pyretailscience.plots.styles.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -441,6 +441,9 @@ def test_default_value_col_handling(sample_series):
 
     assert isinstance(result_ax, Axes)
     assert len(result_ax.patches) == expected_num_patches
+    _, legend_labels = result_ax.get_legend_handles_labels()
+    assert legend_labels, "Expected legend labels but found none"
+    assert legend_labels == ["Value"], f"Expected legend label to be 'Value', got {legend_labels}"
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
@@ -508,7 +511,7 @@ def test_percentage_by_bar_group_with_negative_values():
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_percentage_by_bar_group_with_zero_group_total():
-    """Test percentage_by_bar_group with zero group totals and suppress the warning."""
+    """Test percentage_by_bar_group with zero group totals and verify warning is emitted."""
     df = pd.DataFrame({"product": ["A", "B"], "sales": [0, 0]})
 
     with pytest.warns(UserWarning, match="Division by zero detected"):

@@ -22,15 +22,6 @@ repos:
       - id: check-yaml
       - id: debug-statements
         language_version: python3
-  - repo: local
-    hooks:
-      - id: pytest
-        name: pytest
-        language: system
-        entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration
-        types: [python]
-        pass_filenames: false
-        always_run: true
   - repo: https://github.com/kynan/nbstripout
     rev: 0.5.0
     hooks:
@@ -53,3 +44,13 @@ repos:
     hooks:
       - id: markdownlint
         args: ["--config", ".markdownlint.json"]
+        exclude: ^\.claude/
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        language: system
+        entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration
+        types: [python]
+        pass_filenames: false
+        files: ^pyretailscience/

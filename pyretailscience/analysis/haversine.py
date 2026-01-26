@@ -1,25 +1,20 @@
-"""This module provides functionality for computing geospatial distances using Ibis expressions.
+"""Geospatial Distance Analysis for Retail Location Intelligence.
 
-It defines functions for efficient geospatial analysis on structured data tables, leveraging
-Ibis for optimized query execution.
+This module provides efficient geospatial distance calculations that power location-based retail analytics and
+strategic decision-making.
 
-### Core Features
+## Technical Features
 
-- **Ibis-Based Computation**: Uses Ibis expressions for scalable processing.
-- **Haversine Distance Calculation**: Computes great-circle distances dynamically as an Ibis expression.
-- **Backend Agnostic**: Works with multiple Ibis-supported backends, including SQL-based databases.
-- **Efficient Query Optimization**: Defers computation to the database or processing engine.
+- **Ibis-Based Computation**: Scalable processing within existing data pipelines
+- **Database Integration**: Calculations performed in SQL databases for efficiency
+- **Haversine Formula**: Accurate great-circle distance computation
+- **Backend Agnostic**: Works with multiple database and processing engines
 
-### Use Cases
+## Limitations
 
-- **Geospatial Filtering**: Identify locations within a certain radius using database queries.
-- **Spatial Analysis**: Analyze movement patterns and distances between geographic points.
-- **Logistics & Routing**: Optimize route planning by calculating distances dynamically.
-
-### Limitations and Warnings
-
-- **Requires Ibis-Compatible Backend**: Ensure your Ibis backend supports trigonometric functions.
-- **Assumes Spherical Earth**: Uses the Haversine formula, which introduces slight inaccuracies due to Earth's oblate shape.
+- **Spherical Earth Assumption**: Minor inaccuracies due to Earth's actual oblate shape
+- **Straight-Line Distance**: Measures "as the crow flies", not driving distances
+- **Requires Trigonometric Functions**: Backend must support mathematical functions
 """
 
 import ibis

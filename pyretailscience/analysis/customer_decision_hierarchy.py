@@ -1,4 +1,66 @@
-"""This module contains the RangePlanning class for performing customer decision hierarchy analysis."""
+"""Customer Decision Hierarchy Analysis for Product Substitutability and Range Optimization.
+
+## Business Context
+
+Customer Decision Hierarchy (CDH) analysis reveals how customers perceive products
+as substitutes or complements. This critical intelligence informs range planning,
+assortment optimization, and delisting decisions by understanding which products
+customers view as interchangeable versus essential variety.
+
+## The Business Problem
+
+Retailers often struggle with range rationalization decisions:
+- Which products can be delisted without losing customers?
+- When does variety add value versus create confusion?
+- Which products are true substitutes in customers' minds?
+- How to optimize shelf space without sacrificing choice?
+
+CDH analysis answers these questions by analyzing actual switching behavior rather
+than relying on product attributes or manager intuition.
+
+## How It Works
+
+The analysis examines customer purchase patterns to identify substitutability:
+- Products rarely bought by the same customer → likely substitutes
+- Products often bought by the same customer → complements or variety-seeking
+- Uses Yule's Q coefficient to measure substitutability strength
+- Creates hierarchical clusters showing substitution relationships
+
+## Real-World Applications
+
+1. **Range Rationalization**
+   - Identify safe delisting candidates within substitute clusters
+   - Maintain one option per cluster to preserve choice
+   - Reduce SKU count while maintaining customer satisfaction
+
+2. **New Product Introduction**
+   - Understand which existing products new items might cannibalize
+   - Position new products to fill gaps rather than duplicate
+   - Predict source of volume for new launches
+
+3. **Private Label Strategy**
+   - Identify national brand products suitable for PL alternatives
+   - Understand where PL can substitute vs. complement
+   - Optimize PL/NB mix within categories
+
+4. **Space Optimization**
+   - Allocate more space to non-substitutable products
+   - Reduce facings for products within same substitute cluster
+   - Optimize variety/productivity trade-off
+
+5. **Markdown Strategy**
+   - Clear substitute products sequentially, not simultaneously
+   - Understand which products can drive category traffic
+   - Identify products that won't cannibalize when promoted
+
+## Business Value
+
+- **Efficient Assortment**: Reduce complexity without losing sales
+- **Better Space Productivity**: Allocate space based on true variety value
+- **Improved Margins**: Replace duplicative SKUs with unique offerings
+- **Customer Satisfaction**: Maintain perceived choice while reducing confusion
+- **Strategic Clarity**: Data-driven approach to range decisions
+"""
 
 from typing import Literal
 
@@ -8,42 +70,89 @@ import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
 
-import pyretailscience.style.graph_utils as gu
+import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.style.graph_utils import GraphStyles
+from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 
 class CustomerDecisionHierarchy:
-    """A class to perform customer decision hierarchy analysis using the Customer Decision Hierarchy method."""
+    """Analyzes product substitutability patterns to optimize retail assortments.
+
+    The CustomerDecisionHierarchy class identifies which products customers view as
+    substitutes versus essential variety. This enables data-driven range planning
+    decisions that maintain customer choice while improving operational efficiency.
+
+    ## Business Insight
+
+    Traditional range planning often assumes products in the same category are
+    substitutes (e.g., all yogurts are interchangeable). However, customer behavior
+    reveals the truth: some customers always buy both Greek and regular yogurt
+    (complements), while others switch between strawberry and raspberry flavors
+    (substitutes).
+
+    ## Substitutability Logic
+
+    The analysis identifies substitutes through purchase patterns:
+    - **High substitutability**: Customers buy product A OR product B, rarely both
+    - **Low substitutability**: Customers often buy both A AND B
+    - **Exclusion logic**: Products bought in same transaction can't be substitutes
+
+    ## Decision Framework
+
+    The hierarchy output guides range decisions:
+    - **Tight clusters**: Strong substitutes - keep best performer
+    - **Loose clusters**: Weak substitutes - maintain variety
+    - **Separate branches**: Different needs - preserve both
+    - **Isolated products**: Unique value - protect from delisting
+
+    ## Example Use Case
+
+    A supermarket analyzing yogurt finds:
+    - Cluster 1: Store brand vanilla, strawberry, raspberry (substitutes)
+    - Cluster 2: Greek plain, Greek honey (substitutes)
+    - Separate branch: Kids' squeezable yogurt (unique need)
+
+    Decision: Can reduce flavor variety in Cluster 1, maintain Greek options,
+    must keep kids' yogurt despite low sales.
+    """
 
     def __init__(
         self,
         df: pd.DataFrame,
         product_col: str,
         exclude_same_transaction_products: bool = True,
-        method: Literal["truncated_svd", "yules_q"] = "truncated_svd",
-        min_var_explained: float = 0.8,
+        method: Literal["yules_q"] = "yules_q",
         random_state: int = 42,
     ) -> None:
-        """Initializes the RangePlanning object.
+        """Initialize customer decision hierarchy analysis for range optimization.
 
         Args:
-            df (pd.DataFrame): The input dataframe containing transaction data. The dataframe must have the columns
-                customer_id, transaction_id, product_name.
-            product_col (str): The name of the column containing the product or category names.
-            exclude_same_transaction_products (bool, optional): Flag indicating whether to exclude products found in
-                the same transaction from a customer's distinct list of products bought. The idea is that if a
-                customer bought two products in the same transaction they can't be substitutes for that customer.
-                Thus they should be excluded from the analysis. Defaults to True.
-            method (Literal["truncated_svd", "yules_q"], optional): The method to use for calculating distances.
-                Defaults to "truncated_svd".
-            min_var_explained (float, optional): The minimum variance explained required for truncated SVD method.
-                Only applicable if method is "truncated_svd". Defaults to 0.8.
-            random_state (int, optional): Random seed for reproducibility. Defaults to 42.
+            df (pd.DataFrame): Transaction data with customer purchase history.
+                Must contain: customer_id, transaction_id, and product identifier.
+            product_col (str): Column containing products to analyze for substitutability
+                (e.g., "product_name", "sku", "brand", "subcategory").
+            exclude_same_transaction_products (bool, optional): Whether products bought
+                together in one transaction should be considered non-substitutes.
+                True = If customer buys milk and eggs together, they're not substitutes.
+                False = Include all purchase patterns.
+                Defaults to True (recommended for most retail contexts).
+            method (Literal["yules_q"], optional): Statistical method for measuring
+                substitutability. "yules_q" measures association strength between
+                binary purchase patterns. Defaults to "yules_q".
+            random_state (int, optional): Seed for reproducible clustering results.
+                Important for consistent range planning decisions. Defaults to 42.
 
         Raises:
-            ValueError: If the dataframe does not have the require columns.
+            ValueError: If required columns are missing from the dataframe.
 
+        Business Example:
+            >>> # Analyze substitutability in coffee category
+            >>> cdh = CustomerDecisionHierarchy(
+            ...     df=transactions,
+            ...     product_col="brand_flavor",  # e.g., "Folgers_Original"
+            ...     exclude_same_transaction_products=True  # Bought together = not substitutes
+            ... )
+            >>> # Use results to identify which coffee SKUs can be delisted
         """
         cols = ColumnHelper()
         required_cols = [cols.customer_id, cols.transaction_id, product_col]
@@ -55,7 +164,7 @@ class CustomerDecisionHierarchy:
         self.random_state = random_state
         self.product_col = product_col
         self.pairs_df = self._get_pairs(df, exclude_same_transaction_products, product_col)
-        self.distances = self._calculate_distances(method=method, min_var_explained=min_var_explained)
+        self.distances = self._calculate_distances(method=method)
 
     @staticmethod
     def _get_pairs(df: pd.DataFrame, exclude_same_transaction_products: bool, product_col: str) -> pd.DataFrame:
@@ -79,42 +188,6 @@ class CustomerDecisionHierarchy:
             pairs_df = df[[cols.customer_id, product_col]].drop_duplicates()
 
         return pairs_df.reset_index(drop=True).astype("category")
-
-    def _get_truncated_svd_distances(self, min_var_explained: float = 0.8) -> np.array:
-        """Calculate the truncated SVD distances for the given pairs dataframe.
-
-        Args:
-            min_var_explained (float): The minimum variance explained required.
-
-        Returns:
-            np.array: The normalized matrix of truncated SVD distances.
-        """
-        from scipy.sparse import csr_matrix
-        from sklearn.decomposition import TruncatedSVD
-
-        sparse_matrix = csr_matrix(
-            (
-                [1] * len(self.pairs_df),
-                (
-                    self.pairs_df[self.product_col].cat.codes,
-                    self.pairs_df[get_option("column.customer_id")].cat.codes,
-                ),
-            ),
-        )
-
-        n_products = sparse_matrix.shape[0]
-        svd = TruncatedSVD(n_components=n_products, random_state=self.random_state)
-        svd.fit(sparse_matrix)
-        cuml_var = np.cumsum(svd.explained_variance_ratio_)
-
-        req_n_components = np.argmax(cuml_var >= min_var_explained) + 1
-
-        reduced_matrix = TruncatedSVD(n_components=req_n_components, random_state=self.random_state).fit_transform(
-            sparse_matrix,
-        )
-        norm_matrix = reduced_matrix / np.linalg.norm(reduced_matrix, axis=1, keepdims=True)
-
-        return norm_matrix  # noqa: RET504
 
     @staticmethod
     def _calculate_yules_q(bought_product_1: np.array, bought_product_2: np.array) -> float:
@@ -195,15 +268,12 @@ class CustomerDecisionHierarchy:
 
     def _calculate_distances(
         self,
-        method: Literal["truncated_svd", "yules_q"],
-        min_var_explained: float,
+        method: Literal["yules_q"],
     ) -> None:
         """Calculates distances between items using the specified method.
 
         Args:
-            method (Literal["truncated_svd", "yules_q"], optional): The method to use for calculating distances.
-            min_var_explained (float, optional): The minimum variance explained required for truncated SVD method.
-                Only applicable if method is "truncated_svd".
+            method (Literal["yules_q"], optional): The method to use for calculating distances.
 
         Raises:
             ValueError: If the method is not valid.
@@ -212,12 +282,10 @@ class CustomerDecisionHierarchy:
             None
         """
         # Check method is valid
-        if method == "truncated_svd":
-            distances = self._get_truncated_svd_distances(min_var_explained=min_var_explained)
-        elif method == "yules_q":
+        if method == "yules_q":
             distances = self._get_yules_q_distances()
         else:
-            raise ValueError("Method must be 'truncated_svd' or 'yules_q'")
+            raise ValueError("Method must be 'yules_q'")
 
         return distances
 
@@ -246,7 +314,7 @@ class CustomerDecisionHierarchy:
             SubplotBase: The matplotlib SubplotBase object.
         """
         linkage_matrix = linkage(self.distances, method="ward")
-        labels = self.pairs_df["product_name"].cat.categories
+        labels = self.pairs_df[self.product_col].cat.categories
 
         if ax is None:
             _, ax = plt.subplots(figsize=figsize)
@@ -272,9 +340,8 @@ class CustomerDecisionHierarchy:
             ax.xaxis.set_label_position("top")
 
         dendrogram(linkage_matrix, labels=labels, ax=ax, **kwargs)
-
-        ax.xaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
-        ax.yaxis.set_tick_params(labelsize=GraphStyles.DEFAULT_TICK_LABEL_FONT_SIZE)
+        styler = PlotStyler()
+        styler.apply_ticks(ax)
 
         # Rotate the x-axis labels if they are too long
         if orientation in ["top", "bottom"]:
