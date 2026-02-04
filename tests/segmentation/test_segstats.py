@@ -2010,8 +2010,14 @@ class TestDivisionByZeroHandling:
             .reset_index(drop=True)
         )
 
-        # Since no unknown customers exist, transaction_id_unknown is 0 for all segments
-        # spend_per_trans_unknown should be NaN (not an error)
+        # Verify expected structure: 2 detail rows + 1 total = 3 rows
+        expected_row_count = 3
+        assert len(result) == expected_row_count
+
+        # Verify precondition: no unknown transactions exist (all customers are known)
+        assert (result[cols.agg.transaction_id_unknown] == 0).all()
+
+        # spend_per_trans_unknown should be NaN (not an error) when transaction_id_unknown is 0
         assert result[cols.calc.spend_per_trans_unknown].isna().all()
 
     def test_rollup_with_all_unknown_customers_no_division_error(self):
@@ -2042,8 +2048,13 @@ class TestDivisionByZeroHandling:
             unknown_customer_value=-1,
         ).df
 
-        # Key assertion: query executed successfully (no error raised)
-        assert len(result) > 0
+        # ROLLUP(store_id, week) generates:
+        # - 6 detail rows (S1/W1, S1/W2, S2/W1, S2/W2, S3/W1, S3/W2)
+        # - 3 store rollups (S1/Total, S2/Total, S3/Total)
+        # - 1 grand total
+        # Total: 10 rows
+        expected_row_count = 10
+        assert len(result) == expected_row_count
 
         # Verify derived metrics that divide by transaction/customer counts are NaN
         # when those counts are zero (which they are for identified customers)
@@ -2080,6 +2091,9 @@ class TestDivisionByZeroHandling:
         # Loyalty segment (known customers) should have valid spend_per_cust
         loyalty_segment = result[result["customer_type"] == "Loyalty"]
         assert loyalty_segment[cols.calc.spend_per_cust].notna().all()
+        # Verify the actual computed value: (100 + 200) / 2 customers = 150
+        expected_loyalty_spend_per_cust = 150.0
+        assert loyalty_segment[cols.calc.spend_per_cust].iloc[0] == pytest.approx(expected_loyalty_spend_per_cust)
 
         # Walk-In segment (only unknown customers) should have NaN for spend_per_cust
         walkin_segment = result[result["customer_type"] == "Walk-In"]
@@ -2087,3 +2101,8 @@ class TestDivisionByZeroHandling:
 
         # But Walk-In segment should have valid spend_per_trans_unknown
         assert walkin_segment[cols.calc.spend_per_trans_unknown].notna().all()
+        # Verify the actual computed value: (150 + 250) / 2 unknown transactions = 200
+        expected_walkin_spend_per_trans_unknown = 200.0
+        assert walkin_segment[cols.calc.spend_per_trans_unknown].iloc[0] == pytest.approx(
+            expected_walkin_spend_per_trans_unknown,
+        )
