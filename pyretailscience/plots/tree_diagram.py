@@ -329,46 +329,48 @@ class SimpleTreeNode(TreeNode):
 
 
 class TreeGrid:
-    """Grid-based tree diagram renderer with configurable node types."""
+    """Grid-based tree diagram renderer with automatic layout using Reingold-Tilford algorithm."""
 
     # Connection styling constants
     CONNECTION_CURVE_RADIUS = 0.15
     CONNECTION_LINE_WIDTH = 2
     CONNECTION_LINE_COLOR = "black"
 
+    # Default spacing constants
+    DEFAULT_VERTICAL_GAP = 0.8  # Gap between vertical levels (added to node height)
+    DEFAULT_HORIZONTAL_GAP = 0.5  # Gap between horizontal positions (added to node width)
+    DEFAULT_LR_DEPTH_GAP = 1.0  # Extra gap between depth levels in LR orientation
+
     def __init__(
         self,
         tree_structure: dict[str, dict],
-        num_rows: int,
-        num_cols: int,
         node_class: type[TreeNode],
         vertical_spacing: float | None = None,
         horizontal_spacing: float | None = None,
+        grid_spacing: int = 2,
+        orientation: str = "LR",
     ) -> None:
-        """Initialize the tree grid.
+        """Initialize the tree grid with automatic layout.
 
         Args:
-            tree_structure: Dictionary mapping node IDs to node data with required keys
-                depending on the node_class being used.
-            num_rows: Number of rows in the grid.
-            num_cols: Number of columns in the grid.
+            tree_structure: Dictionary mapping node IDs to node data. Each node must include a
+                'children' key (list[str]) listing child node IDs. Use empty list for leaf nodes.
             node_class: The TreeNode subclass to use for rendering nodes.
-            vertical_spacing: Vertical spacing between rows. If None, automatically calculated as
-                node_height + 0.6 gap.
-            horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated as
-                node_width - 1.0 overlap for compact layout.
+            vertical_spacing: Vertical spacing between rows. If None, automatically calculated.
+            horizontal_spacing: Horizontal spacing between columns. If None, automatically calculated.
+            grid_spacing: Minimum spacing between sibling nodes. Default is 2.
+            orientation: Tree layout direction. "LR" (default) for left-to-right (root on left,
+                grows horizontally), or "TB" for top-to-bottom (root on top, grows vertically).
 
         Raises:
-            ValueError: If grid dimensions are not positive, if tree_structure is empty,
-                or if node positions are out of bounds.
+            ValueError: If tree_structure is empty or orientation is invalid.
             TypeError: If node_class is not a TreeNode subclass.
 
         """
-        # Validate grid dimensions
-        if num_rows <= 0 or num_cols <= 0:
-            error_msg = f"Grid dimensions must be positive: num_rows={num_rows}, num_cols={num_cols}"
+        # Validate orientation
+        if orientation not in ("LR", "TB"):
+            error_msg = f"orientation must be 'LR' or 'TB', got '{orientation}'"
             raise ValueError(error_msg)
-
         # Validate node_class is a TreeNode subclass
         if not issubclass(node_class, TreeNode):
             error_msg = f"node_class must be a TreeNode subclass, got {node_class}"
@@ -379,36 +381,194 @@ class TreeGrid:
             raise ValueError("tree_structure cannot be empty")
 
         self.tree_structure = tree_structure
-        self.num_rows = num_rows
-        self.num_cols = num_cols
         self.node_class = node_class
+        self.grid_spacing = grid_spacing
+        self.orientation = orientation
 
         # Get node dimensions from the node class
-        self.node_width = node_class.NODE_WIDTH
-        self.node_height = node_class.NODE_HEIGHT
+        node_width = node_class.NODE_WIDTH
+        node_height = node_class.NODE_HEIGHT
 
         # Auto-calculate spacing if not provided
-        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else self.node_height + 0.6
-        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else self.node_width - 1.0
+        # vertical_spacing: distance between tree levels (used for depth spacing)
+        # horizontal_spacing: distance between sibling positions (used for x_pos spacing)
+        # Both now use consistent logic: node dimension + fixed gap
+        default_vertical = node_height + self.DEFAULT_VERTICAL_GAP
+        default_horizontal = node_width + self.DEFAULT_HORIZONTAL_GAP
+        self.vertical_spacing = vertical_spacing if vertical_spacing is not None else default_vertical
+        self.horizontal_spacing = horizontal_spacing if horizontal_spacing is not None else default_horizontal
 
-        # Validate positions are within grid bounds
-        for node_id, node_data in tree_structure.items():
-            if "position" not in node_data:
-                error_msg = f"Node '{node_id}' is missing required 'position' key"
-                raise ValueError(error_msg)
+        # For LR orientation, we need extra spacing between depth levels for connection lines
+        # For TB orientation, vertical_spacing already handles depth spacing
+        if self.orientation == "LR":
+            # Depth spacing: need room for node + gap for connection lines
+            self.depth_spacing = node_width + self.DEFAULT_LR_DEPTH_GAP
+        else:
+            # TB: depth grows vertically, use vertical_spacing
+            self.depth_spacing = self.vertical_spacing
 
-            col_idx, row_idx = node_data["position"]
-            if not (0 <= col_idx < num_cols):
-                error_msg = f"Node '{node_id}' column index {col_idx} is out of bounds [0, {num_cols})"
-                raise ValueError(error_msg)
-            if not (0 <= row_idx < num_rows):
-                error_msg = f"Node '{node_id}' row index {row_idx} is out of bounds [0, {num_rows})"
-                raise ValueError(error_msg)
+        # Compute positions using Reingold-Tilford algorithm
+        self._positions, num_rows, num_cols = self._compute_positions()
 
         # Generate row and column positions
-        # Row 0 is at the top, increasing downward (reversed from matplotlib's default bottom-up)
+        # These will be mapped to x/y coordinates based on orientation in render()
+        # Row 0 at top, increasing downward
         self.row = {i: (num_rows - 1 - i) * self.vertical_spacing for i in range(num_rows)}
+        # Col 0 at left, increasing rightward
         self.col = {i: i * self.horizontal_spacing for i in range(num_cols)}
+
+    def _compute_positions(self) -> tuple[dict[str, tuple[float, int]], int, int]:  # noqa: C901
+        """Compute node positions using Reingold-Tilford algorithm with contour tracking.
+
+        The algorithm ensures no overlapping nodes by:
+        - Post-order pass: Assign preliminary x-coordinates and compute subtree contours
+        - Checking left/right contours to ensure minimum separation between sibling subtrees
+        - Pre-order pass: Apply accumulated modifiers for final coordinates
+
+        Returns:
+            positions: Mapping of node_id -> (x_position, depth) where x is float for centering
+            num_rows: Total number of levels in the tree
+            max_width: Maximum width of the tree
+        """
+        from collections import deque
+
+        # Build tree relationships
+        children_map: dict[str, list[str]] = {}
+        parent_map: dict[str, str | None] = {}
+
+        for node_id, node_data in self.tree_structure.items():
+            children = node_data.get("children", []) or []
+            children_map[node_id] = list(children)
+            parent_map[node_id] = None
+
+        # Map children to parents
+        for parent_id, children in children_map.items():
+            for child_id in children:
+                parent_map[child_id] = parent_id
+
+        # Find root nodes
+        roots = [nid for nid, parent in parent_map.items() if parent is None]
+        if not roots:
+            roots = [sorted(self.tree_structure.keys())[0]]
+
+        # Calculate depths using BFS
+        depths: dict[str, int] = {}
+        queue: deque[tuple[str, int]] = deque((r, 0) for r in roots)
+        visited: set[str] = set()
+
+        while queue:
+            node_id, depth = queue.popleft()
+            if node_id in visited:
+                continue
+            visited.add(node_id)
+            depths[node_id] = depth
+            queue.extend((child, depth + 1) for child in children_map.get(node_id, []))
+
+        num_rows = max(depths.values(), default=0) + 1
+
+        # Data structures for layout algorithm
+        prelim_x: dict[str, float] = {}
+        modifier: dict[str, float] = {}
+
+        def get_contour(node_id: str, mod_sum: float, get_leftmost: bool) -> dict[int, float]:
+            """Get extreme x-coordinate (leftmost or rightmost) at each depth level in subtree.
+
+            Args:
+                node_id: Node identifier to compute contour for.
+                mod_sum: Accumulated modifier sum from ancestors.
+                get_leftmost: If True, return leftmost coordinates; if False, return rightmost.
+
+            Returns:
+                dict[int, float]: Mapping of depth level to extreme x-coordinate.
+
+            """
+            contour: dict[int, float] = {}
+            node_depth = depths[node_id]
+            contour[node_depth] = prelim_x[node_id] + mod_sum
+
+            children = children_map.get(node_id, [])
+            if children:
+                child_contours = [get_contour(child, mod_sum + modifier[node_id], get_leftmost) for child in children]
+                for child_contour in child_contours:
+                    for depth, x in child_contour.items():
+                        if (
+                            depth not in contour
+                            or (get_leftmost and x < contour[depth])
+                            or (not get_leftmost and x > contour[depth])
+                        ):
+                            contour[depth] = x
+            return contour
+
+        def layout_subtree(node_id: str) -> None:
+            """Post-order: assign preliminary x-coordinates with contour-based separation."""
+            children = children_map.get(node_id, [])
+
+            if not children:
+                # Leaf node
+                parent = parent_map[node_id]
+                if parent:
+                    siblings = children_map[parent]
+                    idx = siblings.index(node_id)
+                    if idx > 0:
+                        left_sibling = siblings[idx - 1]
+                        prelim_x[node_id] = prelim_x[left_sibling] + self.grid_spacing
+                    else:
+                        prelim_x[node_id] = 0.0
+                else:
+                    prelim_x[node_id] = 0.0
+                modifier[node_id] = 0.0
+            else:
+                # Internal node: process children first
+                for child in children:
+                    layout_subtree(child)
+
+                # Position siblings with contour checking
+                for i in range(1, len(children)):
+                    left_child = children[i - 1]
+                    right_child = children[i]
+
+                    # Get contours (rightmost of left child, leftmost of right child)
+                    left_contour = get_contour(left_child, modifier[left_child], get_leftmost=False)
+                    right_contour = get_contour(right_child, modifier[right_child], get_leftmost=True)
+
+                    # Find maximum overlap at each depth level
+                    max_shift = 0.0
+                    for depth in set(left_contour.keys()) & set(right_contour.keys()):
+                        separation = left_contour[depth] - right_contour[depth] + self.grid_spacing
+                        max_shift = max(max_shift, separation)
+
+                    # Shift right child to avoid overlap
+                    if max_shift > 0:
+                        prelim_x[right_child] += max_shift
+                        modifier[right_child] += max_shift
+
+                # Center parent over children
+                child_center = (prelim_x[children[0]] + prelim_x[children[-1]]) / 2
+                prelim_x[node_id] = child_center
+                modifier[node_id] = 0.0
+
+        def apply_modifiers(node_id: str, mod_sum: float) -> None:
+            """Pre-order: compute final x-coordinates by applying accumulated modifiers."""
+            final_x[node_id] = prelim_x[node_id] + mod_sum
+            for child in children_map.get(node_id, []):
+                apply_modifiers(child, mod_sum + modifier[node_id])
+
+        # Execute layout
+        final_x: dict[str, float] = {}
+        for root in roots:
+            layout_subtree(root)
+            apply_modifiers(root, 0.0)
+
+        # Normalize to start at x=0
+        if final_x:
+            min_x = min(final_x.values())
+            final_x = {k: v - min_x for k, v in final_x.items()}
+
+        # Build final positions
+        positions = {nid: (final_x.get(nid, 0.0), depths.get(nid, 0)) for nid in self.tree_structure}
+        max_width = int(max(final_x.values(), default=0)) + 1
+
+        return positions, num_rows, max_width
 
     def render(self, ax: Axes | None = None) -> Axes:
         """Render the tree diagram.
@@ -420,27 +580,50 @@ class TreeGrid:
             The matplotlib axes object.
 
         """
-        if ax is None:
-            # Calculate plot dimensions based on layout
-            plot_width = self.col[self.num_cols - 1] + self.node_width
-            # Row 0 is at the top with the highest y-value after coordinate inversion
-            plot_height = self.row[0] + self.node_height
+        # Calculate plot dimensions based on layout and orientation
+        max_x_pos = max((x_pos for x_pos, _ in self._positions.values()), default=0.0)
+        max_depth = max((depth for _, depth in self._positions.values()), default=0)
 
+        if self.orientation == "LR":
+            # LR: depth grows horizontally, siblings stack vertically
+            plot_width = max_depth * self.depth_spacing + self.node_class.NODE_WIDTH
+            plot_height = max_x_pos * self.vertical_spacing + self.node_class.NODE_HEIGHT
+        else:  # TB
+            # TB: depth grows vertically, siblings spread horizontally
+            plot_width = max_x_pos * self.horizontal_spacing + self.node_class.NODE_WIDTH
+            plot_height = max_depth * self.depth_spacing + self.node_class.NODE_HEIGHT
+
+        if ax is None:
             _, ax = plt.subplots(figsize=(plot_width, plot_height))
-            ax.set_xlim(0, plot_width)
-            ax.set_ylim(0, plot_height)
             ax.axis("off")
+
+        # Always set axes limits to match the tree dimensions
+        ax.set_xlim(0, plot_width)
+        ax.set_ylim(0, plot_height)
 
         # First pass: create all nodes and store their centers
         node_centers = {}
         for node_id, node_data in self.tree_structure.items():
-            # Convert grid coordinates to absolute positions
-            col_idx, row_idx = node_data["position"]
-            x = self.col[col_idx]
-            y = self.row[row_idx]
+            # Get computed position from auto-layout
+            x_pos, depth = self._positions[node_id]
 
-            # Extract data for the node (exclude position and children which are structural)
-            data_dict = {k: v for k, v in node_data.items() if k not in ("position", "children")}
+            # Map to x/y coordinates based on orientation
+            # x_pos: horizontal position from Reingold-Tilford (sibling spacing)
+            # depth: tree level (0=root, 1=children, etc.)
+            if self.orientation == "LR":
+                # LR: depth→x (horizontal), x_pos→y (vertical)
+                # Root on left, grows right; siblings stack vertically
+                x = depth * self.depth_spacing  # Use depth_spacing for level separation
+                y = x_pos * self.vertical_spacing
+            else:  # TB
+                # TB: depth→y (vertical), x_pos→x (horizontal)
+                # Root on top, grows down; siblings spread horizontally
+                # Invert depth so root (depth=0) is at the top
+                x = x_pos * self.horizontal_spacing
+                y = (max_depth - depth) * self.depth_spacing  # Use depth_spacing for level separation
+
+            # Extract data for the node (exclude children which is structural)
+            data_dict = {k: v for k, v in node_data.items() if k != "children"}
 
             # Create and render the node
             node = self.node_class(
@@ -450,12 +633,23 @@ class TreeGrid:
             )
             node.render(ax)
 
-            # Store center positions for connections
-            node_centers[node_id] = {
-                "x": x + self.node_width / 2,
-                "y_bottom": y,
-                "y_top": y + self.node_height,
-            }
+            # Store connection points for lines based on orientation
+            if self.orientation == "LR":
+                # LR: connect from parent's right edge to child's left edge
+                node_centers[node_id] = {
+                    "x_out": x + self.node_class.NODE_WIDTH,  # right edge
+                    "y_out": y + self.node_class.NODE_HEIGHT / 2,  # vertical center
+                    "x_in": x,  # left edge
+                    "y_in": y + self.node_class.NODE_HEIGHT / 2,  # vertical center
+                }
+            else:  # TB
+                # TB: connect from parent's bottom edge to child's top edge
+                node_centers[node_id] = {
+                    "x_out": x + self.node_class.NODE_WIDTH / 2,  # horizontal center
+                    "y_out": y,  # bottom edge
+                    "x_in": x + self.node_class.NODE_WIDTH / 2,  # horizontal center
+                    "y_in": y + self.node_class.NODE_HEIGHT,  # top edge
+                }
 
         # Second pass: draw connections
         for node_id, node_data in self.tree_structure.items():
@@ -472,10 +666,11 @@ class TreeGrid:
                     child = node_centers[child_id]
                     self._draw_connection(
                         ax=ax,
-                        x1=parent["x"],
-                        y1=parent["y_bottom"],
-                        x2=child["x"],
-                        y2=child["y_top"],
+                        x1=parent["x_out"],
+                        y1=parent["y_out"],
+                        x2=child["x_in"],
+                        y2=child["y_in"],
+                        orientation=self.orientation,
                     )
 
         return ax
@@ -506,8 +701,8 @@ class TreeGrid:
         codes.append(Path.CURVE3)
 
     @staticmethod
-    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float) -> None:
-        """Draw connection line between nodes with curved corners.
+    def _draw_connection(ax: Axes, x1: float, y1: float, x2: float, y2: float, orientation: str = "LR") -> None:
+        """Draw connection line between nodes with orientation-appropriate styling.
 
         Args:
             ax: Matplotlib axes object.
@@ -515,6 +710,7 @@ class TreeGrid:
             y1: Y-coordinate of first point.
             x2: X-coordinate of second point.
             y2: Y-coordinate of second point.
+            orientation: Tree orientation ("LR" or "TB").
 
         """
         # Use class constants for connection styling
@@ -522,34 +718,87 @@ class TreeGrid:
         line_width = TreeGrid.CONNECTION_LINE_WIDTH
         line_color = TreeGrid.CONNECTION_LINE_COLOR
 
-        mid_y = (y1 + y2) / 2
-        curve_sign = 1 if x2 > x1 else -1
-
         # Create path with curved corners using Bezier curves
         verts = []
         codes = []
 
-        # Start point (bottom of parent node)
-        verts.append((x1, y1))
-        codes.append(Path.MOVETO)
+        if orientation == "LR":
+            # LR: Clean L-shape with rounded elbow
+            # Start point (right edge of parent node, vertical center)
+            verts.append((x1, y1))
+            codes.append(Path.MOVETO)
 
-        # Vertical line down to curve start
-        verts.append((x1, mid_y + curve_radius))
-        codes.append(Path.LINETO)
+            # Determine elbow position
+            elbow_x = x2 - curve_radius
+            y_diff = y2 - y1
 
-        # Curve from vertical to horizontal (first corner)
-        TreeGrid._add_curve(verts, codes, x1, mid_y, curve_sign * curve_radius, 0)
+            if abs(y_diff) < curve_radius:
+                # Very small vertical offset: straight with gentle curve at end
+                verts.append((elbow_x, y1))
+                codes.append(Path.LINETO)
+                TreeGrid._add_curve(verts, codes, elbow_x, y1, 0, y_diff)
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
+            else:
+                # Larger vertical offset: L-shape with rounded corner
+                curve_sign = 1 if y2 > y1 else -1
 
-        # Horizontal line
-        verts.append((x2 - (curve_sign * curve_radius), mid_y))
-        codes.append(Path.LINETO)
+                # Horizontal line from parent to elbow (minus curve radius)
+                verts.append((elbow_x, y1))
+                codes.append(Path.LINETO)
 
-        # Curve from horizontal to vertical (second corner)
-        TreeGrid._add_curve(verts, codes, x2, mid_y, 0, -curve_radius)
+                # Rounded corner from horizontal to vertical
+                TreeGrid._add_curve(verts, codes, elbow_x, y1, 0, curve_sign * curve_radius)
 
-        # Vertical line up to child node
-        verts.append((x2, y2))
-        codes.append(Path.LINETO)
+                # Vertical line to child's level (minus curve radius)
+                verts.append((elbow_x, y2 - curve_sign * curve_radius))
+                codes.append(Path.LINETO)
+
+                # Rounded corner from vertical to horizontal
+                TreeGrid._add_curve(verts, codes, elbow_x, y2, curve_radius, 0)
+
+                # Short horizontal line to child
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
+
+        else:  # TB orientation
+            # TB: Vertical connections with horizontal offset handling
+            mid_y = (y1 + y2) / 2
+            x_diff = abs(x2 - x1)
+
+            # Start point (bottom of parent node)
+            verts.append((x1, y1))
+            codes.append(Path.MOVETO)
+
+            if x_diff < curve_radius * 2:
+                # Small horizontal offset: use simple vertical line without curves
+                verts.append((x1, mid_y))
+                codes.append(Path.LINETO)
+                verts.append((x2, mid_y))
+                codes.append(Path.LINETO)
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
+            else:
+                # Larger horizontal offset: use S-curve pattern with rounded corners
+                curve_sign = 1 if x2 > x1 else -1
+
+                # Vertical line down to curve start
+                verts.append((x1, mid_y + curve_radius))
+                codes.append(Path.LINETO)
+
+                # Curve from vertical to horizontal (first corner)
+                TreeGrid._add_curve(verts, codes, x1, mid_y, curve_sign * curve_radius, 0)
+
+                # Horizontal line
+                verts.append((x2 - (curve_sign * curve_radius), mid_y))
+                codes.append(Path.LINETO)
+
+                # Curve from horizontal to vertical (second corner)
+                TreeGrid._add_curve(verts, codes, x2, mid_y, 0, -curve_radius)
+
+                # Vertical line up to child node
+                verts.append((x2, y2))
+                codes.append(Path.LINETO)
 
         # Create and draw the path
         path = Path(verts, codes)
@@ -579,6 +828,18 @@ class DetailedTreeNode(TreeNode):
     # Color thresholds for percent change
     GREEN_THRESHOLD = 1.0  # Percent change at or above this shows green
     RED_THRESHOLD = -1.0  # Percent change at or below this shows red
+
+    # Layout constants
+    HEADER_HEIGHT_RATIO = 0.25
+    NODE_PADDING_HORIZONTAL = 0.2
+    PERIOD_LABEL_GAP = 0.25
+    PERIOD_BOTTOM_MARGIN = 0.25
+    DIVIDER_HORIZONTAL_INSET = 0.2
+    DIVIDER_VERTICAL_OFFSET = 0.025
+    INFO_ROW_COUNT = 3
+    INFO_ROW_SPACING_SCALE = 0.75
+    DATA_SECTION_PADDING_TOP = 0.2
+    DATA_SECTION_PADDING_BOTTOM = 0.1
 
     @staticmethod
     def _get_color(percent_change: float) -> str:
@@ -615,7 +876,6 @@ class DetailedTreeNode(TreeNode):
         contribution = self._data.get("contribution")
         # Styling constants
         corner_radius = 0.15
-        header_height_ratio = 0.25
         header_color = self._get_color(percent)
         header_text_color = "white"
         data_bg_color = "white"
@@ -630,33 +890,8 @@ class DetailedTreeNode(TreeNode):
         regular_font = get_font_properties(style.label_font)
 
         # Title section (colored header)
-        title_section_height = self.NODE_HEIGHT * header_height_ratio
+        title_section_height = self.NODE_HEIGHT * self.HEADER_HEIGHT_RATIO
         data_section_height = self.NODE_HEIGHT - title_section_height
-
-        # Layout configuration based on visual structure (all values are fixed/absolute)
-        layout = {
-            "node": {
-                "padding_left": 0.2,
-                "padding_right": 0.2,
-            },
-            "data_section": {
-                "padding_top": 0.2,  # Space above period labels
-                "padding_bottom": 0.1,  # Space below last info row
-                "period_subsection": {
-                    "previous_period_x": (self.NODE_WIDTH / 2) + 0.2,  # X position for "Previous Period" column
-                    "label_row_gap": 0.25,  # Vertical gap from labels to metrics
-                    "bottom_margin": 0.25,  # Space below period metrics before divider
-                },
-                "divider": {
-                    "horizontal_inset": 0.2,  # Padding on left/right of divider line
-                    "vertical_offset": 0.025,  # Fine-tune vertical position
-                },
-                "info_subsection": {
-                    "row_count": 3,  # Number of info rows
-                    "row_spacing_scale": 0.75,  # Scale factor for vertical spacing between rows
-                },
-            },
-        }
         # Render title section box (border matches header color for seamless appearance)
         title_box = BaseRoundedBox(
             xy=(self.x, self.y + self.NODE_HEIGHT - title_section_height),
@@ -684,9 +919,9 @@ class DetailedTreeNode(TreeNode):
         ax.add_patch(data_section_box)
 
         # Calculate horizontal positions
-        content_left_x = self.x + layout["node"]["padding_left"]
-        previous_period_x = self.x + layout["data_section"]["period_subsection"]["previous_period_x"]
-        content_right_x = self.x + self.NODE_WIDTH - layout["node"]["padding_right"]
+        content_left_x = self.x + self.NODE_PADDING_HORIZONTAL
+        previous_period_x = self.x + (self.NODE_WIDTH / 2) + self.NODE_PADDING_HORIZONTAL
+        content_right_x = self.x + self.NODE_WIDTH - self.NODE_PADDING_HORIZONTAL
 
         # Render title text
         ax.text(
@@ -714,18 +949,13 @@ class DetailedTreeNode(TreeNode):
         )
 
         # Period subsection: labels and metrics
-        period_labels_y = data_section_top - layout["data_section"]["padding_top"]
-        period_metrics_y = period_labels_y - layout["data_section"]["period_subsection"]["label_row_gap"]
+        period_labels_y = data_section_top - self.DATA_SECTION_PADDING_TOP
+        period_metrics_y = period_labels_y - self.PERIOD_LABEL_GAP
 
         # Divider line between period and info subsections
-        divider_y = (
-            period_metrics_y
-            - layout["data_section"]["period_subsection"]["bottom_margin"]
-            + layout["data_section"]["divider"]["vertical_offset"]
-        )
-        divider_inset = layout["data_section"]["divider"]["horizontal_inset"]
+        divider_y = period_metrics_y - self.PERIOD_BOTTOM_MARGIN + self.DIVIDER_VERTICAL_OFFSET
         ax.plot(
-            [self.x + divider_inset, self.x + self.NODE_WIDTH - divider_inset],
+            [self.x + self.DIVIDER_HORIZONTAL_INSET, self.x + self.NODE_WIDTH - self.DIVIDER_HORIZONTAL_INSET],
             [divider_y, divider_y],
             color=border_color,
             linewidth=1,
@@ -769,12 +999,12 @@ class DetailedTreeNode(TreeNode):
         # Calculate remaining height for info subsection
         info_section_height = (
             data_section_height
-            - layout["data_section"]["padding_top"]
-            - layout["data_section"]["period_subsection"]["label_row_gap"]
-            - layout["data_section"]["period_subsection"]["bottom_margin"]
-            - layout["data_section"]["padding_bottom"]
+            - self.DATA_SECTION_PADDING_TOP
+            - self.PERIOD_LABEL_GAP
+            - self.PERIOD_BOTTOM_MARGIN
+            - self.DATA_SECTION_PADDING_BOTTOM
         )
-        info_row_height = info_section_height / layout["data_section"]["info_subsection"]["row_count"]
+        info_row_height = info_section_height / self.INFO_ROW_COUNT
 
         # Render info subsection rows (Diff, Pct Diff, Contribution)
         info_rows = [
@@ -786,9 +1016,7 @@ class DetailedTreeNode(TreeNode):
             info_rows.append(("Contribution", contribution))
 
         for i, (label, metric) in enumerate(info_rows):
-            info_row_y = divider_y - info_row_height * (
-                i + layout["data_section"]["info_subsection"]["row_spacing_scale"]
-            )
+            info_row_y = divider_y - info_row_height * (i + self.INFO_ROW_SPACING_SCALE)
             # Label on left
             ax.text(
                 content_left_x,
