@@ -1360,12 +1360,21 @@ a product might have high sales but low margin, or a supplier might offer great 
 - **Store Performance Assessment**: Rank stores using sales per sq ft, conversion rates, labor productivity, and NPS
 - **Category Management**: Prioritize categories for space allocation using growth, profitability, and market share
 
+**Group-Based Ranking:**
+
+The module supports both global ranking (across entire dataset) and group-based ranking (within categories):
+
+- **Global Ranking**: Rank all products together regardless of category
+- **Group-Based Ranking**: Rank products within each category (electronics vs electronics, apparel vs apparel)
+- **Use Cases**: Category management, regional store performance, supplier evaluation by specialization
+
 **Business Value:**
 
 - Removes bias through systematic multi-factor evaluation
 - Scales to thousands of products/stores/suppliers simultaneously
 - Provides transparent methodology stakeholders can trust
 - Enables clear cut-off decisions based on composite performance
+- Supports fair comparison within relevant peer groups
 
 **Aggregation Strategies:**
 
@@ -1382,12 +1391,13 @@ Example:
 import pandas as pd
 from pyretailscience.analysis.composite_rank import CompositeRank
 
-# Create sample data for products
+# Create sample data for products with categories
 df = pd.DataFrame({
-    "product_id": [1, 2, 3, 4, 5],
-    "spend": [100, 150, 75, 200, 125],
-    "customers": [20, 30, 15, 40, 25],
-    "spend_per_customer": [5.0, 5.0, 5.0, 5.0, 5.0],
+    "product_id": [1, 2, 3, 4, 5, 6],
+    "product_category": ["Electronics", "Electronics", "Electronics", "Apparel", "Apparel", "Apparel"],
+    "spend": [100, 150, 75, 200, 125, 80],
+    "customers": [20, 30, 15, 40, 25, 18],
+    "spend_per_customer": [5.0, 5.0, 5.0, 5.0, 5.0, 4.4],
 })
 
 # Create CompositeRank with multiple columns
@@ -1399,19 +1409,21 @@ cr = CompositeRank(
         ("spend_per_customer", "desc") # Higher spend per customer is better
     ],
     agg_func="mean",     # Use mean to aggregate ranks
-    ignore_ties=False    # Keep ties (rows with same values get same rank)
+    ignore_ties=False,    # Keep ties (rows with same values get same rank)
+    group_col="product_category"  # Rank within categories
 )
 
-cr.df.sort_values("composite_rank")
+cr.df.sort_values(["product_category", "composite_rank"])
 ```
 <!-- markdownlint-disable MD013 -->
-| product_id | spend | customers | spend_per_customer | spend_rank | customers_rank | spend_per_customer_rank | composite_rank |
-|:-----------|------:|----------:|-------------------:|----------:|--------------:|-----------------------:|---------------:|
-| 4          | 200   | 40        | 5.0                | 1         | 1             | 1                      | 1.0            |
-| 2          | 150   | 30        | 5.0                | 2         | 2             | 1                      | 1.67           |
-| 5          | 125   | 25        | 5.0                | 3         | 3             | 1                      | 2.33           |
-| 1          | 100   | 20        | 5.0                | 4         | 4             | 1                      | 3.0            |
-| 3          | 75    | 15        | 5.0                | 5         | 5             | 1                      | 3.67           |
+| product_id | product_category | spend | customers | spend_per_customer | spend_rank | customers_rank | spend_per_customer_rank | composite_rank |
+|:-----------|-----------------:|------:|----------:|-------------------:|-----------:|---------------:|------------------------:|---------------:|
+| 4          | Apparel          | 200   | 40        | 5.0                | 1          | 1              | 1                       | 1.0            |
+| 5          | Apparel          | 125   | 25        | 5.0                | 2          | 2              | 1                       | 1.67           |
+| 6          | Apparel          | 80    | 18        | 4.4                | 3          | 3              | 3                       | 3.0            |
+| 2          | Electronics      | 150   | 30        | 5.0                | 1          | 1              | 1                       | 1.0            |
+| 1          | Electronics      | 100   | 20        | 5.0                | 2          | 2              | 1                       | 1.67           |
+| 3          | Electronics      | 75    | 15        | 5.0                | 3          | 3              | 1                       | 2.33           |
 <!-- markdownlint-enable MD013 -->
 
 ## Utils
