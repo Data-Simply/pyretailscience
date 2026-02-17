@@ -26,6 +26,7 @@ inform strategic decision-making.
 """
 
 import ibis
+import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 
@@ -97,29 +98,29 @@ def calc_tree_kpis(
         )
 
         # Percentage change calculations
-        df[col + "_" + get_option("column.suffix.percent_difference")] = (
-            df[col + "_" + get_option("column.suffix.difference")]
-            / df[col + "_" + get_option("column.suffix.period_1")]
-        )
+        p1_col = df[col + "_" + get_option("column.suffix.period_1")]
+        df[col + "_" + get_option("column.suffix.percent_difference")] = df[
+            col + "_" + get_option("column.suffix.difference")
+        ] / p1_col.replace(0, np.nan)
 
     # Calculate price elasticity
     if cols.agg.unit_qty in df_cols:
-        df[cols.calc.price_elasticity] = (
-            (df[cols.agg.unit_qty_p2] - df[cols.agg.unit_qty_p1])
-            / ((df[cols.agg.unit_qty_p2] + df[cols.agg.unit_qty_p1]) / 2)
-        ) / (
-            (df[cols.calc.price_per_unit_p2] - df[cols.calc.price_per_unit_p1])
-            / ((df[cols.calc.price_per_unit_p2] + df[cols.calc.price_per_unit_p1]) / 2)
-        )
+        qty_avg = ((df[cols.agg.unit_qty_p2] + df[cols.agg.unit_qty_p1]) / 2).replace(0, np.nan)
+        qty_pct_change = (df[cols.agg.unit_qty_p2] - df[cols.agg.unit_qty_p1]) / qty_avg
+
+        price_avg = ((df[cols.calc.price_per_unit_p2] + df[cols.calc.price_per_unit_p1]) / 2).replace(0, np.nan)
+        price_pct_change = (df[cols.calc.price_per_unit_p2] - df[cols.calc.price_per_unit_p1]) / price_avg
+
+        df[cols.calc.price_elasticity] = qty_pct_change / price_pct_change.replace(0, np.nan)
 
     # Calculate frequency elasticity
-    df[cols.calc.frequency_elasticity] = (
-        (df[cols.calc.trans_per_cust_p2] - df[cols.calc.trans_per_cust_p1])
-        / ((df[cols.calc.trans_per_cust_p2] + df[cols.calc.trans_per_cust_p1]) / 2)
-    ) / (
-        (df[cols.calc.spend_per_cust_p2] - df[cols.calc.spend_per_cust_p1])
-        / ((df[cols.calc.spend_per_cust_p2] + df[cols.calc.spend_per_cust_p1]) / 2)
-    )
+    freq_avg = ((df[cols.calc.trans_per_cust_p2] + df[cols.calc.trans_per_cust_p1]) / 2).replace(0, np.nan)
+    freq_pct_change = (df[cols.calc.trans_per_cust_p2] - df[cols.calc.trans_per_cust_p1]) / freq_avg
+
+    spend_avg = ((df[cols.calc.spend_per_cust_p2] + df[cols.calc.spend_per_cust_p1]) / 2).replace(0, np.nan)
+    spend_pct_change = (df[cols.calc.spend_per_cust_p2] - df[cols.calc.spend_per_cust_p1]) / spend_avg
+
+    df[cols.calc.frequency_elasticity] = freq_pct_change / spend_pct_change.replace(0, np.nan)
 
     # Contribution calculations
     df[cols.agg.customer_id_contrib] = (
@@ -168,10 +169,10 @@ def calc_tree_kpis(
             cols.calc.units_per_trans,
             cols.calc.price_per_unit,
         ]:
-            df[col + "_" + get_option("column.suffix.percent_difference")] = (
-                df[col + "_" + get_option("column.suffix.difference")]
-                / df[col + "_" + get_option("column.suffix.period_1")]
-            )
+            p1_col = df[col + "_" + get_option("column.suffix.period_1")]
+            df[col + "_" + get_option("column.suffix.percent_difference")] = df[
+                col + "_" + get_option("column.suffix.difference")
+            ] / p1_col.replace(0, np.nan)
 
         df[cols.calc.price_per_unit_contrib] = (
             (

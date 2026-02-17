@@ -3,6 +3,7 @@
 import math
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
@@ -642,3 +643,127 @@ class TestRevenueTree:
         # Test that out of bounds raises IndexError
         with pytest.raises(IndexError):
             rt.draw_tree(row_index=2)
+
+    @pytest.mark.parametrize("include_quantity", [True, False])
+    def test_pct_diff_returns_nan_when_p1_is_zero(self, cols: ColumnHelper, include_quantity: bool):
+        """Test that percentage difference produces NaN instead of inf when period 1 values are zero."""
+        df = pd.DataFrame(
+            {
+                cols.agg.customer_id: [0, 5],
+                cols.agg.transaction_id: [0, 5],
+                cols.agg.unit_spend: [0.0, 500.0],
+            },
+            index=["p1", "p2"],
+        )
+
+        if include_quantity:
+            df[cols.agg.unit_qty] = [0, 20]
+
+        p1_index = [True, False]
+        p2_index = [False, True]
+
+        result = calc_tree_kpis(df, p1_index, p2_index)
+
+        # All percentage difference columns should be NaN (not inf) when p1 is zero
+        for pct_col in [
+            cols.agg.customer_id_pct_diff,
+            cols.agg.transaction_id_pct_diff,
+            cols.agg.unit_spend_pct_diff,
+            cols.calc.spend_per_cust_pct_diff,
+            cols.calc.spend_per_trans_pct_diff,
+            cols.calc.trans_per_cust_pct_diff,
+        ]:
+            val = result[pct_col].iloc[0]
+            assert math.isnan(val), f"{pct_col} should be NaN when p1 is zero, got {val}"
+
+        if include_quantity:
+            for pct_col in [
+                cols.agg.unit_qty_pct_diff,
+                cols.calc.units_per_trans_pct_diff,
+                cols.calc.price_per_unit_pct_diff,
+            ]:
+                val = result[pct_col].iloc[0]
+                assert math.isnan(val), f"{pct_col} should be NaN when p1 is zero, got {val}"
+
+    @pytest.mark.parametrize(
+        ("customer_id", "transaction_id", "unit_spend", "unit_qty"),
+        [
+            pytest.param([3, 3], [3, 3], [900.0, 900.0], [10, 10], id="identical_periods"),
+            pytest.param([0, 0], [0, 0], [0.0, 0.0], [0, 0], id="all_zeros"),
+        ],
+    )
+    def test_elasticity_returns_nan_for_zero_divisors(
+        self,
+        cols: ColumnHelper,
+        customer_id,
+        transaction_id,
+        unit_spend,
+        unit_qty,
+    ):
+        """Test that elasticity produces NaN instead of inf when divisors are zero.
+
+        Covers identical periods (0/0 from zero pct change) and all-zero values (zero midpoint averages).
+        """
+        df = pd.DataFrame(
+            {
+                cols.agg.customer_id: customer_id,
+                cols.agg.transaction_id: transaction_id,
+                cols.agg.unit_spend: unit_spend,
+                cols.agg.unit_qty: unit_qty,
+            },
+            index=["p1", "p2"],
+        )
+
+        result = calc_tree_kpis(df, [True, False], [False, True])
+
+        freq_elasticity = result[cols.calc.frequency_elasticity].iloc[0]
+        assert math.isnan(freq_elasticity), f"frequency_elasticity should be NaN, got {freq_elasticity}"
+
+        price_elasticity = result[cols.calc.price_elasticity].iloc[0]
+        assert math.isnan(price_elasticity), f"price_elasticity should be NaN, got {price_elasticity}"
+
+    def test_no_inf_values_with_p2_only_group(self, cols: ColumnHelper):
+        """Test that a group with data only in P2 (new product) produces NaN, not inf."""
+        df = pd.DataFrame(
+            {
+                "group_id": [1, 1, 2],
+                cols.customer_id: [1, 2, 3],
+                cols.transaction_id: [1, 2, 3],
+                cols.unit_spend: [100.0, 200.0, 300.0],
+                cols.unit_qty: [5, 10, 15],
+                "period": ["P1", "P2", "P2"],
+            },
+        )
+
+        rt = RevenueTree(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+            group_col="group_id",
+        )
+
+        # Group 2 has no P1 data — all p1 values are 0 after fillna
+        group2_data = rt.df.loc[2]
+
+        # Percentage-diff columns should be NaN (not inf) when P1 is zero — they divide by P1 directly
+        expected_nan_cols = [
+            cols.agg.customer_id_pct_diff,
+            cols.agg.transaction_id_pct_diff,
+            cols.agg.unit_spend_pct_diff,
+            cols.calc.spend_per_cust_pct_diff,
+            cols.calc.spend_per_trans_pct_diff,
+            cols.calc.trans_per_cust_pct_diff,
+            cols.agg.unit_qty_pct_diff,
+            cols.calc.units_per_trans_pct_diff,
+            cols.calc.price_per_unit_pct_diff,
+        ]
+        for col_name in expected_nan_cols:
+            val = group2_data[col_name]
+            assert math.isnan(val), f"{col_name} should be NaN for P2-only group, got {val}"
+
+        # Elasticity columns use midpoint averages (p1+p2)/2, so they remain finite when only P2 has data
+        for col_name in [cols.calc.frequency_elasticity, cols.calc.price_elasticity]:
+            val = group2_data[col_name]
+            assert not np.isinf(val), f"{col_name} should not be inf for P2-only group, got {val}"
+            assert not math.isnan(val), f"{col_name} should not be NaN for P2-only group, got {val}"

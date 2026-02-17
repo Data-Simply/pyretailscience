@@ -192,10 +192,8 @@ class PurchasesPerCustomer:
         }
 
         if comparison not in ops:
-            raise ValueError(
-                "Comparison must be one of 'less_than', 'less_than_equal_to', 'equal_to', 'not_equal_to',",
-                "'greater_than', 'greater_than_equal_to'",
-            )
+            msg = f"Comparison must be one of {', '.join(repr(k) for k in ops)}"
+            raise ValueError(msg)
 
         return len(self.cust_purchases_s[ops[comparison](self.cust_purchases_s, number_of_purchases)]) / len(
             self.cust_purchases_s,

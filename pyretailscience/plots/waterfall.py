@@ -27,6 +27,7 @@ performance tracking, and visualizing changes over time.
 - **format_data_labels()**: A helper function used to format the data labels according to the specified format (absolute, percentage, both).
 """
 
+import warnings
 from typing import Literal
 
 import pandas as pd
@@ -181,11 +182,31 @@ def format_data_labels(
     label_format: str,
     decimals: int,
 ) -> list[str]:
-    """Format the data labels based on the specified format."""
+    """Format the data labels based on the specified format.
+
+    Args:
+        amounts (pd.Series): The amounts to format.
+        total_change (float): The total change (sum of amounts) used for percentage calculations.
+        label_format (str): The format of the data labels ("absolute", "percentage", or "both").
+        decimals (int): The number of decimal places for formatting.
+
+    Returns:
+        list[str]: A list of formatted data label strings.
+    """
     if label_format == "absolute":
-        return amounts.apply(lambda x: gu.human_format(x, decimals=decimals + 1))
+        return amounts.apply(lambda x: gu.human_format(x, decimals=decimals + 1)).tolist()
+
+    if total_change == 0:
+        warnings.warn(
+            "Total change is zero, cannot calculate percentages. Percentage labels will be omitted.",
+            UserWarning,
+            stacklevel=2,
+        )
+        if label_format == "percentage":
+            return [""] * len(amounts)
+        return [gu.human_format(x, decimals=decimals + 1) for x in amounts]
 
     if label_format == "percentage":
-        return amounts.apply(lambda x: f"{x / total_change:.0%}")
+        return amounts.apply(lambda x: f"{x / total_change:.0%}").tolist()
 
     return [f"{gu.human_format(x, decimals=decimals + 1)} ({x / total_change:.0%})" for x in amounts]
