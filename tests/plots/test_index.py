@@ -192,6 +192,105 @@ def test_get_indexes_with_ibis_table_input():
     assert not result.empty
 
 
+class TestGetIndexesZeroDivision:
+    """Tests for get_indexes division by zero edge cases.
+
+    Verifies that when denominators are zero (overall total, subset total,
+    or group proportion), the code returns NaN instead of raising errors.
+    """
+
+    @pytest.mark.parametrize(
+        "df_data",
+        [
+            pytest.param(
+                {
+                    "region": ["North", "South"],
+                    "category": ["Electronics", "Electronics"],
+                    "sales": [0, 0],
+                },
+                id="zero_overall_total",
+            ),
+            pytest.param(
+                {
+                    "region": ["North", "South", "North", "South"],
+                    "category": ["Electronics", "Electronics", "Grocery", "Grocery"],
+                    "sales": [0, 0, 100, 200],
+                },
+                id="zero_subset_total",
+            ),
+        ],
+    )
+    def test_returns_all_nan_when_totals_are_zero(self, df_data):
+        """Test that get_indexes produces all NaN index values when totals are zero."""
+        df = pd.DataFrame(df_data)
+
+        result = get_indexes(
+            df,
+            value_to_index="Electronics",
+            index_col="category",
+            value_col="sales",
+            group_col="region",
+        )
+        assert result["index"].isna().all(), "Expected all NaN index values when totals are zero"
+
+    def test_zero_overall_total_with_subgroup_returns_nan(self):
+        """Test that get_indexes produces NaN index when a subgroup's overall total is zero."""
+        df = pd.DataFrame(
+            {
+                "store": ["Mall", "Mall", "Mall", "Mall", "Outlet", "Outlet", "Outlet", "Outlet"],
+                "region": ["North", "South", "North", "South", "North", "South", "North", "South"],
+                "category": [
+                    "Electronics",
+                    "Electronics",
+                    "Grocery",
+                    "Grocery",
+                    "Electronics",
+                    "Electronics",
+                    "Grocery",
+                    "Grocery",
+                ],
+                "sales": [10, 20, 30, 40, 0, 0, 0, 0],
+            },
+        )
+
+        result = get_indexes(
+            df,
+            value_to_index="Electronics",
+            index_col="category",
+            value_col="sales",
+            group_col="region",
+            index_subgroup_col="store",
+        )
+        mall_rows = result[result["store"] == "Mall"]
+        assert not mall_rows["index"].isna().any(), "Expected valid index for subgroup with non-zero overall total"
+
+        outlet_rows = result[result["store"] == "Outlet"]
+        assert outlet_rows["index"].isna().all(), "Expected NaN index for subgroup with zero overall total"
+
+    def test_zero_group_proportion_returns_nan(self):
+        """Test that get_indexes produces NaN for a group with zero overall proportion."""
+        df = pd.DataFrame(
+            {
+                "region": ["North", "South", "East"],
+                "category": ["Electronics", "Electronics", "Electronics"],
+                "sales": [100, 200, 0],
+            },
+        )
+
+        result = get_indexes(
+            df,
+            value_to_index="Electronics",
+            index_col="category",
+            value_col="sales",
+            group_col="region",
+        )
+        east_row = result[result["region"] == "East"]
+        assert east_row["index"].isna().all(), "Expected NaN index for group with zero proportion_overall"
+
+        non_zero_rows = result[result["region"] != "East"]
+        assert not non_zero_rows["index"].isna().any(), "Expected valid index for groups with non-zero proportions"
+
+
 class TestIndexPlot:
     """Tests for the index_plot function."""
 

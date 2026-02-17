@@ -220,9 +220,13 @@ class CustomerDecisionHierarchy:
         d = np.count_nonzero(~bought_product_1 & ~bought_product_2)
 
         # Calculate Yule's Q coefficient
-        q = (a * d - b * c) / (a * d + b * c)
+        denominator = a * d + b * c
+        if denominator == 0:
+            # Both a*d and b*c are zero, making Q mathematically undefined (0/0).
+            # Return 0.0 (no association) because NaN would break scipy's linkage() downstream.
+            return 0.0
 
-        return q  # noqa: RET504
+        return (a * d - b * c) / denominator
 
     def _get_yules_q_distances(self) -> float:
         """Calculate the Yules Q distances between pairs of products.

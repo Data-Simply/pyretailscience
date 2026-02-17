@@ -9,7 +9,10 @@
 - Run tests with coverage: `uv run pytest --cov=pyretailscience`
 - Lint code: `uv run ruff check .`
 - Format code: `uv run ruff format .`
+- Run Python scripts: `uv run python script.py`
 - Run notebook: `uv run jupyter nbconvert --to notebook --execute my_notebook.ipynb`
+
+**Note**: Always use `uv run` to execute Python commands to ensure the correct virtual environment and dependencies are used.
 
 ## Code Style Guidelines
 
@@ -39,6 +42,9 @@
   error messages
 - Use ternary operators for simple conditional assignments (e.g., `status = "active" if count > 0 else "inactive"`
   instead of multi-line if/else blocks)
+- Avoid using `Any` or `object` types in annotations; determine and use the correct specific type whenever possible
+- Use `TYPE_CHECKING` blocks for type-only imports to avoid runtime import overhead. Do not use `noqa: TC003` to
+  suppress these warnings; instead, properly move type-only imports into `if TYPE_CHECKING:` blocks
 
 ## Test Writing Guidelines
 
@@ -91,6 +97,10 @@
   assertions (True == True)
 - **Don't test implementation details**: Avoid asserting internal state values or data structures. Testing private
   method behavior/outputs is OK; testing how data is stored internally is not.
+- **Don't test configuration defaults**: Avoid tests that only verify default values match their definitions (e.g.,
+  `assert get_option("foo") == "bar"` when you just set `"foo": "bar"` in the defaults dictionary). These are
+  tautological and can only fail from typos noticed immediately. Instead, test that configured values are actually
+  *used* by package functionality through integration tests.
 - **Don't use generic test data**: Use domain-specific examples (retail customer data, not "A", "B", "C")
 - **Don't mismatch test names and assertions**: If test claims to verify sorting, actually assert sort order. If it
   claims validation, verify validation logic works.
@@ -106,21 +116,3 @@ Before committing test code, verify each test meets these criteria:
 5. **No substantial duplication**: Similar tests use parametrize or are combined
 6. **Uses realistic data**: Test data reflects retail domain (customer IDs, prices, stores, etc.)
 7. **Minimal mocking**: Only external dependencies are mocked, not internal package logic
-
-## GitHub PR Review Comments
-
-When asked to review a GitHub PR comment (e.g., a URL like
-`https://github.com/Data-Simply/pyretailscience/pull/414#issuecomment-3592454545`), extract the comment ID from the URL
-and fetch the comment content using the `gh` CLI:
-
-```bash
-gh api repos/Data-Simply/pyretailscience/issues/comments/<COMMENT_ID>
-```
-
-For example, given the URL `https://github.com/Data-Simply/pyretailscience/pull/414#issuecomment-3592454545`, run:
-
-```bash
-gh api repos/Data-Simply/pyretailscience/issues/comments/3592454545
-```
-
-This returns the comment body and metadata, which you can then use to review and respond to the feedback

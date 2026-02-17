@@ -400,13 +400,13 @@ def get_indexes(
     overall_agg = table.group_by(group_cols).aggregate(value=agg_fn(table[value_col]))
 
     if index_subgroup_col is None:
-        overall_total = overall_agg.value.sum().execute()
-        overall_props = overall_agg.mutate(proportion_overall=overall_agg.value / overall_total)
+        overall_total = overall_agg.value.sum()
+        overall_props = overall_agg.mutate(proportion_overall=overall_agg.value / overall_total.nullif(0))
     else:
         overall_total = overall_agg.group_by(index_subgroup_col).aggregate(total=lambda t: t.value.sum())
         overall_props = (
             overall_agg.join(overall_total, index_subgroup_col)
-            .mutate(proportion_overall=lambda t: t.value / t.total)
+            .mutate(proportion_overall=lambda t: t.value / t.total.nullif(0))
             .drop("total")
         )
 
@@ -415,7 +415,7 @@ def get_indexes(
 
     if index_subgroup_col is None:
         subset_total = subset_agg.value.sum().name("total")
-        subset_props = subset_agg.mutate(proportion=subset_agg.value / subset_total)
+        subset_props = subset_agg.mutate(proportion=subset_agg.value / subset_total.nullif(0))
     else:
         subset_total = subset_agg.group_by(index_subgroup_col).aggregate(total=lambda t: t.value.sum())
         subset_props = (
@@ -428,7 +428,7 @@ def get_indexes(
     result = (
         subset_props.join(overall_props, group_cols)
         .mutate(
-            index=lambda t: (t.proportion / t.proportion_overall * 100) - offset,
+            index=lambda t: (t.proportion / t.proportion_overall.nullif(0) * 100) - offset,
         )
         .order_by(group_cols)
     )

@@ -45,6 +45,27 @@ class TestCustomerDecisionHierarchy:
 
         assert rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2) == expected_q
 
+    @pytest.mark.parametrize(
+        ("bought_product_1", "bought_product_2"),
+        [
+            pytest.param(
+                np.array([True, True, True]),
+                np.array([True, True, True]),
+                id="all_customers_buy_both",
+            ),
+            pytest.param(
+                np.array([True, True, True]),
+                np.array([False, False, False]),
+                id="no_overlap_no_neither",
+            ),
+        ],
+    )
+    def test_calculate_yules_q_zero_denominator_returns_zero(self, bought_product_1, bought_product_2):
+        """Test that Yule's Q returns 0.0 when the denominator is zero."""
+        result = rp.CustomerDecisionHierarchy._calculate_yules_q(bought_product_1, bought_product_2)
+
+        assert result == 0.0
+
     def test_get_yules_q_distances(self):
         """Test that the function returns the correct Yules Q distances."""
         bought_product_1 = np.array([1, 0, 1, 0, 0, 1, 1, 0, 1], dtype=bool)

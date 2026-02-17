@@ -1,11 +1,14 @@
 """Tests for the waterfall plot module."""
 
+import warnings
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import pytest
 from matplotlib.colors import to_hex
 
 from pyretailscience.plots.styles.colors import COLORS
-from pyretailscience.plots.waterfall import plot
+from pyretailscience.plots.waterfall import format_data_labels, plot
 
 
 class TestWaterfallPlot:
@@ -107,3 +110,77 @@ class TestWaterfallPlot:
 
         with pytest.raises(ValueError):
             plot(amounts, labels, data_label_format="invalid_format")
+
+    @pytest.mark.parametrize("label_format", ["percentage", "both"])
+    def test_zero_total_change_does_not_raise(self, label_format):
+        """Test that offsetting amounts (zero total) do not raise ZeroDivisionError."""
+        amounts = [500.0, -300.0, -200.0]
+        labels = ["Revenue", "Cost of Goods", "Operating Expenses"]
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            result_ax = plot(amounts, labels, data_label_format=label_format)
+
+        assert isinstance(result_ax, plt.Axes)
+        assert any("Total change is zero" in str(w.message) for w in caught)
+
+
+class TestFormatDataLabels:
+    """Tests for the format_data_labels function."""
+
+    @pytest.fixture
+    def sample_amounts(self):
+        """Return a sample Series of retail transaction amounts."""
+        return pd.Series([500.0, -300.0, 200.0])
+
+    def test_percentage_format_with_zero_total_returns_empty_strings(self):
+        """Test that percentage format returns empty strings when total change is zero."""
+        amounts = pd.Series([500.0, -300.0, -200.0])
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            result = format_data_labels(amounts, total_change=0, label_format="percentage", decimals=0)
+
+        assert result == ["", "", ""]
+        assert len(caught) == 1
+        assert "Total change is zero" in str(caught[0].message)
+
+    def test_both_format_with_zero_total_returns_absolute_values_only(self):
+        """Test that 'both' format returns only absolute values when total change is zero."""
+        amounts = pd.Series([500.0, -300.0, -200.0])
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            result = format_data_labels(amounts, total_change=0, label_format="both", decimals=0)
+
+        assert result == ["500", "-300", "-200"]
+        assert len(caught) == 1
+        assert "Total change is zero" in str(caught[0].message)
+
+    def test_absolute_format_unaffected_by_zero_total(self):
+        """Test that absolute format works normally regardless of total change."""
+        amounts = pd.Series([500.0, -300.0, -200.0])
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            result = format_data_labels(amounts, total_change=0, label_format="absolute", decimals=0)
+
+        assert result == ["500", "-300", "-200"]
+        # No warning should be emitted for absolute format
+        assert not any("Total change is zero" in str(w.message) for w in caught)
+
+    def test_percentage_format_with_nonzero_total(self, sample_amounts):
+        """Test that percentage format calculates correctly with a valid total."""
+        total = sample_amounts.sum()  # 400.0
+        result = format_data_labels(sample_amounts, total_change=total, label_format="percentage", decimals=0)
+
+        assert result[0] == "125%"
+        assert result[1] == "-75%"
+        assert result[2] == "50%"
+
+    def test_both_format_with_nonzero_total(self, sample_amounts):
+        """Test that 'both' format includes absolute value and percentage with a valid total."""
+        total = sample_amounts.sum()  # 400.0
+        result = format_data_labels(sample_amounts, total_change=total, label_format="both", decimals=0)
+
+        assert list(result) == ["500 (125%)", "-300 (-75%)", "200 (50%)"]
