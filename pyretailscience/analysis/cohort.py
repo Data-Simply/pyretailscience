@@ -37,6 +37,7 @@ marketing strategies, and drive long-term growth.
 from typing import ClassVar
 
 import ibis
+import numpy as np
 import pandas as pd
 
 from pyretailscience.options import ColumnHelper
@@ -173,7 +174,8 @@ class CohortAnalysis:
         )
 
         if percentage:
-            cohort_analysis_table = cohort_analysis_table.div(cohort_analysis_table.iloc[0], axis=1).round(2)
+            first_period = cohort_analysis_table[0].replace(0, np.nan)
+            cohort_analysis_table = cohort_analysis_table.div(first_period, axis=0).round(2)
 
         cohort_analysis_table = cohort_analysis_table.fillna(0)
         cohort_analysis_table = self._fill_cohort_gaps(cohort_analysis_table, period)

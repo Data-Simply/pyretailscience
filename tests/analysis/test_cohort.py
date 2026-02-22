@@ -48,7 +48,7 @@ class TestCohortAnalysis:
                 2: [2.0, 1.0, 0.0, 0.0, 0.0],
                 3: [1.0, 0.0, 0.0, 0.0, 0.0],
             },
-            index=pd.to_datetime(["2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01", "2023-05-01"]),
+            index=pd.date_range("2023-01-01", periods=5, freq="MS"),
         )
 
         expected_df.index.name = "min_period_shopped"
@@ -66,7 +66,6 @@ class TestCohortAnalysis:
             percentage=False,
         )
         result = cohort.df
-        expected_results_df.index = result.index.astype("datetime64[ns]")
         pdt.assert_frame_equal(result, expected_results_df)
 
     def test_missing_columns(self):
@@ -91,17 +90,77 @@ class TestCohortAnalysis:
                 period=invalid_period,
             )
 
-    def test_cohort_percentage(self, transactions_df):
-        """Tests cohort analysis with percentage=True."""
+    def test_cohort_percentage_normalizes_each_cohort_to_own_period_zero(self, transactions_df):
+        """Tests that percentage=True normalizes each cohort row by its own period-0 value.
+
+        Rows for months with no first-time customers (2023-03, 2023-04) are gap-filled
+        with zeros after the percentage calculation.
+        """
         cohort = CohortAnalysis(
             df=transactions_df,
+            aggregation_column="unit_spend",
+            agg_func="nunique",
+            period="month",
+            percentage=True,
+        )
+        result = cohort.df
+
+        expected_df = pd.DataFrame(
+            {
+                0: [1.0, 1.0, 0.0, 0.0, 1.0],
+                1: [0.5, 1.0, 0.0, 0.0, 0.5],
+                2: [1.0, 1.0, 0.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0, 0.0, 0.0],
+            },
+            index=pd.date_range("2023-01-01", periods=5, freq="MS"),
+        )
+        expected_df.index.name = "min_period_shopped"
+        expected_df.columns.name = "period_since"
+
+        pdt.assert_frame_equal(result, expected_df)
+
+    def test_cohort_percentage_with_zero_period_zero_sum_produces_zeros(self):
+        """Tests that percentage=True produces zeros when a cohort's period-0 sum is zero.
+
+        When using agg_func='sum', a cohort's period-0 value can be zero if all
+        transactions in the first period have zero spend. The replace(0, np.nan)
+        guard prevents division-by-zero errors (NaN/inf), producing zeros instead.
+        """
+        df = pd.DataFrame(
+            {
+                "transaction_id": list(range(5)),
+                "customer_id": [1, 2, 1, 3, 3],
+                "unit_spend": [10.0, 20.0, 5.0, 0.0, 15.0],
+                "transaction_date": [
+                    datetime.date(2023, 1, 15),  # Customer 1, cohort Jan
+                    datetime.date(2023, 1, 20),  # Customer 2, cohort Jan
+                    datetime.date(2023, 2, 10),  # Customer 1, period 1
+                    datetime.date(2023, 2, 5),  # Customer 3, cohort Feb (zero spend)
+                    datetime.date(2023, 3, 1),  # Customer 3, period 1
+                ],
+            },
+        )
+
+        cohort = CohortAnalysis(
+            df=df,
             aggregation_column="unit_spend",
             agg_func="sum",
             period="month",
             percentage=True,
         )
         result = cohort.df
-        assert (result.iloc[0] <= 1).all(), "Percentage values should be between 0 and 1"
+
+        expected_df = pd.DataFrame(
+            {
+                0: [1.0, 0.0],
+                1: [0.17, 0.0],
+            },
+            index=pd.date_range("2023-01-01", periods=2, freq="MS"),
+        )
+        expected_df.index.name = "min_period_shopped"
+        expected_df.columns.name = "period_since"
+
+        pdt.assert_frame_equal(result, expected_df)
 
     def test_with_custom_column_names(self, transactions_df):
         """Test CohortAnalysis with custom column names to ensure column overrides work correctly."""
