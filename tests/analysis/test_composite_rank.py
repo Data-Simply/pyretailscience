@@ -64,24 +64,23 @@ class TestCompositeRank:
 
     def test_string_column_specs(self, simple_df):
         """Test that the class accepts string column specifications."""
-        # Create expected dataframe for ascending rank
-        expected_df = pd.DataFrame(
-            {
-                "product_id": [1, 2, 3],
-                "spend_rank": [2, 3, 1],  # Ascending: lowest values (75) get rank 1
-                "customers_rank": [2, 3, 1],  # Ascending: lowest values (15) get rank 1
-            },
-        )
-
         # Test with just column names (should default to ascending)
         cr = CompositeRank(df=simple_df, rank_cols=["spend", "customers"], agg_func="mean", ignore_ties=False)
 
-        # Sort both dataframes for comparison
-        result_subset = cr.df.sort_values("product_id").reset_index(drop=True)[
-            ["product_id", "spend_rank", "customers_rank"]
-        ]
+        result = cr.df.sort_values("product_id").reset_index(drop=True)
 
-        pd.testing.assert_frame_equal(result_subset, expected_df)
+        expected = pd.DataFrame(
+            {
+                "product_id": [1, 2, 3],
+                "spend": [100, 150, 75],
+                "customers": [20, 30, 15],
+                "spend_rank": [2, 3, 1],  # Ascending: lowest values (75) get rank 1
+                "customers_rank": [2, 3, 1],  # Ascending: lowest values (15) get rank 1
+                "composite_rank": [2.0, 3.0, 1.0],
+            },
+        )
+
+        pd.testing.assert_frame_equal(result, expected)
 
     def test_ignore_ties(self):
         """Test the behavior with the ignore_ties parameter."""
@@ -95,34 +94,42 @@ class TestCompositeRank:
         # Without ignore_ties (should have ties)
         cr_with_ties = CompositeRank(df=df, rank_cols=[("spend", "desc")], agg_func="mean", ignore_ties=False)
 
-        result_with_ties = cr_with_ties.df
-        # Create expected dataframe for tie ranks (descending)
+        result_with_ties = cr_with_ties.df.sort_values("product_id").reset_index(drop=True)
+
         expected_df = pd.DataFrame(
             {
                 "product_id": [1, 2, 3, 4],
+                "spend": [100, 100, 150, 150],
                 "spend_rank": [3, 3, 1, 1],  # Descending: [100, 100] gets rank 3, [150, 150] gets rank 1
+                "composite_rank": [3.0, 3.0, 1.0, 1.0],
             },
         )
 
-        # Sort both dataframes for comparison
-        result_subset = result_with_ties.sort_values("product_id").reset_index(drop=True)[["product_id", "spend_rank"]]
-
-        pd.testing.assert_frame_equal(result_subset, expected_df)
+        pd.testing.assert_frame_equal(result_with_ties, expected_df)
 
         # With ignore_ties (should have unique ranks)
         cr_no_ties = CompositeRank(df=df, rank_cols=[("spend", "desc")], agg_func="mean", ignore_ties=True)
 
-        # Verify all ranks are unique
-        expected_rank = 4
-        assert len(cr_no_ties.df["spend_rank"].unique()) == expected_rank
+        # Verify all ranks are unique and span the expected range
+        expected_unique_count = 4
+        assert len(cr_no_ties.df["spend_rank"].unique()) == expected_unique_count
+        assert set(cr_no_ties.df["spend_rank"]) == {1, 2, 3, 4}
+
+        # Verify ordering: products with higher spend should have lower (better) ranks
+        result = cr_no_ties.df
+        high_spend = 150
+        low_spend = 100
+        high_spend_ranks = result.loc[result["spend"] == high_spend, "spend_rank"]
+        low_spend_ranks = result.loc[result["spend"] == low_spend, "spend_rank"]
+        assert high_spend_ranks.max() < low_spend_ranks.min()
 
     @pytest.mark.parametrize(
         ("agg_func", "expected_composite_ranks"),
         [
             ("mean", [3.0, 3.6667, 3.3333, 2.3333, 2.6667]),
-            ("sum", [9.0, 11.0, 10.0, 7.0, 8.0]),
-            ("min", [2.0, 2.0, 1.0, 1.0, 2.0]),
-            ("max", [4.0, 5.0, 5.0, 5.0, 3.0]),
+            ("sum", [9, 11, 10, 7, 8]),
+            ("min", [2, 2, 1, 1, 2]),
+            ("max", [4, 5, 5, 5, 3]),
         ],
     )
     def test_different_agg_functions(self, agg_func, expected_composite_ranks):
@@ -155,27 +162,20 @@ class TestCompositeRank:
             },
         )
 
-        # Compare the relevant columns
-        result_cols = [
-            "product_id",
-            "spend",
-            "customers",
-            "profit",
-            "spend_rank",
-            "customers_rank",
-            "profit_rank",
-            "composite_rank",
-        ]
         pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("product_id").reset_index(drop=True),
-            expected[result_cols].sort_values("product_id").reset_index(drop=True),
-            check_dtype=False,
+            result,
+            expected.sort_values("product_id").reset_index(drop=True),
             rtol=1e-3,
         )
 
     @pytest.mark.parametrize(
         ("rank_cols", "agg_func", "expected_error_pattern"),
         [
+            (
+                [],
+                "mean",
+                "rank_cols must contain at least one column specification",
+            ),
             (
                 [("spend", "desc"), ("non_existent_column", "asc")],
                 "mean",
@@ -235,61 +235,12 @@ class TestCompositeRank:
         # Verify both results are the same object (cached)
         assert result1 is result2
 
-    def test_group_based_ranking(self):
-        """Test basic group-based ranking functionality."""
-        df = pd.DataFrame(
-            {
-                "product_id": [1, 2, 3, 4, 5, 6],
-                "product_category": ["Electronics", "Electronics", "Electronics", "Apparel", "Apparel", "Apparel"],
-                "sales": [1000, 800, 600, 500, 400, 300],
-                "margin_pct": [20, 25, 15, 30, 35, 25],
-            },
-        )
-
-        ranker = CompositeRank(
-            df=df,
-            rank_cols=[("sales", "desc"), ("margin_pct", "desc")],
-            agg_func="mean",
-            group_col="product_category",
-        )
-
-        result = ranker.df.sort_values("product_id").reset_index(drop=True)
-
-        # Create expected results DataFrame with correct rankings
-        expected = pd.DataFrame(
-            {
-                "product_id": [1, 2, 3, 4, 5, 6],
-                "product_category": ["Electronics", "Electronics", "Electronics", "Apparel", "Apparel", "Apparel"],
-                "sales": [1000, 800, 600, 500, 400, 300],
-                "margin_pct": [20, 25, 15, 30, 35, 25],
-                "sales_rank": [1, 2, 3, 1, 2, 3],  # Within-group ranks for sales (desc)
-                "margin_pct_rank": [2, 1, 3, 2, 1, 3],  # Within-group ranks for margin_pct (desc)
-                "composite_rank": [1.5, 1.5, 3.0, 1.5, 1.5, 3.0],  # Mean of sales_rank and margin_pct_rank
-            },
-        )
-
-        # Compare the relevant columns
-        result_cols = [
-            "product_id",
-            "product_category",
-            "sales",
-            "margin_pct",
-            "sales_rank",
-            "margin_pct_rank",
-            "composite_rank",
-        ]
-        pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("product_id").reset_index(drop=True),
-            expected[result_cols].sort_values("product_id").reset_index(drop=True),
-            check_dtype=False,
-        )
-
     def test_group_vs_global_ranking_difference(self):
         """Test that group-based ranking produces different results than global ranking."""
         df = pd.DataFrame(
             {
                 "product_id": [1, 2, 3, 4],
-                "category": ["A", "A", "B", "B"],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
                 "sales": [100, 80, 90, 70],  # Global ranks: 1, 3, 2, 4
             },
         )
@@ -316,7 +267,7 @@ class TestCompositeRank:
         expected_global = pd.DataFrame(
             {
                 "product_id": [1, 2, 3, 4],
-                "category": ["A", "A", "B", "B"],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
                 "sales": [100, 80, 90, 70],
                 "sales_rank": [1, 3, 2, 4],  # Global ranks based on sales values
                 "composite_rank": [1.0, 3.0, 2.0, 4.0],
@@ -327,7 +278,7 @@ class TestCompositeRank:
         expected_group = pd.DataFrame(
             {
                 "product_id": [1, 2, 3, 4],
-                "category": ["A", "A", "B", "B"],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
                 "sales": [100, 80, 90, 70],
                 "sales_rank": [1, 2, 1, 2],  # Within-group ranks
                 "composite_rank": [1.0, 2.0, 1.0, 2.0],
@@ -335,24 +286,20 @@ class TestCompositeRank:
         )
 
         # Compare global results
-        global_cols = ["product_id", "category", "sales", "sales_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            global_result[global_cols].sort_values("product_id").reset_index(drop=True),
-            expected_global[global_cols].sort_values("product_id").reset_index(drop=True),
-            check_dtype=False,
+            global_result,
+            expected_global.sort_values("product_id").reset_index(drop=True),
         )
 
         # Compare group results
-        group_cols = ["product_id", "category", "sales", "sales_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            group_result[group_cols].sort_values("product_id").reset_index(drop=True),
-            expected_group[group_cols].sort_values("product_id").reset_index(drop=True),
-            check_dtype=False,
+            group_result,
+            expected_group.sort_values("product_id").reset_index(drop=True),
         )
 
     def test_invalid_group_col(self, simple_df):
         """Test behavior with an invalid group column."""
-        with pytest.raises(ValueError, match="Group column 'non_existent_group' not found"):
+        with pytest.raises(ValueError, match=r"Group column\(s\) \['non_existent_group'\] not found"):
             CompositeRank(
                 df=simple_df,
                 rank_cols=[("spend", "desc")],
@@ -361,17 +308,28 @@ class TestCompositeRank:
             )
 
     @pytest.mark.parametrize(
+        "invalid_group_col",
+        [123, 12.5, {"key": "value"}],
+    )
+    def test_invalid_group_col_type(self, simple_df, invalid_group_col):
+        """Test behavior with invalid group_col type."""
+        with pytest.raises(TypeError, match="group_col must be a string or list of strings"):
+            CompositeRank(
+                df=simple_df,
+                rank_cols=[("spend", "desc")],
+                agg_func="mean",
+                group_col=invalid_group_col,
+            )
+
+    @pytest.mark.parametrize(
         ("invalid_group_col", "expected_error_message"),
         [
-            (123, "Group column '123' not found"),
-            (12.5, "Group column '12.5' not found"),
-            (True, "Group column 'True' not found"),
-            (["invalid"], r"Group columns \['invalid'\] not found in the DataFrame"),
-            ({"key": "value"}, r"Group column '\{'key': 'value'\}' not found"),
+            ([], "group_col must not be an empty list. Use None for global ranking."),
+            (["invalid"], r"Group column\(s\) \['invalid'\] not found in the DataFrame"),
         ],
     )
-    def test_invalid_group_col_type(self, simple_df, invalid_group_col, expected_error_message):
-        """Test behavior with invalid group_col type."""
+    def test_invalid_group_col_value(self, simple_df, invalid_group_col, expected_error_message):
+        """Test behavior with invalid group_col values."""
         with pytest.raises(ValueError, match=expected_error_message):
             CompositeRank(
                 df=simple_df,
@@ -414,60 +372,52 @@ class TestCompositeRank:
             },
         )
 
-        # Compare the relevant columns
-        result_cols = ["product_id", "category", "sales", "margin", "sales_rank", "margin_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("product_id").reset_index(drop=True),
-            expected[result_cols].sort_values("product_id").reset_index(drop=True),
-            check_dtype=False,
+            result,
+            expected.sort_values("product_id").reset_index(drop=True),
         )
 
     def test_group_with_ignore_ties(self):
-        """Test group-based ranking with ignore_ties=True."""
+        """Test group-based ranking with ignore_ties=True produces unique ranks within each group."""
         df = pd.DataFrame(
             {
-                "id": [1, 2, 3, 4],
-                "group": ["A", "A", "B", "B"],
-                "value": [100, 100, 50, 50],  # Ties within each group
+                "product_id": [1, 2, 3, 4],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
+                "sales": [100, 100, 50, 50],  # Ties within each group
             },
         )
 
         ranker = CompositeRank(
             df=df,
-            rank_cols=[("value", "desc")],
+            rank_cols=[("sales", "desc")],
             agg_func="mean",
-            group_col="group",
+            group_col="category",
             ignore_ties=True,
         )
 
-        result = ranker.df.sort_values("id").reset_index(drop=True)
+        result = ranker.df
+        expected_group_size = 2
+        expected_ranks = {1, 2}
 
-        # Create expected results DataFrame - ranks should be unique even with tied values
-        expected = pd.DataFrame(
-            {
-                "id": [1, 2, 3, 4],
-                "group": ["A", "A", "B", "B"],
-                "value": [100, 100, 50, 50],
-                "value_rank": [1, 2, 1, 2],  # ignore_ties=True makes ranks unique within groups
-                "composite_rank": [1.0, 2.0, 1.0, 2.0],
-            },
-        )
+        # Verify ranks are unique within each group and in the expected range
+        for group_name in ["Electronics", "Apparel"]:
+            group_data = result.loc[result["category"] == group_name]
+            group_ranks = group_data["sales_rank"]
+            assert len(group_ranks.unique()) == expected_group_size
+            assert set(group_ranks) == expected_ranks
 
-        # Compare the relevant columns
-        result_cols = ["id", "group", "value", "value_rank", "composite_rank"]
-        pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("id").reset_index(drop=True),
-            expected[result_cols].sort_values("id").reset_index(drop=True),
-            check_dtype=False,
-        )
+            # composite_rank equals sales_rank when there's only one rank column with mean agg
+            group_composite = group_data["composite_rank"]
+            assert len(group_composite.unique()) == expected_group_size
+            assert set(group_composite) == {1.0, 2.0}
 
     @pytest.mark.parametrize(
         ("agg_func", "expected_composite_ranks"),
         [
             ("mean", [1.5, 1.5, 3.0, 1.5, 1.5, 3.0]),
-            ("sum", [3.0, 3.0, 6.0, 3.0, 3.0, 6.0]),
-            ("min", [1.0, 1.0, 3.0, 1.0, 1.0, 3.0]),
-            ("max", [2.0, 2.0, 3.0, 2.0, 2.0, 3.0]),
+            ("sum", [3, 3, 6, 3, 3, 6]),
+            ("min", [1, 1, 3, 1, 1, 3]),
+            ("max", [2, 2, 3, 2, 2, 3]),
         ],
     )
     def test_group_agg_functions(self, agg_func, expected_composite_ranks):
@@ -503,12 +453,9 @@ class TestCompositeRank:
             },
         )
 
-        # Compare the relevant columns
-        result_cols = ["product_id", "category", "sales", "margin", "sales_rank", "margin_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("product_id").reset_index(drop=True),
-            expected[result_cols].sort_values("product_id").reset_index(drop=True),
-            check_dtype=False,
+            result,
+            expected.sort_values("product_id").reset_index(drop=True),
             rtol=1e-3,
         )
 
@@ -516,47 +463,43 @@ class TestCompositeRank:
         """Test behavior when all data belongs to a single group."""
         df = pd.DataFrame(
             {
-                "id": [1, 2, 3],
-                "category": ["A", "A", "A"],  # All same group
-                "value": [100, 200, 150],
+                "product_id": [1, 2, 3],
+                "category": ["Electronics", "Electronics", "Electronics"],  # All same group
+                "sales": [100, 200, 150],
             },
         )
 
         ranker = CompositeRank(
             df=df,
-            rank_cols=[("value", "desc")],
+            rank_cols=[("sales", "desc")],
             agg_func="mean",
             group_col="category",
         )
 
-        result = ranker.df.sort_values("id").reset_index(drop=True)
+        result = ranker.df.sort_values("product_id").reset_index(drop=True)
 
-        # Create expected results DataFrame
         expected = pd.DataFrame(
             {
-                "id": [1, 2, 3],
-                "category": ["A", "A", "A"],
-                "value": [100, 200, 150],
-                "value_rank": [3, 1, 2],  # Values [100, 200, 150] descending = ranks [3, 1, 2]
+                "product_id": [1, 2, 3],
+                "category": ["Electronics", "Electronics", "Electronics"],
+                "sales": [100, 200, 150],
+                "sales_rank": [3, 1, 2],  # Values [100, 200, 150] descending = ranks [3, 1, 2]
                 "composite_rank": [3.0, 1.0, 2.0],
             },
         )
 
-        # Compare the relevant columns
-        result_cols = ["id", "category", "value", "value_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("id").reset_index(drop=True),
-            expected[result_cols].sort_values("id").reset_index(drop=True),
-            check_dtype=False,
+            result,
+            expected.sort_values("product_id").reset_index(drop=True),
         )
 
     def test_group_with_ibis_table(self):
         """Test that group-based ranking works with Ibis table input."""
         df = pd.DataFrame(
             {
-                "id": [1, 2, 3, 4],
-                "group": ["A", "A", "B", "B"],
-                "value": [100, 80, 90, 70],
+                "product_id": [1, 2, 3, 4],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
+                "sales": [100, 80, 90, 70],
             },
         )
 
@@ -564,66 +507,78 @@ class TestCompositeRank:
 
         ranker = CompositeRank(
             df=ibis_table,
-            rank_cols=[("value", "desc")],
+            rank_cols=[("sales", "desc")],
             agg_func="mean",
-            group_col="group",
+            group_col="category",
         )
 
-        result = ranker.df.sort_values("id").reset_index(drop=True)
+        result = ranker.df.sort_values("product_id").reset_index(drop=True)
 
-        # Create expected results DataFrame
         expected = pd.DataFrame(
             {
-                "id": [1, 2, 3, 4],
-                "group": ["A", "A", "B", "B"],
-                "value": [100, 80, 90, 70],
-                "value_rank": [1, 2, 1, 2],  # Within-group ranks: Group A [1,2], Group B [1,2]
+                "product_id": [1, 2, 3, 4],
+                "category": ["Electronics", "Electronics", "Apparel", "Apparel"],
+                "sales": [100, 80, 90, 70],
+                "sales_rank": [1, 2, 1, 2],  # Within-group ranks: Electronics [1,2], Apparel [1,2]
                 "composite_rank": [1.0, 2.0, 1.0, 2.0],
             },
         )
 
-        # Compare the relevant columns
-        result_cols = ["id", "group", "value", "value_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("id").reset_index(drop=True),
-            expected[result_cols].sort_values("id").reset_index(drop=True),
-            check_dtype=False,
+            result,
+            expected.sort_values("product_id").reset_index(drop=True),
         )
 
     def test_group_col_with_list(self):
         """Test group-based ranking with list of group columns."""
         df = pd.DataFrame(
             {
-                "id": [1, 2, 3, 4, 5, 6, 7, 8],
+                "product_id": [1, 2, 3, 4, 5, 6, 7, 8],
                 "region": ["North", "North", "South", "South", "North", "North", "South", "South"],
-                "category": ["A", "B", "A", "B", "A", "B", "A", "B"],
-                "value": [100, 80, 90, 70, 95, 85, 88, 75],
+                "category": [
+                    "Electronics",
+                    "Apparel",
+                    "Electronics",
+                    "Apparel",
+                    "Electronics",
+                    "Apparel",
+                    "Electronics",
+                    "Apparel",
+                ],
+                "sales": [100, 80, 90, 70, 95, 85, 88, 75],
             },
         )
 
         ranker = CompositeRank(
             df=df,
-            rank_cols=[("value", "desc")],
+            rank_cols=[("sales", "desc")],
             agg_func="mean",
             group_col=["region", "category"],  # Group by both region and category
         )
 
-        result = ranker.df.sort_values("id").reset_index(drop=True)
+        result = ranker.df.sort_values("product_id").reset_index(drop=True)
 
         expected = pd.DataFrame(
             {
-                "id": [1, 2, 3, 4, 5, 6, 7, 8],
+                "product_id": [1, 2, 3, 4, 5, 6, 7, 8],
                 "region": ["North", "North", "South", "South", "North", "North", "South", "South"],
-                "category": ["A", "B", "A", "B", "A", "B", "A", "B"],
-                "value": [100, 80, 90, 70, 95, 85, 88, 75],
-                "value_rank": [1, 2, 1, 2, 2, 1, 2, 1],
+                "category": [
+                    "Electronics",
+                    "Apparel",
+                    "Electronics",
+                    "Apparel",
+                    "Electronics",
+                    "Apparel",
+                    "Electronics",
+                    "Apparel",
+                ],
+                "sales": [100, 80, 90, 70, 95, 85, 88, 75],
+                "sales_rank": [1, 2, 1, 2, 2, 1, 2, 1],
                 "composite_rank": [1.0, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0, 1.0],
             },
         )
 
-        result_cols = ["id", "region", "category", "value", "value_rank", "composite_rank"]
         pd.testing.assert_frame_equal(
-            result[result_cols].sort_values("id").reset_index(drop=True),
-            expected[result_cols].sort_values("id").reset_index(drop=True),
-            check_dtype=False,
+            result,
+            expected.sort_values("product_id").reset_index(drop=True),
         )
