@@ -61,7 +61,10 @@ Key Features:
 - Utilizes Ibis for efficient query execution on large retail datasets
 """
 
+from typing import Any
+
 import ibis
+import ibis.expr.types as ir
 import pandas as pd
 
 
@@ -115,7 +118,7 @@ class CompositeRank:
         rank_cols: list[tuple[str, str] | str],
         agg_func: str,
         ignore_ties: bool = False,
-        group_col: str | list[str] | list | None = None,
+        group_col: str | list[str] | None = None,
     ) -> None:
         """Initialize the CompositeRank class for multi-criteria retail analysis.
 
@@ -136,7 +139,7 @@ class CompositeRank:
             ignore_ties (bool, optional): How to handle identical values:
                 - False (default): Products with same sales get same rank (fair comparison)
                 - True: Force unique ranks even for ties (strict ordering needed)
-            group_col (str | list[str] | list, optional): Column(s) to partition rankings by group.
+            group_col (str | list[str], optional): Column(s) to partition rankings by group.
                 - None (default): Rank across entire dataset (current behavior)
                 - If specified: Calculate ranks independently within each group
                 Examples for group-based ranking:
@@ -185,41 +188,82 @@ class CompositeRank:
         df = df.mutate(**rank_mutates)
         self.table = self._create_composite_ranking(df, rank_mutates, agg_func)
 
-    def _validate_group_col(self, group_col: str | list[str] | list | None, df: ibis.Table) -> None:
-        """Validate group_col parameter."""
-        if group_col is not None:
-            if isinstance(group_col, str):
-                if group_col not in df.columns:
-                    msg = f"Group column '{group_col}' not found in the DataFrame."
-                    raise ValueError(msg)
-            elif isinstance(group_col, list):
-                # Validate that all items in the list are strings
-                if not all(isinstance(col, str) for col in group_col):
-                    msg = f"All group columns must be strings. Got {group_col}"
-                    raise ValueError(msg)
-                missing_cols = [col for col in group_col if col not in df.columns]
-                if missing_cols:
-                    msg = f"Group columns {missing_cols} not found in the DataFrame."
-                    raise ValueError(msg)
-            else:
-                # Invalid type - maintain backward compatibility with error message
-                msg = f"Group column '{group_col}' not found in the DataFrame."
-                raise ValueError(msg)
+    def _validate_group_col(self, group_col: str | list[str] | None, df: ibis.Table) -> None:
+        """Validate group_col parameter against the DataFrame columns.
+
+        Args:
+            group_col (str | list[str] | None): Column name or list of column names to partition rankings by.
+                None skips validation entirely.
+            df (ibis.Table): The table whose columns are validated against.
+
+        Raises:
+            TypeError: If group_col is not a string, list, or None.
+            ValueError: If group_col is an empty list.
+            ValueError: If any specified group columns are not found in the DataFrame.
+        """
+        if group_col is None:
+            return
+
+        if isinstance(group_col, str):
+            group_col = [group_col]
+        elif not isinstance(group_col, list):
+            msg = f"group_col must be a string or list of strings. Got {type(group_col).__name__}."
+            raise TypeError(msg)
+
+        if len(group_col) == 0:
+            msg = "group_col must not be an empty list. Use None for global ranking."
+            raise ValueError(msg)
+
+        missing_cols = sorted(set(group_col) - set(df.columns))
+        if len(missing_cols) > 0:
+            msg = f"Group column(s) {missing_cols} not found in the DataFrame."
+            raise ValueError(msg)
 
     def _process_rank_columns(
         self,
         rank_cols: list[tuple[str, str] | str],
         df: ibis.Table,
-        group_col: str | list[str] | list | None,
+        group_col: str | list[str] | None,
         ignore_ties: bool,
-    ) -> dict[str, any]:
-        """Process rank columns and create ranking expressions."""
+    ) -> dict[str, ir.IntegerColumn]:
+        """Process rank columns and create ranking expressions.
+
+        Validates each column specification, then builds an ibis ranking expression
+        for each metric using the appropriate window function and tie-handling strategy.
+
+        Args:
+            rank_cols (list[tuple[str, str] | str]): Column specifications to rank. Each element is
+                either a string (column name, defaults to ascending) or a tuple of (column_name, sort_order).
+            df (ibis.Table): The table containing the columns to rank.
+            group_col (str | list[str] | None): Column(s) to partition the ranking window by,
+                or None for global ranking.
+            ignore_ties (bool): If True, uses row_number for unique ranks. If False, uses rank
+                which assigns the same rank to tied values.
+
+        Returns:
+            dict[str, ir.IntegerColumn]: Mapping of rank column names (e.g., "sales_rank") to ibis ranking expressions.
+
+        Raises:
+            ValueError: If a specified column is not found in the DataFrame.
+            ValueError: If a sort order is not one of "asc", "ascending", "desc", or "descending".
+        """
+        if len(rank_cols) == 0:
+            msg = "rank_cols must contain at least one column specification."
+            raise ValueError(msg)
+
         valid_sort_orders = ["asc", "ascending", "desc", "descending"]
         rank_mutates = {}
 
         for col_spec in rank_cols:
             col_name, sort_order = self._parse_column_spec(col_spec)
-            self._validate_column_and_sort_order(col_name, sort_order, df, valid_sort_orders)
+
+            # Validate column exists and sort order is valid
+            if col_name not in df.columns:
+                msg = f"Column '{col_name}' not found in the DataFrame."
+                raise ValueError(msg)
+            if sort_order.lower() not in valid_sort_orders:
+                msg = f"Sort order must be one of {valid_sort_orders}. Got '{sort_order}'"
+                raise ValueError(msg)
 
             order_by = ibis.asc(df[col_name]) if sort_order in ["asc", "ascending"] else ibis.desc(df[col_name])
             window = self._create_window(group_col, df, order_by)
@@ -231,7 +275,18 @@ class CompositeRank:
         return rank_mutates
 
     def _parse_column_spec(self, col_spec: tuple[str, str] | str) -> tuple[str, str]:
-        """Parse column specification into column name and sort order."""
+        """Parse a column specification into a column name and sort order.
+
+        Args:
+            col_spec (tuple[str, str] | str): Either a column name string (defaults to "asc")
+                or a tuple of (column_name, sort_order).
+
+        Returns:
+            tuple[str, str]: A tuple of (column_name, sort_order).
+
+        Raises:
+            ValueError: If a tuple is provided but does not contain exactly two elements.
+        """
         if isinstance(col_spec, str):
             return col_spec, "asc"
         if len(col_spec) != 2:  # noqa: PLR2004 - Error message below explains the value
@@ -239,38 +294,56 @@ class CompositeRank:
             raise ValueError(msg)
         return col_spec
 
-    def _validate_column_and_sort_order(
-        self,
-        col_name: str,
-        sort_order: str,
-        df: ibis.Table,
-        valid_sort_orders: list[str],
-    ) -> None:
-        """Validate column exists and sort order is valid."""
-        if col_name not in df.columns:
-            msg = f"Column '{col_name}' not found in the DataFrame."
-            raise ValueError(msg)
-        if sort_order.lower() not in valid_sort_orders:
-            msg = f"Sort order must be one of {valid_sort_orders}. Got '{sort_order}'"
-            raise ValueError(msg)
-
     def _create_window(
         self,
-        group_col: str | list[str] | list | None,
+        group_col: str | list[str] | None,
         df: ibis.Table,
-        order_by: any,
-    ) -> any:
-        """Create window function for ranking."""
-        return (
-            ibis.window(order_by=order_by)
-            if group_col is None
-            else ibis.window(group_by=df[group_col], order_by=order_by)
-            if isinstance(group_col, str)
-            else ibis.window(group_by=[df[col] for col in group_col], order_by=order_by)
-        )
+        order_by: ir.Column,
+    ) -> Any:  # noqa: ANN401 - WindowedExpr is an internal ibis type; Any is safest here
+        """Create an ibis window specification for ranking.
 
-    def _create_composite_ranking(self, df: ibis.Table, rank_mutates: dict[str, any], agg_func: str) -> ibis.Table:
-        """Create the final composite ranking."""
+        Builds the appropriate window function based on whether rankings should be
+        global or partitioned by group column(s).
+
+        Args:
+            group_col (str | list[str] | None): Column(s) to partition the window by.
+                None creates a global window, a string or list creates a grouped window.
+            df (ibis.Table): The table containing the group columns.
+            order_by (ir.Column): An ibis ordering expression (e.g., ibis.asc or ibis.desc) for the window.
+
+        Returns:
+            Any: An ibis window specification for use with ranking functions.
+        """
+        if group_col is None:
+            return ibis.window(order_by=order_by)
+        if isinstance(group_col, str):
+            return ibis.window(group_by=df[group_col], order_by=order_by)
+        return ibis.window(group_by=[df[col] for col in group_col], order_by=order_by)
+
+    def _create_composite_ranking(
+        self,
+        df: ibis.Table,
+        rank_mutates: dict[str, ir.IntegerColumn],
+        agg_func: str,
+    ) -> ibis.Table:
+        """Create the final composite ranking by aggregating individual rank columns.
+
+        Combines the individual ranking columns into a single composite_rank column
+        using the specified aggregation function.
+
+        Args:
+            df (ibis.Table): The table with individual rank columns already added.
+            rank_mutates (dict[str, ir.IntegerColumn]): Mapping of rank column names to their expressions,
+                used to identify which columns to aggregate.
+            agg_func (str): Aggregation function to combine ranks. Must be one of
+                "mean", "sum", "min", or "max".
+
+        Returns:
+            ibis.Table: The input table with an additional composite_rank column.
+
+        Raises:
+            ValueError: If agg_func is not one of the supported aggregation functions.
+        """
         column_refs = [df[col] for col in rank_mutates]
         agg_expr = {
             "mean": sum(column_refs) / len(column_refs),
