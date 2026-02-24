@@ -43,12 +43,12 @@ class TestFilterAndLabelByPeriods:
 
         period_ranges = {
             "Q1": (
-                datetime.datetime(2023, 1, 1, tzinfo=datetime.UTC),
-                datetime.datetime(2023, 3, 31, tzinfo=datetime.UTC),
+                datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+                datetime.datetime(2023, 3, 31, tzinfo=datetime.timezone.utc),
             ),
             "Q2": (
-                datetime.datetime(2023, 4, 1, tzinfo=datetime.UTC),
-                datetime.datetime(2023, 6, 30, tzinfo=datetime.UTC),
+                datetime.datetime(2023, 4, 1, tzinfo=datetime.timezone.utc),
+                datetime.datetime(2023, 6, 30, tzinfo=datetime.timezone.utc),
             ),
         }
         result = filter_and_label_by_periods(sample_transactions_table, period_ranges)
