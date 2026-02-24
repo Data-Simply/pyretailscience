@@ -95,7 +95,7 @@ class PluginManager:
                 try:
                     plugin_register_fn = entry_point.load()
                     plugin_register_fn(self)
-                except Exception as plugin_error:  # noqa: BLE001
+                except Exception as plugin_error:  # noqa: BLE001, PERF203
                     failed_plugins.append((entry_point.name, str(plugin_error)))
                     traceback.print_exc()
             self._plugin_loaded = True
