@@ -10,7 +10,6 @@ from pyretailscience.plots import scatter
 
 PERIODS = 6
 RNG = np.random.default_rng(42)
-NBR_CANDIDATES_DEFAULT = 50  # Default number of candidates for textalloc
 
 
 @pytest.fixture(autouse=True)
