@@ -594,7 +594,6 @@ class TestBubbleChartFeature:
                 size_scale=size_scale,
             )
 
-    @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
     def test_bubble_chart_s_parameter_override(self, bubble_chart_dataframe):
         """Test that user-provided 's' parameter is overridden by size_col with a warning."""
         with pytest.warns(UserWarning, match="'s' keyword argument is ignored when 'size_col' is specified"):
