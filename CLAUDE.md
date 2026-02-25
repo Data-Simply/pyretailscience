@@ -23,7 +23,12 @@
 - Class names use CamelCase; functions, methods, variables use snake_case
 - Private methods/functions should be prefixed with underscore (_)
 - Max line length: 120 characters
-- Error handling: validate inputs early, use specific exceptions with descriptive messages
+- Error handling: validate inputs at public API boundaries with specific
+  exceptions and descriptive messages. Private functions should not
+  re-validate inputs, but must include an explicit `raise` for unhandled
+  cases in branching logic (e.g., if/elif chains dispatching on a type
+  parameter) to prevent implicit `None` returns. Every code path must
+  either return a value or raise an exception.
 - File naming: Module names should be lowercase with underscores
 - Using double quotes when quoting strings
 - When checking for None values use `if my_var is not None` rather than `if my_var:`
