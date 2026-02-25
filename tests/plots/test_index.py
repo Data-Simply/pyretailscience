@@ -551,85 +551,95 @@ class TestIndexPlot:
                 filter_above=100000,  # Using an extremely high value that should cause all data to be filtered out
             )
 
-    def test_top_and_bottom_n(self, test_data):
-        """Test that the function can display only top and/or bottom N indexes."""
-        # Use a non-reference category to get more groups in the result
-        df = test_data
-
-        # First verify available groups to work with
-        result_df = get_indexes(
-            df=df,
-            value_to_index="C",  # Use a different value for indexing to get more groups
-            index_col="category",
-            value_col="sales",
-            group_col="category",
+    @pytest.mark.parametrize(
+        ("sort_by", "sort_order", "top_n", "bottom_n", "expected_y_labels"),
+        [
+            pytest.param(
+                "value",
+                "ascending",
+                3,
+                2,
+                ["Snacks", "Meat", "Dairy", "Bakery", "Produce"],
+                id="value_asc_top3_bot2",
+            ),
+            pytest.param(
+                "value",
+                "descending",
+                3,
+                2,
+                ["Produce", "Bakery", "Dairy", "Meat", "Snacks"],
+                id="value_desc_top3_bot2",
+            ),
+            pytest.param("value", "ascending", 3, None, ["Dairy", "Bakery", "Produce"], id="value_asc_top3_only"),
+            pytest.param("value", "ascending", None, 2, ["Snacks", "Meat"], id="value_asc_bot2_only"),
+            pytest.param(
+                "value",
+                "ascending",
+                None,
+                None,
+                ["Snacks", "Meat", "Dairy", "Bakery", "Produce"],
+                id="value_asc_no_filter",
+            ),
+            pytest.param(
+                "group",
+                "ascending",
+                3,
+                2,
+                ["Bakery", "Dairy", "Meat", "Produce", "Snacks"],
+                id="group_asc_top3_bot2",
+            ),
+            pytest.param(
+                "group",
+                "descending",
+                None,
+                None,
+                ["Snacks", "Produce", "Meat", "Dairy", "Bakery"],
+                id="group_desc_no_filter",
+            ),
+            pytest.param(
+                None,
+                "ascending",
+                None,
+                None,
+                ["Bakery", "Dairy", "Meat", "Produce", "Snacks"],
+                id="no_sort_asc",
+            ),
+            pytest.param(
+                None,
+                "descending",
+                None,
+                None,
+                ["Bakery", "Dairy", "Meat", "Produce", "Snacks"],
+                id="no_sort_desc",
+            ),
+            pytest.param(None, "ascending", 2, 2, ["Produce", "Bakery", "Meat", "Snacks"], id="no_sort_top2_bot2"),
+        ],
+    )
+    def test_plot_sort_order(self, sort_by, sort_order, top_n, bottom_n, expected_y_labels):
+        """Test that y-axis labels reflect the correct sort order with optional top_n/bottom_n filtering."""
+        # Index values (ascending): Snacks(-37.9), Meat(-25.5), Dairy(-21.0), Bakery(24.1), Produce(30.3)
+        df = pd.DataFrame(
+            {
+                "department": ["Dairy", "Bakery", "Meat", "Produce", "Snacks"] * 2,
+                "cust_type": ["Loyalty"] * 5 + ["Regular"] * 5,
+                "spend": [100, 200, 150, 300, 50, 120, 80, 200, 100, 90],
+            },
         )
 
-        available_groups = result_df["category"].unique()
-
-        group_count = len(available_groups)
-
-        # Sort to find expected top and bottom groups
-        expected_top_group = result_df.nlargest(1, "index")["category"].iloc[0]
-        expected_bottom_group = result_df.nsmallest(1, "index")["category"].iloc[0]
-
-        # Test with top_n (making sure value is ≤ available groups)
-        top_count = min(1, group_count)
-        result_ax = plot(
+        ax = plot(
             df,
-            value_col="sales",
-            group_col="category",
-            index_col="category",
-            value_to_index="C",  # Use non-A value as reference
-            top_n=top_count,
+            value_col="spend",
+            group_col="department",
+            index_col="cust_type",
+            value_to_index="Loyalty",
+            sort_by=sort_by,
+            sort_order=sort_order,
+            top_n=top_n,
+            bottom_n=bottom_n,
         )
 
-        assert isinstance(result_ax, plt.Axes)
-        # For top_n=1 case
-        labels = [t.get_text() for t in result_ax.get_yticklabels()]
-        assert len(labels) == 1, f"Expected 1 group for top_n=1, got {len(labels)}"
-        assert labels[0] == expected_top_group, f"Expected top group '{expected_top_group}', got '{labels[0]}'"
-
-        # Test with bottom_n (making sure value is ≤ available groups)
-        bottom_count = min(1, group_count)
-        result_ax = plot(
-            df,
-            value_col="sales",
-            group_col="category",
-            index_col="category",
-            value_to_index="C",  # Use non-A value as reference
-            bottom_n=bottom_count,
-        )
-
-        assert isinstance(result_ax, plt.Axes)
-
-        # For bottom_n=1 case
-        labels = [t.get_text() for t in result_ax.get_yticklabels()]
-        assert len(labels) == 1, f"Expected 1 group for bottom_n=1, got {len(labels)}"
-        assert labels[0] == expected_bottom_group, f"Expected bottom group '{expected_bottom_group}', got '{labels[0]}'"
-
-        # Test with both top_n and bottom_n if we have enough groups
-        minimum_group_count = 2
-        if group_count >= minimum_group_count:
-            result_ax = plot(
-                df,
-                value_col="sales",
-                group_col="category",
-                index_col="category",
-                value_to_index="C",  # Use non-A value as reference
-                top_n=1,
-                bottom_n=1,
-            )
-
-            assert isinstance(result_ax, plt.Axes)
-            # For combined top_n=1 and bottom_n=1 case
-            labels = [t.get_text() for t in result_ax.get_yticklabels()]
-            expected_len = 2
-            assert len(labels) == expected_len, f"Expected 2 groups for top_n=1 and bottom_n=1, got {len(labels)}"
-            assert expected_top_group in labels, f"Expected top group '{expected_top_group}' not found in {labels}"
-            assert expected_bottom_group in labels, (
-                f"Expected bottom group '{expected_bottom_group}' not found in {labels}"
-            )
+        y_labels = [t.get_text() for t in ax.get_yticklabels()]
+        assert y_labels == expected_y_labels
 
     def test_error_with_series_and_filtering(self, test_data):
         """Test that appropriate error is raised when using filtering with series_col."""
