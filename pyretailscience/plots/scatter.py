@@ -132,7 +132,7 @@ def _process_size_data(
 def _create_scatter_plot(
     ax: Axes,
     pivot_df: pd.DataFrame,
-    colors: list,
+    colors: list[str],
     size_data: pd.DataFrame | pd.Series | None,
     group_col: str | None,
     is_multi_scatter: bool,
@@ -144,7 +144,7 @@ def _create_scatter_plot(
     Args:
         ax (Axes): Matplotlib axes object to plot on.
         pivot_df (pd.DataFrame): DataFrame with pivoted data for plotting.
-        colors (list): List of colors for each column.
+        colors (list[str]): List of colors for each column.
         size_data (pd.DataFrame | pd.Series | None): Processed size data for bubble charts.
         group_col (str | None): Column name for grouping.
         is_multi_scatter (bool): Whether this is a multi-series scatter plot.
