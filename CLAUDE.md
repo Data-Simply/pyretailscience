@@ -11,6 +11,8 @@
 - Format code: `uv run ruff format .`
 - Run Python scripts: `uv run python script.py`
 - Run notebook: `uv run jupyter nbconvert --to notebook --execute my_notebook.ipynb`
+- When running a specific test, use `pytest -k "test_name"` if you don't already know the full node path
+  (class name, parameterization, etc.). Don't guess full paths.
 
 **Note**: Always use `uv run` to execute Python commands to ensure the correct virtual environment and dependencies are used.
 

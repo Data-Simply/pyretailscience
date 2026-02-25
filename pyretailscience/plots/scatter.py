@@ -1,48 +1,32 @@
 """This module provides functionality for creating scatter plots and bubble charts from pandas DataFrames.
 
-It is designed to visualize relationships between variables, highlight distributions, and compare different categories using scatter points with optional variable sizing for bubble chart functionality.
+It is designed to visualize relationships between variables, highlight distributions,
+and compare different categories using scatter points with optional variable sizing
+for bubble chart functionality.
 
 ### Core Features
 
 - **Flexible X-Axis Handling**: Uses an index or a specified x-axis column (**`x_col`**) for plotting.
 - **Multiple Scatter Groups**: Supports plotting multiple columns (**`value_col`**) or groups (**`group_col`**).
-- **Bubble Chart Support**: Variable point sizes based on data values using **`size_col`** and **`size_scale`** parameters.
-- **Point Labels**: Supports adding text labels to individual scatter points with automatic positioning to avoid overlaps.
+- **Bubble Chart Support**: Variable point sizes via **`size_col`** and **`size_scale`** parameters.
+- **Point Labels**: Text labels with automatic positioning to avoid overlaps.
 - **Dynamic Color Mapping**: Automatically selects a colormap based on the number of groups.
-- **Legend Customization**: Supports custom legend titles and the option to move the legend outside the plot.
-- **Source Text**: Provides an option to add source attribution to the plot.
 
 ### Use Cases
 
 - **Category-Based Scatter Plots**: Compare different categories using scatter points.
-- **Bubble Charts**: Visualize three dimensions of data with x, y positions and point sizes representing a third variable.
-- **Trend Analysis**: Identify patterns and outliers in datasets.
-- **Multi-Value Scatter Plots**: Show multiple data series in a single scatter chart.
+- **Bubble Charts**: Visualize three dimensions of data with x, y positions and point sizes.
 - **Labeled Scatter Plots**: Identify specific data points with text labels (e.g., product names, store IDs).
-- **Store Performance Analysis**: Show sales vs profit with store size as bubble sizes.
-
-### Bubble Chart Features
-
-- **Variable Point Sizes**: Use `size_col` parameter to specify a column for point sizes.
-- **Size Scaling**: Control bubble size scaling with `size_scale` parameter for optimal visualization.
-- **Grouped Bubble Charts**: Combine bubble sizing with group-based coloring for multi-dimensional analysis.
-- **Size Validation**: Automatic validation ensures size column contains numeric values.
-
-### Label Support
-
-- **Single Series Labeling**: When using a single `value_col`, labels can be added via `label_col` parameter.
-- **Group-Based Labeling**: When using `group_col`, each point gets labeled from the original DataFrame.
-- **Automatic Label Positioning**: Uses textalloc library to prevent label overlaps and optimize readability.
-- **Clean Label Display**: Labels are positioned without connecting lines to maintain a clean appearance.
-- **Customizable Label Styling**: Control label appearance through `label_kwargs` parameter.
 
 ### Limitations and Warnings
 
-- **Pre-Aggregated Data Required**: The module does not perform data aggregation; data should be pre-aggregated
-before being passed to the function.
+- **Pre-Aggregated Data Required**: Data should be pre-aggregated before being passed to the function.
 - **Label Limitations**: Point labels are not supported when `value_col` is a list (raises ValueError).
-- **Size Column Requirements**: When using bubble charts, `size_col` must contain numeric values only.
+- **Size Column Requirements**: `size_col` must contain numeric, non-negative values.
 """
+
+import warnings
+from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -54,19 +38,31 @@ from pyretailscience.options import PlotStyleHelper
 from pyretailscience.plots.styles.colors import get_plot_colors
 
 
-def _validate_size_col(df: pd.DataFrame, size_col: str | None) -> None:
-    """Validate size_col parameter.
+def _handle_size_params(
+    df: pd.DataFrame,
+    size_col: str | None,
+    size_scale: float,
+    kwargs: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate size parameters and resolve conflicting kwargs.
 
     Args:
         df (pd.DataFrame): DataFrame containing the data.
         size_col (str | None): Column name containing values to determine point sizes.
+        size_scale (float): Scaling factor for point sizes.
+        kwargs (dict[str, Any]): Keyword arguments for matplotlib scatter function.
+
+    Returns:
+        dict[str, Any]: The original kwargs, or a copy with the 's' key removed if it was present.
 
     Raises:
         KeyError: If size_col doesn't exist in DataFrame.
         ValueError: If size_col contains non-numeric values.
+        ValueError: If size_col contains negative values.
+        ValueError: If size_scale is not positive when size_col is specified.
     """
     if size_col is None:
-        return
+        return kwargs
 
     if size_col not in df.columns:
         msg = f"size_col '{size_col}' not found in DataFrame"
@@ -75,6 +71,25 @@ def _validate_size_col(df: pd.DataFrame, size_col: str | None) -> None:
     if not pd.api.types.is_numeric_dtype(df[size_col]):
         msg = f"size_col '{size_col}' must contain numeric values"
         raise ValueError(msg)
+
+    if (df[size_col] < 0).any():
+        msg = f"size_col '{size_col}' contains negative values, which are not supported for bubble sizes"
+        raise ValueError(msg)
+
+    if size_scale <= 0:
+        msg = "size_scale must be a positive number"
+        raise ValueError(msg)
+
+    if "s" in kwargs:
+        warnings.warn(
+            "The 's' keyword argument is ignored when 'size_col' is specified. "
+            "Point sizes are controlled by 'size_col'.",
+            UserWarning,
+            stacklevel=3,
+        )
+        kwargs = {k: v for k, v in kwargs.items() if k != "s"}
+
+    return kwargs
 
 
 def _process_size_data(
@@ -100,11 +115,17 @@ def _process_size_data(
         return None
 
     if group_col is None:
-        # For ungrouped data, align sizes with pivot_df index
-        return df.set_index(x_col if x_col is not None else df.index)[size_col] * size_scale
+        # Extract size values before set_index, which removes x_col from columns
+        size_values = df[size_col] * size_scale
+        index = df[x_col] if x_col is not None else df.index
+        return pd.Series(size_values.values, index=index)
 
     # For grouped data, create size array that aligns with pivot structure
-    size_pivot = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=size_col)
+    size_pivot = (
+        df.pivot(columns=group_col, values=size_col)
+        if x_col is None
+        else df.pivot(index=x_col, columns=group_col, values=size_col)
+    )
     return size_pivot * size_scale
 
 
@@ -116,7 +137,7 @@ def _create_scatter_plot(
     group_col: str | None,
     is_multi_scatter: bool,
     alpha: float,
-    **kwargs: dict[str, any],
+    **kwargs: Any,  # noqa: ANN401
 ) -> None:
     """Create scatter plots for each column in pivot_df.
 
@@ -151,15 +172,16 @@ def _create_scatter_plot(
             x_values = pivot_df.index
             y_values = pivot_df[col]
 
-        ax.scatter(
-            x_values,
-            y_values,
-            s=sizes,
-            color=color_val,
-            label=col if is_multi_scatter else None,
-            alpha=alpha,
+        scatter_kwargs: dict[str, Any] = {
+            "color": color_val,
+            "label": col if is_multi_scatter else None,
+            "alpha": alpha,
             **kwargs,
-        )
+        }
+        if sizes is not None:
+            scatter_kwargs["s"] = sizes
+
+        ax.scatter(x_values, y_values, **scatter_kwargs)
 
 
 def _add_point_labels(
@@ -169,7 +191,7 @@ def _add_point_labels(
     label_col: str,
     x_col: str | None = None,
     group_col: str | None = None,
-    label_kwargs: dict[str, any] | None = None,
+    label_kwargs: dict[str, Any] | None = None,
 ) -> None:
     """Add text labels to scatter plot points with automatic positioning.
 
@@ -180,7 +202,7 @@ def _add_point_labels(
         label_col (str): Column name containing text labels.
         x_col (str | None): Column name for x-values. If None, uses index.
         group_col (str | None): Column name for grouping. If None, treats as single series.
-        label_kwargs (dict[str, any] | None): Additional arguments passed to textalloc.allocate().
+        label_kwargs (dict[str, Any] | None): Additional arguments passed to textalloc.allocate().
     """
     # Get style configuration for label styling
     style = PlotStyleHelper()
@@ -244,8 +266,8 @@ def plot(
     legend_title: str | None = None,
     move_legend_outside: bool = False,
     label_col: str | None = None,
-    label_kwargs: dict[str, any] | None = None,
-    **kwargs: dict[str, any],
+    label_kwargs: dict[str, Any] | None = None,
+    **kwargs: Any,  # noqa: ANN401
 ) -> SubplotBase:
     """Plots a scatter chart for the given `value_col` over `x_col` or index, with optional grouping by `group_col`.
 
@@ -259,6 +281,7 @@ def plot(
         group_col (str, optional): The column used to define different scatter groups.
         size_col (str, optional): The column name containing values to determine point sizes.
             If None, all points have uniform size. Creates bubble charts when specified.
+            When used with multiple value_col columns, the same size values apply to all series.
         size_scale (float, optional): Scaling factor for point sizes. Default: 1.0.
             Actual size = size_col_value * size_scale.
         ax (Axes, optional): Matplotlib axes object to plot on.
@@ -281,7 +304,8 @@ def plot(
         ValueError: If `label_col` is provided when `value_col` is a list.
         KeyError: If `label_col` doesn't exist in DataFrame.
         KeyError: If `size_col` doesn't exist in DataFrame.
-        ValueError: If `size_col` contains non-numeric values.
+        ValueError: If `size_col` contains non-numeric or negative values.
+        ValueError: If `size_scale` is not positive when `size_col` is specified.
     """
     if isinstance(df, pd.Series):
         df = df.to_frame()
@@ -300,15 +324,19 @@ def plot(
             msg = f"label_col '{label_col}' not found in DataFrame"
             raise KeyError(msg)
 
-    # Validate size_col parameter
-    _validate_size_col(df, size_col)
+    # Validate size parameters and resolve conflicting kwargs
+    kwargs = _handle_size_params(df, size_col, size_scale, kwargs)
 
     if group_col is None:
         pivot_df = df.set_index(x_col if x_col is not None else df.index)[
             [value_col] if isinstance(value_col, str) else value_col
         ]
     else:
-        pivot_df = df.pivot(index=x_col if x_col is not None else None, columns=group_col, values=value_col)
+        pivot_df = (
+            df.pivot(columns=group_col, values=value_col)
+            if x_col is None
+            else df.pivot(index=x_col, columns=group_col, values=value_col)
+        )
 
     is_multi_scatter = (group_col is not None) or (isinstance(value_col, list) and len(value_col) > 1)
 
@@ -325,8 +353,6 @@ def plot(
     ax = ax or plt.gca()
     alpha = kwargs.pop("alpha", 0.7)
 
-    # Remove 's' from kwargs to avoid conflict with our size parameter
-    kwargs.pop("s", None)
     _create_scatter_plot(ax, pivot_df, colors, size_data, group_col, is_multi_scatter, alpha, **kwargs)
 
     # Add labels if requested
