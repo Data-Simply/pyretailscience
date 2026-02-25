@@ -1,6 +1,7 @@
 """Helper functions for styling graphs."""
 
 import importlib.resources as pkg_resources
+import warnings
 from collections.abc import Generator
 from datetime import datetime
 from itertools import cycle
@@ -21,6 +22,19 @@ from pyretailscience.plots.styles.styling_helpers import PlotStyler
 
 ASSETS_PATH = pkg_resources.files("pyretailscience").joinpath("assets")
 _MAGNITUDE_SUFFIXES = ["", "K", "M", "B", "T", "P"]
+
+_MIN_LINE_POINTS = 50
+_MAX_LINE_POINTS = 500
+_DATA_SIZE_MULTIPLIER = 3
+_POSITIVE_X_FLOOR = 1e-6
+_VARIANCE_THRESHOLD = 1e-10
+
+# Map regression_type -> (check_x_positive, check_y_positive)
+_POSITIVITY_REQUIREMENTS: dict[str, tuple[bool, bool]] = {
+    "power": (True, True),
+    "logarithmic": (True, False),
+    "exponential": (False, True),
+}
 
 
 def _hatches_gen() -> Generator[str, None, None]:
@@ -347,9 +361,9 @@ def _calculate_r_squared_original_space(y_actual: np.ndarray, y_predicted: np.nd
     ss_res = np.sum((y_actual - y_predicted) ** 2)  # Sum of squares of residuals
     ss_tot = np.sum((y_actual - np.mean(y_actual)) ** 2)  # Total sum of squares
 
-    # Handle edge case where all y values are identical
-    if ss_tot == 0:
-        return 1.0 if ss_res == 0 else 0.0
+    # Handle edge case where all y values are (nearly) identical
+    if ss_tot < _VARIANCE_THRESHOLD:
+        return 1.0 if ss_res < _VARIANCE_THRESHOLD else 0.0
 
     return 1 - (ss_res / ss_tot)
 
@@ -444,32 +458,37 @@ def _generate_regression_line(
 
     # For non-linear types, use adaptive point calculation
     # Base points on data size but ensure smooth curves for complex functions
-    min_points = 50
-    max_points = 500
-    adaptive_points = max(data_size * 3, min_points)
-    num_points = min(adaptive_points, max_points)
+    adaptive_points = max(data_size * _DATA_SIZE_MULTIPLIER, _MIN_LINE_POINTS)
+    num_points = min(adaptive_points, _MAX_LINE_POINTS)
+
+    # Derive from the single source of truth
+    requirements = _POSITIVITY_REQUIREMENTS.get(regression_type)
+    requires_positive_x = requirements is not None and requirements[0]
+    x_start = max(x_min, _POSITIVE_X_FLOOR) if requires_positive_x else x_min
+    x_line = np.linspace(x_start, x_max, num_points)
 
     if regression_type == "power":
-        # Ensure we don't go below a small positive value to avoid log issues
-        x_start = max(x_min, 1e-6)
-        x_line = np.linspace(x_start, x_max, num_points)
-        y_line = param1 * (x_line**param2)
-        return x_line, y_line
-
-    if regression_type == "logarithmic":
-        # Ensure we don't go below a small positive value to avoid log issues
-        x_start = max(x_min, 1e-6)
-        x_line = np.linspace(x_start, x_max, num_points)
+        # Suppress overflow warning — large exponents can overflow to inf, which is filtered below
+        with np.errstate(over="ignore"):
+            y_line = param1 * (x_line**param2)
+    elif regression_type == "logarithmic":
         y_line = param1 * np.log(x_line) + param2
-        return x_line, y_line
+    elif regression_type == "exponential":
+        # Suppress overflow warning — large x values can overflow exp() to inf, which is filtered below
+        with np.errstate(over="ignore"):
+            y_line = param1 * np.exp(param2 * x_line)
+    else:
+        msg = f"Unsupported regression type for line generation: {regression_type}"
+        raise ValueError(msg)
 
-    if regression_type == "exponential":
-        x_line = np.linspace(x_min, x_max, num_points)
-        y_line = param1 * np.exp(param2 * x_line)
-        return x_line, y_line
+    # Filter out infinite/NaN values for types susceptible to overflow
+    if regression_type in ("power", "exponential"):
+        finite_mask = np.isfinite(y_line)
+        if not np.all(finite_mask):
+            x_line = x_line[finite_mask]
+            y_line = y_line[finite_mask]
 
-    msg = f"Unsupported regression type: {regression_type}"
-    raise ValueError(msg)
+    return x_line, y_line
 
 
 def _add_equation_text(
@@ -506,19 +525,23 @@ def _add_equation_text(
     if show_equation:
         if regression_type == "linear":
             sign = "+" if param2 >= 0 else "-"
-            equation = f"y = {param1:.3f}x {sign} {abs(param2):.3f}"
+            equation = f"y = {param1:.4g}x {sign} {abs(param2):.4g}"
         elif regression_type == "power":
-            equation = f"y = {param1:.3f}x^{param2:.3f}"
+            exp_str = f"({param2:.4g})" if param2 < 0 else f"{param2:.4g}"
+            equation = f"y = {param1:.4g}x^{exp_str}"
         elif regression_type == "logarithmic":
             sign = "+" if param2 >= 0 else "-"
-            equation = f"y = {param1:.3f}ln(x) {sign} {abs(param2):.3f}"
+            equation = f"y = {param1:.4g}ln(x) {sign} {abs(param2):.4g}"
         elif regression_type == "exponential":
-            equation = f"y = {param1:.3f}e^({param2:.3f}x)"
+            equation = f"y = {param1:.4g}e^({param2:.4g}x)"
+        else:
+            msg = f"Unsupported regression type for equation formatting: {regression_type}"
+            raise ValueError(msg)
 
         equation_parts.append(equation)
 
     if show_r2:
-        r2_text = f"R² = {r_squared:.3f}"
+        r2_text = f"R² = {r_squared:.4g}"
         equation_parts.append(r2_text)
 
     text = "\n".join(equation_parts)
@@ -655,11 +678,9 @@ def _prepare_numeric_data(x_data: np.ndarray, y_data: np.ndarray) -> tuple[np.nd
     x_filtered = x_numeric[valid_mask]
     y_filtered = y_numeric[valid_mask]
 
-    # Check for zero variance in either dimension
-    if np.var(x_filtered) == 0:
+    # Check for zero variance in x — invalid for all regression types
+    if np.var(x_filtered) < _VARIANCE_THRESHOLD:
         raise ValueError("Cannot perform regression: all x values are identical (zero variance)")
-    if np.var(y_filtered) == 0:
-        raise ValueError("Cannot perform regression: all y values are identical (zero variance)")
 
     return x_filtered, y_filtered
 
@@ -668,7 +689,7 @@ def _validate_regression_data(
     x_data: np.ndarray,
     y_data: np.ndarray,
     regression_type: str,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> None:
     """Validate data for specific regression types.
 
     Args:
@@ -676,63 +697,39 @@ def _validate_regression_data(
         y_data (np.ndarray): The y-axis data.
         regression_type (str): The regression type being used.
 
-    Returns:
-        tuple[np.ndarray, np.ndarray]: Validated x and y data arrays.
-
     Raises:
         ValueError: If data contains values incompatible with the regression type.
     """
-    if regression_type == "power":
-        # Power regression requires positive x AND y values for log transformation
-        negative_or_zero_x = np.sum(x_data <= 0)
-        negative_or_zero_y = np.sum(y_data <= 0)
+    requirements = _POSITIVITY_REQUIREMENTS.get(regression_type)
+    if requirements is None:
+        # Linear and other types use all data without positivity checks
+        return
 
-        if negative_or_zero_x > 0 or negative_or_zero_y > 0:
-            error_parts = []
-            if negative_or_zero_x > 0:
-                error_parts.append(f"{negative_or_zero_x} non-positive x value(s)")
-            if negative_or_zero_y > 0:
-                error_parts.append(f"{negative_or_zero_y} non-positive y value(s)")
+    check_x, check_y = requirements
+    axes_desc = " and ".join(name for name, required in [("x", check_x), ("y", check_y)] if required)
+    error_parts = []
 
-            error_msg = (
-                f"Power regression requires all x and y values to be positive. "
-                f"Found {' and '.join(error_parts)}. "
-                f"Please remove or transform these values before applying power regression."
-            )
-            raise ValueError(error_msg)
+    if check_x:
+        count = int(np.sum(x_data <= 0))
+        if count > 0:
+            error_parts.append(f"{count} non-positive x value(s)")
 
-        return x_data, y_data
+    if check_y:
+        count = int(np.sum(y_data <= 0))
+        if count > 0:
+            error_parts.append(f"{count} non-positive y value(s)")
 
-    if regression_type == "logarithmic":
-        # Logarithmic requires positive x values for log transformation
-        negative_or_zero_x = np.sum(x_data <= 0)
+    if len(error_parts) > 0:
+        error_msg = (
+            f"{regression_type.capitalize()} regression requires all {axes_desc} values to be positive. "
+            f"Found {' and '.join(error_parts)}. "
+            f"Please remove or transform these values before applying {regression_type} regression."
+        )
+        raise ValueError(error_msg)
 
-        if negative_or_zero_x > 0:
-            error_msg = (
-                f"Logarithmic regression requires all x values to be positive. "
-                f"Found {negative_or_zero_x} non-positive x value(s). "
-                f"Please remove or transform these values before applying logarithmic regression."
-            )
-            raise ValueError(error_msg)
-
-        return x_data, y_data
-
-    if regression_type == "exponential":
-        # Exponential requires positive y values for log transformation
-        negative_or_zero_y = np.sum(y_data <= 0)
-
-        if negative_or_zero_y > 0:
-            error_msg = (
-                f"Exponential regression requires all y values to be positive. "
-                f"Found {negative_or_zero_y} non-positive y value(s). "
-                f"Please remove or transform these values before applying exponential regression."
-            )
-            raise ValueError(error_msg)
-
-        return x_data, y_data
-
-    # Linear regression uses all data
-    return x_data, y_data
+    # Zero variance in y produces identical log(y) values, making regression meaningless
+    if check_y and np.var(y_data) < _VARIANCE_THRESHOLD:
+        raise ValueError("Cannot perform regression: all y values are identical (zero variance)")
 
 
 def add_regression_line(
@@ -743,7 +740,7 @@ def add_regression_line(
     text_position: float = 0.6,
     show_equation: bool = True,
     show_r2: bool = True,
-    **kwargs: dict[str, Any],
+    **kwargs: Any,  # noqa: ANN401 - forwarded to matplotlib's ax.plot()
 ) -> Axes:
     """Add a regression line with configurable algorithm to a matplotlib plot.
 
@@ -805,16 +802,25 @@ def add_regression_line(
     # Convert to numeric data and validate
     x_numeric, y_numeric = _prepare_numeric_data(x_data, y_data)
 
-    # Apply algorithm-specific data validation and filtering
-    x_filtered, y_filtered = _validate_regression_data(x_numeric, y_numeric, regression_type)
+    # Apply algorithm-specific data validation
+    _validate_regression_data(x_numeric, y_numeric, regression_type)
 
     # Perform regression calculation
-    param1, param2, r_squared = _perform_regression_calculation(regression_type, x_filtered, y_filtered)
+    param1, param2, r_squared = _perform_regression_calculation(regression_type, x_numeric, y_numeric)
 
     # Generate regression line points
     x_min, x_max = ax.get_xlim()
-    data_size = len(x_filtered)
+    data_size = len(x_numeric)
     x_line, y_line = _generate_regression_line(regression_type, param1, param2, x_min, x_max, data_size)
+
+    if len(x_line) == 0:
+        warnings.warn(
+            f"Regression line for '{regression_type}' produced no finite values in the visible range. "
+            "Consider adjusting axis limits or using a different regression type.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return ax
 
     # Plot the regression line
     ax.plot(x_line, y_line, color=color, linestyle=linestyle, **kwargs)
