@@ -28,6 +28,7 @@ _MAX_LINE_POINTS = 500
 _DATA_SIZE_MULTIPLIER = 3
 _POSITIVE_X_FLOOR = 1e-6
 _VARIANCE_THRESHOLD = 1e-10
+_TEXT_X_PADDING = 0.05  # 5% from left
 
 # Map regression_type -> (check_x_positive, check_y_positive)
 _POSITIVITY_REQUIREMENTS: dict[str, tuple[bool, bool]] = {
@@ -549,7 +550,7 @@ def _add_equation_text(
     # Calculate text position (relative to axis bounds)
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
-    text_x = x_min + 0.05 * (x_max - x_min)  # 5% from left
+    text_x = x_min + _TEXT_X_PADDING * (x_max - x_min)
     text_y = y_min + text_position * (y_max - y_min)
 
     ax.text(
@@ -587,7 +588,7 @@ def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
         x_data = lines[0].get_xdata()
         y_data = lines[0].get_ydata()
     # Check for bar charts (patches)
-    elif hasattr(ax, "patches") and ax.patches:
+    elif hasattr(ax, "patches") and len(ax.patches) > 0:
         # Detect bar orientation using BarContainer (stable API)
         is_vertical = True  # Default assumption
         for container in ax.containers:
@@ -606,7 +607,7 @@ def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
         bar_data.sort(key=lambda point: point[0])
         x_data, y_data = np.array(bar_data).T
     # If no lines or bars, check for scatter plots (or other collections)
-    elif hasattr(ax, "collections") and ax.collections:
+    elif hasattr(ax, "collections") and len(ax.collections) > 0:
         # Extract data from the first collection (e.g., scatter plot)
         collection = ax.collections[0]
         # Get the offsets which contain the x,y coordinates
