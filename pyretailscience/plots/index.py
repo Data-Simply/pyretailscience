@@ -291,17 +291,17 @@ def plot(  # noqa: C901, PLR0913
         default_colors = get_named_color("primary")
         show_legend = False
         index_df = index_df[[group_col, "index"]].set_index(group_col)
-        if sort_by in ["group", "value"]:
-            index_df = index_df.sort_values(
-                by=group_col if sort_by == "group" else "index",
-                ascending=sort_order == "ascending",
-            )
-
         index_df = filter_top_bottom_n(
             df=index_df,
             top_n=top_n,
             bottom_n=bottom_n,
         )
+
+        if sort_by in ["group", "value"]:
+            index_df = index_df.sort_values(
+                by=group_col if sort_by == "group" else "index",
+                ascending=sort_order == "ascending",
+            )
 
     else:
         show_legend = True
