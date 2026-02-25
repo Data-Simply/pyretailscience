@@ -725,24 +725,6 @@ class TestIndexPlot:
             f"Legend mismatch: expected {expected_legend_labels}, got {legend_labels}"
         )
 
-    def test_error_with_excessive_top_and_bottom_n(self, test_data):
-        """Test that appropriate error is raised when top_n + bottom_n exceeds group count."""
-        df = test_data
-        unique_count = len(df["category"].unique())
-
-        # Since validation flow changed, we now get a different error message
-        # when top_n exceeds available groups
-        with pytest.raises(ValueError, match="top_n .* cannot exceed the number of available groups"):
-            plot(
-                df,
-                value_col="sales",
-                group_col="category",
-                index_col="category",
-                value_to_index="A",
-                top_n=unique_count,
-                bottom_n=1,
-            )
-
     def test_error_with_top_n_exceeding_available_groups(self, test_data):
         """Test that appropriate error is raised when top_n exceeds available groups."""
         df = test_data
