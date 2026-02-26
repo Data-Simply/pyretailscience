@@ -5,16 +5,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.colors import to_hex
 
 from pyretailscience.plots.index import (
+    BASELINE_INDEX,
     filter_by_groups,
     filter_by_value_thresholds,
     filter_top_bottom_n,
     get_indexes,
     plot,
 )
+from pyretailscience.plots.styles.colors import get_named_color
 
-OFFSET_VALUE = 100
 OFFSET_THRESHOLD = 5
 
 
@@ -357,7 +359,7 @@ class TestIndexPlot:
         )
 
         assert isinstance(result_ax, plt.Axes)
-        assert result_ax.get_xlim()[0] < OFFSET_VALUE < result_ax.get_xlim()[1]
+        assert result_ax.get_xlim()[0] < BASELINE_INDEX < result_ax.get_xlim()[1]
 
     def test_generates_index_plot_with_group_filter(self, test_data):
         """Test that the function generates an index plot with a group filter applied."""
@@ -506,7 +508,7 @@ class TestIndexPlot:
             index_col="category",
             value_col="sales",
             group_col="category",
-            offset=100,
+            offset=BASELINE_INDEX,
         )
 
         # Choose a threshold that will actually filter some data
@@ -882,3 +884,100 @@ def test_filter_by_value_thresholds_filter_below():
     # Check that the result has the expected number of rows
     expected_count = len(test_df[test_df["index"] < threshold])
     assert len(result_df) == expected_count
+
+
+class TestColorByThreshold:
+    """Tests for color_by_threshold functionality in the index plot."""
+
+    def teardown_method(self):
+        """Clean up after each test method."""
+        plt.close("all")
+
+    @pytest.fixture
+    def threshold_data(self):
+        """Return data with index values that fall above, below, and between default thresholds.
+
+        Computed visual index values:
+            Dairy ≈ 99 (neutral), Bakery ≈ 120 (neutral/positive boundary),
+            Meat ≈ 72 (negative), Produce ≈ 126 (positive), Snacks ≈ 60 (negative).
+        This ensures all three color branches (positive, negative, neutral) are exercised
+        for both the default (80, 120) and custom (90, 110) highlight ranges.
+        """
+        return pd.DataFrame(
+            {
+                "department": ["Dairy", "Bakery", "Meat", "Produce", "Snacks"] * 2,
+                "cust_type": ["Loyalty"] * 5 + ["Regular"] * 5,
+                "spend": [130, 200, 150, 300, 50, 90, 80, 200, 100, 90],
+            },
+        )
+
+    @pytest.mark.parametrize(
+        ("expected_color_names", "plot_kwargs"),
+        [
+            pytest.param(
+                # Default range (80, 120), sorted by value ascending:
+                # Snacks≈60 (neg), Meat≈72 (neg), Dairy≈99 (neutral), Bakery≈120 (neutral), Produce≈126 (pos)
+                ["negative", "negative", "neutral", "neutral", "positive"],
+                {"sort_by": "value", "sort_order": "ascending"},
+                id="default_range_value_sort",
+            ),
+            pytest.param(
+                # Custom range (90, 110), sorted by value ascending:
+                # Snacks≈60 (neg), Meat≈72 (neg), Dairy≈99 (neutral), Bakery≈120 (pos), Produce≈126 (pos)
+                ["negative", "negative", "neutral", "positive", "positive"],
+                {"highlight_range": (90, 110), "sort_by": "value", "sort_order": "ascending"},
+                id="custom_range_value_sort",
+            ),
+            pytest.param(
+                # Default range (80, 120), sorted by group ascending:
+                # Bakery≈120 (neutral), Dairy≈99 (neutral), Meat≈72 (neg), Produce≈126 (pos), Snacks≈60 (neg)
+                ["neutral", "neutral", "negative", "positive", "negative"],
+                {},
+                id="default_range_group_sort",
+            ),
+        ],
+    )
+    def test_bars_colored_by_threshold(self, threshold_data, expected_color_names, plot_kwargs):
+        """Test that bars are colored positive/negative/neutral based on highlight range thresholds."""
+        ax = plot(
+            threshold_data,
+            value_col="spend",
+            group_col="department",
+            index_col="cust_type",
+            value_to_index="Loyalty",
+            color_by_threshold=True,
+            **plot_kwargs,
+        )
+
+        expected_colors = [get_named_color(name) for name in expected_color_names]
+
+        # Filter to only bar patches (alpha=1.0), excluding axvspan highlight (alpha=0.1)
+        bar_patches = [p for p in ax.patches if p.get_alpha() is None or p.get_alpha() == 1.0]
+        actual_colors = [to_hex(p.get_facecolor()) for p in bar_patches]
+        assert actual_colors == expected_colors
+
+    def test_raises_error_when_highlight_range_is_none(self, threshold_data):
+        """Test that ValueError is raised when color_by_threshold=True but highlight_range is None."""
+        with pytest.raises(ValueError, match="color_by_threshold requires highlight_range to be set"):
+            plot(
+                threshold_data,
+                value_col="spend",
+                group_col="department",
+                index_col="cust_type",
+                value_to_index="Loyalty",
+                highlight_range=None,
+                color_by_threshold=True,
+            )
+
+    def test_raises_error_when_series_col_provided(self, threshold_data):
+        """Test that ValueError is raised when color_by_threshold=True with series_col."""
+        with pytest.raises(ValueError, match="color_by_threshold cannot be used when series_col is provided"):
+            plot(
+                threshold_data,
+                value_col="spend",
+                group_col="department",
+                index_col="cust_type",
+                value_to_index="Loyalty",
+                series_col="cust_type",
+                color_by_threshold=True,
+            )

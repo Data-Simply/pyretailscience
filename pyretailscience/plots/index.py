@@ -38,12 +38,16 @@ offering valuable insights into retail operations.
 from typing import Literal
 
 import ibis
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.plots.styles.colors import get_linear_cmap, get_named_color
+
+BASELINE_INDEX = 100
+DEFAULT_HIGHLIGHT_RANGE = (80, 120)
 
 
 def filter_by_groups(
@@ -176,6 +180,7 @@ def plot(  # noqa: C901, PLR0913
     bottom_n: int | None = None,
     filter_above: float | None = None,
     filter_below: float | None = None,
+    color_by_threshold: bool = False,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
     """Creates an index plot.
@@ -231,7 +236,13 @@ def plot(  # noqa: C901, PLR0913
         bottom_n (int, optional): Display only the bottom N indexes by value. Only applicable when series_col is None. Defaults to None.
         filter_above (float, optional): Only display indexes above this value. Only applicable when series_col is None. Defaults to None.
         filter_below (float, optional): Only display indexes below this value. Only applicable when series_col is None. Defaults to None.
-        **kwargs: Additional keyword arguments to pass to the Pandas plot function.
+        color_by_threshold (bool, optional): Color bars based on highlight_range thresholds using configurable option
+            colors. Values >= the upper threshold use the ``plot.color.positive`` option, values <= the lower
+            threshold use the ``plot.color.negative`` option, and values between use the ``plot.color.neutral`` option.
+            Requires highlight_range to be set (not None). Only applicable when series_col is None. Defaults to False.
+        **kwargs: Additional keyword arguments to pass to the Pandas plot function. When
+            ``color_by_threshold`` is True, kwargs are passed to matplotlib's ``Axes.barh()`` instead
+            and pandas-specific kwargs (figsize, stacked, legend, subplots, layout) are filtered out.
 
     Returns:
         SubplotBase: The matplotlib axes object.
@@ -243,6 +254,8 @@ def plot(  # noqa: C901, PLR0913
         ValueError: If both top_n and bottom_n are provided but their sum exceeds the total number of groups.
         ValueError: If top_n or bottom_n exceed the number of available groups.
         ValueError: If top_n, bottom_n, filter_above, or filter_below are used when series_col is provided.
+        ValueError: If color_by_threshold is True but highlight_range is None.
+        ValueError: If color_by_threshold is True when series_col is provided.
         ValueError: If filtering results in an empty dataset.
     """
     if sort_by not in ["group", "value", None]:
@@ -259,6 +272,14 @@ def plot(  # noqa: C901, PLR0913
         raise ValueError(
             "top_n, bottom_n, filter_above, and filter_below cannot be used when series_col is provided.",
         )
+    if color_by_threshold:
+        if highlight_range is None:
+            raise ValueError("color_by_threshold requires highlight_range to be set (not None).")
+        if series_col is not None:
+            raise ValueError("color_by_threshold cannot be used when series_col is provided.")
+
+    if highlight_range == "default":
+        highlight_range = DEFAULT_HIGHLIGHT_RANGE
 
     index_df = get_indexes(
         df=df,
@@ -267,7 +288,7 @@ def plot(  # noqa: C901, PLR0913
         index_subgroup_col=series_col,
         value_col=value_col,
         agg_func=agg_func,
-        offset=100,
+        offset=BASELINE_INDEX,
         group_col=group_col,
     )
 
@@ -319,19 +340,45 @@ def plot(  # noqa: C901, PLR0913
 
     width = kwargs.pop("width", 0.8)
     color = kwargs.pop("color", default_colors)
-    ax = index_df.plot.barh(
-        left=100,
-        legend=show_legend,
-        ax=ax,
-        color=color,
-        width=width,
-        zorder=2,
-        **kwargs,
-    )
 
-    ax.axvline(100, color="black", linewidth=1, alpha=0.5)
+    if color_by_threshold:
+        positive_color = get_named_color("positive")
+        negative_color = get_named_color("negative")
+        neutral_color = get_named_color("neutral")
+
+        values = index_df["index"].values + BASELINE_INDEX
+        bar_colors = np.select(
+            [values >= highlight_range[1], values <= highlight_range[0]],
+            [positive_color, negative_color],
+            default=neutral_color,
+        )
+        if ax is None:
+            figsize = kwargs.get("figsize")
+            _, ax = plt.subplots(figsize=figsize)
+        _pandas_only_kwargs = {"figsize", "stacked", "legend", "subplots", "layout"}
+        mpl_kwargs = {k: v for k, v in kwargs.items() if k not in _pandas_only_kwargs}
+        ax.barh(
+            y=index_df.index,
+            width=index_df["index"].values,
+            left=BASELINE_INDEX,
+            color=bar_colors,
+            height=width,
+            zorder=2,
+            **mpl_kwargs,
+        )
+    else:
+        ax = index_df.plot.barh(
+            left=BASELINE_INDEX,
+            legend=show_legend,
+            ax=ax,
+            color=color,
+            width=width,
+            zorder=2,
+            **kwargs,
+        )
+
+    ax.axvline(BASELINE_INDEX, color="black", linewidth=1, alpha=0.5)
     if highlight_range is not None:
-        highlight_range = (80, 120) if highlight_range == "default" else highlight_range
         ax.axvline(highlight_range[0], color="black", linewidth=0.25, alpha=0.1, zorder=-1)
         ax.axvline(highlight_range[1], color="black", linewidth=0.25, alpha=0.1, zorder=-1)
         ax.axvspan(highlight_range[0], highlight_range[1], color="black", alpha=0.1, zorder=-1)
