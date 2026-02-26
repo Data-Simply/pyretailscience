@@ -102,13 +102,10 @@ def plot(
 
     amount_total = df["amounts"].sum()
 
-    default_colors = (
-        df["amounts"]
-        .apply(
-            lambda x: get_named_color("positive") if x > 0 else get_named_color("negative"),
-        )
-        .to_list()
-    )
+    positive_color = get_named_color("positive")
+    negative_color = get_named_color("negative")
+
+    default_colors = (df["amounts"] > 0).map({True: positive_color, False: negative_color}).to_list()
     bottom = df["amounts"].cumsum().shift(1).fillna(0).to_list()
 
     if display_net_bar:
