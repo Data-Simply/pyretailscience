@@ -438,7 +438,7 @@ class RevenueTree:
         graph_data = self.df.iloc[row_index].to_dict()
 
         # Set period labels
-        current_label, previous_label = value_labels if value_labels else ("Current Period", "Previous Period")
+        current_label, previous_label = value_labels or ("Current Period", "Previous Period")
 
         # Build tree structure - always include base 5 nodes
         tree_structure = {
