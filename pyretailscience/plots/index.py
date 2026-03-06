@@ -440,7 +440,7 @@ def get_indexes(
     if agg_func not in {"sum", "mean", "max", "min", "nunique"}:
         raise ValueError("Unsupported aggregation function.")
 
-    agg_fn = lambda x: getattr(x, agg_func)()
+    agg_fn = lambda x: getattr(x, agg_func)()  # noqa: E731
 
     group_cols = [group_col] if index_subgroup_col is None else [index_subgroup_col, group_col]
 
