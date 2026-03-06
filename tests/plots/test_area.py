@@ -106,7 +106,7 @@ def test_plot_multiple_columns(sample_dataframe):
 def test_plot_multiple_columns_with_group_col(sample_dataframe):
     """Test the plot function when using multiple columns along with a group column."""
     sample_dataframe["additional_spend"] = RNG.integers(1, 6, size=3 * PERIODS)
-    with pytest.raises(ValueError, match="Cannot use both a list for `value_col` and a `group_col`. Choose one."):
+    with pytest.raises(ValueError, match=r"Cannot use both a list for `value_col` and a `group_col`. Choose one."):
         area.plot(
             df=sample_dataframe,
             value_col=["unit_spend", "additional_spend", "Shoes"],

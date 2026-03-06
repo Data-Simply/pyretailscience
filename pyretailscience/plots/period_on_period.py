@@ -82,7 +82,7 @@ def plot(
     """
     min_period_length = 2
     if len(periods) < min_period_length:
-        raise ValueError("The 'periods' list must contain at least two (start, end) tuples for comparison.")
+        raise ValueError("The 'periods' list must contain at least two (start, end) tuples for comparison")
 
     periods = [(pd.to_datetime(start), pd.to_datetime(end)) for start, end in periods]
     start_ref = periods[0][0]

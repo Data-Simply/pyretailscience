@@ -148,7 +148,7 @@ def test_plot_multiple_columns(sample_sales_dataframe):
 
 def test_plot_multiple_columns_with_group_col(sample_sales_dataframe):
     """Test scatter plot when using multiple columns along with a group column."""
-    with pytest.raises(ValueError, match="Cannot use both a list for `value_col` and a `group_col`. Choose one."):
+    with pytest.raises(ValueError, match=r"Cannot use both a list for `value_col` and a `group_col`. Choose one."):
         scatter.plot(
             df=sample_sales_dataframe,
             value_col=["sales", "profit", "expenses"],
@@ -209,7 +209,7 @@ def test_plot_with_labels_single_series(sample_product_dataframe, mocker):
 
     # Check that textalloc was called with correct parameters
     mock_textalloc.assert_called_once()
-    args, kwargs = mock_textalloc.call_args
+    args, _kwargs = mock_textalloc.call_args
 
     ax_arg = args[0]
     x_coords = args[1]
@@ -277,7 +277,7 @@ def test_plot_with_labels_grouped_series(sample_store_dataframe, mocker):
 
     # Check that textalloc was called with correct parameters
     mock_textalloc.assert_called_once()
-    args, kwargs = mock_textalloc.call_args
+    args, _kwargs = mock_textalloc.call_args
 
     ax_arg = args[0]
     x_coords = args[1]
@@ -331,7 +331,7 @@ def test_plot_with_labels_custom_kwargs(sample_product_dataframe, mocker):
 
     # Verify textalloc was called with custom kwargs
     mock_textalloc.assert_called_once()
-    args, kwargs = mock_textalloc.call_args
+    args, ta_kwargs = mock_textalloc.call_args
 
     ax_arg = args[0]
     x_coords = args[1]
@@ -350,11 +350,11 @@ def test_plot_with_labels_custom_kwargs(sample_product_dataframe, mocker):
     )
 
     # Check that custom kwargs were passed through to textalloc
-    assert kwargs["nbr_candidates"] == custom_kwargs["nbr_candidates"], (
-        f"nbr_candidates not passed correctly: expected {custom_kwargs['nbr_candidates']}, got {kwargs.get('nbr_candidates')}"
+    assert ta_kwargs["nbr_candidates"] == custom_kwargs["nbr_candidates"], (
+        f"nbr_candidates not passed correctly: expected {custom_kwargs['nbr_candidates']}, got {ta_kwargs.get('nbr_candidates')}"
     )
-    assert kwargs["min_distance"] == custom_kwargs["min_distance"], (
-        f"min_distance not passed correctly: expected {custom_kwargs['min_distance']}, got {kwargs.get('min_distance')}"
+    assert ta_kwargs["min_distance"] == custom_kwargs["min_distance"], (
+        f"min_distance not passed correctly: expected {custom_kwargs['min_distance']}, got {ta_kwargs.get('min_distance')}"
     )
     assert ax_arg == result_ax
 
@@ -401,7 +401,7 @@ def test_plot_labels_with_nan_values(sample_product_dataframe, mocker):
 
     assert isinstance(result_ax, Axes)
     mock_textalloc.assert_called_once()
-    args, kwargs = mock_textalloc.call_args
+    args, _kwargs = mock_textalloc.call_args
     labels = args[3]
     # Should have fewer texts due to NaN filtering
     expected_non_nan_count = len(df_with_nan.dropna(subset=["units_sold", "product_name"]))
@@ -434,7 +434,7 @@ def test_plot_labels_using_index_as_x(sample_product_dataframe, mocker):
     )
 
     mock_textalloc.assert_called_once()
-    args, kwargs = mock_textalloc.call_args
+    args, _kwargs = mock_textalloc.call_args
     labels = args[3]
     assert len(labels) == len(sample_product_dataframe)
 

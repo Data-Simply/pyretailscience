@@ -565,7 +565,7 @@ class TestHighlightFeature:
 
     def test_highlight_invalid_values_raises_error(self, multi_category_dataframe):
         """Test that highlight raises error for invalid values."""
-        with pytest.raises(ValueError, match="highlight values .* not found in available columns"):
+        with pytest.raises(ValueError, match=r"highlight values .* not found in available columns"):
             line.plot(
                 df=multi_category_dataframe,
                 x_col="month",

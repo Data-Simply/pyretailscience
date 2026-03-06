@@ -152,7 +152,7 @@ def _prepare_value_col(df: pd.DataFrame | pd.Series, value_col: str | list[str] 
         return ["value"] if value_col is None else [value_col]
 
     if value_col is None:
-        raise ValueError("Please provide a value column to plot.")
+        raise ValueError("Please provide a value column to plot")
 
     if isinstance(value_col, str):
         value_col = [value_col]

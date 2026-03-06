@@ -6,7 +6,7 @@ import traceback
 import types
 from collections.abc import Callable, Iterator
 from importlib.metadata import entry_points
-from typing import Optional, Union
+from typing import Optional, Self, Union
 
 
 class PluginManager:
@@ -14,7 +14,7 @@ class PluginManager:
 
     _instance: Optional["PluginManager"] = None
 
-    def __new__(cls: type["PluginManager"]) -> "PluginManager":
+    def __new__(cls: type["PluginManager"]) -> "Self":
         """Singleton pattern for plugin manager."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -200,6 +200,10 @@ class ExtensibleFunctionResult:
         if isinstance(other, ExtensibleFunctionResult):
             return self._result == other._result
         return self._result == other
+
+    def __hash__(self) -> int:
+        """Support hashing by delegating to the wrapped result."""
+        return hash(self._result)
 
     def __lt__(self, other: object) -> bool:
         """Support less than comparison."""

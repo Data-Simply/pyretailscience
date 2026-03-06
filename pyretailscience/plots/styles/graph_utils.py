@@ -617,11 +617,11 @@ def _extract_plot_data(ax: Axes) -> tuple[np.ndarray, np.ndarray]:
                 x_data = offset_data[:, 0]
                 y_data = offset_data[:, 1]
             else:
-                raise ValueError("No data points found in the collection.")
+                raise ValueError("No data points found in the collection")
         else:
-            raise ValueError("Cannot extract data from this type of collection.")
+            raise ValueError("Cannot extract data from this type of collection")
     else:
-        raise ValueError("No visible lines or collections found in the plot.")
+        raise ValueError("No visible lines or collections found in the plot")
 
     return x_data, y_data
 

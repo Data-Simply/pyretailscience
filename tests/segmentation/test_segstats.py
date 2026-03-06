@@ -1535,7 +1535,7 @@ class TestGroupingSetsCustomMode:
 
     def test_custom_grouping_sets_invalid_column(self):
         """Test custom grouping sets raises error for invalid column name."""
-        with pytest.raises(ValueError, match="Columns .* in grouping_sets not found in segment_col"):
+        with pytest.raises(ValueError, match=r"Columns .* in grouping_sets not found in segment_col"):
             SegTransactionStats._generate_grouping_sets(
                 segment_col=["region", "store"],
                 grouping_sets=[("region", "invalid_col")],
@@ -1543,7 +1543,7 @@ class TestGroupingSetsCustomMode:
 
     def test_custom_grouping_sets_unmentioned_column(self):
         """Test custom grouping sets raises error when segment_col column is never mentioned."""
-        with pytest.raises(ValueError, match="Columns .* in segment_col are not mentioned in any grouping set"):
+        with pytest.raises(ValueError, match=r"Columns .* in segment_col are not mentioned in any grouping set"):
             SegTransactionStats._generate_grouping_sets(
                 segment_col=["region", "store", "date"],
                 grouping_sets=[

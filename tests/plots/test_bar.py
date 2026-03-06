@@ -396,7 +396,7 @@ def test_plot_calls_dataframe_plot(mocker, sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_invalid_orientation(sample_dataframe):
     """Test that an invalid orientation raises a ValueError."""
-    with pytest.raises(ValueError, match="Invalid orientation: invalid_orientation. Expected one of .*"):
+    with pytest.raises(ValueError, match=r"Invalid orientation: invalid_orientation. Expected one of .*"):
         bar.plot(
             df=sample_dataframe,
             value_col="sales",
@@ -408,7 +408,7 @@ def test_invalid_orientation(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_invalid_sort_order(sample_dataframe):
     """Test that an invalid sort_order raises a ValueError."""
-    with pytest.raises(ValueError, match="Invalid sort_order: invalid_sort_order. Expected one of .*"):
+    with pytest.raises(ValueError, match=r"Invalid sort_order: invalid_sort_order. Expected one of .*"):
         bar.plot(
             df=sample_dataframe,
             value_col="sales",
@@ -420,7 +420,7 @@ def test_invalid_sort_order(sample_dataframe):
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_invalid_data_label_format(sample_dataframe):
     """Test that an invalid data_label_format raises a ValueError."""
-    with pytest.raises(ValueError, match="Invalid data_label_format: invalid_format. Expected one of .*"):
+    with pytest.raises(ValueError, match=r"Invalid data_label_format: invalid_format. Expected one of .*"):
         bar.plot(
             df=sample_dataframe,
             value_col="sales",

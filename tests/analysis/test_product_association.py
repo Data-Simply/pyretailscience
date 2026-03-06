@@ -230,7 +230,7 @@ class TestProductAssociations:
 
     def test_calc_association_invalid_min_occurrences(self, transactions_df):
         """Test calculating association rules with an invalid minimum occurrences value."""
-        with pytest.raises(ValueError, match="Minimum occurrences must be at least 1."):
+        with pytest.raises(ValueError, match="Minimum occurrences must be at least 1"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
@@ -240,7 +240,7 @@ class TestProductAssociations:
 
     def test_calc_association_invalid_min_cooccurrences(self, transactions_df):
         """Test calculating association rules with an invalid minimum cooccurrences value."""
-        with pytest.raises(ValueError, match="Minimum cooccurrences must be at least 1."):
+        with pytest.raises(ValueError, match="Minimum cooccurrences must be at least 1"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
@@ -250,14 +250,14 @@ class TestProductAssociations:
 
     def test_calc_association_min_support_invalid_range(self, transactions_df):
         """Test calculating association rules with an invalid minimum support range."""
-        with pytest.raises(ValueError, match="Minimum support must be between 0 and 1."):
+        with pytest.raises(ValueError, match="Minimum support must be between 0 and 1"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
                 group_col=cols.transaction_id,
                 min_support=-0.1,
             )
-        with pytest.raises(ValueError, match="Minimum support must be between 0 and 1."):
+        with pytest.raises(ValueError, match="Minimum support must be between 0 and 1"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
@@ -267,14 +267,14 @@ class TestProductAssociations:
 
     def test_calc_association_min_confidence_invalid_range(self, transactions_df):
         """Test calculating association rules with an invalid minimum confidence range."""
-        with pytest.raises(ValueError, match="Minimum confidence must be between 0 and 1."):
+        with pytest.raises(ValueError, match="Minimum confidence must be between 0 and 1"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
                 group_col=cols.transaction_id,
                 min_confidence=-0.1,
             )
-        with pytest.raises(ValueError, match="Minimum confidence must be between 0 and 1."):
+        with pytest.raises(ValueError, match="Minimum confidence must be between 0 and 1"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",
@@ -284,7 +284,7 @@ class TestProductAssociations:
 
     def test_calc_association_min_uplift_invalid_range(self, transactions_df):
         """Test calculating association rules with an invalid minimum uplift range."""
-        with pytest.raises(ValueError, match="Minimum uplift must be greater or equal to 0."):
+        with pytest.raises(ValueError, match="Minimum uplift must be greater or equal to 0"):
             ProductAssociation._calc_association(
                 df=transactions_df,
                 value_col="product",

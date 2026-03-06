@@ -39,7 +39,7 @@ class TestWaterfallPlot:
 
         with pytest.raises(
             ValueError,
-            match="The lengths of amounts and labels must be the same.",
+            match="The lengths of amounts and labels must be the same",
         ):
             plot(amounts, labels)
 

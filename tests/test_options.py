@@ -15,13 +15,13 @@ class TestOptions:
     def test_unknown_option_raises_value_error(self):
         """Test setting/getting/resetting an unknown option raises a ValueError."""
         options = opt.Options()
-        with pytest.raises(ValueError, match="Unknown option: unknown.option"):
+        with pytest.raises(ValueError, match=r"Unknown option: unknown.option"):
             options.set_option("unknown.option", "some_value")
-        with pytest.raises(ValueError, match="Unknown option: unknown.option"):
+        with pytest.raises(ValueError, match=r"Unknown option: unknown.option"):
             options.get_option("unknown_option")
-        with pytest.raises(ValueError, match="Unknown option: unknown.option"):
+        with pytest.raises(ValueError, match=r"Unknown option: unknown.option"):
             options.reset_option("unknown_option")
-        with pytest.raises(ValueError, match="Unknown option: unknown.option"):
+        with pytest.raises(ValueError, match=r"Unknown option: unknown.option"):
             options.describe_option("unknown_option")
 
     def test_list_options_returns_all_options(self):
@@ -146,7 +146,7 @@ class TestOptions:
     def test_load_invalid_option_toml(self):
         """Test loading an invalid TOML file raises a ValueError."""
         test_file_path = Path("tests/toml_files/invalid_option.toml").resolve()
-        with pytest.raises(ValueError, match="Unknown option in TOML file: column.agg.unknown_column"):
+        with pytest.raises(ValueError, match=r"Unknown option in TOML file: column.agg.unknown_column"):
             opt.Options.load_from_toml(test_file_path)
 
     def test_flatten_options(self):

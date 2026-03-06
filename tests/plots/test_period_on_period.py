@@ -132,7 +132,7 @@ def test_overlapping_periods_raises_on_empty_periods(sample_dataframe):
     """Test overlapping periods with a ValueError is raised if an empty list of periods is passed."""
     with pytest.raises(
         ValueError,
-        match=r"The 'periods' list must contain at least two \(start, end\) tuples for comparison\.",
+        match=r"The 'periods' list must contain at least two \(start, end\) tuples for comparison",
     ):
         plot(
             df=sample_dataframe,

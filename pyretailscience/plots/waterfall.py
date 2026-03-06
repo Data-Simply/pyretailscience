@@ -83,7 +83,7 @@ def plot(
         Axes: The matplotlib axes object.
     """
     if len(amounts) != len(labels):
-        raise ValueError("The lengths of amounts and labels must be the same.")
+        raise ValueError("The lengths of amounts and labels must be the same")
 
     data_label_format = data_label_format.lower() if data_label_format else None
     if data_label_format is not None and data_label_format not in [

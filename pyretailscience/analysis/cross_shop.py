@@ -274,7 +274,7 @@ class CrossShop:
             .order_by(group_col)
         ).execute()
 
-        cs_df["groups"] = cs_df[group_cols].apply(lambda x: tuple(x), axis=1)
+        cs_df["groups"] = cs_df[group_cols].apply(tuple, axis=1)
 
         # Use default alphabetical labels if none provided
         if labels is None:

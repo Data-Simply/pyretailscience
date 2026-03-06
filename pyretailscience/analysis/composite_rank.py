@@ -216,7 +216,7 @@ class CompositeRank:
 
         missing_cols = sorted(set(group_col) - set(df.columns))
         if len(missing_cols) > 0:
-            msg = f"Group column(s) {missing_cols} not found in the DataFrame."
+            msg = f"Group column(s) {missing_cols} not found in the DataFrame"
             raise ValueError(msg)
 
     def _process_rank_columns(
@@ -248,7 +248,7 @@ class CompositeRank:
             ValueError: If a sort order is not one of "asc", "ascending", "desc", or "descending".
         """
         if len(rank_cols) == 0:
-            msg = "rank_cols must contain at least one column specification."
+            msg = "rank_cols must contain at least one column specification"
             raise ValueError(msg)
 
         valid_sort_orders = ["asc", "ascending", "desc", "descending"]
@@ -259,7 +259,7 @@ class CompositeRank:
 
             # Validate column exists and sort order is valid
             if col_name not in df.columns:
-                msg = f"Column '{col_name}' not found in the DataFrame."
+                msg = f"Column '{col_name}' not found in the DataFrame"
                 raise ValueError(msg)
             if sort_order.lower() not in valid_sort_orders:
                 msg = f"Sort order must be one of {valid_sort_orders}. Got '{sort_order}'"
