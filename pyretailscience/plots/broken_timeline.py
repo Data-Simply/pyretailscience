@@ -64,7 +64,7 @@ def _validate_inputs(df: pd.DataFrame, category_col: str, value_col: str, date_c
     # Validate period parameter
     valid_periods = list(PERIOD_CONFIG.keys())
     if period not in valid_periods:
-        msg = f"Invalid period '{period}'. Must be one of {valid_periods}"
+        msg = f"Invalid period '{period}'. Must be one of {valid_periods}."
         raise ValueError(msg)
 
 
