@@ -438,7 +438,7 @@ def get_indexes(
 
     agg_func = agg_func.lower()
     if agg_func not in {"sum", "mean", "max", "min", "nunique"}:
-        raise ValueError("Unsupported aggregation function")
+        raise ValueError("Unsupported aggregation function.")
 
     agg_fn = lambda x: getattr(x, agg_func)()  # noqa: E731
 
