@@ -69,7 +69,7 @@ def test_get_indexes_invalid_agg_func():
         },
     )
 
-    with pytest.raises(ValueError, match="Unsupported aggregation function."):
+    with pytest.raises(ValueError, match="Unsupported aggregation function"):
         get_indexes(
             df,
             value_to_index="A",
@@ -732,7 +732,7 @@ class TestIndexPlot:
         df = test_data
         total_count = len(df["category"].unique())
 
-        with pytest.raises(ValueError, match="top_n .* cannot exceed the number of available groups"):
+        with pytest.raises(ValueError, match=r"top_n .* cannot exceed the number of available groups"):
             plot(
                 df,
                 value_col="sales",
@@ -747,7 +747,7 @@ class TestIndexPlot:
         df = test_data
         total_count = len(df["category"].unique())
 
-        with pytest.raises(ValueError, match="bottom_n .* cannot exceed the number of available groups"):
+        with pytest.raises(ValueError, match=r"bottom_n .* cannot exceed the number of available groups"):
             plot(
                 df,
                 value_col="sales",
@@ -770,7 +770,7 @@ class TestIndexPlot:
         # Test that sum of top_n and bottom_n validation works
         with pytest.raises(
             ValueError,
-            match="The sum of top_n .* and bottom_n .* cannot exceed the total number of groups",
+            match=r"The sum of top_n .* and bottom_n .* cannot exceed the total number of groups",
         ):
             filter_top_bottom_n(
                 df=test_df,
@@ -821,7 +821,7 @@ def test_filter_by_groups_validation_error():
     include_list = ["A", "C"]
 
     # Test with both exclude_groups and include_only_groups
-    with pytest.raises(ValueError, match="exclude_groups and include_only_groups cannot be used together."):
+    with pytest.raises(ValueError, match="exclude_groups and include_only_groups cannot be used together"):
         plot(
             df=test_df,
             value_col="value",
@@ -843,7 +843,7 @@ def test_series_col_with_sort_by_value_validation_error():
         },
     )
 
-    with pytest.raises(ValueError, match="sort_by cannot be 'value' when series_col is provided."):
+    with pytest.raises(ValueError, match="sort_by cannot be 'value' when series_col is provided"):
         plot(
             df=test_df,
             value_col="value",

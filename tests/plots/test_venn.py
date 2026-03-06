@@ -68,7 +68,7 @@ def test_plot_three_set_venn():
 def test_plot_invalid_sets():
     """Test Venn plot with invalid number of sets (should raise ValueError)."""
     df = pd.DataFrame({"groups": [(1,)], "percent": [1.0]})
-    with pytest.raises(ValueError, match="Only 2-set or 3-set Venn diagrams are supported."):
+    with pytest.raises(ValueError, match="Only 2-set or 3-set Venn diagrams are supported"):
         venn.plot(df=df, labels=["Set A"])
 
 

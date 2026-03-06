@@ -133,15 +133,15 @@ def filter_top_bottom_n(df: pd.DataFrame, top_n: int | None = None, bottom_n: in
     # Check if top_n or bottom_n exceed the dataframe length
     df_length = len(df)
     if top_n is not None and top_n > df_length:
-        error_msg = f"top_n ({top_n}) cannot exceed the number of available groups ({df_length})."
+        error_msg = f"top_n ({top_n}) cannot exceed the number of available groups ({df_length})"
         raise ValueError(error_msg)
     if bottom_n is not None and bottom_n > df_length:
-        error_msg = f"bottom_n ({bottom_n}) cannot exceed the number of available groups ({df_length})."
+        error_msg = f"bottom_n ({bottom_n}) cannot exceed the number of available groups ({df_length})"
         raise ValueError(error_msg)
 
     # Check if top_n + bottom_n exceeds total groups
     if top_n is not None and bottom_n is not None and top_n + bottom_n > df_length:
-        error_msg = f"The sum of top_n ({top_n}) and bottom_n ({bottom_n}) cannot exceed the total number of groups ({df_length})."
+        error_msg = f"The sum of top_n ({top_n}) and bottom_n ({bottom_n}) cannot exceed the total number of groups ({df_length})"
         raise ValueError(error_msg)
 
     # Create a temporary dataframe sorted by index value
@@ -261,22 +261,22 @@ def plot(  # noqa: C901, PLR0913
     if sort_by not in ["group", "value", None]:
         raise ValueError("sort_by must be either 'group' or 'value' or None")
     if series_col is not None and sort_by == "value":
-        raise ValueError("sort_by cannot be 'value' when series_col is provided.")
+        raise ValueError("sort_by cannot be 'value' when series_col is provided")
     if sort_order not in ["ascending", "descending"]:
         raise ValueError("sort_order must be either 'ascending' or 'descending'")
     if exclude_groups is not None and include_only_groups is not None:
-        raise ValueError("exclude_groups and include_only_groups cannot be used together.")
+        raise ValueError("exclude_groups and include_only_groups cannot be used together")
     if series_col is not None and (
         top_n is not None or bottom_n is not None or filter_above is not None or filter_below is not None
     ):
         raise ValueError(
-            "top_n, bottom_n, filter_above, and filter_below cannot be used when series_col is provided.",
+            "top_n, bottom_n, filter_above, and filter_below cannot be used when series_col is provided",
         )
     if color_by_threshold:
         if highlight_range is None:
-            raise ValueError("color_by_threshold requires highlight_range to be set (not None).")
+            raise ValueError("color_by_threshold requires highlight_range to be set (not None)")
         if series_col is not None:
-            raise ValueError("color_by_threshold cannot be used when series_col is provided.")
+            raise ValueError("color_by_threshold cannot be used when series_col is provided")
 
     if highlight_range == "default":
         highlight_range = DEFAULT_HIGHLIGHT_RANGE
@@ -438,7 +438,7 @@ def get_indexes(
 
     agg_func = agg_func.lower()
     if agg_func not in {"sum", "mean", "max", "min", "nunique"}:
-        raise ValueError("Unsupported aggregation function.")
+        raise ValueError("Unsupported aggregation function")
 
     agg_fn = lambda x: getattr(x, agg_func)()  # noqa: E731
 

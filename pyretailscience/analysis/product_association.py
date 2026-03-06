@@ -232,15 +232,15 @@ class ProductAssociation:
             ValueError: If any parameter is outside the valid range.
         """
         if min_occurrences < 1:
-            raise ValueError("Minimum occurrences must be at least 1.")
+            raise ValueError("Minimum occurrences must be at least 1")
         if min_cooccurrences < 1:
-            raise ValueError("Minimum cooccurrences must be at least 1.")
+            raise ValueError("Minimum cooccurrences must be at least 1")
         if min_support < 0.0 or min_support > 1.0:
-            raise ValueError("Minimum support must be between 0 and 1.")
+            raise ValueError("Minimum support must be between 0 and 1")
         if min_confidence < 0.0 or min_confidence > 1.0:
-            raise ValueError("Minimum confidence must be between 0 and 1.")
+            raise ValueError("Minimum confidence must be between 0 and 1")
         if min_uplift < 0.0:
-            raise ValueError("Minimum uplift must be greater or equal to 0.")
+            raise ValueError("Minimum uplift must be greater or equal to 0")
 
     @staticmethod
     def _calc_association(

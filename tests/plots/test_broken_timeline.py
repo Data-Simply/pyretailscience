@@ -180,7 +180,7 @@ class TestBrokenTimelinePlot:
 
     def test_custom_axes(self, sample_dataframe):
         """Test plotting on a custom axes object."""
-        fig, custom_ax = plt.subplots()
+        _fig, custom_ax = plt.subplots()
 
         result_ax = broken_timeline.plot(
             df=sample_dataframe,
@@ -211,7 +211,7 @@ class TestBrokenTimelinePlot:
 
     def test_invalid_period_raises_error(self, sample_dataframe):
         """Test that invalid period raises ValueError."""
-        with pytest.raises(ValueError, match="Invalid period 'X'. Must be one of"):
+        with pytest.raises(ValueError, match=r"Invalid period 'X'. Must be one of"):
             broken_timeline.plot(
                 df=sample_dataframe,
                 category_col="category",

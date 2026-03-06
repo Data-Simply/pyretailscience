@@ -91,10 +91,10 @@ class ThresholdSegmentation:
                 columns contain null values.
         """
         if len(thresholds) != len(set(thresholds)):
-            raise ValueError("The thresholds must be unique.")
+            raise ValueError("The thresholds must be unique")
 
         if len(thresholds) != len(segments):
-            raise ValueError("The number of thresholds must match the number of segments.")
+            raise ValueError("The number of thresholds must match the number of segments")
 
         # Initialize column helper
         cols = ColumnHelper()

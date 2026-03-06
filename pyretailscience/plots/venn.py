@@ -72,7 +72,7 @@ def plot(
     """
     num_sets = len(labels)
     if num_sets not in {MIN_SUPPORTED_SETS, MAX_SUPPORTED_SETS}:
-        raise ValueError("Only 2-set or 3-set Venn diagrams are supported.")
+        raise ValueError("Only 2-set or 3-set Venn diagrams are supported")
 
     default_colors = get_plot_colors(num_sets)
     colors = kwargs.pop("color", default_colors)

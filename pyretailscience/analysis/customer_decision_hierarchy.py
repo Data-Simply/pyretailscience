@@ -69,6 +69,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.sparse import csr_matrix
 
 import pyretailscience.plots.styles.graph_utils as gu
 from pyretailscience.options import ColumnHelper, get_option
@@ -234,8 +235,6 @@ class CustomerDecisionHierarchy:
         Returns:
             float: The Yules Q distances between pairs of products.
         """
-        from scipy.sparse import csr_matrix
-
         # Create a sparse matrix where the rows are the customers and the columns are the products
         # The values are True if the customer bought the product and False if they didn't
         product_matrix = csr_matrix(

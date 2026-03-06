@@ -588,7 +588,7 @@ class TestTreeGrid:
             },
         }
 
-        with pytest.raises(ValueError, match="column index .* is out of bounds"):
+        with pytest.raises(ValueError, match=r"column index .* is out of bounds"):
             TreeGrid(
                 tree_structure=tree_structure,
                 num_rows=1,
@@ -608,7 +608,7 @@ class TestTreeGrid:
             },
         }
 
-        with pytest.raises(ValueError, match="row index .* is out of bounds"):
+        with pytest.raises(ValueError, match=r"row index .* is out of bounds"):
             TreeGrid(
                 tree_structure=tree_structure,
                 num_rows=1,
