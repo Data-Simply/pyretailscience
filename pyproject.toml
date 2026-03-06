@@ -67,7 +67,7 @@ show-fixes     = true
 target-version = "py310"
 
 [tool.ruff.lint]
-ignore = [ "COM812", "EM101", "ISC001", "PT011", "PTH123", "SLF001", "TRY003" ]
+ignore = [ "COM812", "E501", "EM101", "ISC001", "PT011", "PTH123", "SLF001", "TRY003" ]
 select = [
     "A",
     "ANN",
@@ -83,6 +83,7 @@ select = [
     "D3",
     "D4",
     "DTZ",
+    "E",
     "EM",
     "ERA",
     "EXE",
