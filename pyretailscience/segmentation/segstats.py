@@ -1071,7 +1071,7 @@ class SegTransactionStats:
         y_label: str | None = None,
         ax: Axes | None = None,
         orientation: Literal["vertical", "horizontal"] = "vertical",
-        sort_order: Literal["ascending", "descending", None] = None,
+        sort_order: Literal["ascending", "descending"] | None = None,
         source_text: str | None = None,
         hide_total: bool = True,
         **kwargs: dict[str, Any],
