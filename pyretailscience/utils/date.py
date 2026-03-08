@@ -149,10 +149,8 @@ def find_overlapping_periods(
     Raises:
         ValueError: If the start date is after the end date.
     """
-    if isinstance(start_date, str):
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")  # noqa: DTZ007
-    if isinstance(end_date, str):
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")  # noqa: DTZ007
+    start_date = _normalize_datetime(start_date)
+    end_date = _normalize_datetime(end_date)
 
     if start_date > end_date:
         raise ValueError("Start date must be before end date")
@@ -164,8 +162,11 @@ def find_overlapping_periods(
 
     years = np.arange(start_year, end_year)
 
-    period_starts = [start_date if year == start_year else datetime(year, start_month, start_day) for year in years]  # noqa: DTZ001
-    period_ends = [datetime(year + 1, end_month, end_day) for year in years]  # noqa: DTZ001
+    period_starts = [
+        start_date if year == start_year else datetime(year, start_month, start_day, tzinfo=timezone.utc)
+        for year in years
+    ]
+    period_ends = [datetime(year + 1, end_month, end_day, tzinfo=timezone.utc) for year in years]
 
     df = pd.DataFrame({"start": period_starts, "end": period_ends})
 

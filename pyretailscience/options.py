@@ -130,7 +130,7 @@ class Options:
             "column.unit_quantity": "The name of the column containing the number of units sold.",
             "column.unit_price": "The name of the column containing the unit price of the product.",
             "column.unit_spend": (
-                "The name of the column containing the total spend of the products in the transaction."
+                "The name of the column containing the total spend of the products in the transaction. "
                 "ie, unit_price * units",
             ),
             "column.unit_cost": (
