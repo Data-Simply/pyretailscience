@@ -8,44 +8,44 @@ retail analysis, sales tracking, and customer behavior insights.
 ### Features
 
 - **Timeline Plot Creation**: Plot a value column (e.g., sales, transactions) over time,
-aggregated by a specific period (e.g., daily, weekly).
+  aggregated by a specific period (e.g., daily, weekly).
 - **Customizable Aggregation**: Supports different aggregation functions (e.g., sum, average)
-to compute the value column's metrics.
+  to compute the value column's metrics.
 - **Grouping by Categories**: Optionally group data by a specific category (e.g., product,
-region, store) and compare performance over time.
+  region, store) and compare performance over time.
 - **Time Period Handling**: The `period` parameter allows data aggregation by different time
-periods, such as days, weeks, or months.
+  periods, such as days, weeks, or months.
 - **Graph Styling**: Customize the appearance of the plot with options to adjust titles, axis
-labels, legend placement, and more.
+  labels, legend placement, and more.
 - **Color Mapping**: Use linear color gradients for category-based groupings to visually
-differentiate between groups in the timeline.
+  differentiate between groups in the timeline.
 
 ### Use Cases
 
 - **Sales and Revenue Analysis**: Track sales performance over time, either as a total or by
-group (e.g., product category or store).
+  group (e.g., product category or store).
 - **Seasonal Trend Analysis**: Visualize how sales or transaction values fluctuate across
-different periods, helping to identify seasonal trends or promotional impacts.
+  different periods, helping to identify seasonal trends or promotional impacts.
 - **Customer Behavior Tracking**: Examine changes in customer behavior (e.g., purchase
-frequency, average transaction value) over time.
+  frequency, average transaction value) over time.
 - **Comparative Performance**: Compare multiple categories (e.g., different products or regions)
-on the same timeline to evaluate relative performance.
+  on the same timeline to evaluate relative performance.
 
 ### Limitations and Handling of Data
 
 - **Time Period Grouping**: Data is aggregated by a time period defined by the `period`
-argument, which can be adjusted to daily, weekly, monthly, etc.
+  argument, which can be adjusted to daily, weekly, monthly, etc.
 - **Grouping by Categories**: If `group_col` is specified, the plot will display performance
-across different categories, with color differentiation for each group.
+  across different categories, with color differentiation for each group.
 - **Flexible Aggregation**: The aggregation function (e.g., sum, average) can be customized to
-calculate the desired value for each period.
+  calculate the desired value for each period.
 
 ### Functionality Details
 
 - **plot()**: Generates a timeline plot of a specified value column over time, with
-customization options for grouping, aggregation, and styling.
+  customization options for grouping, aggregation, and styling.
 - **Helper functions**: Utilizes utility functions from the `pyretailscience` package to handle
-styling, formatting, and other plot adjustments.
+  styling, formatting, and other plot adjustments.
 """
 
 import numpy as np

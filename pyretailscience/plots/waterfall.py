@@ -9,30 +9,30 @@ performance tracking, and visualizing changes over time.
 
 - **Waterfall Chart Creation**: Displays how different positive and negative values affect a starting total.
 - **Data Label Formatting**: Supports custom formatting for data labels, including absolute
-values, percentages, or both.
+  values, percentages, or both.
 - **Net Line and Bar Display**: Optionally includes a net line and net bar to show the overall
-cumulative result.
+  cumulative result.
 - **Customizable Plot Style**: Options to customize chart titles, axis labels, and remove zero
-amounts for better clarity.
+  amounts for better clarity.
 - **Handling of Zero Amounts**: Allows removal of zero amounts from the plot to avoid cluttering the chart.
 - **Interactive Elements**: Supports custom annotations for the chart with source text.
 
 ### Use Cases
 
 - **Financial Analysis**: Show the breakdown of profits and losses over multiple periods, or how
-different cost categories affect overall margin.
+  different cost categories affect overall margin.
 - **Revenue Tracking**: Track how revenue or other key metrics change over time, and visualize
-the impact of individual contributing factors.
+  the impact of individual contributing factors.
 - **Performance Visualization**: Highlight how various business or product categories affect
-overall performance, such as sales, expenses, or growth metrics.
+  overall performance, such as sales, expenses, or growth metrics.
 - **Budget Breakdown**: Visualize how different spending categories contribute to a total budget over a period.
 
 ### Functionality Details
 
 - **plot()**: Generates a waterfall chart from a list of amounts and labels. It supports
-additional customization for display settings, labels, and source text.
+  additional customization for display settings, labels, and source text.
 - **format_data_labels()**: A helper function used to format the data labels according to the
-specified format (absolute, percentage, both).
+  specified format (absolute, percentage, both).
 """
 
 import warnings
