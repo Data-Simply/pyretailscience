@@ -359,24 +359,26 @@ class TestFindOverlappingPeriods:
 
     def test_valid_range_multiple_years_datetime(self):
         """Test case where the start and end dates span multiple years with return_iso=False."""
-        start_date = datetime.datetime(2021, 5, 10)
-        end_date = datetime.datetime(2024, 8, 20)
+        utc = datetime.timezone.utc
+        start_date = datetime.datetime(2021, 5, 10, tzinfo=utc)
+        end_date = datetime.datetime(2024, 8, 20, tzinfo=utc)
         expected = [
-            (datetime.datetime(2021, 5, 10), datetime.datetime(2022, 8, 20)),
-            (datetime.datetime(2022, 5, 10), datetime.datetime(2023, 8, 20)),
-            (datetime.datetime(2023, 5, 10), datetime.datetime(2024, 8, 20)),
+            (datetime.datetime(2021, 5, 10, tzinfo=utc), datetime.datetime(2022, 8, 20, tzinfo=utc)),
+            (datetime.datetime(2022, 5, 10, tzinfo=utc), datetime.datetime(2023, 8, 20, tzinfo=utc)),
+            (datetime.datetime(2023, 5, 10, tzinfo=utc), datetime.datetime(2024, 8, 20, tzinfo=utc)),
         ]
         result = find_overlapping_periods(start_date, end_date, return_str=False)
         assert result == expected
 
     def test_valid_range_multiple_years_string(self):
         """Test case where the start and end dates are provided as strings with return_iso=False."""
+        utc = datetime.timezone.utc
         start_date = "2021-05-10"
         end_date = "2024-08-20"
         expected = [
-            (datetime.datetime(2021, 5, 10), datetime.datetime(2022, 8, 20)),
-            (datetime.datetime(2022, 5, 10), datetime.datetime(2023, 8, 20)),
-            (datetime.datetime(2023, 5, 10), datetime.datetime(2024, 8, 20)),
+            (datetime.datetime(2021, 5, 10, tzinfo=utc), datetime.datetime(2022, 8, 20, tzinfo=utc)),
+            (datetime.datetime(2022, 5, 10, tzinfo=utc), datetime.datetime(2023, 8, 20, tzinfo=utc)),
+            (datetime.datetime(2023, 5, 10, tzinfo=utc), datetime.datetime(2024, 8, 20, tzinfo=utc)),
         ]
         result = find_overlapping_periods(start_date, end_date, return_str=False)
         assert result == expected
