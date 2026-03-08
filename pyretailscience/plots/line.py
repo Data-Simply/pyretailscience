@@ -2,32 +2,46 @@
 
 It focuses on visualizing sequences that are ordered or sequential but not necessarily categorical, such as "days since
 an event" or "months since a competitor opened." However, while this module can handle datetime values on the x-axis,
-the **plots.time_line** module has additional features that make working with datetimes easier, such as easily resampling the
-data to alternate time frames.
+the **plots.time_line** module has additional features that make working with datetimes easier,
+such as easily resampling the data to alternate time frames.
 
-The sequences used in this module can include values like "days since an event" (e.g., -2, -1, 0, 1, 2) or "months
-since a competitor store opened." **This module is not intended for use with actual datetime values**.
+The sequences used in this module can include values like "days since an event" (e.g.,
+-2, -1, 0, 1, 2) or "months since a competitor store opened." **This module is not intended
+for use with actual datetime values**.
 
 ### Core Features
 
-- **Plotting Sequences or Indexes**: Plot one or more value columns (**`value_col`**) with support for sequences like
--2, -1, 0, 1, 2 (e.g., months since an event), using either the index or a specified x-axis column (**`x_col`**).
-- **Custom X-Axis or Index**: Use any column as the x-axis (**`x_col`**) or plot based on the index if no x-axis column is specified.
-- **Multiple Lines**: Create separate lines for each unique value in **`group_col`** (e.g., categories or product types).
-- **Comprehensive Customization**: Easily customize plot titles, axis labels, and legends, with the option to move the legend outside the plot.
-- **Pre-Aggregated Data**: The data must be pre-aggregated before plotting, as no aggregation occurs within the module.
+- **Plotting Sequences or Indexes**: Plot one or more value columns (**`value_col`**) with
+support for sequences like -2, -1, 0, 1, 2 (e.g., months since an event), using either the
+index or a specified x-axis column (**`x_col`**).
+- **Custom X-Axis or Index**: Use any column as the x-axis (**`x_col`**) or plot based on the
+index if no x-axis column is specified.
+- **Multiple Lines**: Create separate lines for each unique value in **`group_col`** (e.g.,
+categories or product types).
+- **Comprehensive Customization**: Easily customize plot titles, axis labels, and legends, with
+the option to move the legend outside the plot.
+- **Pre-Aggregated Data**: The data must be pre-aggregated before plotting, as no aggregation
+occurs within the module.
 
 ### Use Cases
 
-- **Daily Trends**: Plot trends such as daily revenue or user activity, for example, tracking revenue since the start of the year.
-- **Event Impact**: Visualize how metrics (e.g., revenue, sales, or traffic) change before and after an important event, such as a competitor store opening or a product launch.
-- **Category Comparison**: Compare metrics across multiple categories over time, for example, tracking total revenue for the top categories before and after an event like the introduction of a new competitor.
+- **Daily Trends**: Plot trends such as daily revenue or user activity, for example, tracking
+revenue since the start of the year.
+- **Event Impact**: Visualize how metrics (e.g., revenue, sales, or traffic) change before and
+after an important event, such as a competitor store opening or a product launch.
+- **Category Comparison**: Compare metrics across multiple categories over time, for example,
+tracking total revenue for the top categories before and after an event like the introduction
+of a new competitor.
 
 ### Limitations and Handling of Temporal Data
 
-- **Limited Handling of Temporal Data**: This module can plot simple time-based sequences, such as "days since an event," but it cannot manipulate or directly handle datetime or date-like columns. It is not optimized for actual datetime values.
-If a datetime column is passed or more complex temporal plotting is needed, consider using the **`plots.time_line`** module, which is specifically designed for working with temporal data and performing time-based manipulation.
-- **Pre-Aggregated Data Required**: The module does not perform any data aggregation, so all data must be pre-aggregated before being passed in for plotting.
+- **Limited Handling of Temporal Data**: This module can plot simple time-based sequences, such
+as "days since an event," but it cannot manipulate or directly handle datetime or date-like
+columns. It is not optimized for actual datetime values. If a datetime column is passed or more
+complex temporal plotting is needed, consider using the **`plots.time_line`** module, which is
+specifically designed for working with temporal data and performing time-based manipulation.
+- **Pre-Aggregated Data Required**: The module does not perform any data aggregation, so all
+data must be pre-aggregated before being passed in for plotting.
 
 """
 
@@ -250,7 +264,7 @@ def plot(
     highlight: str | list[str] | None = None,
     **kwargs: dict[str, any],
 ) -> SubplotBase:
-    """Plots the `value_col` over the specified `x_col` or index, creating a separate line for each unique value in `group_col`.
+    """Plots `value_col` over `x_col` or index, with a separate line per unique `group_col` value.
 
     This function supports both pandas DataFrames and Series as input. When a Series is provided,
     the Series values are plotted against its index, and `value_col` must be None.

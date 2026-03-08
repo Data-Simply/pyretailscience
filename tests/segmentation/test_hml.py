@@ -38,7 +38,7 @@ class TestHMLSegmentation:
 
     # Correctly handles zero spend customers when zero_value_customers is "include_with_light"
     def test_handles_zero_spend_customers_include_with_light(self, base_df):
-        """Test that the method correctly handles zero spend customers when zero_value_customers is "include_with_light"."""
+        """Test handling of zero spend customers when zero_value_customers is "include_with_light"."""
         hml_segmentation = HMLSegmentation(base_df, zero_value_customers="include_with_light")
         result_df = hml_segmentation.df
 
@@ -50,7 +50,7 @@ class TestHMLSegmentation:
 
     # Correctly handles zero spend customers when zero_value_customers is "separate_segment"
     def test_handles_zero_spend_customers_separate_segment(self, base_df):
-        """Test that the method correctly handles zero spend customers when zero_value_customers is "separate_segment"."""
+        """Test handling of zero spend customers when zero_value_customers is "separate_segment"."""
         hml_segmentation = HMLSegmentation(base_df, zero_value_customers="separate_segment")
         result_df = hml_segmentation.df
 

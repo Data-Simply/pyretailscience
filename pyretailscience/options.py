@@ -183,15 +183,22 @@ class Options:
             "column.suffix.unknown_customer": "The suffix to use for unknown customer columns.",
             "column.suffix.total": "The suffix to use for total columns.",
             # Color options
-            "plot.color.mono_palette": "Monochromatic palette for plots with few series (default: 3 green shades). Set to [] to disable.",
-            "plot.color.multi_color_palette": "Multi-color palette for plots with many series (default: 21 Tailwind colors)",
+            "plot.color.mono_palette": (
+                "Monochromatic palette for plots with few series (default: 3 green shades). Set to [] to disable."
+            ),
+            "plot.color.multi_color_palette": (
+                "Multi-color palette for plots with many series (default: 21 Tailwind colors)"
+            ),
             "plot.color.positive": "Color for positive values (e.g., gains, increases)",
             "plot.color.negative": "Color for negative values (e.g., losses, decreases)",
             "plot.color.neutral": "Color for neutral values (e.g., net amounts)",
             "plot.color.difference": "Color for difference values (e.g., waterfall transitions, tree differences)",
             "plot.color.context": "Color for de-emphasized context lines",
             "plot.color.primary": "Default color for single-series plots",
-            "plot.color.heatmap": "Tailwind color name (e.g., 'green', 'blue') or matplotlib colormap name (e.g., 'Greens', 'viridis') for heatmaps",
+            "plot.color.heatmap": (
+                "Tailwind color name (e.g., 'green', 'blue') or matplotlib colormap name"
+                " (e.g., 'Greens', 'viridis') for heatmaps"
+            ),
             # Plot font descriptions
             "plot.font.title_font": "The font family to use for plot titles.",
             "plot.font.label_font": "The font family to use for axis labels.",

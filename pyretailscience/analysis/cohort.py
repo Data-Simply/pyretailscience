@@ -67,7 +67,8 @@ class CohortAnalysis:
 
         Raises:
             ValueError: If `period` is not one of the allowed values.
-            ValueError: If `df` is missing required columns (`customer_id`, `transaction_date`, or `aggregation_column`).
+            ValueError: If `df` is missing required columns
+                (`customer_id`, `transaction_date`, or `aggregation_column`).
         """
         cols = ColumnHelper()
 

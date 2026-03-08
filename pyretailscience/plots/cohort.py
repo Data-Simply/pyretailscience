@@ -1,6 +1,7 @@
 """This module provides functionality for creating cohort plots from pandas DataFrames.
 
-It is designed to visualize data distributions using color-coded heatmaps, helping to highlight trends and comparisons between different groups.
+It is designed to visualize data distributions using color-coded heatmaps, helping to highlight
+trends and comparisons between different groups.
 
 ### Core Features
 
@@ -21,7 +22,8 @@ It is designed to visualize data distributions using color-coded heatmaps, helpi
 
 ### Limitations and Warnings
 
-- **Data Aggregation Required**: The module does not perform data aggregation; data should be pre-aggregated before being passed to the function.
+- **Data Aggregation Required**: The module does not perform data aggregation; data should be
+pre-aggregated before being passed to the function.
 - **Fixed Color Mapping**: The module uses a predefined colormap without dynamic adjustments.
 """
 
