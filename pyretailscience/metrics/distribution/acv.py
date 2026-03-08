@@ -60,11 +60,10 @@ class Acv:
         required_cols = [unit_spend_col]
         if group_by is not None:
             required_cols.extend(group_by)
-
-        validate_columns(df, required_cols)
-
-        if group_by is not None:
+            validate_columns(df, required_cols)
             df = df.group_by(group_by)
+        else:
+            validate_columns(df, required_cols)
 
         self.table = df.aggregate(acv=_[unit_spend_col].sum() / acv_scale_factor)
 
