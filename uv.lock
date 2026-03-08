@@ -2410,7 +2410,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["duckdb"], specifier = ">=10.0.0,<11" },
     { name = "matplotlib", specifier = ">=3.9.1,<4" },
     { name = "matplotlib-set-diagrams", specifier = ">=0.0.2,<0.3.0" },
-    { name = "numpy", specifier = ">=1.26.3,<=2.2.6" },
+    { name = "numpy", specifier = ">=1.26.3,<3" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
     { name = "pyarrow", specifier = ">=18.0.0,<24" },
     { name = "scikit-learn", specifier = ">=1.4.2,<2" },

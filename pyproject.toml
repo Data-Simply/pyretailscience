@@ -13,7 +13,7 @@ dependencies = [
     "ibis-framework[duckdb]>=10.0.0,<11",
     "matplotlib-set-diagrams>=0.0.2,<0.3.0",
     "matplotlib>=3.9.1,<4",
-    "numpy>=1.26.3,<=2.2.6",
+    "numpy>=1.26.3,<3",
     "pandas>=2.2.3,<3",
     "pyarrow>=18.0.0,<24",
     "scikit-learn>=1.4.2,<2",
