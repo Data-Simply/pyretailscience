@@ -68,12 +68,12 @@ class RFMSegmentation:
                 - transaction_id
             current_date (Optional[Union[str, datetime.date]]): The reference date for calculating recency.
                 Can be a string (format: "YYYY-MM-DD"), a date object, or None (defaults to the current system date).
-            r_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
-                Defaults to 10 bins.
-            f_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
-                Defaults to 10 bins.
-            m_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile cut points (max 9 cut points).
-                Defaults to 10 bins.
+            r_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile
+                cut points (max 9 cut points). Defaults to 10 bins.
+            f_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile
+                cut points (max 9 cut points). Defaults to 10 bins.
+            m_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile
+                cut points (max 9 cut points). Defaults to 10 bins.
             min_monetary (Optional[float]): Minimum monetary value to include in segmentation.
                 Customers with total spend below this value will be excluded from the analysis.
             max_monetary (Optional[float]): Maximum monetary value to include in segmentation.
@@ -149,7 +149,10 @@ class RFMSegmentation:
                 raise ValueError(msg)
         elif isinstance(segments, list):
             if len(segments) == 0 or len(segments) > max_segments_list:
-                msg = f"{param_name} must contain between {max_segments} and {max_segments_list} cut points when specified as a list"
+                msg = (
+                    f"{param_name} must contain between {max_segments} and"
+                    f" {max_segments_list} cut points when specified as a list"
+                )
                 raise ValueError(msg)
             if not all(isinstance(x, int | float) for x in segments):  # UP038
                 msg = f"All cut points in {param_name} must be numeric"

@@ -106,7 +106,7 @@ class TestCustomerDecisionHierarchy:
         assert pairs_df.equals(expected_pairs_df)
 
     def test_init_exclude_same_transaction_products_false(self):
-        """Test that the function returns the correct pairs dataframe when exclude_same_transaction_products is False."""
+        """Test correct pairs dataframe when exclude_same_transaction_products is False."""
         df = pd.DataFrame(
             {
                 cols.customer_id: [1, 1, 1, 2, 2, 2, 3, 3],

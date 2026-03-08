@@ -245,11 +245,12 @@ class SegTransactionStats:
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
-            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
-                Value or expression identifying unknown customers for separate tracking. When provided,
-                metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
-                ibis literals, or boolean expressions (e.g., data["customer_id"] < 0). Requires customer_id column.
-                Defaults to None.
+            unknown_customer_value (optional): Value or expression identifying unknown
+                customers for separate tracking. Type: int, str, ibis Scalar,
+                ibis BooleanColumn, or None. When provided, metrics are split into
+                identified, unknown, and total variants. Accepts simple values (e.g., -1),
+                ibis literals, or boolean expressions (e.g., data["customer_id"] < 0).
+                Requires customer_id column. Defaults to None.
             grouping_sets (Literal["rollup", "cube"] | list[list[str] | tuple[str, ...]] | None, optional):
                 Grouping sets mode. Mutually exclusive with calc_total/calc_rollup when explicitly set.
                 - "rollup": SQL ROLLUP (hierarchical aggregation from right to left). Generates [A,B,C], [A,B], [A], [].
@@ -489,7 +490,10 @@ class SegTransactionStats:
         # String validation
         if isinstance(grouping_sets, str):
             if grouping_sets not in ["rollup", "cube", "total"]:
-                msg = f"grouping_sets must be 'rollup', 'cube', 'total', a list of tuples, or None. Got: '{grouping_sets}'"
+                msg = (
+                    f"grouping_sets must be 'rollup', 'cube', 'total', a list of tuples,"
+                    f" or None. Got: '{grouping_sets}'"
+                )
                 raise ValueError(msg)
 
         # List validation - only accept tuples for consistency (Ticket 5 design)
@@ -911,12 +915,13 @@ class SegTransactionStats:
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
-            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
-                Value or expression identifying unknown customers for separate tracking. When provided,
-                metrics are split into identified, unknown, and total variants. Accepts simple values (e.g., -1),
+            unknown_customer_value (optional): Value or expression identifying unknown
+                customers for separate tracking. Type: int, str, ibis Scalar,
+                ibis BooleanColumn, or None. When provided, metrics are split into
+                identified, unknown, and total variants. Accepts simple values (e.g., -1),
                 ibis literals, or boolean expressions. Defaults to None.
-            grouping_sets (Literal["rollup", "cube"] | list[tuple[str, ...]] | None, optional): Grouping sets mode
-                ('rollup', 'cube', list of tuples, or None). Defaults to None.
+            grouping_sets (optional): Grouping sets mode ('rollup', 'cube', list of
+                tuples, or None). Defaults to None.
 
         Returns:
             pd.DataFrame: The transaction statistics by segment.
@@ -932,7 +937,10 @@ class SegTransactionStats:
 
         # Validate rollup_value list length
         if len(rollup_value) != len(segment_col):
-            msg = f"If rollup_value is a list, its length must match the number of segment columns. Expected {len(segment_col)}, got {len(rollup_value)}"
+            msg = (
+                f"If rollup_value is a list, its length must match the number of segment"
+                f" columns. Expected {len(segment_col)}, got {len(rollup_value)}"
+            )
             raise ValueError(msg)
 
         # Validate and create unknown flag if unknown_customer_value is provided

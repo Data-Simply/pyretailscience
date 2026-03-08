@@ -151,7 +151,10 @@ class TestFilterAndLabelByPeriods:
 
         with pytest.raises(
             ValueError,
-            match="Period 'Invalid_Q1': start date \\(2023-03-31 00:00:00\\) must be <= end date \\(2023-01-01 00:00:00\\)",
+            match=(
+                r"Period 'Invalid_Q1': start date \(2023-03-31 00:00:00\)"
+                r" must be <= end date \(2023-01-01 00:00:00\)"
+            ),
         ):
             filter_and_label_by_periods(sample_transactions_table, period_ranges)
 

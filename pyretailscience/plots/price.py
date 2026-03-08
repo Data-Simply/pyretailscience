@@ -1,6 +1,8 @@
-"""This module provides functionality for creating bubble chart visualizations that display price distribution analysis across different categories.
+"""Bubble chart visualizations for price distribution analysis across categories.
 
-The bubble chart shows price distribution as vertical layers (price bands) with bubble sizes representing the percentage of products in each price range for different categories like retailers, countries, etc.
+The bubble chart shows price distribution as vertical layers (price bands) with bubble sizes
+representing the percentage of products in each price range for different categories like
+retailers, countries, etc.
 
 ### Core Features
 
@@ -51,7 +53,8 @@ def _validate_inputs(
         Tuple of (cleaned_dataframe, validated_bins).
 
     Raises:
-        ValueError: If DataFrame is empty, columns don't exist, value column is not numeric, or bins parameter is invalid.
+        ValueError: If DataFrame is empty, columns don't exist, value column is not numeric,
+            or bins parameter is invalid.
         KeyError: If specified columns are not found in DataFrame.
         TypeError: If bins parameter has invalid type.
     """

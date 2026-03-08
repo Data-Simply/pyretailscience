@@ -52,7 +52,10 @@ def _validate_and_normalize_periods(
     for i, (name1, (start1, end1)) in enumerate(period_list):
         for name2, (start2, end2) in period_list[i + 1 :]:
             if start1 <= end2 and start2 <= end1:
-                overlap_msg = f"Periods '{name1}' ({start1.date()}-{end1.date()}) and '{name2}' ({start2.date()}-{end2.date()}) overlap"
+                overlap_msg = (
+                    f"Periods '{name1}' ({start1.date()}-{end1.date()}) and"
+                    f" '{name2}' ({start2.date()}-{end2.date()}) overlap"
+                )
                 raise ValueError(overlap_msg)
 
     return normalized
@@ -131,8 +134,10 @@ def find_overlapping_periods(
         it may cause an issue in non-leap years.
 
     Args:
-        start_date (Union[datetime, str]): The starting date of the range, either as a datetime object or 'YYYY-MM-DD' string.
-        end_date (Union[datetime, str]): The ending date of the range, either as a datetime object or 'YYYY-MM-DD' string.
+        start_date (Union[datetime, str]): The starting date of the range, either as a
+            datetime object or 'YYYY-MM-DD' string.
+        end_date (Union[datetime, str]): The ending date of the range, either as a
+            datetime object or 'YYYY-MM-DD' string.
         return_str (bool, optional): If True, returns dates as ISO-formatted strings ('YYYY-MM-DD').
                                      If False, returns datetime objects. Defaults to True.
 

@@ -9,10 +9,12 @@ labels or categories.
 - **Single or Grouped Bar Plots**: Plot one or more value columns (`value_col`) as bars. The `x_col` is used to define
 categories or groups on the x-axis (e.g., products, categories, or regions). Grouped bars can be created by
 specifying both `value_col` (list of columns) and `x_col`.
-- **Sorting and Orientation**: Customize the sorting of bars (ascending or descending) and choose between vertical (`"v"`, `"vertical"`) or horizontal (`"h"`, `"horizontal"`) bar orientations.
+- **Sorting and Orientation**: Customize the sorting of bars (ascending or descending) and choose between
+vertical (`"v"`, `"vertical"`) or horizontal (`"h"`, `"horizontal"`) bar orientations.
 - **Data Labels**: Add data labels to bars, with options to show absolute values or percentages.
 - **Hatching Patterns**: Apply hatch patterns to the bars for enhanced visual differentiation.
-- **Legend Customization**: Move the legend outside the plot for better visibility, especially when dealing with grouped bars or multiple value columns.
+- **Legend Customization**: Move the legend outside the plot for better visibility, especially when dealing
+with grouped bars or multiple value columns.
 
 
 ### Use Cases
@@ -61,7 +63,9 @@ def plot(
     num_digits: int = 3,
     **kwargs: dict[str, Any],
 ) -> SubplotBase:
-    """Creates a customizable bar plot from a DataFrame or Series with optional features like sorting, orientation, and adding data labels. Grouped bars can be created with the use of a grouping column.
+    """Creates a customizable bar plot from a DataFrame or Series.
+
+    Supports optional sorting, orientation, and data labels. Grouped bars can be created with a grouping column.
 
     Args:
         df (pd.DataFrame | pd.Series): The input DataFrame or Series containing the data to be plotted.

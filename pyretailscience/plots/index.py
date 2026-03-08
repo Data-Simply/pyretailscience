@@ -1,37 +1,52 @@
 """This module provides functionality for creating index plots in retail analytics.
 
-Index plots are useful for comparing the performance of different categories or segments against a baseline or average,
-typically set at 100. The module supports customization of the plot's appearance, sorting of data, and filtering by specific groups,
-offering valuable insights into retail operations.
+Index plots are useful for comparing the performance of different categories or segments against
+a baseline or average, typically set at 100. The module supports customization of the plot's
+appearance, sorting of data, and filtering by specific groups, offering valuable insights into
+retail operations.
 
 
 ### Features
 
-- **Index Plot Creation**: Visualize how categories or segments perform relative to a baseline value, typically set at 100.
-  Useful for comparing performance across products, regions, or customer segments.
-- **Flexible Sorting**: Sort data by either group or value to highlight specific trends in the data.
-- **Data Filtering**: Filter data based on specified groups to focus on specific categories or exclude unwanted data.
-- **Highlighting Range**: Highlight specific ranges of values (e.g., performance range between 80-120) to focus on performance.
-- **Series Support**: Optionally include a `series_col` for plotting multiple series (e.g., time periods) within the same plot.
-- **Graph Customization**: Adjust titles, axis labels, legend titles, and styling to match the specific context of the analysis.
+- **Index Plot Creation**: Visualize how categories or segments perform relative to a baseline
+  value, typically set at 100. Useful for comparing performance across products, regions, or
+  customer segments.
+- **Flexible Sorting**: Sort data by either group or value to highlight specific trends.
+- **Data Filtering**: Filter data based on specified groups to focus on specific categories
+  or exclude unwanted data.
+- **Highlighting Range**: Highlight specific ranges of values (e.g., performance range between
+  80-120) to focus on performance.
+- **Series Support**: Optionally include a `series_col` for plotting multiple series (e.g.,
+  time periods) within the same plot.
+- **Graph Customization**: Adjust titles, axis labels, legend titles, and styling to match the
+  specific context of the analysis.
 
 ### Use Cases
 
-- **Retail Performance Comparison**: Compare product or regional performance to the company average or baseline using an index plot.
-- **Customer Segment Analysis**: Evaluate customer segment behavior against overall performance, helping identify high-performing segments.
-- **Operational Insights**: Identify areas of concern or opportunity by comparing store, region, or product performance against the baseline.
-- **Visualizing Retail Strategy**: Support decision-making by visualizing which categories or products overperform or underperform relative to a baseline.
+- **Retail Performance Comparison**: Compare product or regional performance to the company
+  average or baseline using an index plot.
+- **Customer Segment Analysis**: Evaluate customer segment behavior against overall performance,
+  helping identify high-performing segments.
+- **Operational Insights**: Identify areas of concern or opportunity by comparing store, region,
+  or product performance against the baseline.
+- **Visualizing Retail Strategy**: Support decision-making by visualizing which categories or
+  products overperform or underperform relative to a baseline.
 
 ### Limitations and Handling of Data
 
-- **Data Grouping and Aggregation**: Supports aggregation functions such as sum, average, etc., for calculating the index.
-- **Sorting**: Sorting can be applied by group or value, allowing analysts to focus on specific trends. If `series_col` is provided, sorting by `group` is applied.
-- **Group Filtering**: Users can exclude or include specific groups for focused analysis, with error handling to ensure conflicting options are not used simultaneously.
+- **Data Grouping and Aggregation**: Supports aggregation functions such as sum, average, etc.,
+  for calculating the index.
+- **Sorting**: Sorting can be applied by group or value, allowing analysts to focus on specific
+  trends. If `series_col` is provided, sorting by `group` is applied.
+- **Group Filtering**: Users can exclude or include specific groups for focused analysis, with
+  error handling to ensure conflicting options are not used simultaneously.
 
 ### Functionality Details
 
-- **plot()**: Generates the index plot, which can be customized with multiple options such as sorting, filtering, and styling.
-- **get_indexes()**: Helper function for calculating the index of the value column for a given subset of the dataframe based on filters and aggregation.
+- **plot()**: Generates the index plot, which can be customized with multiple options such as
+  sorting, filtering, and styling.
+- **get_indexes()**: Helper function for calculating the index of the value column for a given
+  subset of the dataframe based on filters and aggregation.
 
 """
 
@@ -141,7 +156,10 @@ def filter_top_bottom_n(df: pd.DataFrame, top_n: int | None = None, bottom_n: in
 
     # Check if top_n + bottom_n exceeds total groups
     if top_n is not None and bottom_n is not None and top_n + bottom_n > df_length:
-        error_msg = f"The sum of top_n ({top_n}) and bottom_n ({bottom_n}) cannot exceed the total number of groups ({df_length})"
+        error_msg = (
+            f"The sum of top_n ({top_n}) and bottom_n ({bottom_n}) cannot exceed"
+            f" the total number of groups ({df_length})"
+        )
         raise ValueError(error_msg)
 
     # Create a temporary dataframe sorted by index value
@@ -232,10 +250,14 @@ def plot(  # noqa: C901, PLR0913
             groups are included. When not None only the groups in the list are included. Can not be used with
             exclude_groups.
         drop_na (bool, optional): Whether to drop NA index values. Defaults to False.
-        top_n (int, optional): Display only the top N indexes by value. Only applicable when series_col is None. Defaults to None.
-        bottom_n (int, optional): Display only the bottom N indexes by value. Only applicable when series_col is None. Defaults to None.
-        filter_above (float, optional): Only display indexes above this value. Only applicable when series_col is None. Defaults to None.
-        filter_below (float, optional): Only display indexes below this value. Only applicable when series_col is None. Defaults to None.
+        top_n (int, optional): Display only the top N indexes by value. Only applicable
+            when series_col is None. Defaults to None.
+        bottom_n (int, optional): Display only the bottom N indexes by value. Only applicable
+            when series_col is None. Defaults to None.
+        filter_above (float, optional): Only display indexes above this value. Only applicable
+            when series_col is None. Defaults to None.
+        filter_below (float, optional): Only display indexes below this value. Only applicable
+            when series_col is None. Defaults to None.
         color_by_threshold (bool, optional): Color bars based on highlight_range thresholds using configurable option
             colors. Values >= the upper threshold use the ``plot.color.positive`` option, values <= the lower
             threshold use the ``plot.color.negative`` option, and values between use the ``plot.color.neutral`` option.
