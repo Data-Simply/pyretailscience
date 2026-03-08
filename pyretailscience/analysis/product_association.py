@@ -152,8 +152,6 @@ class ProductAssociation:
         - uplift: The ratio of the observed support to the expected support if the products were independent.
     """
 
-    _df: pd.DataFrame | None = None
-
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -192,6 +190,7 @@ class ProductAssociation:
             ValueError: If the minimum occurrences or cooccurrences are less than 1.
             ValueError: If the input DataFrame does not contain the required columns or if they have null values.
         """
+        self._df: pd.DataFrame | None = None
         group_col = group_col or get_option("column.customer_id")
         required_cols = [group_col, value_col]
         missing_cols = set(required_cols) - set(df.columns)
