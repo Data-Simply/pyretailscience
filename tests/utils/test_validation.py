@@ -24,11 +24,12 @@ class TestValidateColumns:
         with pytest.raises(ValueError, match=r"\['store_id', 'unit_spend'\]"):
             validate_columns(df, ["customer_id", "unit_spend", "store_id"])
 
-    def test_raises_type_error_when_required_cols_is_string(self):
-        """Test that passing a string instead of a list raises TypeError."""
+    @pytest.mark.parametrize("required_cols", ["unit_spend", None, 42, ("unit_spend",)])
+    def test_raises_type_error_when_required_cols_is_not_a_list(self, required_cols):
+        """Test that passing a non-list for required_cols raises TypeError."""
         df = pd.DataFrame({"customer_id": [1], "unit_spend": [5.0]})
-        with pytest.raises(TypeError, match="required_cols must be a list of column names, not a string"):
-            validate_columns(df, "unit_spend")
+        with pytest.raises(TypeError, match="required_cols must be a list of column names"):
+            validate_columns(df, required_cols)
 
     def test_does_not_raise_with_superset_of_columns(self):
         """Test validation succeeds when DataFrame has more columns than required."""
