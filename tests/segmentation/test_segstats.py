@@ -634,7 +634,7 @@ class TestSegTransactionStats:
             & (result_df["subcategory"] == "Total")
         ]
         assert len(north_clothing_total) == 1
-        assert north_clothing_total[cols.agg.unit_spend].values[0] == 10.0 + 20.0
+        assert north_clothing_total[cols.agg.unit_spend].to_numpy()[0] == 10.0 + 20.0
 
         # Spot check: one suffix rollup (Total, Total, Jeans)
         total_total_jeans = result_df[
@@ -643,7 +643,7 @@ class TestSegTransactionStats:
             & (result_df["subcategory"] == "Jeans")
         ]
         assert len(total_total_jeans) == 1
-        assert total_total_jeans[cols.agg.unit_spend].values[0] == 10.0 + 30.0 + 50.0 + 70.0
+        assert total_total_jeans[cols.agg.unit_spend].to_numpy()[0] == 10.0 + 30.0 + 50.0 + 70.0
 
         # Grand total
         grand_total = result_df[
@@ -652,7 +652,7 @@ class TestSegTransactionStats:
             & (result_df["subcategory"] == "Total")
         ]
         assert len(grand_total) == 1
-        assert grand_total[cols.agg.unit_spend].values[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
+        assert grand_total[cols.agg.unit_spend].to_numpy()[0] == sum([10, 20, 30, 40, 50, 60, 70, 80])
 
     def test_rollup_enabled_total_disabled(self):
         """Test that rollup rows are included but grand total is excluded when calc_rollup=True, calc_total=False."""
@@ -732,8 +732,8 @@ class TestSegTransactionStats:
         assert len(rollup_rows) == 0
 
         # Verify all rows are detail rows (no "Total" values)
-        assert "Total" not in result_df["category"].values
-        assert "Total" not in result_df["subcategory"].values
+        assert "Total" not in result_df["category"].to_numpy()
+        assert "Total" not in result_df["subcategory"].to_numpy()
 
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")

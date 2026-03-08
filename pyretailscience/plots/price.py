@@ -186,21 +186,17 @@ def plot(
     if proportions.max().max() == 0 or pd.isna(proportions.max().max()):
         raise ValueError("All proportions are zero - no data falls within the specified bins")
 
-    # Stack to get all (group, price_bin) combinations with their proportions
-    stacked = proportions.stack()
+    # Melt to get all (group, price_bin) combinations with their proportions
+    melted = proportions.reset_index().melt(id_vars=group_col, var_name="price_bin", value_name="proportion")
     # Filter out zero proportions to avoid invisible bubbles
-    stacked = stacked[stacked > 0]
+    melted = melted[melted["proportion"] > 0]
 
-    if len(stacked) > 0:  # Only plot if there are non-zero proportions
-        x_positions = [groups.index(group) for group, _ in stacked.index]
-        y_positions = [price_bins.index(price_bin) for _, price_bin in stacked.index]
+    if len(melted) > 0:  # Only plot if there are non-zero proportions
+        x_positions = [groups.index(group) for group in melted[group_col]]
+        y_positions = [price_bins.index(price_bin) for price_bin in melted["price_bin"]]
         # Calculate bubble sizes using absolute proportion values for cross-group comparison
-        bubble_sizes = []
-        for group, price_bin in stacked.index:
-            proportion_value = stacked.loc[(group, price_bin)]
-            scaled_size = proportion_value * s_scale
-            bubble_sizes.append(scaled_size)
-        bubble_colors = [colors[groups.index(group)] for group, _ in stacked.index]
+        bubble_sizes = (melted["proportion"] * s_scale).tolist()
+        bubble_colors = [colors[groups.index(group)] for group in melted[group_col]]
 
         ax.scatter(
             x_positions,

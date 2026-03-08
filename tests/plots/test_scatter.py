@@ -496,7 +496,7 @@ class TestBubbleChartFeature:
         assert len(collections) >= 1, "No scatter plot collections found"
 
         sizes = collections[0].get_sizes()
-        expected_sizes = bubble_chart_dataframe["store_sqft"].values * size_scale
+        expected_sizes = bubble_chart_dataframe["store_sqft"].to_numpy() * size_scale
         assert np.array_equal(sizes, expected_sizes), f"Sizes should be scaled by {size_scale}"
 
     @pytest.mark.parametrize("x_col", ["sales", None], ids=["explicit_x_col", "index_x_col"])
@@ -533,7 +533,7 @@ class TestBubbleChartFeature:
             assert len(sizes) == len(offsets), "Each point should have a corresponding size"
 
         all_sizes = sorted(np.concatenate([c.get_sizes() for c in collections]))
-        expected_all_sizes = sorted(bubble_chart_dataframe["store_sqft"].values * size_scale)
+        expected_all_sizes = sorted(bubble_chart_dataframe["store_sqft"].to_numpy() * size_scale)
         assert np.array_equal(all_sizes, expected_all_sizes), (
             f"Grouped bubble chart sizes should be scaled by {size_scale}"
         )
@@ -612,7 +612,7 @@ class TestBubbleChartFeature:
 
         # Verify sizes come from size_col, not the 's' parameter
         sizes = collections[0].get_sizes()
-        expected_sizes = bubble_chart_dataframe["store_sqft"].values
+        expected_sizes = bubble_chart_dataframe["store_sqft"].to_numpy()
         assert np.array_equal(sizes, expected_sizes), "Sizes should come from size_col, not 's' parameter"
 
     def test_s_parameter_passthrough_without_size_col(self, bubble_chart_dataframe):
@@ -667,7 +667,7 @@ class TestBubbleChartFeature:
             )
 
             # Verify sizes match the size_col values (sales column)
-            expected_sizes = bubble_chart_dataframe["sales"].values
+            expected_sizes = bubble_chart_dataframe["sales"].to_numpy()
             assert np.array_equal(sizes, expected_sizes), f"Collection {i} sizes should match size_col values"
 
     def test_bubble_chart_with_negative_sizes_raises(self, bubble_chart_dataframe):
@@ -708,7 +708,7 @@ class TestBubbleChartFeature:
         assert len(offsets) == len(df), "All data points should be plotted"
 
         sizes = collections[0].get_sizes()
-        expected_sizes = df["store_sqft"].values
+        expected_sizes = df["store_sqft"].to_numpy()
         assert np.array_equal(sizes, expected_sizes), "Sizes should match data including zero values"
 
     def test_bubble_chart_with_labels(self, bubble_chart_dataframe, mocker):
@@ -730,7 +730,7 @@ class TestBubbleChartFeature:
         collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
         assert len(collections) >= 1, "No scatter plot collections found"
         sizes = collections[0].get_sizes()
-        expected_sizes = bubble_chart_dataframe["store_sqft"].values
+        expected_sizes = bubble_chart_dataframe["store_sqft"].to_numpy()
         assert np.array_equal(sizes, expected_sizes), "Sizes should match store_sqft values"
 
         # Verify labels were applied with correct values
@@ -756,5 +756,5 @@ class TestBubbleChartFeature:
         assert len(collections) >= 1, "No scatter plot collections found"
 
         sizes = collections[0].get_sizes()
-        expected_sizes = bubble_chart_dataframe["sales"].values
+        expected_sizes = bubble_chart_dataframe["sales"].to_numpy()
         assert np.array_equal(sizes, expected_sizes), "Sizes should match sales values when x_col == size_col"

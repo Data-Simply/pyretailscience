@@ -149,7 +149,7 @@ def plot(
 
     # Process each category
     for category in categories:
-        dates = df_copy[df_copy[category_col] == category][date_col].values
+        dates = df_copy[df_copy[category_col] == category][date_col].to_numpy()
 
         # Convert to matplotlib date numbers and find segments
         dates_num = mdates.date2num(dates)

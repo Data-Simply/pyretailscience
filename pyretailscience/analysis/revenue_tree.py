@@ -316,7 +316,7 @@ class RevenueTree:
         if group_col is None:
             result_df.index = ["p1", "p2"]
         else:
-            result_df.set_index(group_col, inplace=True)
+            result_df = result_df.set_index(group_col)
             if len(group_col) == 1:
                 result_df.index = pd.CategoricalIndex(result_df.index)
             # else: MultiIndex created automatically by set_index
