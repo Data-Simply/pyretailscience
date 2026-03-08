@@ -202,8 +202,6 @@ class SegTransactionStats:
     aggregations for comparison across segments.
     """
 
-    _df: pd.DataFrame | None = None
-
     def __init__(
         self,
         data: pd.DataFrame | ibis.Table,
@@ -300,6 +298,7 @@ class SegTransactionStats:
             ...     calc_rollup=False,
             ... )
         """
+        self._df: pd.DataFrame | None = None
         # Convert data to ibis.Table if it's a pandas DataFrame
         if isinstance(data, pd.DataFrame):
             data = ibis.memtable(data)

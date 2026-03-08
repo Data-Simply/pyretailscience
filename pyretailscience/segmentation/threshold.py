@@ -54,9 +54,6 @@ from pyretailscience.options import ColumnHelper
 class ThresholdSegmentation:
     """Segments customers based on user-defined thresholds and segments."""
 
-    _df: pd.DataFrame | None = None
-    _group_col: list[str] | None = None
-
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -90,6 +87,8 @@ class ThresholdSegmentation:
             ValueError: If the dataframe is missing the columns option column.customer_id or `value_col`, or these
                 columns contain null values.
         """
+        self._df: pd.DataFrame | None = None
+        self._group_col: list[str] | None = None
         if len(thresholds) != len(set(thresholds)):
             raise ValueError("The thresholds must be unique")
 

@@ -110,8 +110,6 @@ class CompositeRank:
     - Middle 60% → Maintain current strategy, monitor for changes
     """
 
-    _df: pd.DataFrame | None = None
-
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -180,6 +178,7 @@ class CompositeRank:
             >>> # Electronics products ranked against other electronics
             >>> # Apparel products ranked against other apparel
         """
+        self._df: pd.DataFrame | None = None
         if isinstance(df, pd.DataFrame):
             df = ibis.memtable(df)
 

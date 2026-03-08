@@ -45,8 +45,6 @@ class RFMSegmentation:
     The RFM segment is a 3-digit number (R*100 + F*10 + M), representing customer value.
     """
 
-    _df: pd.DataFrame | None = None
-
     def __init__(
         self,
         df: pd.DataFrame | ibis.Table,
@@ -90,6 +88,7 @@ class RFMSegmentation:
                        or invalid filter parameters.
             TypeError: If the input data is not a pandas DataFrame or an Ibis Table.
         """
+        self._df: pd.DataFrame | None = None
         cols = ColumnHelper()
         required_cols = [
             cols.customer_id,
