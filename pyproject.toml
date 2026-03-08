@@ -64,6 +64,7 @@ default-groups = [ "dev", "docs", "examples" ]
 [tool.ruff]
 line-length    = 120
 show-fixes     = true
+src            = ["pyretailscience", "tests"]
 target-version = "py310"
 
 [tool.ruff.lint]
@@ -157,6 +158,9 @@ multiline-quotes = "double"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.ruff.lint.isort]
+known-first-party = ["pyretailscience"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
