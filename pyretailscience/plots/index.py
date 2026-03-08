@@ -346,7 +346,7 @@ def plot(  # noqa: C901, PLR0913
         negative_color = get_named_color("negative")
         neutral_color = get_named_color("neutral")
 
-        values = index_df["index"].values + BASELINE_INDEX
+        values = index_df["index"].to_numpy() + BASELINE_INDEX
         bar_colors = np.select(
             [values >= highlight_range[1], values <= highlight_range[0]],
             [positive_color, negative_color],

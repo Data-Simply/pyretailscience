@@ -288,7 +288,7 @@ class CrossShop:
 
         column_order = [group_col, *group_cols, "groups", "group_labels", temp_value_col]
         cs_df = cs_df[column_order]
-        cs_df.set_index(group_col, inplace=True)
+        cs_df = cs_df.set_index(group_col)
         return cs_df.rename(columns={temp_value_col: value_col})
 
     @staticmethod

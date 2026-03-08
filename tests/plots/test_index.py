@@ -798,10 +798,10 @@ def test_filter_by_groups_exclude_groups():
     )
 
     # Check that excluded groups are not in the result
-    assert all(value not in result_df["category"].values for value in ["B", "D"])
+    assert all(value not in result_df["category"].to_numpy() for value in ["B", "D"])
 
     # Check that other groups are still in the result
-    assert all(value in result_df["category"].values for value in ["A", "C", "E"])
+    assert all(value in result_df["category"].to_numpy() for value in ["A", "C", "E"])
 
     # Check that the result has the expected number of rows
     expected_row_count = len(test_df) - len(exclude_list)
@@ -878,8 +878,8 @@ def test_filter_by_value_thresholds_filter_below():
     assert all(result_df["index"] < threshold)
 
     # Check that correct values are included and excluded
-    assert all(value in result_df["index"].values for value in [80, 90, 100])
-    assert all(value not in result_df["index"].values for value in [110, 120])
+    assert all(value in result_df["index"].to_numpy() for value in [80, 90, 100])
+    assert all(value not in result_df["index"].to_numpy() for value in [110, 120])
 
     # Check that the result has the expected number of rows
     expected_count = len(test_df[test_df["index"] < threshold])
