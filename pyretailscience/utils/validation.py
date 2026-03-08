@@ -17,10 +17,11 @@ def validate_columns(df: pd.DataFrame | ibis.Table, required_cols: list[str]) ->
         required_cols (list[str]): Column names that must be present.
 
     Raises:
+        TypeError: If required_cols is not a list.
         ValueError: If any required columns are missing from the data.
     """
-    if isinstance(required_cols, str):
-        msg = "required_cols must be a list of column names, not a string."
+    if not isinstance(required_cols, list):
+        msg = "required_cols must be a list of column names."
         raise TypeError(msg)
     missing_cols = sorted(set(required_cols) - set(df.columns))
     if len(missing_cols) > 0:
