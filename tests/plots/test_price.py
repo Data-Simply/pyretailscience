@@ -228,7 +228,7 @@ def test_plot_with_missing_values(mocker):
     # Row 2 (unit_price=None) and row 4 (retailer=None) should be dropped
     expected_values = [1.0, 2.0, 4.0]
 
-    assert list(cleaned_data.values) == expected_values, f"Expected {expected_values}, got {list(cleaned_data.values)}"
+    assert cleaned_data.tolist() == expected_values, f"Expected {expected_values}, got {cleaned_data.tolist()}"
 
     # Also verify the retailer data was cleaned correctly by checking the DataFrame index
     # The cleaned DataFrame should have the correct corresponding retailer values

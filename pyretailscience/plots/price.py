@@ -195,7 +195,7 @@ def plot(
         x_positions = [groups.index(group) for group in melted[group_col]]
         y_positions = [price_bins.index(price_bin) for price_bin in melted["price_bin"]]
         # Calculate bubble sizes using absolute proportion values for cross-group comparison
-        bubble_sizes = (melted["proportion"] * s_scale).tolist()
+        bubble_sizes = (melted["proportion"] * s_scale).to_numpy()
         bubble_colors = [colors[groups.index(group)] for group in melted[group_col]]
 
         ax.scatter(
