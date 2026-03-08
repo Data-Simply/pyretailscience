@@ -133,18 +133,22 @@ def find_overlapping_periods(
         This function does not adjust for leap years. If the start or end date is February 29,
         it may cause an issue in non-leap years.
 
+        All input dates are normalized to timezone-aware (UTC) datetimes. Naive datetime inputs
+        are treated as UTC. When ``return_str`` is False, the returned datetime objects are
+        always timezone-aware (UTC).
+
     Args:
-        start_date (Union[datetime, str]): The starting date of the range, either as a
-            datetime object or 'YYYY-MM-DD' string.
-        end_date (Union[datetime, str]): The ending date of the range, either as a
-            datetime object or 'YYYY-MM-DD' string.
+        start_date (datetime | str): The starting date of the range, either as a
+            datetime object or 'YYYY-MM-DD' string. Naive datetimes are treated as UTC.
+        end_date (datetime | str): The ending date of the range, either as a
+            datetime object or 'YYYY-MM-DD' string. Naive datetimes are treated as UTC.
         return_str (bool, optional): If True, returns dates as ISO-formatted strings ('YYYY-MM-DD').
-                                     If False, returns datetime objects. Defaults to True.
+                                     If False, returns timezone-aware (UTC) datetime objects. Defaults to True.
 
     Returns:
-        List[Tuple[Union[str, datetime], Union[str, datetime]]]:
+        list[tuple[str | datetime, str | datetime]]:
         A list of tuples where each tuple contains the start and end dates of an overlapping period,
-        either as strings (ISO format) or datetime objects.
+        either as strings (ISO format) or timezone-aware (UTC) datetime objects.
 
     Raises:
         ValueError: If the start date is after the end date.
