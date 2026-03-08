@@ -380,3 +380,34 @@ class TestFindOverlappingPeriods:
         ]
         result = find_overlapping_periods(start_date, end_date, return_str=False)
         assert result == expected
+
+    def test_naive_datetime_returns_naive_datetimes(self):
+        """Test that naive datetime inputs produce naive datetime outputs."""
+        start_date = datetime.datetime(2021, 3, 1)
+        end_date = datetime.datetime(2023, 6, 15)
+        result = find_overlapping_periods(start_date, end_date, return_str=False)
+        for start, end in result:
+            assert start.tzinfo is None
+            assert end.tzinfo is None
+
+    def test_aware_datetime_returns_aware_datetimes(self):
+        """Test that tz-aware datetime inputs produce tz-aware datetime outputs."""
+        utc = datetime.timezone.utc
+        start_date = datetime.datetime(2021, 3, 1, tzinfo=utc)
+        end_date = datetime.datetime(2023, 6, 15, tzinfo=utc)
+        expected = [
+            (datetime.datetime(2021, 3, 1, tzinfo=utc), datetime.datetime(2022, 6, 15, tzinfo=utc)),
+            (datetime.datetime(2022, 3, 1, tzinfo=utc), datetime.datetime(2023, 6, 15, tzinfo=utc)),
+        ]
+        result = find_overlapping_periods(start_date, end_date, return_str=False)
+        assert result == expected
+        for start, end in result:
+            assert start.tzinfo is not None
+            assert end.tzinfo is not None
+
+    def test_string_input_returns_naive_datetimes(self):
+        """Test that string inputs produce naive datetime outputs when return_str=False."""
+        result = find_overlapping_periods("2021-03-01", "2023-06-15", return_str=False)
+        for start, end in result:
+            assert start.tzinfo is None
+            assert end.tzinfo is None
