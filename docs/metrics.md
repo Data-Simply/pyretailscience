@@ -13,7 +13,7 @@ ACV measures the total dollar sales across all products in a set of stores, expr
 used in retail analytics to quantify the size of a store or group of stores.
 
 $$
-\text{ACV} = \frac{\sum \text{unit\_spend}}{\text{acv\_scale\_factor}}
+\text{ACV} = \frac{\sum \text{unit_spend}}{\text{acv_scale_factor}}
 $$
 
 By default, `acv_scale_factor` is 1,000,000 (expressing ACV in $MM).
