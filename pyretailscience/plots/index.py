@@ -359,7 +359,7 @@ def plot(  # noqa: C901, PLR0913
         mpl_kwargs = {k: v for k, v in kwargs.items() if k not in _pandas_only_kwargs}
         ax.barh(
             y=index_df.index,
-            width=index_df["index"].values,
+            width=index_df["index"].to_numpy(),
             left=BASELINE_INDEX,
             color=bar_colors,
             height=width,
