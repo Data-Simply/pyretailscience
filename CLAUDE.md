@@ -52,6 +52,8 @@
 - Avoid using `Any` or `object` types in annotations; determine and use the correct specific type whenever possible
 - Use `TYPE_CHECKING` blocks for type-only imports to avoid runtime import overhead. Do not use `noqa: TC003` to
   suppress these warnings; instead, properly move type-only imports into `if TYPE_CHECKING:` blocks
+- In LaTeX math blocks (`$$ ... $$`), do not escape underscores inside `\text{}` commands. Use `\text{unit_spend}`,
+  not `\text{unit\_spend}` — the backslash-escaped form renders a visible backslash in the output.
 
 ## Test Writing Guidelines
 
