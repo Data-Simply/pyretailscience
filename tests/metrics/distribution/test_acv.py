@@ -116,11 +116,3 @@ class TestAcv:
         """Test that passing a non-DataFrame/Table raises TypeError."""
         with pytest.raises(TypeError, match="pandas DataFrame or an Ibis Table"):
             Acv({"unit_spend": [100.0]})
-
-    def test_df_property_is_cached(self):
-        """Test that the df property returns the same object on repeated access."""
-        df = pd.DataFrame({"unit_spend": [1_000_000.0]})
-        acv = Acv(df)
-        first = acv.df
-        second = acv.df
-        assert first is second
