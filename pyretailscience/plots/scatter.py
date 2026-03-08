@@ -118,7 +118,7 @@ def _process_size_data(
         # Extract size values before set_index, which removes x_col from columns
         size_values = df[size_col] * size_scale
         index = df[x_col] if x_col is not None else df.index
-        return pd.Series(size_values.values, index=index)
+        return pd.Series(size_values.to_numpy(), index=index)
 
     # For grouped data, create size array that aligns with pivot structure
     size_pivot = (

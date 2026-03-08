@@ -145,7 +145,7 @@ class TestStylingOptionsIntegration:
             )
 
             # Find data label text objects and verify their font size
-            label_values = set(sample_dataframe["labels"].values)
+            label_values = set(sample_dataframe["labels"].to_numpy())
             label_texts = [
                 child for child in ax.get_children() if isinstance(child, Text) and child.get_text() in label_values
             ]
