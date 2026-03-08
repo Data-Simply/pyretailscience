@@ -10,6 +10,8 @@ nav:
       - Options & Configuration: getting_started/options_guide.md
   - Analysis Modules:
       - analysis_modules.md
+  - Metrics:
+      - metrics.md
   - Plot Gallery:
       - Overview: gallery/index.md
       - Area Plot: gallery/plots/area.ipynb
@@ -68,6 +70,8 @@ nav:
           - Styles:
               - Graph Utils: api/plots/styles/graph_utils.md
               - Styling Helpers: api/plots/styles/styling_helpers.md
+      - Metrics:
+          - Distribution: api/metrics/distribution.md
       - Utils:
           - Date Utils: api/utils/date.md
           - Filter & Label Utils: api/utils/filter_and_label.md
@@ -97,6 +101,9 @@ theme:
   favicon: assets/images/logo.svg
 extra_css:
   - stylesheets/extra.css
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 plugins:
   - search
@@ -116,6 +123,8 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
 
 extra:
   analytics:
