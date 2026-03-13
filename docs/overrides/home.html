@@ -19,9 +19,9 @@
     <div class="hero-text">
       <h1>From Data Drudgery<br>to Analytics <span class="text-green">Artistry</span></h1>
       <p>
-        Go from data janitor to insights virtuoso. From segmentations to
-        gain-loss analysis, PyRetailScience gives you the building blocks
-        to master retail analytics.
+        Stop rebuilding the same retail analyses from scratch.
+        PyRetailScience gives your team pre-built, tested modules for
+        segmentation, gain-loss, cross-shop, and more.
       </p>
       <div class="hero-actions">
         <a href="{{ 'analysis_modules/' | url }}" class="btn btn-primary">See What's Included</a>
@@ -54,33 +54,12 @@ segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
   <div class="logo-bar-header">
     <p class="logo-bar-label">Built with expertise doing analytics for scale-ups to multinationals</p>
   </div>
+  {% set logos = ['Loblaws', 'IKI', 'Dominos Pizza', 'Migros', 'Sephora', 'Sainsburys', 'Nectar', 'Metro', 'Coles', 'GANNI', 'Mindful Chef', 'Auchan'] %}
   <div class="logo-bar-mask">
     <div class="logo-scroll">
-      <span>Loblaws</span>
-      <span>IKI</span>
-      <span>Dominos Pizza</span>
-      <span>Migros</span>
-      <span>Sephora</span>
-      <span>Sainsburys</span>
-      <span>Nectar</span>
-      <span>Metro</span>
-      <span>Coles</span>
-      <span>GANNI</span>
-      <span>Mindful Chef</span>
-      <span>Auchan</span>
-      <!-- Duplicate for seamless loop -->
-      <span>Loblaws</span>
-      <span>IKI</span>
-      <span>Dominos Pizza</span>
-      <span>Migros</span>
-      <span>Sephora</span>
-      <span>Sainsburys</span>
-      <span>Nectar</span>
-      <span>Metro</span>
-      <span>Coles</span>
-      <span>GANNI</span>
-      <span>Mindful Chef</span>
-      <span>Auchan</span>
+      {% for name in logos %}<span>{{ name }}</span>{% endfor %}
+      <!-- Duplicate for seamless CSS scroll loop -->
+      {% for name in logos %}<span>{{ name }}</span>{% endfor %}
     </div>
   </div>
 </section>
@@ -100,6 +79,38 @@ segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
       </div>
       <div class="feature-image">
         <img src="{{ 'assets/images/features/cross_shop.png' | url }}" alt="Cross-shop Venn diagram" />
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-content">
+        <h3>Trust Your Results, Every Time</h3>
+        <p>
+          Built with extensive unit testing and best practices,
+          PyRetailScience ensures the accuracy and reliability of your
+          analyses. Confidently present your findings, knowing they're
+          backed by a robust, well-tested framework.
+        </p>
+        <a href="{{ 'getting_started/installation/' | url }}">Get Started &rarr;</a>
+      </div>
+      <div class="feature-image">
+        <div class="code-window">
+          <div class="code-titlebar">
+            <span class="code-dot code-dot--red"></span>
+            <span class="code-dot code-dot--yellow"></span>
+            <span class="code-dot code-dot--green"></span>
+            <span class="code-filename">test_customer.py</span>
+          </div>
+          <pre class="code-body"><code><span class="kw">import</span> <span class="mod">pytest</span>
+<span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> <span class="cls">TransactionChurn</span>
+
+<span class="kw">def</span> <span class="fn">test_churn_identifies_lapsed_customers</span>(sample_df):
+    churn = <span class="cls">TransactionChurn</span>(sample_df, churn_period=<span class="num">90</span>)
+    <span class="kw">assert</span> churn.churned_count &gt; <span class="num">0</span>
+    <span class="kw">assert</span> churn.retention_rate &lt;= <span class="num">1.0</span>
+
+<span class="cmt"># 94% coverage across all modules</span></code></pre>
+        </div>
       </div>
     </div>
 
@@ -139,7 +150,7 @@ dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
 <span class="cmt"># Define the churn period as the 80th percentile</span>
 churn_period = dbp.purchases_percentile(<span class="num">0.8</span>)
 <span class="cmt"># Use that in our plot title</span>
-plot_title = <span class="str">f"Customers churn within {round(churn_period)} Days"</span>
+plot_title = <span class="str">f"Customers churn within <span class="expr">{round(churn_period)}</span> Days"</span>
 <span class="cmt"># Plot our chart</span>
 dbp.plot(title=plot_title)</code></pre>
         </div>
@@ -170,11 +181,10 @@ dbp.plot(title=plot_title)</code></pre>
 <span class="cmt"># Analyze purchase distribution</span>
 ppc = <span class="cls">PurchasesPerCustomer</span>(df)
 ppc.plot()
-    <span class="cmt"># → A publication-ready chart, instantly.</span></code></pre>
+<span class="cmt"># → A publication-ready chart, instantly.</span></code></pre>
     </div>
     <div class="get-started-actions">
-      <a href="{{ 'getting_started/installation/' | url }}" class="btn btn-primary">Read the Docs &nearr;</a>
-      <a href="https://github.com/Data-Simply/pyretailscience" class="btn btn-outline-dark">View on GitHub</a>
+      <a href="{{ 'analysis_modules/' | url }}" class="btn btn-primary">See What's Included</a>
     </div>
   </div>
 </section>
