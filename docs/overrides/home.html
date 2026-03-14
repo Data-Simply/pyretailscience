@@ -11,6 +11,10 @@
   @media screen and (min-width: 76.25em) {
     .md-sidebar--primary { display: none; }
   }
+  h1 { font-size: var(--text-2xl); }
+  h2 { font-size: var(--text-xl); }
+  h3 { font-size: var(--text-lg); }
+  h4 { font-size: var(--text-base); }
 </style>
 
 <!-- Hero -->
@@ -59,7 +63,7 @@ segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
     <div class="logo-scroll">
       {% for name in logos %}<span>{{ name }}</span>{% endfor %}
       <!-- Duplicate for seamless CSS scroll loop -->
-      {% for name in logos %}<span>{{ name }}</span>{% endfor %}
+      {% for name in logos %}<span aria-hidden="true">{{ name }}</span>{% endfor %}
     </div>
   </div>
 </section>

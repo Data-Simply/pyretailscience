@@ -5,6 +5,7 @@
   --neutral-50: #f8faf8;
   --neutral-600: #4b5548;
   --neutral-800: #1e2a1e;
+  --border-color: #e5e7eb;
 
   /* Type scale (Tailwind-aligned) */
   --text-xs: 0.75rem;   /* 12px */
@@ -45,10 +46,6 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0.5em;
 }
 
-h1 { font-size: var(--text-2xl); }
-h2 { font-size: var(--text-xl); }
-h3 { font-size: var(--text-lg); }
-h4 { font-size: var(--text-base); }
 
 p { margin-bottom: 1em; }
 
@@ -229,8 +226,8 @@ p { margin-bottom: 1em; }
 /* Logo Bar              */
 /* ===================== */
 .logo-bar {
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   padding: clamp(2rem, 4vw, 4rem) 0;
   overflow: hidden;
 }
@@ -280,6 +277,13 @@ p { margin-bottom: 1em; }
 @media (prefers-reduced-motion: reduce) {
   .logo-scroll {
     animation: none;
+    flex-wrap: wrap;
+    width: auto;
+    justify-content: center;
+  }
+
+  .logo-scroll span[aria-hidden="true"] {
+    display: none;
   }
 }
 
@@ -416,11 +420,12 @@ p { margin-bottom: 1em; }
 .md-header {
   background: #fff;
   box-shadow: none;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   color: var(--neutral-800);
 }
 
 .md-header__title {
+  /* !important needed to override Material's inline margin from JS */
   margin-left: 0 !important;
   color: var(--neutral-800);
   font-weight: 600;
