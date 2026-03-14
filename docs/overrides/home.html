@@ -11,10 +11,10 @@
   @media screen and (min-width: 76.25em) {
     .md-sidebar--primary { display: none; }
   }
-  h1 { font-size: var(--text-2xl); }
-  h2 { font-size: var(--text-xl); }
-  h3 { font-size: var(--text-lg); }
-  h4 { font-size: var(--text-base); }
+  .hero h1, .features h1, .get-started h1 { font-size: var(--text-2xl); }
+  .hero h2, .features h2, .get-started h2 { font-size: var(--text-xl); }
+  .hero h3, .features h3, .get-started h3 { font-size: var(--text-lg); }
+  .hero h4, .features h4, .get-started h4 { font-size: var(--text-base); }
 </style>
 
 <!-- Hero -->
@@ -82,7 +82,7 @@ segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
         <a href="{{ 'analysis_modules/' | url }}">See Analysis Modules &rarr;</a>
       </div>
       <div class="feature-image">
-        <img src="{{ 'assets/images/features/cross_shop.png' | url }}" alt="Cross-shop Venn diagram" />
+        <img src="{{ 'assets/images/features/cross_shop.png' | url }}" alt="Cross-shop Venn diagram" loading="lazy" />
       </div>
     </div>
 
@@ -128,7 +128,7 @@ segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
         <a href="{{ 'gallery/' | url }}">Browse Plot Gallery &rarr;</a>
       </div>
       <div class="feature-image">
-        <img src="{{ 'assets/images/features/charts.png' | url }}" alt="Waterfall chart showing store cannibalization" />
+        <img src="{{ 'assets/images/features/charts.png' | url }}" alt="Waterfall chart showing store cannibalization" loading="lazy" />
       </div>
     </div>
 
