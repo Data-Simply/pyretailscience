@@ -208,7 +208,7 @@ p { margin-bottom: 1em; }
 .str { color: #f9e2af; }
 .str .expr { color: #fab387; }
 
-@media (max-width: 768px) {
+@media (max-width: 48em) {
   .hero-inner {
     flex-direction: column;
   }
@@ -344,7 +344,7 @@ p { margin-bottom: 1em; }
   text-decoration: underline;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48em) {
   .feature,
   .feature:nth-child(even) {
     flex-direction: column;
