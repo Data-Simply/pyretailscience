@@ -57,6 +57,21 @@
 
 ## Test Writing Guidelines
 
+### Red/Green TDD
+
+**Strongly prefer red/green TDD wherever possible.** When implementing new functionality or fixing bugs:
+
+1. **Red** — Write a failing test first that captures the expected behavior
+2. **Green** — Write the minimum code to make the test pass
+3. **Refactor** — Clean up while keeping tests green
+
+This applies to new features, bug fixes, and significant refactoring. Skip TDD only for trivial changes (typo fixes,
+comment updates, etc.) where writing a test first would be purely mechanical.
+
+**Confirming red/green status requires running the tests.** Pyright diagnostics (type errors, missing parameters, etc.)
+are not a substitute for actually executing `uv run pytest` on the relevant test file. A test is only "red" when it
+fails at runtime, and only "green" when it passes at runtime.
+
 ### Core Principles
 
 - **Test package functionality, not libraries**: Every test must import and exercise PyRetailScience code. Do not test
@@ -99,7 +114,10 @@
     - Vague comparison assertions that only check "something changed" (e.g., `assert filtered_df.shape !=
       unfiltered_df.shape`). Better: verify the actual filtering behavior (e.g., `assert len(filtered_df) == 5` and
       `assert (filtered_df['price'] > 100).all()`)
-- **Don't duplicate tests**: Multiple tests with identical structure should use parametrize instead
+- **Don't duplicate tests**: If you are about to write a new test method whose body follows the same pattern as an
+  existing method in the class (same assertion, same exception, same setup) but with different input values, stop and
+  add a `pytest.mark.parametrize` entry to the existing method instead. This applies even when the methods test
+  "different parameters" — if the structure is identical, they belong in one parametrized test.
 - **Don't over-mock**: Mock external dependencies only (databases, APIs, file I/O, network calls). Never mock internal
   PyRetailScience logic or calculations. Test real package behavior.
 - **Don't write trivial tests**: Avoid testing constants equal their definitions, class names, or tautological
@@ -122,6 +140,8 @@ Before committing test code, verify each test meets these criteria:
 2. **Calls package functionality**: Test actually invokes package functions/classes/methods
 3. **Has meaningful assertions**: Assertions verify actual behavior, not just types or existence
 4. **Test name matches behavior**: Assertions validate what the test name claims to test
-5. **No substantial duplication**: Similar tests use parametrize or are combined
+5. **No substantial duplication**: If two or more test methods share the same structure (same assertion pattern, same
+   exception, same setup) and differ only in one or two input values, they must be combined with
+   `pytest.mark.parametrize`. Look for this across the entire test class, not just adjacent methods.
 6. **Uses realistic data**: Test data reflects retail domain (customer IDs, prices, stores, etc.)
 7. **Minimal mocking**: Only external dependencies are mocked, not internal package logic
