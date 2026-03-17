@@ -111,7 +111,7 @@ segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
 <span class="kw">def</span> <span class="fn">test_churn_has_expected_columns</span>(sample_df):
     churn = <span class="cls">TransactionChurn</span>(sample_df, churn_period=<span class="num">90</span>)
     <span class="kw">assert</span> <span class="str">"churned_pct"</span> <span class="kw">in</span> churn.purchase_dist_df.columns
-    <span class="kw">assert</span> churn.n_unique_customers &gt; <span class="num">0</span>
+    <span class="kw">assert</span> churn.n_unique_customers == <span class="num">1250</span>
 
 <span class="cmt"># 94% coverage across all modules</span></code></pre>
         </div>
