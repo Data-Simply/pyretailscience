@@ -38,7 +38,8 @@
 - Always create "conventional commit" commit messages
 - Do not stage files or commit unless asked to
 - Docstrings should specify argument and return types
-- Type annotations should use Python 3.11 formats
+- Type annotations should use Python 3.10-compatible formats (e.g., use `from __future__ import annotations` and
+  import newer typing constructs like `Self` inside `if TYPE_CHECKING:` blocks)
 - Remove unnecessary trailing whitespace
 - Use vectorized operations for numpy arrays and pandas DataFrames/Series wherever possible instead of loops or
   .apply() to keep code clean and performant. Avoid converting Series to lists for iteration or using .iterrows() -

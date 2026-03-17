@@ -1,20 +1,25 @@
 """Plugin management module for pyretailscience."""
 
+from __future__ import annotations
+
 import functools
 import inspect
 import traceback
 import types
-from collections.abc import Callable, Iterator
 from importlib.metadata import entry_points
-from typing import Optional, Self, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from typing import Self
 
 
 class PluginManager:
     """Manages plugins for pyretailscience package."""
 
-    _instance: Optional["PluginManager"] = None
+    _instance: PluginManager | None = None
 
-    def __new__(cls: type["PluginManager"]) -> "Self":
+    def __new__(cls: type[PluginManager]) -> Self:
         """Singleton pattern for plugin manager."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -153,7 +158,7 @@ class ExtensibleFunctionResult:
         """Convert the wrapper to string as the wrapped result."""
         return str(self._result)
 
-    def __iter__(self) -> Union[None, "Iterator"]:
+    def __iter__(self) -> None | Iterator:
         """Return an iterator if the result supports iteration."""
         if hasattr(self._result, "__iter__"):
             return iter(self._result)
