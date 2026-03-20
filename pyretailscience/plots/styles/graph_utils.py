@@ -224,7 +224,8 @@ def apply_hatches(ax: Axes, num_segments: int) -> Axes:
 
     Args:
         ax (Axes): The matplotlib Axes object containing the plot with patches (bars, histograms, etc.).
-        num_segments (int): The number of segments to divide the patches into, with each segment receiving a different hatch pattern.
+        num_segments (int): The number of segments to divide the patches into, with each
+            segment receiving a different hatch pattern.
 
     Returns:
         Axes: The modified Axes object with hatches applied to the patches.

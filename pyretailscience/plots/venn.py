@@ -19,7 +19,8 @@ It is designed to visualize relationships between sets, highlighting intersectio
 ### Limitations and Warnings
 
 - **Only Supports 2 or 3 Sets**: Does not extend to Venn diagrams with more than three sets.
-- **Pre-Aggregated Data Required**: The module does not perform data aggregation; input data should already be structured correctly.
+- **Pre-Aggregated Data Required**: The module does not perform data aggregation; input data
+should already be structured correctly.
 
 """
 

@@ -125,9 +125,9 @@ class ProductAssociation:
             the product identifiers.
         group_col (str, optional): The name of the column that identifies unique
             transactions or customers. Defaults to option column.column_id.
-        target_item (str | float | list[str | float] | None, optional): A specific product or list of products to focus the
-            association analysis on. If None, associations for all products are
-            calculated. Defaults to None.
+        target_item (str | float | list[str | float] | None, optional): A specific
+            product or list of products to focus the association analysis on.
+            If None, associations for all products are calculated. Defaults to None.
 
     Attributes:
         df (pandas.DataFrame): A DataFrame containing the calculated association
@@ -171,7 +171,8 @@ class ProductAssociation:
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
-            target_item (str | float | list[str | float] | None, optional): A specific product or list of products to focus the association analysis on. If None,
+            target_item (str | float | list[str | float] | None, optional): A specific product
+                or list of products to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.
@@ -263,7 +264,8 @@ class ProductAssociation:
             value_col (str): The name of the column in the input DataFrame that contains the product identifiers.
             group_col (str, optional): The name of the column that identifies unique transactions or customers. Defaults
                 to option column.unit_spend.
-            target_item (str | float | list[str | float] | None, optional): A specific product or list of products to focus the association analysis on. If None,
+            target_item (str | float | list[str | float] | None, optional): A specific product
+                or list of products to focus the association analysis on. If None,
                 associations for all products are calculated. Defaults to None.
             min_occurrences (int, optional): The minimum number of occurrences required for each product in the
                 association analysis. Defaults to 1. Must be at least 1.

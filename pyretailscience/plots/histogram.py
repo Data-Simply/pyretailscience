@@ -6,36 +6,41 @@ distributions across categories by splitting the data into multiple histograms.
 
 ### Core Features
 
-- **Single or Multiple Histograms**: Plot one or more value columns (**`value_col`**) as histograms. For example, visualize
-the distribution of a single metric or compare multiple metrics simultaneously.
+- **Single or Multiple Histograms**: Plot one or more value columns (**`value_col`**) as histograms.
+For example, visualize the distribution of a single metric or compare multiple metrics simultaneously.
 - **Grouped Histograms**: Create separate histograms for each unique value in **`group_col`** (e.g., product categories
 or regions), allowing for easy comparison of distributions across groups.
 - **Range Clipping and Filling**: Use **`range_lower`** and **`range_upper`** to limit the values being plotted by
 clipping them or filling values outside the range with **NaN**. This is particularly useful when visualizing specific
 data ranges.
-- **Comprehensive Customization**: Customize plot titles, axis labels, and legends, with the option to move the legend outside the plot.
+- **Comprehensive Customization**: Customize plot titles, axis labels, and legends, with the option to
+move the legend outside the plot.
 
 ### Use Cases
 
 - **Distribution Analysis**: Visualize the distribution of key metrics like revenue, sales, or user activity using
 single or multiple histograms.
-- **Group Comparisons**: Compare distributions across different groups, such as product categories, geographic regions, or customer segments. For instance, plot histograms to show how sales vary across different product categories.
+- **Group Comparisons**: Compare distributions across different groups, such as product categories,
+geographic regions, or customer segments. For instance, plot histograms to show how sales vary across
+different product categories.
 - **Trends and Ranges**: Use **range_lower** and **range_upper** to visualize data within specific ranges, filtering out
 outliers or focusing on key metrics for analysis.
 
 ### Limitations and Handling of Data
 
-- **Pre-Aggregated Data Required**: This module does not perform any data aggregation, so all data must be pre-aggregated before being passed in for plotting.
+- **Pre-Aggregated Data Required**: This module does not perform any data aggregation, so all data must
+be pre-aggregated before being passed in for plotting.
 - **Grouped Histograms**: If **`group_col`** is provided, the data will be pivoted so that each unique value in
 **`group_col`** becomes a separate histogram. Otherwise, a single histogram is plotted.
-- **Series Support**: The module can also handle pandas Series, though **`group_col`** cannot be provided when plotting a Series.
+- **Series Support**: The module can also handle pandas Series, though **`group_col`** cannot be provided
+when plotting a Series.
 
 ### Additional Features
 
 - **Range Clipping or Filling**: You can control how the data is visualized by specifying bounds. If data points fall
 outside the defined range, you can either clip them to the boundary values or fill them with **NaN** for exclusion.
-- **Legend Customization**: For multiple histograms, you can add legends, including the option to move the legend outside
-the plot for clarity.
+- **Legend Customization**: For multiple histograms, you can add legends, including the option to move the
+legend outside the plot for clarity.
 
 """
 
@@ -70,7 +75,8 @@ def plot(
 
     Args:
         df (pd.DataFrame | pd.Series): The dataframe (or series) to plot.
-        value_col (str or list of str, optional): The column(s) to plot. Can be a list of columns for multiple histograms.
+        value_col (str or list of str, optional): The column(s) to plot.
+            Can be a list of columns for multiple histograms.
         group_col (str, optional): The column used to define different histograms.
         title (str, optional): The title of the plot.
         x_label (str, optional): The x-axis label.

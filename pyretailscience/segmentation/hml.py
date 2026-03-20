@@ -73,7 +73,8 @@ class HMLSegmentation(ThresholdSegmentation):
         their spend, transaction volume or quantities purchased.
 
         Args:
-            df (pd.DataFrame | ibis.Table): A dataframe with the transaction data. The dataframe must contain a customer_id column.
+            df (pd.DataFrame | ibis.Table): A dataframe with the transaction data.
+                The dataframe must contain a customer_id column.
             value_col (str, optional): The column to use for the segmentation.
                 Defaults to get_option("column.unit_spend").
             agg_func (str, optional): The aggregation function to use when grouping by customer_id. Defaults to "sum".

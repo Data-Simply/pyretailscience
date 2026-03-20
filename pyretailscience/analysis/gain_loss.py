@@ -1,4 +1,6 @@
-"""This module performs gain loss analysis (switching analysis) on a DataFrame to assess customer movement between brands or products over time.
+"""Gain loss analysis (switching analysis) on a DataFrame.
+
+Assesses customer movement between brands or products over time.
 
 Gain loss analysis, also known as switching analysis, is a marketing analytics technique used to
 assess customer movement between brands or products over time. It helps businesses understand the dynamics of customer
@@ -26,7 +28,10 @@ from pyretailscience.plots.styles.colors import COLORS
 
 
 class GainLoss:
-    """A class to perform gain loss analysis on a DataFrame to assess customer movement between brands or products over time."""
+    """Perform gain loss analysis on a DataFrame.
+
+    Assesses customer movement between brands or products over time.
+    """
 
     def __init__(
         self,
