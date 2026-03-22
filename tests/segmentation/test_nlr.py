@@ -148,6 +148,29 @@ class TestNLRSegmentation:
         with pytest.raises(ValueError, match=match_text):
             NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
 
+    def test_raises_when_p1_equals_p2(self, transaction_df):
+        """Test that ValueError is raised when p1_value and p2_value are the same."""
+        with pytest.raises(ValueError, match="must be different"):
+            NLRSegmentation(df=transaction_df, period_col="year", p1_value=2023, p2_value=2023)
+
+    def test_empty_result_when_no_transactions_match_periods(self):
+        """Test that an empty DataFrame is returned when no transactions match the given periods."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002],
+                cols.unit_spend: [50.00, 75.00],
+                "quarter": ["Q1", "Q2"],
+            },
+        )
+        seg = NLRSegmentation(
+            df=df,
+            period_col="quarter",
+            p1_value="Q3",
+            p2_value="Q4",
+        )
+        result = seg.df
+        assert len(result) == 0
+
     @pytest.mark.parametrize(
         "agg_func",
         ["foobar", "min"],

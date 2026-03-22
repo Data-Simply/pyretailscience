@@ -148,6 +148,10 @@ class NLRSegmentation:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
+        if p1_value == p2_value:
+            msg = f"p1_value and p2_value must be different, got '{p1_value}' for both"
+            raise ValueError(msg)
+
         if agg_func not in _VALID_AGG_FUNCS:
             msg = f"agg_func must be one of {sorted(_VALID_AGG_FUNCS)}, got '{agg_func}'"
             raise ValueError(msg)
