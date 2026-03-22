@@ -148,7 +148,9 @@ class NLRSegmentation:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        if p1_value == p2_value:
+        p1_expr = p1_value if isinstance(p1_value, ibis.Expr) else ibis.literal(p1_value)
+        p2_expr = p2_value if isinstance(p2_value, ibis.Expr) else ibis.literal(p2_value)
+        if p1_expr.equals(p2_expr):
             msg = f"p1_value and p2_value must be different, got '{p1_value}' for both"
             raise ValueError(msg)
 
