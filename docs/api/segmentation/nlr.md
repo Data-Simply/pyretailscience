@@ -1,3 +1,3 @@
 # NLR (New-Lapsed-Repeating) Segmentation
 
-::: pyretailscience.segmentation.lapse
+::: pyretailscience.segmentation.nlr

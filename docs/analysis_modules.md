@@ -1237,7 +1237,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.segmentation.lapse import NLRSegmentation
+from pyretailscience.segmentation.nlr import NLRSegmentation
 
 data = pd.DataFrame({
     "customer_id": [1, 1, 2, 2, 3, 4, 4, 5],
