@@ -280,14 +280,19 @@ class TestNLRSegmentationGroupCol:
             },
         )
 
-    def test_segments_calculated_within_each_group(self, store_transaction_df):
+    @pytest.mark.parametrize(
+        "group_col",
+        [cols.store_id, [cols.store_id]],
+        ids=["string", "list"],
+    )
+    def test_segments_calculated_within_each_group(self, store_transaction_df, group_col):
         """Test that NLR segments are calculated independently within each group."""
         seg = NLRSegmentation(
             df=store_transaction_df,
             period_col="year",
             p1_value=2023,
             p2_value=2024,
-            group_col=cols.store_id,
+            group_col=group_col,
         )
         result = seg.df.sort_index()
         p1_col = f"{cols.unit_spend}_p1"
