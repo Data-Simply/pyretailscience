@@ -56,7 +56,18 @@ SEGMENT_LAPSED = "Lapsed"
 
 
 class NLRSegmentation:
-    """Segments customers into New, Repeating, and Lapsed based on presence across two periods."""
+    """Segments customers into New, Repeating, and Lapsed based on presence across two periods.
+
+    NLRSegmentation compares customer purchasing activity across two defined time periods (P1 and P2) to classify
+    each customer's lifecycle stage. A customer is considered active in a period only if their aggregated spend is
+    strictly positive (> 0). This enables retailers to measure acquisition, retention, and churn rates in a single
+    view, and to size the revenue impact of each lifecycle segment.
+
+    The segmentation is commonly used in period-over-period reporting (e.g., year-over-year, quarter-over-quarter)
+    to answer questions such as how many customers were retained, how many were lost, and how many are newly acquired.
+    When combined with spend data, it reveals whether revenue growth is driven by new customer acquisition or by
+    increasing spend from repeating customers.
+    """
 
     def __init__(
         self,
