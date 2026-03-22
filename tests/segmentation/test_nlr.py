@@ -65,7 +65,7 @@ class TestNLRSegmentation:
         valid_segments = {SEGMENT_NEW, SEGMENT_REPEATING, SEGMENT_LAPSED}
 
         assert result["segment_name"].notna().all()
-        assert set(result["segment_name"].unique()).issubset(valid_segments)
+        assert set(result["segment_name"].unique()) == valid_segments
 
     def test_zero_spend_not_counted_as_bought(self):
         """Test that a customer with zero aggregated spend in a period is not considered to have bought."""
@@ -88,6 +88,30 @@ class TestNLRSegmentation:
         assert result.loc[1001, "segment_name"] == SEGMENT_NEW
         # 1002 only in Q1 with positive spend -> Lapsed
         assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
+
+    def test_zero_spend_both_periods_excluded(self):
+        """Test that a customer with zero spend in both periods is excluded from results."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1001, 1002, 1002],
+                cols.unit_spend: [0.00, 0.00, 50.00, 75.00],
+                "period": ["P1", "P2", "P1", "P2"],
+            },
+        )
+        seg = NLRSegmentation(
+            df=df,
+            period_col="period",
+            p1_value="P1",
+            p2_value="P2",
+        )
+        result = seg.df
+
+        zero_spend_customer = 1001
+        positive_spend_customer = 1002
+        # Customer with zero spend in both periods should not appear
+        assert zero_spend_customer not in result.index
+        # Customer with positive spend in both should be Repeating
+        assert result.loc[positive_spend_customer, "segment_name"] == SEGMENT_REPEATING
 
     def test_negative_spend_not_counted_as_bought(self):
         """Test that a customer with negative aggregated spend in a period is not considered to have bought."""
@@ -154,6 +178,37 @@ class TestNLRSegmentation:
 
         assert result.loc[1001, "segment_name"] == SEGMENT_REPEATING
         assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
+
+    def test_agg_func_count_segments_by_transaction_count(self):
+        """Test that agg_func='count' segments based on transaction counts rather than spend."""
+        df = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1001, 1001, 1002, 1003],
+                cols.unit_spend: [10.00, 20.00, 30.00, 50.00, 75.00],
+                "year": [2023, 2023, 2024, 2023, 2024],
+            },
+        )
+        seg = NLRSegmentation(
+            df=df,
+            period_col="year",
+            p1_value=2023,
+            p2_value=2024,
+            agg_func="count",
+        )
+        result = seg.df.sort_index()
+        p1_col = f"{cols.unit_spend}_p1"
+        p2_col = f"{cols.unit_spend}_p2"
+
+        expected = pd.DataFrame(
+            {
+                cols.customer_id: [1001, 1002, 1003],
+                "segment_name": [SEGMENT_REPEATING, SEGMENT_LAPSED, SEGMENT_NEW],
+                p1_col: [2, 1, 0],
+                p2_col: [1, 0, 1],
+            },
+        ).set_index(cols.customer_id)
+
+        assert_frame_equal(result, expected, check_dtype=False)
 
     def test_input_dataframe_not_mutated(self, transaction_df):
         """Test that the original DataFrame is not modified."""

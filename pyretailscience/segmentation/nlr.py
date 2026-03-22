@@ -23,9 +23,11 @@ a positive aggregated value:
 - **Lapsed**: Positive value in P1 only — these customers have stopped purchasing
 
 A customer must have a positive aggregated value (> 0) in a period to be considered as
-having "bought" in that period. Zero or negative values do not count. When using
-non-spend aggregation functions like ``count`` or ``nunique``, the threshold still
-applies but measures transaction presence rather than spend.
+having "bought" in that period. Zero or negative values do not count. Customers with
+no positive value in either period are excluded from the results entirely, as they do
+not meet the criteria for any segment. When using non-spend aggregation functions like
+``count`` or ``nunique``, the threshold still applies but measures transaction presence
+rather than spend.
 
 ## Real-World Applications
 
@@ -171,7 +173,12 @@ class NLRSegmentation:
             },
         )
 
+        # Exclude customers with no positive value in either period
+        customer = customer.filter((customer[p1_col] > 0) | (customer[p2_col] > 0))
+
         # Classify: both periods -> Repeating, P1 only -> Lapsed, P2 only -> New
+        # Use of ifelse ensures compatibility with some ibis backends that do not support boolean expressions in cases
+        # statements
         in_p1 = (customer[p1_col] > 0).ifelse(1, 0)
         in_p2 = (customer[p2_col] > 0).ifelse(1, 0)
         segment_expr = ibis.cases(
