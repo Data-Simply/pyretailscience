@@ -1256,13 +1256,13 @@ seg = NLRSegmentation(
 seg.df
 ```
 
-| customer_id | segment_name |
-|-------------|-------------|
-| 1           | Repeating   |
-| 2           | Repeating   |
-| 3           | Lapsed      |
-| 4           | New         |
-| 5           | New         |
+| customer_id | segment_name | unit_spend_p1 | unit_spend_p2 |
+|-------------|--------------|---------------|---------------|
+| 1           | Repeating    | 50.0          | 75.0          |
+| 2           | Repeating    | 100.0         | 120.0         |
+| 3           | Lapsed       | 80.0          | 0.0           |
+| 4           | New          | 0.0           | 150.0         |
+| 5           | New          | 0.0           | 110.0         |
 
 ### RFM Segmentation
 
