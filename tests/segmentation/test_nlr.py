@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from pyretailscience.options import ColumnHelper
-from pyretailscience.segmentation.lapse import NLRSegmentation
+from pyretailscience.segmentation.nlr import NLRSegmentation
 
 cols = ColumnHelper()
 
