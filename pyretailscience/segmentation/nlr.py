@@ -1,4 +1,4 @@
-"""New-Repeating-Lapsed Segmentation for Customer Lifecycle Classification.
+"""New-Lapsed-Repeating (NLR) Segmentation for Customer Lifecycle Classification.
 
 ## Business Context
 
@@ -71,6 +71,23 @@ class NLRSegmentation:
     to answer questions such as how many customers were retained, how many were lost, and how many are newly acquired.
     When combined with spend data, it reveals whether revenue growth is driven by new customer acquisition or by
     increasing spend from repeating customers.
+
+    Example:
+        >>> import pandas as pd
+        >>> from pyretailscience.segmentation.nlr import NLRSegmentation
+        >>> df = pd.DataFrame({
+        ...     "customer_id": [1, 2, 3, 1, 3, 4],
+        ...     "unit_spend": [50.0, 100.0, 80.0, 75.0, 60.0, 150.0],
+        ...     "year": [2023, 2023, 2023, 2024, 2024, 2024],
+        ... })
+        >>> seg = NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
+        >>> seg.df[["segment_name"]]
+                     segment_name
+        customer_id
+        1               Repeating
+        2                  Lapsed
+        3               Repeating
+        4                     New
     """
 
     def __init__(
@@ -144,9 +161,9 @@ class NLRSegmentation:
         p1_col = f"{value_col}_p1"
         p2_col = f"{value_col}_p2"
 
-        agg = getattr(df[value_col], agg_func)
-        p1_agg = agg(where=df[period_col] == p1_value)
-        p2_agg = agg(where=df[period_col] == p2_value)
+        agg_method = getattr(df[value_col], agg_func)
+        p1_agg = agg_method(where=df[period_col] == p1_value)
+        p2_agg = agg_method(where=df[period_col] == p2_value)
         customer = df.group_by(*group_cols).aggregate(
             **{
                 p1_col: p1_agg.fill_null(0),

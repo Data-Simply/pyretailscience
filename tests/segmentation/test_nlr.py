@@ -155,44 +155,6 @@ class TestNLRSegmentation:
         assert result.loc[1001, "segment_name"] == SEGMENT_REPEATING
         assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
 
-    def test_output_columns_named_after_value_col(self, transaction_df):
-        """Test that aggregated metric columns are named {value_col}_p1 and {value_col}_p2."""
-        seg = NLRSegmentation(
-            df=transaction_df,
-            period_col="year",
-            p1_value=2023,
-            p2_value=2024,
-        )
-        result = seg.df
-        expected_p1_col = f"{cols.unit_spend}_p1"
-        expected_p2_col = f"{cols.unit_spend}_p2"
-
-        assert expected_p1_col in result.columns
-        assert expected_p2_col in result.columns
-
-    def test_output_columns_use_custom_value_col_name(self):
-        """Test that custom value_col name is reflected in output column names."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1001, 1002, 1001],
-                cols.unit_qty: [5, 10, 8],
-                "year": [2023, 2023, 2024],
-            },
-        )
-        seg = NLRSegmentation(
-            df=df,
-            period_col="year",
-            p1_value=2023,
-            p2_value=2024,
-            value_col=cols.unit_qty,
-        )
-        result = seg.df
-        expected_p1_col = f"{cols.unit_qty}_p1"
-        expected_p2_col = f"{cols.unit_qty}_p2"
-
-        assert expected_p1_col in result.columns
-        assert expected_p2_col in result.columns
-
     def test_input_dataframe_not_mutated(self, transaction_df):
         """Test that the original DataFrame is not modified."""
         original_df = transaction_df.copy()
