@@ -16,14 +16,16 @@ or ignoring at-risk customers who are about to churn.
 ## Segment Definitions
 
 Given two time periods (P1 and P2), customers are classified based on where they have
-positive spend:
+a positive aggregated value:
 
-- **New**: Positive spend in P2 only — these customers were acquired in the later period
-- **Repeating**: Positive spend in both P1 and P2 — these customers are retained
-- **Lapsed**: Positive spend in P1 only — these customers have stopped purchasing
+- **New**: Positive value in P2 only — these customers were acquired in the later period
+- **Repeating**: Positive value in both P1 and P2 — these customers are retained
+- **Lapsed**: Positive value in P1 only — these customers have stopped purchasing
 
-A customer must have positive aggregated spend (> 0) in a period to be considered as having
-"bought" in that period. Zero or negative spend does not count.
+A customer must have a positive aggregated value (> 0) in a period to be considered as
+having "bought" in that period. Zero or negative values do not count. When using
+non-spend aggregation functions like ``count`` or ``nunique``, the threshold still
+applies but measures transaction presence rather than spend.
 
 ## Real-World Applications
 
@@ -54,12 +56,14 @@ SEGMENT_NEW = "New"
 SEGMENT_REPEATING = "Repeating"
 SEGMENT_LAPSED = "Lapsed"
 
+_VALID_AGG_FUNCS = {"sum", "mean", "max", "count", "nunique"}
+
 
 class NLRSegmentation:
     """Segments customers into New, Repeating, and Lapsed based on presence across two periods.
 
     NLRSegmentation compares customer purchasing activity across two defined time periods (P1 and P2) to classify
-    each customer's lifecycle stage. A customer is considered active in a period only if their aggregated spend is
+    each customer's lifecycle stage. A customer is considered active in a period only if their aggregated value is
     strictly positive (> 0). This enables retailers to measure acquisition, retention, and churn rates in a single
     view, and to size the revenue impact of each lifecycle segment.
 
@@ -79,13 +83,13 @@ class NLRSegmentation:
         agg_func: str = "sum",
         group_col: str | list[str] | None = None,
     ) -> None:
-        """Segments customers into New, Repeating, and Lapsed based on positive spend across two periods.
+        """Segments customers into New, Repeating, and Lapsed based on positive aggregated value across two periods.
 
         A customer is considered to have "bought" in a period only if their aggregated value_col
         is strictly positive (> 0). Customers are then classified as:
-        - New: positive spend in P2 only
-        - Repeating: positive spend in both P1 and P2
-        - Lapsed: positive spend in P1 only
+        - New: positive value in P2 only
+        - Repeating: positive value in both P1 and P2
+        - Lapsed: positive value in P1 only
 
         Args:
             df (pd.DataFrame | ibis.Table): Transaction data. Must contain customer_id, period_col,
@@ -93,7 +97,7 @@ class NLRSegmentation:
             period_col (str): Column containing period identifiers.
             p1_value (str | int): Value in period_col identifying period 1.
             p2_value (str | int): Value in period_col identifying period 2.
-            value_col (str | None): Column to aggregate for determining positive spend.
+            value_col (str | None): Column to aggregate for determining customer activity.
                 Defaults to ColumnHelper().unit_spend.
             agg_func (str): Aggregation function to use when grouping by customer_id.
                 Defaults to "sum".
@@ -102,8 +106,8 @@ class NLRSegmentation:
                 Defaults to None.
 
         Raises:
-            ValueError: If required columns are missing from the DataFrame, or if p1_value/p2_value
-                are not found in period_col.
+            ValueError: If required columns are missing from the DataFrame, or if agg_func is not
+                a supported aggregation function.
         """
         self._df: pd.DataFrame | None = None
 
@@ -125,66 +129,46 @@ class NLRSegmentation:
             msg = f"The following columns are required but missing: {missing_cols}"
             raise ValueError(msg)
 
-        # Validate p1_value and p2_value exist in period_col
-        distinct_periods = df.select(period_col).distinct().execute()[period_col].tolist()
-        if p1_value not in distinct_periods:
-            msg = f"p1_value '{p1_value}' not found in column '{period_col}'. Available values: {distinct_periods}"
-            raise ValueError(msg)
-        if p2_value not in distinct_periods:
-            msg = f"p2_value '{p2_value}' not found in column '{period_col}'. Available values: {distinct_periods}"
+        if agg_func not in _VALID_AGG_FUNCS:
+            msg = f"agg_func must be one of {sorted(_VALID_AGG_FUNCS)}, got '{agg_func}'"
             raise ValueError(msg)
 
         # Filter to only P1 and P2 rows
         df = df.filter((df[period_col] == p1_value) | (df[period_col] == p2_value))
 
-        # Build group-by columns
-        group_by_cols = [cols.customer_id, period_col]
+        # Determine which periods each customer has positive spend in
+        group_cols = [cols.customer_id]
         if self._group_col is not None:
-            group_by_cols.extend(self._group_col)
+            group_cols.extend(self._group_col)
 
-        # Aggregate and filter to positive spend only
-        agg_df = df.group_by(*group_by_cols).aggregate(
-            **{value_col: getattr(df[value_col], agg_func)()},
+        p1_col = f"{value_col}_p1"
+        p2_col = f"{value_col}_p2"
+
+        agg = getattr(df[value_col], agg_func)
+        p1_agg = agg(where=df[period_col] == p1_value)
+        p2_agg = agg(where=df[period_col] == p2_value)
+        customer = df.group_by(*group_cols).aggregate(
+            **{
+                p1_col: p1_agg.fill_null(0),
+                p2_col: p2_agg.fill_null(0),
+            },
         )
-        agg_df = agg_df.filter(agg_df[value_col] > 0)
-
-        # Split into P1 and P2 buyer sets with marker columns
-        join_cols = [cols.customer_id]
-        if self._group_col is not None:
-            join_cols.extend(self._group_col)
-
-        select_cols = list(join_cols)
-        p1_buyers = (
-            agg_df.filter(agg_df[period_col] == p1_value)
-            .select(*select_cols)
-            .mutate(
-                _in_p1=ibis.literal(True),
-            )
-        )
-        p2_buyers = (
-            agg_df.filter(agg_df[period_col] == p2_value)
-            .select(*select_cols)
-            .mutate(
-                _in_p2=ibis.literal(True),
-            )
-        )
-
-        # Outer join to find all customers across both periods
-        joined = p1_buyers.outer_join(p2_buyers, join_cols)
-
-        # Coalesce customer_id and group columns from both sides
-        coalesce_exprs = {col: ibis.coalesce(joined[f"{col}_right"], joined[col]) for col in join_cols}
-        joined = joined.select(**coalesce_exprs, _in_p1=joined["_in_p1"], _in_p2=joined["_in_p2"])
 
         # Classify: both periods -> Repeating, P1 only -> Lapsed, P2 only -> New
+        in_p1 = (customer[p1_col] > 0).ifelse(1, 0)
+        in_p2 = (customer[p2_col] > 0).ifelse(1, 0)
         segment_expr = ibis.cases(
-            (joined["_in_p1"].notnull() & joined["_in_p2"].notnull(), SEGMENT_REPEATING),  # noqa: PD004
-            (joined["_in_p1"].notnull(), SEGMENT_LAPSED),  # noqa: PD004
-            (joined["_in_p2"].notnull(), SEGMENT_NEW),  # noqa: PD004
+            ((in_p1 == 1) & (in_p2 == 1), SEGMENT_REPEATING),
+            (in_p1 == 1, SEGMENT_LAPSED),
+            (in_p2 == 1, SEGMENT_NEW),
         )
 
-        result = joined.mutate(segment_name=segment_expr)
-        self.table = result.select(*select_cols, "segment_name")
+        self.table = customer.mutate(segment_name=segment_expr).select(
+            *group_cols,
+            "segment_name",
+            p1_col,
+            p2_col,
+        )
 
     @property
     def df(self) -> pd.DataFrame:
