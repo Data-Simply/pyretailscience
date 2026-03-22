@@ -96,8 +96,8 @@ class NLRSegmentation:
         self,
         df: pd.DataFrame | ibis.Table,
         period_col: str,
-        p1_value: str | float | ibis.expr.types.Scalar,
-        p2_value: str | float | ibis.expr.types.Scalar,
+        p1_value: str | float | ibis.Scalar,
+        p2_value: str | float | ibis.Scalar,
         value_col: str | None = None,
         agg_func: str = "sum",
         group_col: str | list[str] | None = None,
@@ -114,8 +114,8 @@ class NLRSegmentation:
             df (pd.DataFrame | ibis.Table): Transaction data. Must contain customer_id, period_col,
                 and value_col columns.
             period_col (str): Column containing period identifiers.
-            p1_value (str | float | ibis.expr.types.Scalar): Value in period_col identifying period 1.
-            p2_value (str | float | ibis.expr.types.Scalar): Value in period_col identifying period 2.
+            p1_value (str | float | ibis.Scalar): Value in period_col identifying period 1.
+            p2_value (str | float | ibis.Scalar): Value in period_col identifying period 2.
             value_col (str | None): Column to aggregate for determining customer activity.
                 Defaults to ColumnHelper().unit_spend.
             agg_func (str): Aggregation function to use when grouping by customer_id.
