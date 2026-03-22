@@ -5,7 +5,12 @@ import pandas as pd
 import pytest
 
 from pyretailscience.options import ColumnHelper
-from pyretailscience.segmentation.nlr import NLRSegmentation
+from pyretailscience.segmentation.nlr import (
+    SEGMENT_LAPSED,
+    SEGMENT_NEW,
+    SEGMENT_REPEATING,
+    NLRSegmentation,
+)
 
 cols = ColumnHelper()
 
@@ -35,13 +40,13 @@ class TestNLRSegmentation:
         result = seg.df
 
         # 1001 in both periods -> Repeating
-        assert result.loc[1001, "segment_name"] == "Repeating"
+        assert result.loc[1001, "segment_name"] == SEGMENT_REPEATING
         # 1002 only in P1 -> Lapsed
-        assert result.loc[1002, "segment_name"] == "Lapsed"
+        assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
         # 1003 in both periods -> Repeating
-        assert result.loc[1003, "segment_name"] == "Repeating"
+        assert result.loc[1003, "segment_name"] == SEGMENT_REPEATING
         # 1004 only in P2 -> New
-        assert result.loc[1004, "segment_name"] == "New"
+        assert result.loc[1004, "segment_name"] == SEGMENT_NEW
 
     def test_zero_spend_not_counted_as_bought(self):
         """Test that a customer with zero aggregated spend in a period is not considered to have bought."""
@@ -61,9 +66,9 @@ class TestNLRSegmentation:
         result = seg.df
 
         # 1001 has zero spend in Q1 but positive in Q2 -> New
-        assert result.loc[1001, "segment_name"] == "New"
+        assert result.loc[1001, "segment_name"] == SEGMENT_NEW
         # 1002 only in Q1 with positive spend -> Lapsed
-        assert result.loc[1002, "segment_name"] == "Lapsed"
+        assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
 
     def test_negative_spend_not_counted_as_bought(self):
         """Test that a customer with negative aggregated spend in a period is not considered to have bought."""
@@ -83,43 +88,33 @@ class TestNLRSegmentation:
         result = seg.df
 
         # 1001 has negative aggregated spend (-50+30=-20) in P1 but positive in P2 -> New
-        assert result.loc[1001, "segment_name"] == "New"
+        assert result.loc[1001, "segment_name"] == SEGMENT_NEW
 
-    def test_raises_on_missing_customer_id_column(self):
-        """Test that ValueError is raised when customer_id column is missing."""
-        df = pd.DataFrame(
-            {
-                cols.unit_spend: [100.00],
-                "year": [2023],
-            },
-        )
-        with pytest.raises(ValueError, match="missing"):
+    @pytest.mark.parametrize(
+        ("columns", "match_text"),
+        [
+            ({cols.unit_spend: [100.00], "year": [2023]}, "missing"),
+            ({cols.customer_id: [1001], "year": [2023]}, "missing"),
+            ({cols.customer_id: [1001], cols.unit_spend: [100.00]}, "missing"),
+        ],
+        ids=["missing_customer_id", "missing_value_col", "missing_period_col"],
+    )
+    def test_raises_on_missing_required_column(self, columns, match_text):
+        """Test that ValueError is raised when a required column is missing."""
+        df = pd.DataFrame(columns)
+        with pytest.raises(ValueError, match=match_text):
             NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
 
-    def test_raises_on_missing_value_column(self):
-        """Test that ValueError is raised when value column is missing."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1001],
-                "year": [2023],
-            },
-        )
-        with pytest.raises(ValueError, match="missing"):
-            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
-
-    def test_raises_on_missing_period_column(self):
-        """Test that ValueError is raised when period column is missing."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1001],
-                cols.unit_spend: [100.00],
-            },
-        )
-        with pytest.raises(ValueError, match="missing"):
-            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
-
-    def test_raises_on_invalid_p1_value(self):
-        """Test that ValueError is raised when p1_value is not found in period_col."""
+    @pytest.mark.parametrize(
+        ("p1_value", "p2_value", "match_text"),
+        [
+            (2020, 2023, "p1_value"),
+            (2023, 2025, "p2_value"),
+        ],
+        ids=["invalid_p1", "invalid_p2"],
+    )
+    def test_raises_on_invalid_period_value(self, p1_value, p2_value, match_text):
+        """Test that ValueError is raised when a period value is not found in period_col."""
         df = pd.DataFrame(
             {
                 cols.customer_id: [1001],
@@ -127,20 +122,8 @@ class TestNLRSegmentation:
                 "year": [2023],
             },
         )
-        with pytest.raises(ValueError, match="p1_value"):
-            NLRSegmentation(df=df, period_col="year", p1_value=2020, p2_value=2023)
-
-    def test_raises_on_invalid_p2_value(self):
-        """Test that ValueError is raised when p2_value is not found in period_col."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1001],
-                cols.unit_spend: [100.00],
-                "year": [2023],
-            },
-        )
-        with pytest.raises(ValueError, match="p2_value"):
-            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2025)
+        with pytest.raises(ValueError, match=match_text):
+            NLRSegmentation(df=df, period_col="year", p1_value=p1_value, p2_value=p2_value)
 
     def test_alternate_value_col(self):
         """Test segmentation with a non-default value column."""
@@ -160,8 +143,8 @@ class TestNLRSegmentation:
         )
         result = seg.df
 
-        assert result.loc[1001, "segment_name"] == "Repeating"
-        assert result.loc[1002, "segment_name"] == "Lapsed"
+        assert result.loc[1001, "segment_name"] == SEGMENT_REPEATING
+        assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
 
     def test_input_dataframe_not_mutated(self, transaction_df):
         """Test that the original DataFrame is not modified."""
@@ -196,9 +179,9 @@ class TestNLRSegmentation:
         )
         result = seg.df
 
-        assert result.loc[1001, "segment_name"] == "Repeating"
-        assert result.loc[1002, "segment_name"] == "Lapsed"
-        assert result.loc[1004, "segment_name"] == "New"
+        assert result.loc[1001, "segment_name"] == SEGMENT_REPEATING
+        assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
+        assert result.loc[1004, "segment_name"] == SEGMENT_NEW
 
     def test_df_property_caches_result(self, transaction_df):
         """Test that the df property returns the same cached DataFrame on subsequent calls."""
@@ -229,7 +212,7 @@ class TestNLRSegmentationGroupCol:
         )
 
     def test_segments_calculated_within_each_group(self, store_transaction_df):
-        """Test that lapse segments are calculated independently within each group."""
+        """Test that NLR segments are calculated independently within each group."""
         seg = NLRSegmentation(
             df=store_transaction_df,
             period_col="year",
@@ -240,15 +223,15 @@ class TestNLRSegmentationGroupCol:
         result = seg.df.sort_index()
 
         # Store 2001: 1001 in both->Repeating, 1002 P1 only->Lapsed, 1003 P2 only->New
-        assert result.loc[(1001, 2001), "segment_name"] == "Repeating"
-        assert result.loc[(1002, 2001), "segment_name"] == "Lapsed"
-        assert result.loc[(1003, 2001), "segment_name"] == "New"
+        assert result.loc[(1001, 2001), "segment_name"] == SEGMENT_REPEATING
+        assert result.loc[(1002, 2001), "segment_name"] == SEGMENT_LAPSED
+        assert result.loc[(1003, 2001), "segment_name"] == SEGMENT_NEW
 
         # Store 2002: 1001 P1 only->Lapsed, 1002 P1 only->Lapsed, 1003 P2 only->New, 1004 P2 only->New
-        assert result.loc[(1001, 2002), "segment_name"] == "Lapsed"
-        assert result.loc[(1002, 2002), "segment_name"] == "Lapsed"
-        assert result.loc[(1003, 2002), "segment_name"] == "New"
-        assert result.loc[(1004, 2002), "segment_name"] == "New"
+        assert result.loc[(1001, 2002), "segment_name"] == SEGMENT_LAPSED
+        assert result.loc[(1002, 2002), "segment_name"] == SEGMENT_LAPSED
+        assert result.loc[(1003, 2002), "segment_name"] == SEGMENT_NEW
+        assert result.loc[(1004, 2002), "segment_name"] == SEGMENT_NEW
 
     def test_raises_on_missing_group_column(self):
         """Test that ValueError is raised when group_col column is missing from the DataFrame."""
