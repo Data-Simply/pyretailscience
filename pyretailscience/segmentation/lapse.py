@@ -55,7 +55,7 @@ SEGMENT_REPEATING = "Repeating"
 SEGMENT_LAPSED = "Lapsed"
 
 
-class LapseSegmentation:
+class NLRSegmentation:
     """Segments customers into New, Repeating, and Lapsed based on presence across two periods."""
 
     def __init__(
