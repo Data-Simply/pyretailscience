@@ -1241,7 +1241,6 @@ from pyretailscience.segmentation.nlr import NLRSegmentation
 
 data = pd.DataFrame({
     "customer_id": [1, 1, 2, 2, 3, 4, 4, 5],
-    "transaction_id": [101, 102, 201, 202, 301, 401, 402, 501],
     "unit_spend": [50.0, 75.0, 100.0, 120.0, 80.0, 60.0, 90.0, 110.0],
     "period": ["P1", "P2", "P1", "P2", "P1", "P2", "P2", "P2"],
 })
