@@ -148,10 +148,20 @@ class TestNLRSegmentation:
         with pytest.raises(ValueError, match=match_text):
             NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
 
-    def test_raises_when_p1_equals_p2(self, transaction_df):
+    @pytest.mark.parametrize(
+        ("p1_value", "p2_value"),
+        [
+            (2023, 2023),
+            (ibis.literal(2023), ibis.literal(2023)),
+            (2023, ibis.literal(2023)),
+            (ibis.literal(2023), 2023),
+        ],
+        ids=["plain_values", "ibis_scalars", "mixed_plain_ibis", "mixed_ibis_plain"],
+    )
+    def test_raises_when_p1_equals_p2(self, transaction_df, p1_value, p2_value):
         """Test that ValueError is raised when p1_value and p2_value are the same."""
         with pytest.raises(ValueError, match="must be different"):
-            NLRSegmentation(df=transaction_df, period_col="year", p1_value=2023, p2_value=2023)
+            NLRSegmentation(df=transaction_df, period_col="year", p1_value=p1_value, p2_value=p2_value)
 
     def test_empty_result_when_no_transactions_match_periods(self):
         """Test that an empty DataFrame is returned when no transactions match the given periods."""
@@ -254,7 +264,7 @@ class TestNLRSegmentation:
             p2_value=2024,
         )
         table = seg.table
-        assert isinstance(table, ibis.expr.types.Table)
+        assert isinstance(table, ibis.Table)
         assert cols.customer_id in table.columns
         assert "segment_name" in table.columns
         assert f"{cols.unit_spend}_p1" in table.columns
@@ -268,6 +278,29 @@ class TestNLRSegmentation:
             period_col="year",
             p1_value=2023,
             p2_value=2024,
+        )
+        result = seg.df
+
+        assert result.loc[1001, "segment_name"] == SEGMENT_REPEATING
+        assert result.loc[1002, "segment_name"] == SEGMENT_LAPSED
+        assert result.loc[1004, "segment_name"] == SEGMENT_NEW
+
+    @pytest.mark.parametrize(
+        ("p1_value", "p2_value"),
+        [
+            (ibis.literal(2023), ibis.literal(2024)),
+            (ibis.literal(2023), 2024),
+            (2023, ibis.literal(2024)),
+        ],
+        ids=["both_ibis", "mixed_ibis_p1", "mixed_ibis_p2"],
+    )
+    def test_ibis_scalar_period_values(self, transaction_df, p1_value, p2_value):
+        """Test that ibis Scalar and mixed ibis/plain period values produce correct segments."""
+        seg = NLRSegmentation(
+            df=transaction_df,
+            period_col="year",
+            p1_value=p1_value,
+            p2_value=p2_value,
         )
         result = seg.df
 
