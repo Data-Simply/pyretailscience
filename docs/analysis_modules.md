@@ -1211,6 +1211,59 @@ segment_stats.df
 | Total          | 4604.28  |            150 |          50 |              92.0856 |                30.6952  |                           3 |             1   |
 <!-- markdownlint-enable MD013 -->
 
+### NLR (New-Lapsed-Repeating) Segmentation
+
+<div class="clear" markdown>
+
+NLR segmentation classifies customers into **New**, **Repeating**, and **Lapsed** based on their purchasing activity
+across two time periods. Given a baseline period (P1) and a comparison period (P2), customers are assigned:
+
+- **New**: Positive spend in P2 only — acquired in the later period
+- **Repeating**: Positive spend in both P1 and P2 — retained customers
+- **Lapsed**: Positive spend in P1 only — stopped purchasing
+
+This segmentation helps answer questions such as:
+
+- How effective are your acquisition efforts at bringing in new customers?
+- What proportion of your customer base is being retained period-over-period?
+- How many customers have lapsed, and what is their value?
+
+The module supports optional group-level segmentation (e.g., by store or category) so you can compare lifecycle
+dynamics across different parts of the business.
+
+</div>
+
+Example:
+
+```python
+import pandas as pd
+from pyretailscience.segmentation.lapse import NLRSegmentation
+
+data = pd.DataFrame({
+    "customer_id": [1, 1, 2, 2, 3, 4, 4, 5],
+    "transaction_id": [101, 102, 201, 202, 301, 401, 402, 501],
+    "unit_spend": [50.0, 75.0, 100.0, 120.0, 80.0, 60.0, 90.0, 110.0],
+    "period": ["P1", "P2", "P1", "P2", "P1", "P2", "P2", "P2"],
+})
+
+seg = NLRSegmentation(
+    df=data,
+    period_col="period",
+    p1_value="P1",
+    p2_value="P2",
+)
+
+seg.df
+```
+
+| customer_id | segment_name |
+|-------------|-------------|
+| 1           | Repeating   |
+| 2           | Repeating   |
+| 3           | Lapsed      |
+| 4           | New         |
+| 5           | New         |
+
 ### RFM Segmentation
 
 <div class="clear" markdown>

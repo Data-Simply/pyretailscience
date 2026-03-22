@@ -51,6 +51,7 @@ nav:
           - HML Segmentation: api/segmentation/hml.md
           - RFM Segmentation: api/segmentation/rfm.md
           - SegTransactionStats Segmentation: api/segmentation/segstats.md
+          - NLR Segmentation: api/segmentation/lapse.md
           - Threshold Segmentation: api/segmentation/threshold.md
       - Plots:
           - Area Plot: api/plots/area.md
