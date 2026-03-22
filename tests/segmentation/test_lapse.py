@@ -1,17 +1,17 @@
-"""Tests for the LapseSegmentation class."""
+"""Tests for the NLRSegmentation class."""
 
 import ibis
 import pandas as pd
 import pytest
 
 from pyretailscience.options import ColumnHelper
-from pyretailscience.segmentation.lapse import LapseSegmentation
+from pyretailscience.segmentation.lapse import NLRSegmentation
 
 cols = ColumnHelper()
 
 
-class TestLapseSegmentation:
-    """Tests for the LapseSegmentation class."""
+class TestNLRSegmentation:
+    """Tests for the NLRSegmentation class."""
 
     @pytest.fixture
     def transaction_df(self):
@@ -26,7 +26,7 @@ class TestLapseSegmentation:
 
     def test_basic_segmentation(self, transaction_df):
         """Test customers are classified as New, Repeating, or Lapsed."""
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=transaction_df,
             period_col="year",
             p1_value=2023,
@@ -52,7 +52,7 @@ class TestLapseSegmentation:
                 "quarter": ["Q1", "Q2", "Q1"],
             },
         )
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=df,
             period_col="quarter",
             p1_value="Q1",
@@ -74,7 +74,7 @@ class TestLapseSegmentation:
                 "period": ["P1", "P1", "P2"],
             },
         )
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=df,
             period_col="period",
             p1_value="P1",
@@ -94,7 +94,7 @@ class TestLapseSegmentation:
             },
         )
         with pytest.raises(ValueError, match="missing"):
-            LapseSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
+            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
 
     def test_raises_on_missing_value_column(self):
         """Test that ValueError is raised when value column is missing."""
@@ -105,7 +105,7 @@ class TestLapseSegmentation:
             },
         )
         with pytest.raises(ValueError, match="missing"):
-            LapseSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
+            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
 
     def test_raises_on_missing_period_column(self):
         """Test that ValueError is raised when period column is missing."""
@@ -116,7 +116,7 @@ class TestLapseSegmentation:
             },
         )
         with pytest.raises(ValueError, match="missing"):
-            LapseSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
+            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2024)
 
     def test_raises_on_invalid_p1_value(self):
         """Test that ValueError is raised when p1_value is not found in period_col."""
@@ -128,7 +128,7 @@ class TestLapseSegmentation:
             },
         )
         with pytest.raises(ValueError, match="p1_value"):
-            LapseSegmentation(df=df, period_col="year", p1_value=2020, p2_value=2023)
+            NLRSegmentation(df=df, period_col="year", p1_value=2020, p2_value=2023)
 
     def test_raises_on_invalid_p2_value(self):
         """Test that ValueError is raised when p2_value is not found in period_col."""
@@ -140,7 +140,7 @@ class TestLapseSegmentation:
             },
         )
         with pytest.raises(ValueError, match="p2_value"):
-            LapseSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2025)
+            NLRSegmentation(df=df, period_col="year", p1_value=2023, p2_value=2025)
 
     def test_alternate_value_col(self):
         """Test segmentation with a non-default value column."""
@@ -151,7 +151,7 @@ class TestLapseSegmentation:
                 "year": [2023, 2023, 2024],
             },
         )
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=df,
             period_col="year",
             p1_value=2023,
@@ -166,7 +166,7 @@ class TestLapseSegmentation:
     def test_input_dataframe_not_mutated(self, transaction_df):
         """Test that the original DataFrame is not modified."""
         original_df = transaction_df.copy()
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=transaction_df,
             period_col="year",
             p1_value=2023,
@@ -177,7 +177,7 @@ class TestLapseSegmentation:
 
     def test_table_property_returns_ibis_table(self, transaction_df):
         """Test that the table property returns an ibis Table."""
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=transaction_df,
             period_col="year",
             p1_value=2023,
@@ -188,7 +188,7 @@ class TestLapseSegmentation:
     def test_accepts_ibis_table_input(self, transaction_df):
         """Test that an ibis Table can be passed directly as input."""
         table = ibis.memtable(transaction_df)
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=table,
             period_col="year",
             p1_value=2023,
@@ -202,7 +202,7 @@ class TestLapseSegmentation:
 
     def test_df_property_caches_result(self, transaction_df):
         """Test that the df property returns the same cached DataFrame on subsequent calls."""
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=transaction_df,
             period_col="year",
             p1_value=2023,
@@ -213,8 +213,8 @@ class TestLapseSegmentation:
         assert first_call is second_call
 
 
-class TestLapseSegmentationGroupCol:
-    """Tests for LapseSegmentation group_col functionality."""
+class TestNLRSegmentationGroupCol:
+    """Tests for NLRSegmentation group_col functionality."""
 
     @pytest.fixture
     def store_transaction_df(self):
@@ -230,7 +230,7 @@ class TestLapseSegmentationGroupCol:
 
     def test_segments_calculated_within_each_group(self, store_transaction_df):
         """Test that lapse segments are calculated independently within each group."""
-        seg = LapseSegmentation(
+        seg = NLRSegmentation(
             df=store_transaction_df,
             period_col="year",
             p1_value=2023,
@@ -260,7 +260,7 @@ class TestLapseSegmentationGroupCol:
             },
         )
         with pytest.raises(ValueError, match="missing"):
-            LapseSegmentation(
+            NLRSegmentation(
                 df=df,
                 period_col="year",
                 p1_value=2023,
