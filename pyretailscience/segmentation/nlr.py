@@ -74,6 +74,12 @@ class NLRSegmentation:
     When combined with spend data, it reveals whether revenue growth is driven by new customer acquisition or by
     increasing spend from repeating customers.
 
+    Attributes:
+        table (ibis.Table): The underlying ibis Table expression containing the segmentation results.
+            Can be used for further ibis operations before materializing to a DataFrame.
+        df (pd.DataFrame): The materialized segmentation results as a pandas DataFrame, indexed by
+            customer_id (and group_col if specified). Cached after first access.
+
     Example:
         >>> import pandas as pd
         >>> from pyretailscience.segmentation.nlr import NLRSegmentation
@@ -193,7 +199,7 @@ class NLRSegmentation:
             (in_p2 == 1, SEGMENT_NEW),
         )
 
-        self.table = customer.mutate(segment_name=segment_expr).select(
+        self.table: ibis.Table = customer.mutate(segment_name=segment_expr).select(
             *group_cols,
             "segment_name",
             p1_col,
