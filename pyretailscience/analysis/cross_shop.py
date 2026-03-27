@@ -119,12 +119,15 @@ class CrossShop:
             group_1_col (str): Column identifying first segment (e.g., "category", "brand", "channel").
             group_1_val (str): Value to analyze for first segment (e.g., "organic", "Brand_A", "online").
             group_2_val (str): Value to analyze for second segment.
-            group_2_col (str, optional): Column identifying second segment. Defaults to group_1_col.
-            group_3_col (str, optional): Column for three-way analysis. Defaults to group_1_col when group_3_val provided.
+            group_2_col (str, optional): Column identifying second segment.
+                Defaults to group_1_col.
+            group_3_col (str, optional): Column for three-way analysis.
+                Defaults to group_1_col when group_3_val provided.
             group_3_val (str, optional): Value for third segment. Defaults to None.
             labels (list[str], optional): Custom labels for diagram (e.g., ["Organic", "Local"]).
                 Defaults to alphabetical labels [A, B, C].
-            group_col (str, optional): Grouping column (e.g., customer_id, store_id, segment_name). Defaults to customer_id from options.
+            group_col (str, optional): Grouping column (e.g., customer_id, store_id,
+                segment_name). Defaults to customer_id from options.
             value_col (str, optional): Metric to analyze (sales, units, visits).
                 Defaults to spend column from options.
             agg_func (str, optional): How to combine customer values ("sum", "mean", "count").
@@ -230,7 +233,8 @@ class CrossShop:
             group_2_val (str): Value to filter for the second group.
             group_3_col (str, optional): Column name for the third group. Defaults to None.
             group_3_val (str, optional): Value to filter for the third group. Defaults to None.
-            group_col (str, optional): Grouping column (e.g., customer_id, store_id, segment_name). Defaults to customer_id from options.
+            group_col (str, optional): Grouping column (e.g., customer_id, store_id,
+                segment_name). Defaults to customer_id from options.
             value_col (str, optional): The column to aggregate. Defaults to option column.unit_spend.
             agg_func (str, optional): The aggregation function. Defaults to "sum".
             labels (list[str], optional): The labels for the groups. Defaults to None.
@@ -250,7 +254,9 @@ class CrossShop:
         group_col = group_col or get_option("column.customer_id")
         value_col = value_col or get_option("column.unit_spend")
 
-        # Using a temporary value column to avoid duplicate column errors during selection. This happens when `value_col` has the same name as `group_col`, causing conflicts in `.select()`.
+        # Using a temporary value column to avoid duplicate column errors during selection.
+        # This happens when `value_col` has the same name as `group_col`, causing conflicts
+        # in `.select()`.
         temp_value_col = "temp_value_col"
         df = df.mutate(**{temp_value_col: df[value_col]})
 

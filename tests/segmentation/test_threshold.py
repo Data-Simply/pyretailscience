@@ -153,7 +153,7 @@ class TestThresholdSegmentation:
             assert result_df.index.name == "buyer_id", "Should use custom customer_id column name as index"
 
     def test_segmentation_with_tied_spend_values(self):
-        """Test that customers with identical spend values are segmented consistently using customer_id as tiebreaker."""
+        """Test customers with identical spend are segmented consistently using customer_id as tiebreaker."""
         # Create dataset with multiple customers having identical spend values
         df = pd.DataFrame(
             {

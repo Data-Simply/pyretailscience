@@ -351,10 +351,12 @@ def test_plot_with_labels_custom_kwargs(sample_product_dataframe, mocker):
 
     # Check that custom kwargs were passed through to textalloc
     assert ta_kwargs["nbr_candidates"] == custom_kwargs["nbr_candidates"], (
-        f"nbr_candidates not passed correctly: expected {custom_kwargs['nbr_candidates']}, got {ta_kwargs.get('nbr_candidates')}"
+        f"nbr_candidates not passed correctly: expected {custom_kwargs['nbr_candidates']},"
+        f" got {ta_kwargs.get('nbr_candidates')}"
     )
     assert ta_kwargs["min_distance"] == custom_kwargs["min_distance"], (
-        f"min_distance not passed correctly: expected {custom_kwargs['min_distance']}, got {ta_kwargs.get('min_distance')}"
+        f"min_distance not passed correctly: expected {custom_kwargs['min_distance']},"
+        f" got {ta_kwargs.get('min_distance')}"
     )
     assert ax_arg == result_ax
 

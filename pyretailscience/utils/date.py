@@ -52,7 +52,10 @@ def _validate_and_normalize_periods(
     for i, (name1, (start1, end1)) in enumerate(period_list):
         for name2, (start2, end2) in period_list[i + 1 :]:
             if start1 <= end2 and start2 <= end1:
-                overlap_msg = f"Periods '{name1}' ({start1.date()}-{end1.date()}) and '{name2}' ({start2.date()}-{end2.date()}) overlap"
+                overlap_msg = (
+                    f"Periods '{name1}' ({start1.date()}-{end1.date()}) and"
+                    f" '{name2}' ({start2.date()}-{end2.date()}) overlap"
+                )
                 raise ValueError(overlap_msg)
 
     return normalized
@@ -131,23 +134,29 @@ def find_overlapping_periods(
         it may cause an issue in non-leap years.
 
     Args:
-        start_date (Union[datetime, str]): The starting date of the range, either as a datetime object or 'YYYY-MM-DD' string.
-        end_date (Union[datetime, str]): The ending date of the range, either as a datetime object or 'YYYY-MM-DD' string.
+        start_date (datetime | str): The starting date of the range, either as a
+            datetime object or 'YYYY-MM-DD' string.
+        end_date (datetime | str): The ending date of the range, either as a
+            datetime object or 'YYYY-MM-DD' string.
         return_str (bool, optional): If True, returns dates as ISO-formatted strings ('YYYY-MM-DD').
                                      If False, returns datetime objects. Defaults to True.
 
     Returns:
-        List[Tuple[Union[str, datetime], Union[str, datetime]]]:
+        list[tuple[str | datetime, str | datetime]]:
         A list of tuples where each tuple contains the start and end dates of an overlapping period,
-        either as strings (ISO format) or datetime objects.
+        either as strings (ISO format) or datetime objects. Returned datetimes preserve the
+        timezone-awareness of the input (naive in → naive out, aware in → aware out).
+        String inputs produce naive datetime outputs.
 
     Raises:
         ValueError: If the start date is after the end date.
     """
-    if isinstance(start_date, str):
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")  # noqa: DTZ007
-    if isinstance(end_date, str):
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")  # noqa: DTZ007
+    # Track whether outputs should be tz-naive to preserve backward compatibility.
+    # String inputs and naive datetime inputs both produced naive outputs before.
+    input_is_naive = isinstance(start_date, str) or start_date.tzinfo is None
+
+    start_date = _normalize_datetime(start_date)
+    end_date = _normalize_datetime(end_date)
 
     if start_date > end_date:
         raise ValueError("Start date must be before end date")
@@ -159,14 +168,23 @@ def find_overlapping_periods(
 
     years = np.arange(start_year, end_year)
 
-    period_starts = [start_date if year == start_year else datetime(year, start_month, start_day) for year in years]  # noqa: DTZ001
-    period_ends = [datetime(year + 1, end_month, end_day) for year in years]  # noqa: DTZ001
+    period_starts = [
+        start_date if year == start_year else datetime(year, start_month, start_day, tzinfo=timezone.utc)
+        for year in years
+    ]
+    period_ends = [datetime(year + 1, end_month, end_day, tzinfo=timezone.utc) for year in years]
 
     df = pd.DataFrame({"start": period_starts, "end": period_ends})
 
     if return_str:
         return [
             (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+            for start, end in zip(df["start"], df["end"], strict=False)
+        ]
+
+    if input_is_naive:
+        return [
+            (start.replace(tzinfo=None), end.replace(tzinfo=None))
             for start, end in zip(df["start"], df["end"], strict=False)
         ]
     return list(zip(df["start"], df["end"], strict=False))
