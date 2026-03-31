@@ -266,9 +266,9 @@ def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decima
     """Helper function for the `human_format` function that determines the number of decimals to use for the y-axis.
 
     Args:
-        ylim: The y-axis limits.
-        tick_values: The y-axis tick values.
-        max_decimals: The maximum number of decimals to use. Defaults to 100.
+        ylim (tuple[float, float]): The y-axis limits.
+        tick_values (list[float]): The y-axis tick values.
+        max_decimals (int, optional): The maximum number of decimals to use. Defaults to 10.
 
     Returns:
         int: The number of decimals to use.

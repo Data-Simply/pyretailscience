@@ -85,7 +85,7 @@ def filter_and_label_by_periods(
         transactions (ibis.Table): An ibis table with a transaction_date column.
         period_ranges (dict[str, tuple[datetime, datetime] | tuple[str, str]]): Dict where keys are period names and
             values are(start_date, end_date) tuples.
-        period_col (str): Name of the column to create for period labels. Defaults to "period_name".
+        period_col (str, optional): Name of the column to create for period labels. Defaults to "period_name".
 
     Returns:
         An ibis table with filtered transactions and added period label column.

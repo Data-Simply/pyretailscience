@@ -41,16 +41,16 @@ def label_by_condition(
         table (ibis.Table): An ibis table to process.
         condition (ibis.expr.types.BooleanColumn): Boolean expression representing
             the condition to evaluate.
-        label_col (str | None): Column name to group by for labeling. If None, defaults to the setting
+        label_col (str | None, optional): Column name to group by for labeling. If None, defaults to the setting
             column.customer_id.
-        return_col (str): Name of the column to add with the labels. Defaults to "label_name".
-        labeling_strategy (Literal["binary", "extended"]): Strategy for labeling groups.
+        return_col (str, optional): Name of the column to add with the labels. Defaults to "label_name".
+        labeling_strategy (Literal["binary", "extended"], optional): Strategy for labeling groups.
             Defaults to "binary".
-        contains_label (str | ibis.expr.types.Value): Label for groups that contain
+        contains_label (str | ibis.expr.types.Value, optional): Label for groups that contain
             items meeting the condition. Defaults to "contains".
-        not_contains_label (str | ibis.expr.types.Value): Label for groups that do not
+        not_contains_label (str | ibis.expr.types.Value, optional): Label for groups that do not
             contain items meeting the condition. Defaults to "not_contains".
-        mixed_label (str | ibis.expr.types.Value): Label for groups with mixed results
+        mixed_label (str | ibis.expr.types.Value, optional): Label for groups with mixed results
             (only used with "extended" strategy). Defaults to "mixed".
 
     Returns:

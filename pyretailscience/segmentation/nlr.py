@@ -122,11 +122,11 @@ class NLRSegmentation:
             period_col (str): Column containing period identifiers.
             p1_value (str | float | ibis.Scalar): Value in period_col identifying period 1.
             p2_value (str | float | ibis.Scalar): Value in period_col identifying period 2.
-            value_col (str | None): Column to aggregate for determining customer activity.
+            value_col (str | None, optional): Column to aggregate for determining customer activity.
                 Defaults to ColumnHelper().unit_spend.
-            agg_func (str): Aggregation function to use when grouping by customer_id.
+            agg_func (str, optional): Aggregation function to use when grouping by customer_id.
                 Defaults to "sum".
-            group_col (str | list[str] | None): Column(s) to group by when calculating segments.
+            group_col (str | list[str] | None, optional): Column(s) to group by when calculating segments.
                 When specified, segments are calculated within each group independently.
                 Defaults to None.
 
