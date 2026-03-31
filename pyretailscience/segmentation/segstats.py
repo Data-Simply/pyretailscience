@@ -210,7 +210,7 @@ class SegTransactionStats:
         extra_aggs: dict[str, tuple[str, str]] | None = None,
         calc_rollup: bool | None = None,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
-        unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
+        unknown_customer_value: int | str | ibis.Scalar | ibis.expr.types.BooleanColumn | None = None,
         grouping_sets: Literal["rollup", "cube", "total"] | list[tuple[str, ...]] | None = None,
     ) -> None:
         """Calculates transaction statistics by segment.
@@ -246,7 +246,7 @@ class SegTransactionStats:
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
             unknown_customer_value
-                (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
+                (int | str | ibis.Scalar | ibis.expr.types.BooleanColumn | None, optional):
                 Value or expression identifying unknown customers for separate tracking.
                 When provided, metrics are split into identified, unknown, and total variants.
                 Accepts simple values (e.g., -1), ibis literals, or boolean expressions
@@ -410,7 +410,7 @@ class SegTransactionStats:
         data: ibis.Table,
         columns: list[str],
         values: list[Any],
-    ) -> dict[str, ibis.expr.types.generic.Scalar]:
+    ) -> dict[str, ibis.Scalar]:
         """Create a dictionary of ibis literals with proper column types.
 
         Args:
@@ -419,7 +419,7 @@ class SegTransactionStats:
             values (list[Any]): List of values to convert to typed literals
 
         Returns:
-            dict[str, ibis.expr.types.generic.Scalar]: Dictionary mapping column names to typed literals
+            dict[str, ibis.Scalar]: Dictionary mapping column names to typed literals
         """
         mutations = {}
         for i, col in enumerate(columns):
@@ -781,13 +781,13 @@ class SegTransactionStats:
     @staticmethod
     def _create_unknown_flag(
         data: ibis.Table,
-        unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn,
+        unknown_customer_value: int | str | ibis.Scalar | ibis.expr.types.BooleanColumn,
     ) -> ibis.expr.types.BooleanColumn:
         """Create a boolean flag identifying unknown customers.
 
         Args:
             data (ibis.Table): The data table
-            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn):
+            unknown_customer_value (int | str | ibis.Scalar | ibis.expr.types.BooleanColumn):
                 The value or expression identifying unknown customers
 
         Returns:
@@ -797,7 +797,7 @@ class SegTransactionStats:
 
         if isinstance(unknown_customer_value, ibis.expr.types.BooleanColumn):
             return unknown_customer_value
-        if isinstance(unknown_customer_value, ibis.expr.types.Scalar):
+        if isinstance(unknown_customer_value, ibis.Scalar):
             return data[cols.customer_id] == unknown_customer_value
         # Simple value (int/str)
         return data[cols.customer_id] == ibis.literal(unknown_customer_value)
@@ -895,7 +895,7 @@ class SegTransactionStats:
         extra_aggs: dict[str, tuple[str, str]] | None = None,
         calc_rollup: bool | None = None,
         rollup_value: Any | list[Any] = "Total",  # noqa: ANN401 - Any is required for ibis.literal typing
-        unknown_customer_value: int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None = None,
+        unknown_customer_value: int | str | ibis.Scalar | ibis.expr.types.BooleanColumn | None = None,
         grouping_sets: Literal["rollup", "cube", "total"] | list[tuple[str, ...]] | None = None,
     ) -> ibis.Table:
         """Calculates the transaction statistics by segment.
@@ -916,7 +916,7 @@ class SegTransactionStats:
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
             unknown_customer_value
-                (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
+                (int | str | ibis.Scalar | ibis.expr.types.BooleanColumn | None, optional):
                 Value or expression identifying unknown customers for separate tracking.
                 When provided, metrics are split into identified, unknown, and total variants.
                 Accepts simple values (e.g., -1), ibis literals, or boolean expressions.
