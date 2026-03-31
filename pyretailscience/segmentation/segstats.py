@@ -245,7 +245,8 @@ class SegTransactionStats:
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
-            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None):
+            unknown_customer_value
+                (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
                 Value or expression identifying unknown customers for separate tracking.
                 When provided, metrics are split into identified, unknown, and total variants.
                 Accepts simple values (e.g., -1), ibis literals, or boolean expressions
@@ -360,7 +361,7 @@ class SegTransactionStats:
         Args:
             include_quantity (bool): Whether to include the columns related to quantity.
             include_customer (bool): Whether to include customer-based columns.
-            include_unknown (bool): Whether to include unknown customer columns. Defaults to False.
+            include_unknown (bool, optional): Whether to include unknown customer columns. Defaults to False.
 
         Returns:
             list[str]: The default column order.
@@ -914,7 +915,8 @@ class SegTransactionStats:
             rollup_value (Any | list[Any], optional): The value to use for rollup totals. Can be a single value
                 applied to all columns or a list of values matching the length of segment_col, with each value
                 cast to match the corresponding column type. Defaults to "Total".
-            unknown_customer_value (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None):
+            unknown_customer_value
+                (int | str | ibis.expr.types.Scalar | ibis.expr.types.BooleanColumn | None, optional):
                 Value or expression identifying unknown customers for separate tracking.
                 When provided, metrics are split into identified, unknown, and total variants.
                 Accepts simple values (e.g., -1), ibis literals, or boolean expressions.

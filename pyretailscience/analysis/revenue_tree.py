@@ -415,17 +415,21 @@ class RevenueTree:
         """Draw the Revenue Tree graph as a matplotlib visualization.
 
         Args:
-            row_index: Index of the row to visualize from the RevenueTree DataFrame. Defaults to 0.
+            row_index (int, optional): Index of the row to visualize from the RevenueTree DataFrame. Defaults to 0.
                 Useful when the RevenueTree has multiple groups (e.g., by region, store, etc.).
-            value_labels: Labels for period columns. If None, uses "Current Period" and "Previous Period".
-                If provided, should be a tuple of (current_label, previous_label).
-            unit_spend_label: Label for the Revenue node. Defaults to "Revenue".
-            customer_id_label: Label for the Customers node. Defaults to "Customers".
-            spend_per_customer_label: Label for the Spend / Customer node. Defaults to "Spend / Customer".
-            transactions_per_customer_label: Label for the Visits / Customer node. Defaults to "Visits / Customer".
-            spend_per_transaction_label: Label for the Spend / Visit node. Defaults to "Spend / Visit".
-            units_per_transaction_label: Label for the Units / Visit node. Defaults to "Units / Visit".
-            price_per_unit_label: Label for the Price / Unit node. Defaults to "Price / Unit".
+            value_labels (tuple[str, str] | None, optional): Labels for period columns. If None, uses "Current Period"
+                and "Previous Period". If provided, should be a tuple of (current_label, previous_label).
+            unit_spend_label (str, optional): Label for the Revenue node. Defaults to "Revenue".
+            customer_id_label (str, optional): Label for the Customers node. Defaults to "Customers".
+            spend_per_customer_label (str, optional): Label for the Spend / Customer node.
+                Defaults to "Spend / Customer".
+            transactions_per_customer_label (str, optional): Label for the Visits / Customer node.
+                Defaults to "Visits / Customer".
+            spend_per_transaction_label (str, optional): Label for the Spend / Visit node.
+                Defaults to "Spend / Visit".
+            units_per_transaction_label (str, optional): Label for the Units / Visit node.
+                Defaults to "Units / Visit".
+            price_per_unit_label (str, optional): Label for the Price / Unit node. Defaults to "Price / Unit".
 
         Returns:
             matplotlib.axes.Axes: The matplotlib axes containing the tree visualization.

@@ -25,9 +25,9 @@ class Acv:
 
     Args:
         df (pd.DataFrame | ibis.Table): Transaction data containing at least a unit_spend column.
-        group_by (str | list[str] | None): Optional column(s) to group the ACV calculation by
+        group_by (str | list[str] | None, optional): Optional column(s) to group the ACV calculation by
             (e.g., store_id). Defaults to None for total ACV.
-        acv_scale_factor (float): Factor to scale the ACV result (default is 1,000,000 for $MM).
+        acv_scale_factor (float, optional): Factor to scale the ACV result (default is 1,000,000 for $MM).
 
     Raises:
         TypeError: If df is not a pandas DataFrame or an Ibis Table.

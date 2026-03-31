@@ -68,11 +68,11 @@ class RFMSegmentation:
                 - transaction_id
             current_date (Optional[Union[str, datetime.date]]): The reference date for calculating recency.
                 Can be a string (format: "YYYY-MM-DD"), a date object, or None (defaults to the current system date).
-            r_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile
+            r_segments (Union[int, list[float]], optional): Number of bins (1-10) or custom percentile
                 cut points (max 9 cut points). Defaults to 10 bins.
-            f_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile
+            f_segments (Union[int, list[float]], optional): Number of bins (1-10) or custom percentile
                 cut points (max 9 cut points). Defaults to 10 bins.
-            m_segments (Union[int, list[float]]): Number of bins (1-10) or custom percentile
+            m_segments (Union[int, list[float]], optional): Number of bins (1-10) or custom percentile
                 cut points (max 9 cut points). Defaults to 10 bins.
             min_monetary (Optional[float]): Minimum monetary value to include in segmentation.
                 Customers with total spend below this value will be excluded from the analysis.

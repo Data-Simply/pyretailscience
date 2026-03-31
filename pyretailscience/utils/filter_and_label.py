@@ -41,7 +41,7 @@ def filter_and_label_by_condition(
         table (ibis.Table): An ibis table to filter.
         conditions (dict[str, ibis.expr.types.BooleanColumn]): Dict where keys are labels and
             values are ibis boolean expressions representing filter conditions.
-        label_col (str): Name of the label column to add. Defaults to "label".
+        label_col (str, optional): Name of the label column to add. Defaults to "label".
 
     Returns:
         ibis.Table: An ibis table with filtered rows and an added label column.
