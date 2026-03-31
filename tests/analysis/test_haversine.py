@@ -25,7 +25,7 @@ def test_haversine_distance(sample_ibis_table):
     t = sample_ibis_table
     distance_expr = haversine_distance(t["lat1"], t["lon1"], t["lat2"], t["lon2"])
 
-    assert isinstance(distance_expr, ibis.expr.types.Column), "Output should be an Ibis expression."
+    assert isinstance(distance_expr, ibis.Column), "Output should be an Ibis expression."
 
     result_df = t.mutate(distance=distance_expr).execute()
 
