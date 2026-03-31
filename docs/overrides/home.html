@@ -2,240 +2,197 @@
 {% block tabs %}
 {{ super() }}
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PyRetailScience</title>
-    <link
-      href="{{ 'stylesheets/home.css' | url }}"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <!-- Hero Section -->
-    <section class="hero">
-      <img
-        src="{{ 'assets/images/hero-background.svg'}}"
-        alt="Hero Background"
-        class="hero-background"
-      />
-      <div class="hero-content">
-        <h1>From Data Drudgery to Analytics Artistry</h1>
+<style>
+  .md-main__inner { margin: 0; }
+  .md-content { display: none; }
+  @media screen and (min-width: 60em) {
+    .md-sidebar--secondary { display: none; }
+  }
+  @media screen and (min-width: 76.25em) {
+    .md-sidebar--primary { display: none; }
+  }
+  .hero h1, .features h1, .get-started h1 { font-size: var(--text-2xl); }
+  .hero h2, .features h2, .get-started h2 { font-size: var(--text-xl); }
+  .hero h3, .features h3, .get-started h3 { font-size: var(--text-lg); }
+  .hero h4, .features h4, .get-started h4 { font-size: var(--text-base); }
+</style>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>From Data Drudgery<br>to Analytics <span class="text-green">Artistry</span></h1>
+      <p>
+        Stop rebuilding the same retail analyses from scratch.
+        PyRetailScience gives your team pre-built, tested modules for
+        segmentation, gain-loss, cross-shop, and more.
+      </p>
+      <div class="hero-actions">
+        <a href="{{ 'analysis_modules/' | url }}" class="btn btn-primary">See What's Included</a>
+      </div>
+    </div>
+    <div class="hero-code">
+      <div class="code-window">
+        <div class="code-titlebar">
+          <span class="code-dot code-dot--red"></span>
+          <span class="code-dot code-dot--yellow"></span>
+          <span class="code-dot code-dot--green"></span>
+          <span class="code-filename">analysis.py</span>
+        </div>
+        <pre class="code-body"><code><span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> <span class="cls">TransactionChurn</span>
+
+<span class="cmt"># Analyze transaction churn</span>
+churn = <span class="cls">TransactionChurn</span>(df, churn_period=<span class="num">90</span>)
+churn.plot()
+
+<span class="cmt"># Segment customers by value</span>
+<span class="kw">from</span> <span class="mod">pyretailscience.segmentation.hml</span> <span class="kw">import</span> <span class="cls">HMLSegmentation</span>
+segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Logo Bar -->
+<section class="logo-bar">
+  <div class="logo-bar-header">
+    <p class="logo-bar-label">Built with expertise doing analytics for scale-ups to multinationals</p>
+  </div>
+  {% set logos = ['Loblaws', 'IKI', 'Dominos Pizza', 'Migros', 'Sephora', 'Sainsburys', 'Nectar', 'Metro', 'Coles', 'GANNI', 'Mindful Chef', 'Auchan'] %}
+  <div class="logo-bar-mask">
+    <div class="logo-scroll">
+      {% for name in logos %}<span>{{ name }}</span>{% endfor %}
+      <!-- Duplicate for seamless CSS scroll loop -->
+      {% for name in logos %}<span aria-hidden="true">{{ name }}</span>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Features with charts -->
+<section class="features">
+  <div class="container">
+    <div class="feature">
+      <div class="feature-content">
+        <h3>Tailored for Retail, Powered by You</h3>
         <p>
-          Leave the mundane to us and elevate your role from data janitor to
-          insights virtuoso. From segmentations to gain-loss analysis,
-          PyRetailScience equips you with a wide array of retail analytical
-          capabilities.
+          Leverage pre-built functions designed specifically for retail analytics.
+          From customer segmentations to gain-loss analysis, PyRetailScience provides
+          over a dozen building blocks to tackle retail-specific challenges.
         </p>
-        <a href="{{ 'getting_started/installation/' | url }}" class="btn"
-          >Get Started</a
-        >
+        <a href="{{ 'analysis_modules/' | url }}">See Analysis Modules &rarr;</a>
       </div>
-    </section>
+      <div class="feature-image">
+        <img src="{{ 'assets/images/features/cross_shop.png' | url }}" alt="Cross-shop Venn diagram" loading="lazy" />
+      </div>
+    </div>
 
-    <!-- Logo Section -->
-    <section class="logo-section">
-      <div class="container">
-        <h1>You're in good company</h2>
+    <div class="feature">
+      <div class="feature-content">
+        <h3>Trust Your Results, Every Time</h3>
         <p>
-          Built with expertise doing analytics and data science for scale-ups to
-          multi-nationals
+          Built with extensive unit testing and best practices,
+          PyRetailScience ensures the accuracy and reliability of your
+          analyses. Confidently present your findings, knowing they're
+          backed by a robust, well-tested framework.
         </p>
-        <div class="logo-grid">
-          <img
-            src="{{ 'assets/images/logos/loblaws.png' | url }}"
-            alt="Loblaws logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/iki.png' | url }}"
-            alt="IKI logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/dominos.png' | url }}"
-            alt="Dominos Pizza logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/migros.png' | url }}"
-            alt="Migros logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/sephora.png' | url }}"
-            alt="Sephora logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/sainsburys.png' | url }}"
-            alt="Sainsburys logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/nectar.png' | url }}"
-            alt="Nectar logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/metro.png' | url }}"
-            alt="Metro logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/coles.png' | url }}"
-            alt="Coles logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/ganni.png' | url }}"
-            alt="GANNI logo"
-          />
-          <img
-            src="{{ 'assets/images/logos/mindful-chef.png' | url }}"
-            alt="Mindful Chef"
-          />
-          <img
-            src="{{ 'assets/images/logos/auchan.png' | url }}"
-            alt="Auchan logo"
-          />
+        <a href="{{ 'getting_started/installation/' | url }}">Get Started &rarr;</a>
+      </div>
+      <div class="feature-image">
+        <div class="code-window">
+          <div class="code-titlebar">
+            <span class="code-dot code-dot--red"></span>
+            <span class="code-dot code-dot--yellow"></span>
+            <span class="code-dot code-dot--green"></span>
+            <span class="code-filename">test_customer.py</span>
+          </div>
+          <pre class="code-body"><code><span class="kw">import</span> <span class="mod">pytest</span>
+<span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> <span class="cls">TransactionChurn</span>
+
+<span class="kw">def</span> <span class="fn">test_churn_has_expected_columns</span>(sample_df):
+    churn = <span class="cls">TransactionChurn</span>(sample_df, churn_period=<span class="num">90</span>)
+    <span class="kw">assert</span> <span class="str">"churned_pct"</span> <span class="kw">in</span> churn.purchase_dist_df.columns
+    <span class="kw">assert</span> churn.n_unique_customers == <span class="num">1250</span>
+
+<span class="cmt"># 94% coverage across all modules</span></code></pre>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Feature Section -->
-    <section class="features">
-      <div class="container">
-        <h1>Analyze, Automate, Amaze</h2>
-        <!-- Feature 1 -->
-        <div class="feature">
-          <div class="feature-content">
-            <h3>Tailored for Retail, Powered by You</h3>
-            <p>
-              Leverage pre-built functions designed specifically for retail
-              analytics. From customer segmentations to gains loss analysis,
-              PyRetailScience provides the over a dozen building blocks you need
-              to tackle retail-specific challenges efficiently and effectively.
-            </p>
-            <p>
-              <a href="{{ 'getting_started/installation/' | url }}"
-                >Get Started</a
-              >
-            </p>
-          </div>
-          <div class="feature-image">
-            <img
-              src="{{ 'assets/images/features/cross_shop.png' | url }}"
-              alt="Tailored for Retail, Powered by You"
-            />
-          </div>
-        </div>
-        <!-- Feature 2 -->
-        <div class="feature">
-          <div class="feature-content">
-            <h3>Trust Your Results, Every Time</h3>
-            <p>
-              Built with extensive unit testing and best practices,
-              PyRetailScience ensures the accuracy and reliability of your
-              analyses. Confidently present your findings, knowing they're
-              backed by a robust, well-tested framework.
-            </p>
-            <p>
-              <a href="{{ 'getting_started/installation/' | url }}"
-                >Get Started</a
-              >
-            </p>
-          </div>
-          <div class="feature-image">
-            <img
-              src="{{ 'assets/images/features/unit_tests.png' | url }}"
-              alt="Trust Your Results, Every Time"
-            />
-          </div>
-        </div>
-        <!-- Feature 3 -->
-        <div class="feature">
-          <div class="feature-content">
-            <h3>Consistent, Professional Charts in Seconds</h3>
-            <p>
-              Say goodbye to hours of tweaking chart styles. PyRetailScience
-              delivers beautifully standardized visualizations that are
-              presentation-ready with just a few lines of code. Impress
-              stakeholders and save time with our pre-built, customizable chart
-              templates.
-            </p>
-            <p>
-              <a href="{{ 'getting_started/installation/' | url }}"
-                >Get Started</a
-              >
-            </p>
-          </div>
-          <div class="feature-image">
-            <img
-              src="{{ 'assets/images/features/charts.png' | url }}"
-              alt="Consistent, Professional Charts in Seconds"
-            />
-          </div>
-        </div>
-        <!-- Feature 4 -->
-        <div class="feature">
-          <div class="feature-content">
-            <h3>Automate Repetitive Tasks, Focus on Insights</h3>
-            <p>
-              PyRetailScience streamlines your workflow by automating common
-              retail analytics tasks. Easily loop analyses over different
-              dimensions like product categories or countries, and seamlessly
-              use the output of one analysis as input for another. Spend less
-              time on data manipulation and more on generating valuable
-              insights.
-            </p>
-            <p>
-              <a href="{{ 'getting_started/installation/' | url }}"
-                >Get Started</a
-              >
-            </p>
-          </div>
-          <div class="feature-image">
-            <img
-              src="{{ 'assets/images/features/chain_analysis.png' | url }}"
-              alt="Automate Repetitive Tasks, Focus on Insights"
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Testimonial Section -->
-    <!-- <section class="testimonials">
-            <div class="container">
-                <h1>What Our Users Say</h2>
-                <p>&nbsp;</p>
-                <div class="testimonial-grid">
-                    <div class="testimonial">
-                        <p>"PyRetailScience has completely transformed our retail analytics process. It's a game-changer!"</p>
-                        <p><strong>- Jane Doe, Head of Analytics at Retail Corp</strong></p>
-                    </div>
-                    <div class="testimonial-grid">
-                        <div class="testimonial">
-                            <p>"PyRetailScience has completely transformed our retail analytics process. It's a game-changer!"</p>
-                            <p><strong>- Jane Doe, Head of Analytics at Retail Corp</strong></p>
-                        </div>
-                </div>
-            </div>
-        </section> -->
-
-    <!-- CTA Section -->
-    <section class="cta">
-      <div class="container">
-        <h1>Ready to Supercharge Your Retail Operations?</h2>
+    <div class="feature">
+      <div class="feature-content">
+        <h3>Consistent, Professional Charts in Seconds</h3>
         <p>
-          Get started with PyRetailScience in minutes and see the difference for
-          yourself.
+          Standardized visualizations that are presentation-ready with a few
+          lines of code. Waterfall, Venn, heatmap, time series, and more.
         </p>
-        <a href="{{ 'getting_started/installation/' | url }}" class="btn"
-          >Get Started</a
-        >
+        <a href="{{ 'gallery/' | url }}">Browse Plot Gallery &rarr;</a>
       </div>
-    </section>
-  </body>
-</html>
+      <div class="feature-image">
+        <img src="{{ 'assets/images/features/charts.png' | url }}" alt="Waterfall chart showing store cannibalization" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-content">
+        <h3>Automate Repetitive Tasks, Focus on Insights</h3>
+        <p>
+          Loop analyses over different dimensions. Use the output of one analysis
+          as input for another. Spend less time on data manipulation.
+        </p>
+        <a href="{{ 'examples/gain_loss/' | url }}">See Examples &rarr;</a>
+      </div>
+      <div class="feature-image">
+        <div class="code-window">
+          <div class="code-titlebar">
+            <span class="code-dot code-dot--red"></span>
+            <span class="code-dot code-dot--yellow"></span>
+            <span class="code-dot code-dot--green"></span>
+            <span class="code-filename">workflow.py</span>
+          </div>
+          <pre class="code-body"><code><span class="cmt"># Do our analysis</span>
+dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
+<span class="cmt"># Define the churn period as the 80th percentile</span>
+churn_period = dbp.purchases_percentile(<span class="num">0.8</span>)
+<span class="cmt"># Use that in our plot title</span>
+plot_title = <span class="str">f"Customers churn within <span class="expr">{round(churn_period)}</span> Days"</span>
+<span class="cmt"># Plot our chart</span>
+dbp.plot(title=plot_title)</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Get Started -->
+<section class="get-started">
+  <div class="get-started-inner">
+    <h2>Get started in seconds</h2>
+    <p class="get-started-subtitle">Install PyRetailScience and run your first analysis in under a minute.</p>
+    <div class="install-command">
+      <span class="install-prompt">$</span> pip install pyretailscience
+    </div>
+    <div class="code-window code-window--get-started">
+      <div class="code-titlebar">
+        <span class="code-dot code-dot--red"></span>
+        <span class="code-dot code-dot--yellow"></span>
+        <span class="code-dot code-dot--green"></span>
+        <span class="code-filename">quickstart.py</span>
+      </div>
+      <pre class="code-body"><code><span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> (
+    <span class="cls">PurchasesPerCustomer</span>,
+)
+
+<span class="cmt"># Analyze purchase distribution</span>
+ppc = <span class="cls">PurchasesPerCustomer</span>(df)
+ppc.plot()
+<span class="cmt"># → A publication-ready chart, instantly.</span></code></pre>
+    </div>
+    <div class="get-started-actions">
+      <a href="{{ 'analysis_modules/' | url }}" class="btn btn-primary">See What's Included</a>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
 
 {% block content %}{% endblock %}

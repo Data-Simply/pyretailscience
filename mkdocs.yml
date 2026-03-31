@@ -51,6 +51,7 @@ nav:
           - HML Segmentation: api/segmentation/hml.md
           - RFM Segmentation: api/segmentation/rfm.md
           - SegTransactionStats Segmentation: api/segmentation/segstats.md
+          - NLR Segmentation: api/segmentation/nlr.md
           - Threshold Segmentation: api/segmentation/threshold.md
       - Plots:
           - Area Plot: api/plots/area.md
@@ -97,7 +98,7 @@ theme:
   font:
     text: Poppins
     code: Roboto Mono
-  logo: assets/images/logo-white.svg
+  logo: assets/images/logo.svg
   favicon: assets/images/logo.svg
 extra_css:
   - stylesheets/extra.css
