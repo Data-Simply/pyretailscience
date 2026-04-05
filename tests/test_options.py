@@ -60,9 +60,15 @@ class TestOptions:
         description = options.describe_option(option)
         assert description == f"{option}: {expected_description} (current value: {expected_value})"
 
-    def test_matching_keys_between_options_and_descriptions(self):
-        """Test that all options have a corresponding description and vice versa."""
+    def test_describe_option_returns_well_formed_string_for_all_options(self):
+        """Test that describe_option returns a properly formatted string for every option."""
         options = opt.Options()
+        for key in options.list_options():
+            description = options.describe_option(key)
+            assert isinstance(description, str)
+            assert key in description
+            assert "(current value:" in description
+        # Ensure no orphan descriptions exist without a matching option
         assert set(options._options.keys()) == set(options._descriptions.keys())
 
     def test_context_manager_overrides_option(self):

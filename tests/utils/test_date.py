@@ -128,49 +128,27 @@ class TestFilterAndLabelByPeriods:
         # Should return an empty dataframe since no transactions match the period
         assert len(result_df) == 0, "Should return 0 transactions for future period"
 
-    def test_invalid_date_order_string_dates(self, sample_transactions_table):
-        """Test that start date > end date raises ValueError with string dates."""
-        period_ranges = {
-            "Invalid_Q1": ("2023-03-31", "2023-01-01"),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Period 'Invalid_Q1': start date \\(2023-03-31\\) must be <= end date \\(2023-01-01\\)",
-        ):
-            filter_and_label_by_periods(sample_transactions_table, period_ranges)
-
-    def test_invalid_date_order_datetime_objects(self, sample_transactions_table):
-        """Test that start date > end date raises ValueError with datetime objects."""
-        period_ranges = {
-            "Invalid_Q1": (
-                datetime.datetime(2023, 3, 31),
-                datetime.datetime(2023, 1, 1),
+    @pytest.mark.parametrize(
+        ("period_ranges", "match"),
+        [
+            (
+                {"Invalid_Q1": ("2023-03-31", "2023-01-01")},
+                r"Period 'Invalid_Q1': start date \(2023-03-31\) must be <= end date \(2023-01-01\)",
             ),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match=(
-                r"Period 'Invalid_Q1': start date \(2023-03-31 00:00:00\)"
-                r" must be <= end date \(2023-01-01 00:00:00\)"
+            (
+                {"Invalid_Q1": (datetime.datetime(2023, 3, 31), datetime.datetime(2023, 1, 1))},
+                r"Period 'Invalid_Q1': start date \(2023-03-31 00:00:00\) must be <= end date \(2023-01-01 00:00:00\)",
             ),
-        ):
-            filter_and_label_by_periods(sample_transactions_table, period_ranges)
-
-    def test_invalid_date_order_mixed_types(self, sample_transactions_table):
-        """Test that start date > end date raises ValueError with mixed date types."""
-        period_ranges = {
-            "Invalid_Mixed": (
-                datetime.datetime(2023, 6, 30),
-                "2023-04-01",
+            (
+                {"Invalid_Mixed": (datetime.datetime(2023, 6, 30), "2023-04-01")},
+                r"Period 'Invalid_Mixed': start date \(2023-06-30 00:00:00\) must be <= end date \(2023-04-01\)",
             ),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Period 'Invalid_Mixed': start date \\(2023-06-30 00:00:00\\) must be <= end date \\(2023-04-01\\)",
-        ):
+        ],
+        ids=["string_dates", "datetime_objects", "mixed_types"],
+    )
+    def test_invalid_date_order_raises(self, sample_transactions_table, period_ranges, match):
+        """Test that start date > end date raises ValueError for various date types."""
+        with pytest.raises(ValueError, match=match):
             filter_and_label_by_periods(sample_transactions_table, period_ranges)
 
     def test_equal_start_end_dates_valid(self, sample_transactions_table):
@@ -185,76 +163,42 @@ class TestFilterAndLabelByPeriods:
         assert len(result_df) == 1
         assert result_df.iloc[0]["transaction_id"] == 1
 
-    def test_overlapping_periods_complete_overlap(self, sample_transactions_table):
-        """Test overlapping periods where one period completely contains another."""
-        period_ranges = {
-            "Q1": ("2023-01-01", "2023-06-30"),
-            "Q2": ("2023-02-01", "2023-05-31"),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Periods 'Q1' \\(2023-01-01-2023-06-30\\) and 'Q2' \\(2023-02-01-2023-05-31\\) overlap",
-        ):
-            filter_and_label_by_periods(sample_transactions_table, period_ranges)
-
-    def test_overlapping_periods_partial_overlap(self, sample_transactions_table):
-        """Test overlapping periods with partial overlap."""
-        period_ranges = {
-            "Q1": ("2023-01-01", "2023-04-15"),
-            "Q2": ("2023-04-01", "2023-06-30"),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Periods 'Q1' \\(2023-01-01-2023-04-15\\) and 'Q2' \\(2023-04-01-2023-06-30\\) overlap",
-        ):
-            filter_and_label_by_periods(sample_transactions_table, period_ranges)
-
-    def test_overlapping_periods_touching_boundaries(self, sample_transactions_table):
-        """Test periods that touch at boundaries (end of one = start of next)."""
-        period_ranges = {
-            "Q1": ("2023-01-01", "2023-03-31"),
-            "Q2": ("2023-03-31", "2023-06-30"),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Periods 'Q1' \\(2023-01-01-2023-03-31\\) and 'Q2' \\(2023-03-31-2023-06-30\\) overlap",
-        ):
-            filter_and_label_by_periods(sample_transactions_table, period_ranges)
-
-    def test_overlapping_periods_multiple_overlaps(self, sample_transactions_table):
-        """Test multiple overlapping periods - should catch the first overlap."""
-        period_ranges = {
-            "Q1": ("2023-01-01", "2023-04-30"),
-            "Q2": ("2023-03-01", "2023-06-30"),
-            "Q3": ("2023-05-01", "2023-08-31"),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Periods 'Q1' \\(2023-01-01-2023-04-30\\) and 'Q2' \\(2023-03-01-2023-06-30\\) overlap",
-        ):
-            filter_and_label_by_periods(sample_transactions_table, period_ranges)
-
-    def test_overlapping_periods_with_datetime_objects(self, sample_transactions_table):
-        """Test overlapping periods with datetime objects."""
-        period_ranges = {
-            "Period_A": (
-                datetime.datetime(2023, 1, 1),
-                datetime.datetime(2023, 3, 31),
+    @pytest.mark.parametrize(
+        ("period_ranges", "match"),
+        [
+            (
+                {"Q1": ("2023-01-01", "2023-06-30"), "Q2": ("2023-02-01", "2023-05-31")},
+                r"Periods 'Q1' \(2023-01-01-2023-06-30\) and 'Q2' \(2023-02-01-2023-05-31\) overlap",
             ),
-            "Period_B": (
-                datetime.datetime(2023, 3, 15),
-                datetime.datetime(2023, 6, 30),
+            (
+                {"Q1": ("2023-01-01", "2023-04-15"), "Q2": ("2023-04-01", "2023-06-30")},
+                r"Periods 'Q1' \(2023-01-01-2023-04-15\) and 'Q2' \(2023-04-01-2023-06-30\) overlap",
             ),
-        }
-
-        with pytest.raises(
-            ValueError,
-            match="Periods 'Period_A' \\(2023-01-01-2023-03-31\\) and 'Period_B' \\(2023-03-15-2023-06-30\\) overlap",
-        ):
+            (
+                {"Q1": ("2023-01-01", "2023-03-31"), "Q2": ("2023-03-31", "2023-06-30")},
+                r"Periods 'Q1' \(2023-01-01-2023-03-31\) and 'Q2' \(2023-03-31-2023-06-30\) overlap",
+            ),
+            (
+                {
+                    "Q1": ("2023-01-01", "2023-04-30"),
+                    "Q2": ("2023-03-01", "2023-06-30"),
+                    "Q3": ("2023-05-01", "2023-08-31"),
+                },
+                r"Periods 'Q1' \(2023-01-01-2023-04-30\) and 'Q2' \(2023-03-01-2023-06-30\) overlap",
+            ),
+            (
+                {
+                    "Period_A": (datetime.datetime(2023, 1, 1), datetime.datetime(2023, 3, 31)),
+                    "Period_B": (datetime.datetime(2023, 3, 15), datetime.datetime(2023, 6, 30)),
+                },
+                r"Periods 'Period_A' \(2023-01-01-2023-03-31\) and 'Period_B' \(2023-03-15-2023-06-30\) overlap",
+            ),
+        ],
+        ids=["complete_overlap", "partial_overlap", "touching_boundaries", "multiple_overlaps", "datetime_objects"],
+    )
+    def test_overlapping_periods_raises(self, sample_transactions_table, period_ranges, match):
+        """Test that overlapping periods raise ValueError."""
+        with pytest.raises(ValueError, match=match):
             filter_and_label_by_periods(sample_transactions_table, period_ranges)
 
     def test_with_custom_column_names(self, sample_transactions_table):
@@ -357,10 +301,16 @@ class TestFindOverlappingPeriods:
         result = find_overlapping_periods(start_date, end_date)
         assert result == expected
 
-    def test_valid_range_multiple_years_datetime(self):
-        """Test case where the start and end dates span multiple years with return_iso=False."""
-        start_date = datetime.datetime(2021, 5, 10)
-        end_date = datetime.datetime(2024, 8, 20)
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            (datetime.datetime(2021, 5, 10), datetime.datetime(2024, 8, 20)),
+            ("2021-05-10", "2024-08-20"),
+        ],
+        ids=["datetime_input", "string_input"],
+    )
+    def test_valid_range_multiple_years_return_datetime(self, start_date, end_date):
+        """Test return_str=False with datetime and string inputs returns datetime tuples."""
         expected = [
             (datetime.datetime(2021, 5, 10), datetime.datetime(2022, 8, 20)),
             (datetime.datetime(2022, 5, 10), datetime.datetime(2023, 8, 20)),
@@ -369,22 +319,16 @@ class TestFindOverlappingPeriods:
         result = find_overlapping_periods(start_date, end_date, return_str=False)
         assert result == expected
 
-    def test_valid_range_multiple_years_string(self):
-        """Test case where the start and end dates are provided as strings with return_iso=False."""
-        start_date = "2021-05-10"
-        end_date = "2024-08-20"
-        expected = [
-            (datetime.datetime(2021, 5, 10), datetime.datetime(2022, 8, 20)),
-            (datetime.datetime(2022, 5, 10), datetime.datetime(2023, 8, 20)),
-            (datetime.datetime(2023, 5, 10), datetime.datetime(2024, 8, 20)),
-        ]
-        result = find_overlapping_periods(start_date, end_date, return_str=False)
-        assert result == expected
-
-    def test_naive_datetime_returns_naive_datetimes(self):
-        """Test that naive datetime inputs produce naive datetime outputs."""
-        start_date = datetime.datetime(2021, 3, 1)
-        end_date = datetime.datetime(2023, 6, 15)
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            (datetime.datetime(2021, 3, 1), datetime.datetime(2023, 6, 15)),
+            ("2021-03-01", "2023-06-15"),
+        ],
+        ids=["naive_datetime", "string_input"],
+    )
+    def test_naive_input_returns_naive_datetimes(self, start_date, end_date):
+        """Test that naive datetime and string inputs produce naive datetime outputs."""
         result = find_overlapping_periods(start_date, end_date, return_str=False)
         for start, end in result:
             assert start.tzinfo is None
@@ -405,9 +349,45 @@ class TestFindOverlappingPeriods:
             assert start.tzinfo is not None
             assert end.tzinfo is not None
 
-    def test_string_input_returns_naive_datetimes(self):
-        """Test that string inputs produce naive datetime outputs when return_str=False."""
-        result = find_overlapping_periods("2021-03-01", "2023-06-15", return_str=False)
-        for start, end in result:
-            assert start.tzinfo is None
-            assert end.tzinfo is None
+    def test_non_utc_aware_datetime_preserves_timezone(self):
+        """Test that non-UTC tz-aware inputs preserve the original timezone in outputs."""
+        est = datetime.timezone(datetime.timedelta(hours=-5))
+        start_date = datetime.datetime(2021, 3, 1, tzinfo=est)
+        end_date = datetime.datetime(2023, 6, 15, tzinfo=est)
+        expected = [
+            (datetime.datetime(2021, 3, 1, tzinfo=est), datetime.datetime(2022, 6, 15, tzinfo=est)),
+            (datetime.datetime(2022, 3, 1, tzinfo=est), datetime.datetime(2023, 6, 15, tzinfo=est)),
+        ]
+        result = find_overlapping_periods(start_date, end_date, return_str=False)
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            ("2021-03-01", datetime.datetime(2023, 6, 15, tzinfo=datetime.timezone.utc)),
+            (datetime.datetime(2021, 3, 1, tzinfo=datetime.timezone.utc), "2023-06-15"),
+            (datetime.datetime(2021, 3, 1), datetime.datetime(2023, 6, 15, tzinfo=datetime.timezone.utc)),
+            (datetime.datetime(2021, 3, 1, tzinfo=datetime.timezone.utc), datetime.datetime(2023, 6, 15)),
+        ],
+        ids=["string_start_aware_end", "aware_start_string_end", "naive_start_aware_end", "aware_start_naive_end"],
+    )
+    def test_mismatched_timezone_awareness_raises(self, start_date, end_date):
+        """Test that mismatched timezone awareness between start and end dates raises TypeError."""
+        with pytest.raises(TypeError, match="matching timezone awareness"):
+            find_overlapping_periods(start_date, end_date)
+
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            (datetime.date(2022, 6, 15), datetime.datetime(2024, 8, 20)),
+            (datetime.datetime(2022, 6, 15), datetime.date(2024, 8, 20)),
+            (datetime.date(2022, 6, 15), datetime.date(2024, 8, 20)),
+            (12345, datetime.datetime(2024, 8, 20)),
+            (datetime.datetime(2022, 6, 15), 12345),
+        ],
+        ids=["date_start", "date_end", "both_date", "int_start", "int_end"],
+    )
+    def test_invalid_type_raises_type_error(self, start_date, end_date):
+        """Test that non-str/non-datetime inputs raise TypeError with a clear message."""
+        with pytest.raises(TypeError, match="Expected str or datetime"):
+            find_overlapping_periods(start_date, end_date)

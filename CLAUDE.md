@@ -98,6 +98,8 @@ fails at runtime, and only "green" when it passes at runtime.
 - Include boundary/edge case tests for threshold values, limits, and special cases
 - When testing against expected values (colors, formats, etc.), reference package constants rather than hardcoding
   values in tests
+- Use `ColumnHelper` for column names in test DataFrames (e.g., `cols.store_id`, `cols.customer_id`) instead of
+  hardcoding string literals like `"store_id"`. This keeps tests decoupled from the current option defaults.
 - Use pytest fixtures for shared test data setup to improve readability and reduce duplication
 
 ### Anti-Patterns to Avoid
