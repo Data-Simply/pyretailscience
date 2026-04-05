@@ -7,6 +7,9 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from pyretailscience.metrics.distribution.acv import Acv
+from pyretailscience.options import ColumnHelper
+
+cols = ColumnHelper()
 
 
 class TestAcv:
@@ -16,10 +19,10 @@ class TestAcv:
         """Test total ACV across all transactions without grouping."""
         df = pd.DataFrame(
             {
-                "customer_id": [1, 2, 3, 1, 2],
-                "store_id": [101, 101, 102, 102, 103],
-                "product_id": [10, 20, 30, 40, 50],
-                "unit_spend": [500_000.0, 750_000.0, 300_000.0, 600_000.0, 350_000.0],
+                cols.customer_id: [1, 2, 3, 1, 2],
+                cols.store_id: [101, 101, 102, 102, 103],
+                cols.product_id: [10, 20, 30, 40, 50],
+                cols.unit_spend: [500_000.0, 750_000.0, 300_000.0, 600_000.0, 350_000.0],
             }
         )
         result = Acv(df).df
@@ -31,15 +34,15 @@ class TestAcv:
         """Test ACV grouped by store returns correct per-store values for both input types."""
         pdf = pd.DataFrame(
             {
-                "store_id": [101, 101, 102, 102, 103],
-                "unit_spend": [400_000.0, 600_000.0, 300_000.0, 200_000.0, 500_000.0],
+                cols.store_id: [101, 101, 102, 102, 103],
+                cols.unit_spend: [400_000.0, 600_000.0, 300_000.0, 200_000.0, 500_000.0],
             }
         )
         df = ibis.memtable(pdf) if input_type == "ibis" else pdf
-        result = Acv(df, group_col="store_id").df.sort_values("store_id").reset_index(drop=True)
+        result = Acv(df, group_col=cols.store_id).df.sort_values(cols.store_id).reset_index(drop=True)
         expected = pd.DataFrame(
             {
-                "store_id": [101, 102, 103],
+                cols.store_id: [101, 102, 103],
                 "acv": [1.0, 0.5, 0.5],
             }
         )
@@ -49,15 +52,15 @@ class TestAcv:
         """Test ACV grouped by multiple columns."""
         df = pd.DataFrame(
             {
-                "store_id": [101, 101, 102],
+                cols.store_id: [101, 101, 102],
                 "region": ["North", "North", "South"],
-                "unit_spend": [1_000_000.0, 500_000.0, 2_000_000.0],
+                cols.unit_spend: [1_000_000.0, 500_000.0, 2_000_000.0],
             }
         )
-        result = Acv(df, group_col=["store_id", "region"]).df.sort_values("store_id").reset_index(drop=True)
+        result = Acv(df, group_col=[cols.store_id, "region"]).df.sort_values(cols.store_id).reset_index(drop=True)
         expected = pd.DataFrame(
             {
-                "store_id": [101, 102],
+                cols.store_id: [101, 102],
                 "region": ["North", "South"],
                 "acv": [1.5, 2.0],
             }
@@ -68,14 +71,14 @@ class TestAcv:
         """Test that NaN values are excluded from the ACV sum."""
         df = pd.DataFrame(
             {
-                "store_id": [101, 101, 102],
-                "unit_spend": [1_000_000.0, np.nan, 500_000.0],
+                cols.store_id: [101, 101, 102],
+                cols.unit_spend: [1_000_000.0, np.nan, 500_000.0],
             }
         )
-        result = Acv(df, group_col="store_id").df.sort_values("store_id").reset_index(drop=True)
+        result = Acv(df, group_col=cols.store_id).df.sort_values(cols.store_id).reset_index(drop=True)
         expected = pd.DataFrame(
             {
-                "store_id": [101, 102],
+                cols.store_id: [101, 102],
                 "acv": [1.0, 0.5],
             }
         )
@@ -83,22 +86,22 @@ class TestAcv:
 
     def test_acv_missing_column_raises(self):
         """Test that missing unit_spend column raises ValueError."""
-        df = pd.DataFrame({"customer_id": [1, 2], "store_id": [101, 102]})
+        df = pd.DataFrame({cols.customer_id: [1, 2], cols.store_id: [101, 102]})
         with pytest.raises(ValueError, match="missing"):
             Acv(df)
 
-    def test_acv_missing_group_col_column_raises(self):
+    def test_acv_missing_group_col_raises(self):
         """Test that missing group_col column raises ValueError."""
-        df = pd.DataFrame({"unit_spend": [100.0, 200.0]})
+        df = pd.DataFrame({cols.unit_spend: [100.0, 200.0]})
         with pytest.raises(ValueError, match="missing"):
-            Acv(df, group_col="store_id")
+            Acv(df, group_col=cols.store_id)
 
     def test_acv_custom_scale_factor(self):
         """Test ACV with a custom scale factor."""
         df = pd.DataFrame(
             {
-                "store_id": [101, 102],
-                "unit_spend": [5_000.0, 10_000.0],
+                cols.store_id: [101, 102],
+                cols.unit_spend: [5_000.0, 10_000.0],
             }
         )
         result = Acv(df, acv_scale_factor=1_000).df
@@ -108,11 +111,11 @@ class TestAcv:
     @pytest.mark.parametrize("scale_factor", [0, -1_000])
     def test_acv_non_positive_scale_factor_raises(self, scale_factor):
         """Test that zero or negative acv_scale_factor raises ValueError."""
-        df = pd.DataFrame({"unit_spend": [500_000.0, 1_000_000.0]})
+        df = pd.DataFrame({cols.unit_spend: [500_000.0, 1_000_000.0]})
         with pytest.raises(ValueError, match="acv_scale_factor must be positive"):
             Acv(df, acv_scale_factor=scale_factor)
 
     def test_acv_invalid_type_raises(self):
         """Test that passing a non-DataFrame/Table raises TypeError."""
         with pytest.raises(TypeError, match="pandas DataFrame or an Ibis Table"):
-            Acv({"unit_spend": [100.0]})
+            Acv({cols.unit_spend: [100.0]})

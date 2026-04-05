@@ -65,3 +65,21 @@ print(pct.df)
 # 1         502       2        50.0
 # 2         503       1        25.0
 ```
+
+Use `group_col` to add extra grouping dimensions, and `within_group=True` to compute the
+percentage relative to stores within each group rather than all stores:
+
+```python
+df = pd.DataFrame({
+    "store_id": [10, 20, 30, 40, 10],
+    "product_id": [501, 501, 502, 502, 502],
+    "region": ["North", "North", "South", "South", "North"],
+    "unit_spend": [5.99, 3.49, 4.00, 6.00, 2.50],
+})
+
+# Percentage relative to all stores (default)
+pct = PctOfStores(df, group_col="region")
+
+# Percentage relative to stores within each region
+pct_within = PctOfStores(df, group_col="region", within_group=True)
+```
