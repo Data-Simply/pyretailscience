@@ -131,17 +131,17 @@ class Options:
             "column.unit_price": "The name of the column containing the unit price of the product.",
             "column.unit_spend": (
                 "The name of the column containing the total spend of the products in the transaction. "
-                "ie, unit_price * units",
+                "ie, unit_price * units"
             ),
             "column.unit_cost": (
                 "The name of the column containing the total cost of the products in the transaction. "
-                "ie, single unit cost * units",
+                "ie, single unit cost * units"
             ),
             "column.promo_unit_spend": (
                 "The name of the column containing the total spend on promotion of the products in the transaction. "
-                "ie, promotional unit price * units",
+                "ie, promotional unit price * units"
             ),
-            "column.promo_unit_quantity": ("The name of the column containing the number of units sold on promotion."),
+            "column.promo_unit_quantity": "The name of the column containing the number of units sold on promotion.",
             "column.store_id": "The name of the column containing store IDs of the transaction.",
             # Aggregation columns
             "column.agg.customer_id": "The name of the column containing the number of unique customers.",
@@ -769,6 +769,7 @@ class ColumnHelper:
         self.transaction_time = get_option("column.transaction_time")
         self.customer_id = get_option("column.customer_id")
         self.transaction_id = get_option("column.transaction_id")
+        self.product_id = get_option("column.product_id")
         self.store_id = get_option("column.store_id")
         self.unit_spend = get_option("column.unit_spend")
         self.unit_qty = get_option("column.unit_quantity")

@@ -36,7 +36,7 @@ class TestAcv:
             }
         )
         df = ibis.memtable(pdf) if input_type == "ibis" else pdf
-        result = Acv(df, group_by="store_id").df.sort_values("store_id").reset_index(drop=True)
+        result = Acv(df, group_col="store_id").df.sort_values("store_id").reset_index(drop=True)
         expected = pd.DataFrame(
             {
                 "store_id": [101, 102, 103],
@@ -45,7 +45,7 @@ class TestAcv:
         )
         assert_frame_equal(result, expected)
 
-    def test_acv_group_by_list(self):
+    def test_acv_group_col_list(self):
         """Test ACV grouped by multiple columns."""
         df = pd.DataFrame(
             {
@@ -54,7 +54,7 @@ class TestAcv:
                 "unit_spend": [1_000_000.0, 500_000.0, 2_000_000.0],
             }
         )
-        result = Acv(df, group_by=["store_id", "region"]).df.sort_values("store_id").reset_index(drop=True)
+        result = Acv(df, group_col=["store_id", "region"]).df.sort_values("store_id").reset_index(drop=True)
         expected = pd.DataFrame(
             {
                 "store_id": [101, 102],
@@ -72,7 +72,7 @@ class TestAcv:
                 "unit_spend": [1_000_000.0, np.nan, 500_000.0],
             }
         )
-        result = Acv(df, group_by="store_id").df.sort_values("store_id").reset_index(drop=True)
+        result = Acv(df, group_col="store_id").df.sort_values("store_id").reset_index(drop=True)
         expected = pd.DataFrame(
             {
                 "store_id": [101, 102],
@@ -87,11 +87,11 @@ class TestAcv:
         with pytest.raises(ValueError, match="missing"):
             Acv(df)
 
-    def test_acv_missing_group_by_column_raises(self):
-        """Test that missing group_by column raises ValueError."""
+    def test_acv_missing_group_col_column_raises(self):
+        """Test that missing group_col column raises ValueError."""
         df = pd.DataFrame({"unit_spend": [100.0, 200.0]})
         with pytest.raises(ValueError, match="missing"):
-            Acv(df, group_by="store_id")
+            Acv(df, group_col="store_id")
 
     def test_acv_custom_scale_factor(self):
         """Test ACV with a custom scale factor."""

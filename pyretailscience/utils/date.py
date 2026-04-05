@@ -4,8 +4,6 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 
 import ibis
-import numpy as np
-import pandas as pd
 
 from pyretailscience.options import get_option
 
@@ -22,6 +20,26 @@ def _normalize_datetime(date_val: datetime | str) -> datetime:
         return date_val
     error_msg = f"Expected str or datetime, got {type(date_val)}"
     raise TypeError(error_msg)
+
+
+def _is_naive(d: datetime | str) -> bool:
+    """Check whether a datetime-like input is timezone-naive.
+
+    Args:
+        d (datetime | str): A datetime object or date string to check.
+
+    Returns:
+        bool: True if the input is a string or a naive datetime, False if tz-aware.
+
+    Raises:
+        TypeError: If d is not a str or datetime instance.
+    """
+    if isinstance(d, str):
+        return True
+    if isinstance(d, datetime):
+        return d.tzinfo is None
+    msg = f"Expected str or datetime, got {type(d)}"
+    raise TypeError(msg)
 
 
 def _validate_and_normalize_periods(
@@ -149,11 +167,18 @@ def find_overlapping_periods(
         String inputs produce naive datetime outputs.
 
     Raises:
+        TypeError: If start_date and end_date have mismatched timezone awareness
+            (one naive or string and one timezone-aware, or vice versa).
         ValueError: If the start date is after the end date.
     """
     # Track whether outputs should be tz-naive to preserve backward compatibility.
     # String inputs and naive datetime inputs both produced naive outputs before.
-    input_is_naive = isinstance(start_date, str) or start_date.tzinfo is None
+    start_is_naive = _is_naive(start_date)
+    end_is_naive = _is_naive(end_date)
+
+    if start_is_naive != end_is_naive:
+        msg = "start_date and end_date must have matching timezone awareness. Got naive and aware (or vice versa)."
+        raise TypeError(msg)
 
     start_date = _normalize_datetime(start_date)
     end_date = _normalize_datetime(end_date)
@@ -166,25 +191,22 @@ def find_overlapping_periods(
     if start_year == end_year:
         return []
 
-    years = np.arange(start_year, end_year)
+    if start_is_naive:
+        output_tz = None
+        start_date = start_date.replace(tzinfo=None)
+    else:
+        output_tz = start_date.tzinfo
+
+    years = range(start_year, end_year)
 
     period_starts = [
-        start_date if year == start_year else datetime(year, start_month, start_day, tzinfo=timezone.utc)
-        for year in years
+        start_date if year == start_year else datetime(year, start_month, start_day, tzinfo=output_tz) for year in years
     ]
-    period_ends = [datetime(year + 1, end_month, end_day, tzinfo=timezone.utc) for year in years]
+    period_ends = [datetime(year + 1, end_month, end_day, tzinfo=output_tz) for year in years]
 
-    df = pd.DataFrame({"start": period_starts, "end": period_ends})
+    pairs = list(zip(period_starts, period_ends, strict=True))
 
     if return_str:
-        return [
-            (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
-            for start, end in zip(df["start"], df["end"], strict=False)
-        ]
+        return [(start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")) for start, end in pairs]
 
-    if input_is_naive:
-        return [
-            (start.replace(tzinfo=None), end.replace(tzinfo=None))
-            for start, end in zip(df["start"], df["end"], strict=False)
-        ]
-    return list(zip(df["start"], df["end"], strict=False))
+    return pairs
