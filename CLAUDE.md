@@ -41,6 +41,8 @@
 - Type annotations should use Python 3.10-compatible formats (e.g., use `from __future__ import annotations` and
   import newer typing constructs like `Self` inside `if TYPE_CHECKING:` blocks)
 - Remove unnecessary trailing whitespace
+- Assume datasets processed via Ibis could be in the 1B–10B row range. Avoid redundant operations (e.g., a `.nunique()`
+  on already-deduplicated data) and prefer the cheapest correct operation for a given context.
 - Use vectorized operations for numpy arrays and pandas DataFrames/Series wherever possible instead of loops or
   .apply() to keep code clean and performant. Avoid converting Series to lists for iteration or using .iterrows() -
   use vectorized operations directly on the DataFrame/Series
