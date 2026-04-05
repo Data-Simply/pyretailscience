@@ -9,7 +9,21 @@ from pyretailscience.options import get_option
 
 
 def _normalize_datetime(date_val: datetime | str) -> datetime:
-    """Convert string or datetime to timezone-aware datetime object."""
+    """Convert a string or datetime to a timezone-aware datetime object.
+
+    Strings are parsed as ``%Y-%m-%d`` and localized to UTC.  Naive datetimes
+    are made aware by attaching UTC.  Already-aware datetimes are returned
+    unchanged.
+
+    Args:
+        date_val (datetime | str): A date string (``YYYY-MM-DD``) or datetime to normalize.
+
+    Returns:
+        datetime: A timezone-aware datetime in UTC.
+
+    Raises:
+        TypeError: If *date_val* is neither a ``str`` nor a ``datetime``.
+    """
     if isinstance(date_val, str):
         # Convert string to timezone-aware datetime
         return datetime.strptime(date_val, "%Y-%m-%d").replace(tzinfo=timezone.utc)

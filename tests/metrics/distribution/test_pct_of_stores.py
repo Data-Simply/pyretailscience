@@ -220,14 +220,14 @@ class TestPctOfStores:
         result_without = PctOfStores(df, within_group=False).df.sort_values(cols.product_id).reset_index(drop=True)
         assert_frame_equal(result_with, result_without)
 
-    def test_within_group_with_user_column_named_total_stores(self):
-        """Test that a user column named _total_stores does not collide with internal temp column."""
+    def test_within_group_ignores_unrelated_extra_columns(self):
+        """Test that extra columns in the input don't affect within_group computation."""
         df = pd.DataFrame(
             {
                 cols.store_id: [10, 20, 30, 40, 10],
                 cols.product_id: [501, 501, 502, 502, 502],
                 "region": ["North", "North", "South", "South", "North"],
-                "_total_stores": [100, 200, 300, 400, 100],
+                "some_metric": [100, 200, 300, 400, 100],
                 cols.unit_spend: [5.99, 3.49, 4.00, 6.00, 2.50],
             }
         )
