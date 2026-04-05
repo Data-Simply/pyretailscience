@@ -29,7 +29,7 @@ class PctOfStores:
     Args:
         df (pd.DataFrame | ibis.Table): Transaction-level data containing at least
             store_id and product_id columns.
-        product_col (str | None, optional): Column defining product granularity.
+        product_col (str | list[str] | None, optional): Column(s) defining product granularity.
             Defaults to ``get_option("column.product_id")``.
         group_col (str | list[str] | None, optional): Additional grouping dimensions
             (e.g., ``"category_0_name"``). Defaults to None.
@@ -48,7 +48,7 @@ class PctOfStores:
         self,
         df: pd.DataFrame | ibis.Table,
         *,
-        product_col: str | None = None,
+        product_col: str | list[str] | None = None,
         group_col: str | list[str] | None = None,
         within_group: bool = False,
     ) -> None:
@@ -62,22 +62,25 @@ class PctOfStores:
             raise TypeError("df must be either a pandas DataFrame or an Ibis Table.")
 
         store_id_col = get_option("column.store_id")
-        product_col = product_col if product_col is not None else get_option("column.product_id")
+
+        if product_col is None:
+            product_col = [get_option("column.product_id")]
+        elif isinstance(product_col, str):
+            product_col = [product_col]
 
         if isinstance(group_col, str):
             group_col = [group_col]
 
-        required_cols = [store_id_col, product_col]
+        required_cols = [store_id_col, *product_col]
+        group_cols = list(product_col)
         if group_col is not None:
-            if product_col in group_col:
-                msg = f"product_col '{product_col}' must not also appear in group_col"
+            overlap = set(product_col) & set(group_col)
+            if len(overlap) > 0:
+                msg = f"product_col {overlap} must not also appear in group_col"
                 raise ValueError(msg)
             required_cols.extend(group_col)
-        validate_columns(df, required_cols)
-
-        group_cols = [product_col]
-        if group_col is not None:
             group_cols.extend(group_col)
+        validate_columns(df, required_cols)
 
         store_product = df.select([store_id_col, *group_cols]).distinct()
 
@@ -86,7 +89,8 @@ class PctOfStores:
             **{agg_stores_col: _[store_id_col].count()},
         )
 
-        if within_group and group_col is not None:
+        use_within_group = within_group and group_col is not None
+        if use_within_group:
             total_stores = store_product.group_by(group_col).aggregate(
                 **{_TEMP_TOTAL_STORES: _[store_id_col].nunique()},
             )
@@ -99,7 +103,7 @@ class PctOfStores:
         self.table = per_group.mutate(
             **{pct_stores_col: ratio_metric(_[agg_stores_col], denominator)},
         )
-        if within_group and group_col is not None:
+        if use_within_group:
             self.table = self.table.drop(_TEMP_TOTAL_STORES)
 
     @property

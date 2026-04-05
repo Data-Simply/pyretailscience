@@ -166,6 +166,30 @@ class TestPctOfStores:
         )
         assert_frame_equal(result, expected)
 
+    def test_custom_product_col_list(self):
+        """Test with product_col as a list of columns."""
+        df = pd.DataFrame(
+            {
+                cols.store_id: [10, 20, 30, 10],
+                "brand": ["Coca-Cola", "Coca-Cola", "Pepsi", "Pepsi"],
+                "size": ["330ml", "330ml", "500ml", "500ml"],
+                cols.unit_spend: [1.50, 1.50, 2.00, 2.00],
+            }
+        )
+        # Total stores = 3 (10, 20, 30)
+        # (Coca-Cola, 330ml): stores {10, 20} → 66.67%
+        # (Pepsi, 500ml): stores {10, 30} → 66.67%
+        result = PctOfStores(df, product_col=["brand", "size"]).df.sort_values("brand").reset_index(drop=True)
+        expected = pd.DataFrame(
+            {
+                "brand": ["Coca-Cola", "Pepsi"],
+                "size": ["330ml", "500ml"],
+                stores_col: [2, 2],
+                pct_stores_col: [2 / 3 * 100, 2 / 3 * 100],
+            }
+        )
+        assert_frame_equal(result, expected)
+
     def test_overlapping_product_col_and_group_col_raises(self):
         """Test that overlapping product_col and group_col raises ValueError."""
         df = pd.DataFrame(
