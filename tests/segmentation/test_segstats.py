@@ -187,21 +187,26 @@ class TestSegTransactionStats:
     @pytest.mark.parametrize("segment_col", [None, []])
     def test_none_or_empty_segment_col_returns_single_total_row(self, segment_col):
         """Test that None or [] segment_col returns a single total row with no segment columns."""
+        spend_values = [150.0, 200.0, 175.0]
         df = pd.DataFrame(
             {
                 cols.customer_id: [101, 102, 103],
-                cols.unit_spend: [150.0, 200.0, 175.0],
+                cols.unit_spend: spend_values,
                 cols.transaction_id: [1001, 1002, 1003],
             },
         )
 
+        total_spend = sum(spend_values)
+        num_customers = len(spend_values)
+        spend_per_person = total_spend / num_customers
+
         expected = pd.DataFrame(
             {
-                cols.agg.unit_spend: [525.0],
-                cols.agg.transaction_id: [3],
-                cols.agg.customer_id: [3],
-                cols.calc.spend_per_cust: [175.0],
-                cols.calc.spend_per_trans: [175.0],
+                cols.agg.unit_spend: [total_spend],
+                cols.agg.transaction_id: [num_customers],
+                cols.agg.customer_id: [num_customers],
+                cols.calc.spend_per_cust: [spend_per_person],
+                cols.calc.spend_per_trans: [spend_per_person],
                 cols.calc.trans_per_cust: [1.0],
             },
         )
