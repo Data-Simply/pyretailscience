@@ -195,18 +195,20 @@ class TestSegTransactionStats:
             },
         )
 
-        expected_spend = 150.0 + 200.0 + 175.0
-        expected_customers = 3
+        expected = pd.DataFrame(
+            {
+                cols.agg.unit_spend: [525.0],
+                cols.agg.transaction_id: [3],
+                cols.agg.customer_id: [3],
+                cols.calc.spend_per_cust: [175.0],
+                cols.calc.spend_per_trans: [175.0],
+                cols.calc.trans_per_cust: [1.0],
+            },
+        )
 
-        result = SegTransactionStats(df, segment_col=segment_col)
-        result_df = result.df
+        result_df = SegTransactionStats(df, segment_col=segment_col).df
 
-        assert len(result_df) == 1
-        assert result_df[cols.agg.unit_spend].iloc[0] == expected_spend
-        assert result_df[cols.agg.transaction_id].iloc[0] == expected_customers
-        assert result_df[cols.agg.customer_id].iloc[0] == expected_customers
-        # No segment columns should be present
-        assert len(result.segment_col) == 0
+        pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected)
 
     def test_multiple_segment_columns(self):
         """Test that the class correctly handles multiple segment columns."""
