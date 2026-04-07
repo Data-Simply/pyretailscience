@@ -205,7 +205,7 @@ class SegTransactionStats:
     def __init__(
         self,
         data: pd.DataFrame | ibis.Table,
-        segment_col: str | list[str] = "segment_name",
+        segment_col: str | list[str] | None = "segment_name",
         calc_total: bool | None = None,
         extra_aggs: dict[str, tuple[str, str]] | None = None,
         calc_rollup: bool | None = None,
@@ -220,7 +220,8 @@ class SegTransactionStats:
                 customer_id, unit_spend and transaction_id. If the dataframe contains the column unit_quantity, then
                 the columns unit_spend and unit_quantity are used to calculate the price_per_unit and
                 units_per_transaction.
-            segment_col (str | list[str], optional): The column or list of columns to use for the segmentation.
+            segment_col (str | list[str] | None, optional): The column or list of columns to use for the segmentation.
+                When None or an empty list, no segmentation is applied and a single total row is returned.
                 Defaults to "segment_name".
             calc_total (bool | None, optional): Whether to include the total row. Defaults to True if grouping_sets is
                 None. Cannot be used with grouping_sets parameter.
@@ -308,12 +309,10 @@ class SegTransactionStats:
 
         cols = ColumnHelper()
 
-        if isinstance(segment_col, str):
+        if segment_col is None:
+            segment_col = []
+        elif isinstance(segment_col, str):
             segment_col = [segment_col]
-
-        if len(segment_col) == 0:
-            msg = "segment_col cannot be an empty list. At least one segment column must be specified."
-            raise ValueError(msg)
 
         required_cols = [
             cols.unit_spend,
@@ -335,13 +334,19 @@ class SegTransactionStats:
         self.rollup_value = rollup_value
         self.unknown_customer_value = unknown_customer_value
 
-        # Validate grouping_sets parameter
-        self._validate_grouping_sets_params(grouping_sets, calc_total, calc_rollup)
+        # When segment_col is empty, force total-only mode
+        if len(segment_col) == 0:
+            grouping_sets = [()]
+            calc_total = None
+            calc_rollup = None
+        else:
+            # Validate grouping_sets parameter
+            self._validate_grouping_sets_params(grouping_sets, calc_total, calc_rollup)
 
-        # Normalize parameters as local variables (only in legacy mode)
-        if grouping_sets is None:
-            calc_total = True if calc_total is None else calc_total
-            calc_rollup = False if calc_rollup is None else calc_rollup
+            # Normalize parameters as local variables (only in legacy mode)
+            if grouping_sets is None:
+                calc_total = True if calc_total is None else calc_total
+                calc_rollup = False if calc_rollup is None else calc_rollup
 
         self.table = self._calc_seg_stats(
             data,

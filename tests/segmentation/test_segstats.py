@@ -184,8 +184,9 @@ class TestSegTransactionStats:
         with pytest.raises(ValueError):
             SegTransactionStats(df, "segment_name")
 
-    def test_raises_error_when_segment_col_is_empty_list(self):
-        """Test that a ValueError is raised when segment_col is an empty list."""
+    @pytest.mark.parametrize("segment_col", [None, []])
+    def test_none_or_empty_segment_col_returns_single_total_row(self, segment_col):
+        """Test that None or [] segment_col returns a single total row with no segment columns."""
         df = pd.DataFrame(
             {
                 cols.customer_id: [101, 102, 103],
@@ -194,10 +195,18 @@ class TestSegTransactionStats:
             },
         )
 
-        with pytest.raises(ValueError) as excinfo:
-            SegTransactionStats(df, segment_col=[])
+        expected_spend = 150.0 + 200.0 + 175.0
+        expected_customers = 3
 
-        assert "segment_col cannot be an empty list" in str(excinfo.value)
+        result = SegTransactionStats(df, segment_col=segment_col)
+        result_df = result.df
+
+        assert len(result_df) == 1
+        assert result_df[cols.agg.unit_spend].iloc[0] == expected_spend
+        assert result_df[cols.agg.transaction_id].iloc[0] == expected_customers
+        assert result_df[cols.agg.customer_id].iloc[0] == expected_customers
+        # No segment columns should be present
+        assert len(result.segment_col) == 0
 
     def test_multiple_segment_columns(self):
         """Test that the class correctly handles multiple segment columns."""
