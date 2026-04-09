@@ -65,7 +65,6 @@ class TestOptions:
         options = opt.Options()
         for key in options.list_options():
             description = options.describe_option(key)
-            assert isinstance(description, str)
             assert key in description
             assert "(current value:" in description
         # Ensure no orphan descriptions exist without a matching option

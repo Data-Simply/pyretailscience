@@ -1,12 +1,38 @@
 """Unified integration test fixtures for multiple database backends."""
 
+import os
+
 import ibis
 import pandas as pd
 import pytest
 
 
+def _load_snowflake_private_key() -> bytes:
+    """Load Snowflake private key from PEM file and return DER-encoded bytes.
+
+    Returns:
+        bytes: DER-encoded private key bytes suitable for Snowflake authentication.
+    """
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives.serialization import (
+        Encoding,
+        NoEncryption,
+        PrivateFormat,
+        load_pem_private_key,
+    )
+
+    key_path = os.environ["SNOWFLAKE_CI_PRIVATE_KEY_PATH"]
+    with open(key_path, "rb") as f:
+        private_key = load_pem_private_key(f.read(), password=None, backend=default_backend())
+    return private_key.private_bytes(
+        encoding=Encoding.DER,
+        format=PrivateFormat.PKCS8,
+        encryption_algorithm=NoEncryption(),
+    )
+
+
 @pytest.fixture(
-    params=["bigquery", "pyspark"],
+    params=["bigquery", "pyspark", "snowflake"],
     ids=lambda backend: f"backend={backend}",
 )
 def transactions_table(request):
@@ -29,5 +55,16 @@ def transactions_table(request):
         # Create a temporary view and read it back as an ibis table
         spark_df.createOrReplaceTempView("transactions")
         return connection.table("transactions")
+    if request.param == "snowflake":
+        connection = ibis.snowflake.connect(
+            account="JFSMYXL-KU88305",
+            user="PYRETAILSCIENCE_CI",
+            private_key=_load_snowflake_private_key(),
+            database="PYRETAILSCIENCE_TEST",
+            schema="TEST_DATA",
+            warehouse="PYRETAILSCIENCE_WH",
+        )
+        table = connection.table("TRANSACTIONS")
+        return table.rename({col.lower(): col for col in table.columns})
     error_msg = f"Unknown backend: {request.param}"
     raise ValueError(error_msg)

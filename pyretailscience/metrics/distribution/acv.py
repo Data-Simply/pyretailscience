@@ -6,10 +6,15 @@ expressed in millions ($MM).
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import ibis
-import pandas as pd
 from ibis import _
 
+if TYPE_CHECKING:
+    import pandas as pd
+
+from pyretailscience.metrics.base import ensure_ibis_table
 from pyretailscience.options import get_option
 from pyretailscience.utils.validation import validate_columns
 
@@ -45,10 +50,7 @@ class Acv:
         self._df: pd.DataFrame | None = None
         self.table: ibis.Table
 
-        if isinstance(df, pd.DataFrame):
-            df = ibis.memtable(df)
-        elif not isinstance(df, ibis.Table):
-            raise TypeError("df must be either a pandas DataFrame or an Ibis Table.")
+        df = ensure_ibis_table(df)
 
         if acv_scale_factor <= 0:
             raise ValueError("acv_scale_factor must be positive.")
