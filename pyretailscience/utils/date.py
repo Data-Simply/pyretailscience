@@ -200,9 +200,7 @@ def find_overlapping_periods(
     if start_date > end_date:
         raise ValueError("Start date must be before end date")
 
-    start_year, start_month, start_day = start_date.year, start_date.month, start_date.day
-    end_year, end_month, end_day = end_date.year, end_date.month, end_date.day
-    if start_year == end_year:
+    if start_date.year == end_date.year:
         return []
 
     if start_is_naive:
@@ -211,16 +209,18 @@ def find_overlapping_periods(
     else:
         output_tz = start_date.tzinfo
 
-    years = range(start_year, end_year)
-
     period_starts = [
-        start_date if year == start_year else datetime(year, start_month, start_day, tzinfo=output_tz) for year in years
+        start_date if year == start_date.year else datetime(year, start_date.month, start_date.day, tzinfo=output_tz)
+        for year in range(start_date.year, end_date.year)
     ]
-    period_ends = [datetime(year + 1, end_month, end_day, tzinfo=output_tz) for year in years]
-
-    pairs = list(zip(period_starts, period_ends, strict=True))
+    period_ends = [
+        datetime(year + 1, end_date.month, end_date.day, tzinfo=output_tz)
+        for year in range(start_date.year, end_date.year)
+    ]
 
     if return_str:
-        return [(start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")) for start, end in pairs]
+        return [
+            (s.strftime("%Y-%m-%d"), e.strftime("%Y-%m-%d")) for s, e in zip(period_starts, period_ends, strict=True)
+        ]
 
-    return pairs
+    return list(zip(period_starts, period_ends, strict=True))

@@ -28,6 +28,7 @@ import datetime
 import ibis
 import pandas as pd
 
+from pyretailscience.metrics.base import ensure_ibis_table
 from pyretailscience.options import ColumnHelper, get_option
 
 
@@ -96,10 +97,7 @@ class RFMSegmentation:
             cols.unit_spend,
             cols.transaction_id,
         ]
-        if isinstance(df, pd.DataFrame):
-            df = ibis.memtable(df)
-        elif not isinstance(df, ibis.Table):
-            raise TypeError("df must be either a pandas DataFrame or an Ibis Table")
+        df = ensure_ibis_table(df)
 
         missing_cols = set(required_cols) - set(df.columns)
         if missing_cols:

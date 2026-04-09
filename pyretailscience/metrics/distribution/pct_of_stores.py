@@ -6,11 +6,15 @@ Every store counts equally regardless of its sales volume.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import ibis
-import pandas as pd
 from ibis import _
 
-from pyretailscience.metrics.base import ratio_metric
+if TYPE_CHECKING:
+    import pandas as pd
+
+from pyretailscience.metrics.base import ensure_ibis_table, ratio_metric
 from pyretailscience.options import ColumnHelper, get_option
 from pyretailscience.utils.validation import validate_columns
 
@@ -56,10 +60,7 @@ class PctOfStores:
         self._df: pd.DataFrame | None = None
         self.table: ibis.Table
 
-        if isinstance(df, pd.DataFrame):
-            df = ibis.memtable(df)
-        elif not isinstance(df, ibis.Table):
-            raise TypeError("df must be either a pandas DataFrame or an Ibis Table.")
+        df = ensure_ibis_table(df)
 
         store_id_col = get_option("column.store_id")
 
@@ -97,14 +98,14 @@ class PctOfStores:
             per_group = per_group.inner_join(total_stores, group_col)
             denominator = _[_TEMP_TOTAL_STORES]
         else:
-            denominator = store_product[store_id_col].nunique()
+            # Compute total store count from original data for efficiency
+            denominator = df.select(store_id_col).distinct().count()
 
         pct_stores_col = ColumnHelper.join_options("column.agg.store_id", "column.suffix.percent")
+        final_cols = [*group_cols, agg_stores_col, pct_stores_col]
         self.table = per_group.mutate(
             **{pct_stores_col: ratio_metric(_[agg_stores_col], denominator)},
-        )
-        if use_within_group:
-            self.table = self.table.drop(_TEMP_TOTAL_STORES)
+        ).select(final_cols)
 
     @property
     def df(self) -> pd.DataFrame:
