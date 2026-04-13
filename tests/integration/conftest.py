@@ -5,6 +5,13 @@ import os
 import ibis
 import pandas as pd
 import pytest
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    load_pem_private_key,
+)
 
 
 def _load_snowflake_private_key() -> bytes:
@@ -13,14 +20,6 @@ def _load_snowflake_private_key() -> bytes:
     Returns:
         bytes: DER-encoded private key bytes suitable for Snowflake authentication.
     """
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives.serialization import (
-        Encoding,
-        NoEncryption,
-        PrivateFormat,
-        load_pem_private_key,
-    )
-
     key_path = os.environ["SNOWFLAKE_CI_PRIVATE_KEY_PATH"]
     with open(key_path, "rb") as f:
         private_key = load_pem_private_key(f.read(), password=None, backend=default_backend())
