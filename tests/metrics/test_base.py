@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.metrics.base import ensure_ibis_table, ratio_metric
+from pyretailscience.metrics.base import ratio_metric
+from pyretailscience.utils.validation import ensure_ibis_table
 
 
 class TestRatioMetric:

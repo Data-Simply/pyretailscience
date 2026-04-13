@@ -28,8 +28,8 @@ import datetime
 import ibis
 import pandas as pd
 
-from pyretailscience.metrics.base import ensure_ibis_table
 from pyretailscience.options import ColumnHelper, get_option
+from pyretailscience.utils.validation import ensure_ibis_table
 
 
 class RFMSegmentation:

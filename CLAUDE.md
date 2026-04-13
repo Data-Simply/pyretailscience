@@ -57,6 +57,8 @@
   suppress these warnings; instead, properly move type-only imports into `if TYPE_CHECKING:` blocks
 - In LaTeX math blocks (`$$ ... $$`), do not escape underscores inside `\text{}` commands. Use `\text{unit_spend}`,
   not `\text{unit\_spend}` — the backslash-escaped form renders a visible backslash in the output.
+- Shared validation functions (e.g., `ensure_ibis_table`, `validate_columns`) belong in
+  `pyretailscience/utils/validation.py`. Do not place validation helpers in metric-specific modules.
 
 ## Test Writing Guidelines
 
