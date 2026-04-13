@@ -14,9 +14,8 @@ from ibis import _
 if TYPE_CHECKING:
     import pandas as pd
 
-from pyretailscience.metrics.base import ensure_ibis_table
 from pyretailscience.options import get_option
-from pyretailscience.utils.validation import validate_columns
+from pyretailscience.utils.validation import ensure_ibis_table, validate_columns
 
 
 class Acv:
