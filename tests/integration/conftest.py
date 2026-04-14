@@ -5,7 +5,6 @@ import os
 import ibis
 import pandas as pd
 import pytest
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     NoEncryption,
@@ -22,7 +21,7 @@ def _load_snowflake_private_key() -> bytes:
     """
     key_path = os.environ["SNOWFLAKE_CI_PRIVATE_KEY_PATH"]
     with open(key_path, "rb") as f:
-        private_key = load_pem_private_key(f.read(), password=None, backend=default_backend())
+        private_key = load_pem_private_key(f.read(), password=None)
     return private_key.private_bytes(
         encoding=Encoding.DER,
         format=PrivateFormat.PKCS8,
@@ -38,7 +37,7 @@ def transactions_table(request):
     """Parameterized fixture that provides transactions table from different backends."""
     if request.param == "bigquery":
         connection = ibis.bigquery.connect(
-            project_id="pyretailscience-infra",
+            project_id=os.environ["GCP_PROJECT_ID"],
         )
         return connection.table("test_data.transactions")
     if request.param == "pyspark":
@@ -56,12 +55,12 @@ def transactions_table(request):
         return connection.table("transactions")
     if request.param == "snowflake":
         connection = ibis.snowflake.connect(
-            account="JFSMYXL-KU88305",
-            user="PYRETAILSCIENCE_CI",
+            account=os.environ["SNOWFLAKE_CI_ACCOUNT"],
+            user=os.environ["SNOWFLAKE_CI_USER"],
             private_key=_load_snowflake_private_key(),
-            database="PYRETAILSCIENCE_TEST",
-            schema="TEST_DATA",
-            warehouse="PYRETAILSCIENCE_WH",
+            database=os.environ["SNOWFLAKE_CI_DATABASE"],
+            schema=os.environ["SNOWFLAKE_CI_SCHEMA"],
+            warehouse=os.environ["SNOWFLAKE_CI_WAREHOUSE"],
         )
         table = connection.table("TRANSACTIONS")
         return table.rename({col.lower(): col for col in table.columns})
