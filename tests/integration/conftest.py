@@ -41,6 +41,7 @@ def transactions_table(request):
             warehouse=os.environ["SNOWFLAKE_CI_WAREHOUSE"],
         )
         table = connection.table("TRANSACTIONS")
+        # Snowflake returns UPPERCASE column names; lowercase them for compatibility with integration tests
         return table.rename({col.lower(): col for col in table.columns})
     error_msg = f"Unknown backend: {request.param}"
     raise ValueError(error_msg)

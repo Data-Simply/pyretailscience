@@ -80,3 +80,7 @@ jobs:
           else
             uv run pytest tests/integration -k "snowflake and $TEST_SUITE" -v
           fi
+
+      - name: Cleanup private key
+        if: always()
+        run: rm -f /tmp/snowflake_ci_key.p8
