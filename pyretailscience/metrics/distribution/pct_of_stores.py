@@ -98,8 +98,7 @@ class PctOfStores:
             per_group = per_group.inner_join(total_stores, group_col)
             denominator = _[_TEMP_TOTAL_STORES]
         else:
-            # Compute total store count from original data for efficiency
-            denominator = df.select(store_id_col).distinct().count()
+            denominator = store_product[store_id_col].nunique()
 
         pct_stores_col = ColumnHelper.join_options("column.agg.store_id", "column.suffix.percent")
         final_cols = [*group_cols, agg_stores_col, pct_stores_col]
