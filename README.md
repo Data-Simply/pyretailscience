@@ -248,8 +248,9 @@ tox -p auto
 
 ### Integration Tests
 
-Integration tests verify that all analysis modules work correctly with distributed computing engines (PySpark and
-BigQuery). These tests ensure the Ibis-based code paths function properly across different execution environments.
+Integration tests verify that all analysis modules work correctly with distributed computing engines (PySpark,
+BigQuery, and Snowflake). These tests ensure the Ibis-based code paths function properly across different execution
+environments.
 
 #### PySpark Integration Tests
 
@@ -295,6 +296,37 @@ uv run pytest tests/integration -k "bigquery" -v
 
 # Run specific test module
 uv run pytest tests/integration/bigquery/test_cohort_analysis.py -v
+```
+
+#### Snowflake Integration Tests
+
+The Snowflake integration tests verify compatibility with Snowflake as a backend.
+
+**Prerequisites:**
+
+- Access to a Snowflake account with a warehouse, database, and schema configured
+- A key-pair authentication private key (PEM format) for the Snowflake user
+- The test dataset loaded in Snowflake (table: `TRANSACTIONS`)
+
+**Running locally:**
+
+```bash
+# Set up Snowflake connection
+export SNOWFLAKE_CI_ACCOUNT=your-account-identifier
+export SNOWFLAKE_CI_USER=your-username
+export SNOWFLAKE_CI_WAREHOUSE=your-warehouse
+export SNOWFLAKE_CI_DATABASE=your-database
+export SNOWFLAKE_CI_SCHEMA=your-schema
+export SNOWFLAKE_CI_PRIVATE_KEY_PATH=/path/to/your/private-key.p8
+
+# Install dependencies
+uv sync
+
+# Run all Snowflake tests
+uv run pytest tests/integration -k "snowflake" -v
+
+# Run specific test module
+uv run pytest tests/integration/test_cohort_analysis.py -k "snowflake" -v
 ```
 
 ## License

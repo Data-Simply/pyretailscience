@@ -4,7 +4,7 @@ import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.utils.validation import validate_columns
+from pyretailscience.utils.validation import ensure_ibis_table, validate_columns
 
 
 class TestValidateColumns:
@@ -36,3 +36,52 @@ class TestValidateColumns:
         df = pd.DataFrame({"customer_id": [1], "unit_spend": [5.0], "store_id": [10]})
         result = validate_columns(df, ["customer_id"])
         assert result is None
+
+
+class TestEnsureIbisTable:
+    """Tests for the ensure_ibis_table helper function."""
+
+    @pytest.mark.parametrize(
+        "df",
+        [
+            pd.DataFrame({"customer_id": [1, 2, 3], "unit_spend": [4.50, 5.99, 6.00]}),
+            pd.DataFrame({"customer_id": pd.Series([], dtype="int64"), "unit_spend": pd.Series([], dtype="float64")}),
+        ],
+        ids=["non_empty", "empty"],
+    )
+    def test_pandas_dataframe_converts_to_ibis_table(self, df):
+        """Test that pandas DataFrame is converted to ibis Table with data preserved."""
+        result = ensure_ibis_table(df)
+        assert isinstance(result, ibis.Table)
+        result_df = result.execute()
+        pd.testing.assert_frame_equal(result_df, df)
+
+    @pytest.mark.parametrize(
+        "df",
+        [
+            pd.DataFrame({"customer_id": [1, 2, 3], "unit_spend": [4.50, 5.99, 6.00]}),
+            pd.DataFrame({"customer_id": pd.Series([], dtype="int64"), "unit_spend": pd.Series([], dtype="float64")}),
+        ],
+        ids=["non_empty", "empty"],
+    )
+    def test_ibis_table_returns_unchanged(self, df):
+        """Test that ibis Table input is returned unchanged."""
+        ibis_table = ibis.memtable(df)
+        result = ensure_ibis_table(ibis_table)
+        assert result is ibis_table
+
+    @pytest.mark.parametrize(
+        "invalid_input",
+        [
+            {"a": [1, 2, 3]},  # dict
+            [1, 2, 3],  # list
+            None,  # None
+            "not a dataframe",  # string
+            42,  # int
+        ],
+        ids=["dict", "list", "None", "string", "int"],
+    )
+    def test_invalid_input_raises_type_error(self, invalid_input):
+        """Test that invalid input types raise TypeError with correct message."""
+        with pytest.raises(TypeError, match="df must be either a pandas DataFrame or an Ibis Table"):
+            ensure_ibis_table(invalid_input)
