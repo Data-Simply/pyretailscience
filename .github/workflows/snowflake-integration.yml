@@ -1,6 +1,9 @@
 name: Snowflake Integration Tests
 
 on:
+  push:
+    branches:
+      - feature/snowflake-integration
   workflow_dispatch:
     inputs:
       test_suite:
