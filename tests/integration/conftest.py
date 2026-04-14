@@ -5,28 +5,6 @@ import os
 import ibis
 import pandas as pd
 import pytest
-from cryptography.hazmat.primitives.serialization import (
-    Encoding,
-    NoEncryption,
-    PrivateFormat,
-    load_pem_private_key,
-)
-
-
-def _load_snowflake_private_key() -> bytes:
-    """Load Snowflake private key from PEM file and return DER-encoded bytes.
-
-    Returns:
-        bytes: DER-encoded private key bytes suitable for Snowflake authentication.
-    """
-    key_path = os.environ["SNOWFLAKE_CI_PRIVATE_KEY_PATH"]
-    with open(key_path, "rb") as f:
-        private_key = load_pem_private_key(f.read(), password=None)
-    return private_key.private_bytes(
-        encoding=Encoding.DER,
-        format=PrivateFormat.PKCS8,
-        encryption_algorithm=NoEncryption(),
-    )
 
 
 @pytest.fixture(
@@ -57,7 +35,7 @@ def transactions_table(request):
         connection = ibis.snowflake.connect(
             account=os.environ["SNOWFLAKE_CI_ACCOUNT"],
             user=os.environ["SNOWFLAKE_CI_USER"],
-            private_key=_load_snowflake_private_key(),
+            private_key_file=os.environ["SNOWFLAKE_CI_PRIVATE_KEY_PATH"],
             database=os.environ["SNOWFLAKE_CI_DATABASE"],
             schema=os.environ["SNOWFLAKE_CI_SCHEMA"],
             warehouse=os.environ["SNOWFLAKE_CI_WAREHOUSE"],
