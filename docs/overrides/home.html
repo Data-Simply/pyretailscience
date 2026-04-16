@@ -11,184 +11,212 @@
   @media screen and (min-width: 76.25em) {
     .md-sidebar--primary { display: none; }
   }
-  .hero h1, .features h1, .get-started h1 { font-size: var(--text-2xl); }
-  .hero h2, .features h2, .get-started h2 { font-size: var(--text-xl); }
-  .hero h3, .features h3, .get-started h3 { font-size: var(--text-lg); }
-  .hero h4, .features h4, .get-started h4 { font-size: var(--text-base); }
 </style>
 
 <!-- Hero -->
-<section class="hero">
-  <div class="hero-inner">
-    <div class="hero-text">
-      <h1>From Data Drudgery<br>to Analytics <span class="text-green">Artistry</span></h1>
-      <p>
-        Stop rebuilding the same retail analyses from scratch.
-        PyRetailScience gives your team pre-built, tested modules for
-        segmentation, gain-loss, cross-shop, and more.
+<section class="ds-hero">
+  <div class="ds-hero-burst"></div>
+  <div class="ds-hero-inner">
+    <div class="ds-hero-content">
+      <h1 class="ds-hero-headline ds-text-dark">
+        Months to deploy.<br>Black box results.<br>Someone else's cloud.
+      </h1>
+      <h1 class="ds-hero-headline ds-text-primary">
+        There's a better way.
+      </h1>
+      <p class="ds-hero-body">
+        PyRetailScience is open source retail analytics that runs in your
+        database, handles billions of rows, and gives you back control of
+        your KPIs.
       </p>
-      <div class="hero-actions">
-        <a href="{{ 'analysis_modules/' | url }}" class="btn btn-primary">See What's Included</a>
-      </div>
-    </div>
-    <div class="hero-code">
-      <div class="code-window">
-        <div class="code-titlebar">
-          <span class="code-dot code-dot--red"></span>
-          <span class="code-dot code-dot--yellow"></span>
-          <span class="code-dot code-dot--green"></span>
-          <span class="code-filename">analysis.py</span>
-        </div>
-        <pre class="code-body"><code><span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> <span class="cls">TransactionChurn</span>
-
-<span class="cmt"># Analyze transaction churn</span>
-churn = <span class="cls">TransactionChurn</span>(df, churn_period=<span class="num">90</span>)
-churn.plot()
-
-<span class="cmt"># Segment customers by value</span>
-<span class="kw">from</span> <span class="mod">pyretailscience.segmentation.hml</span> <span class="kw">import</span> <span class="cls">HMLSegmentation</span>
-segments = <span class="cls">HMLSegmentation</span>(df)</code></pre>
+      <div class="ds-hero-actions">
+        <a href="{{ 'getting_started/installation/' | url }}" class="ds-btn ds-btn-dark">
+          Get Started
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="{{ 'analysis_modules/' | url }}" class="ds-btn ds-btn-text">
+          Explore Modules
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+        </a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- Logo Bar -->
-<section class="logo-bar">
-  <div class="logo-bar-header">
-    <p class="logo-bar-label">Built with expertise doing analytics for scale-ups to multinationals</p>
+<section class="ds-logo-bar">
+  <div class="ds-logo-bar-header">
+    <p class="ds-logo-bar-label">Built with expertise doing analytics for scale-ups to multinationals</p>
   </div>
   {% set logos = ['Loblaws', 'IKI', 'Dominos Pizza', 'Migros', 'Sephora', 'Sainsburys', 'Nectar', 'Metro', 'Coles', 'GANNI', 'Mindful Chef', 'Auchan'] %}
-  <div class="logo-bar-mask">
-    <div class="logo-scroll">
+  <div class="ds-logo-bar-mask">
+    <div class="ds-logo-scroll">
       {% for name in logos %}<span>{{ name }}</span>{% endfor %}
-      <!-- Duplicate for seamless CSS scroll loop -->
       {% for name in logos %}<span aria-hidden="true">{{ name }}</span>{% endfor %}
     </div>
   </div>
 </section>
 
-<!-- Features with charts -->
-<section class="features">
-  <div class="container">
-    <div class="feature">
-      <div class="feature-content">
-        <h3>Tailored for Retail, Powered by You</h3>
-        <p>
-          Leverage pre-built functions designed specifically for retail analytics.
-          From customer segmentations to gain-loss analysis, PyRetailScience provides
-          over a dozen building blocks to tackle retail-specific challenges.
-        </p>
-        <a href="{{ 'analysis_modules/' | url }}">See Analysis Modules &rarr;</a>
-      </div>
-      <div class="feature-image">
-        <img src="{{ 'assets/images/features/cross_shop.png' | url }}" alt="Cross-shop Venn diagram" loading="lazy" />
-      </div>
-    </div>
-
-    <div class="feature">
-      <div class="feature-content">
-        <h3>Trust Your Results, Every Time</h3>
-        <p>
-          Built with extensive unit testing and best practices,
-          PyRetailScience ensures the accuracy and reliability of your
-          analyses. Confidently present your findings, knowing they're
-          backed by a robust, well-tested framework.
-        </p>
-        <a href="{{ 'getting_started/installation/' | url }}">Get Started &rarr;</a>
-      </div>
-      <div class="feature-image">
-        <div class="code-window">
-          <div class="code-titlebar">
-            <span class="code-dot code-dot--red"></span>
-            <span class="code-dot code-dot--yellow"></span>
-            <span class="code-dot code-dot--green"></span>
-            <span class="code-filename">test_customer.py</span>
-          </div>
-          <pre class="code-body"><code><span class="kw">import</span> <span class="mod">pytest</span>
-<span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> <span class="cls">TransactionChurn</span>
-
-<span class="kw">def</span> <span class="fn">test_churn_has_expected_columns</span>(sample_df):
-    churn = <span class="cls">TransactionChurn</span>(sample_df, churn_period=<span class="num">90</span>)
-    <span class="kw">assert</span> <span class="str">"churned_pct"</span> <span class="kw">in</span> churn.purchase_dist_df.columns
-    <span class="kw">assert</span> churn.n_unique_customers == <span class="num">1250</span>
-
-<span class="cmt"># 94% coverage across all modules</span></code></pre>
+<!-- What's Included -->
+<section class="ds-section ds-bg-surface">
+  <div class="ds-container">
+    <div class="ds-grid-5">
+      <div class="ds-grid-left">
+        <div class="ds-sticky">
+          <h2 class="ds-section-heading">What's included</h2>
+          <p class="ds-section-body">
+            A complete toolkit for retail analytics &mdash; from customer segmentation to revenue trees. Every module is tested, documented, and ready to use.
+          </p>
         </div>
       </div>
-    </div>
-
-    <div class="feature">
-      <div class="feature-content">
-        <h3>Consistent, Professional Charts in Seconds</h3>
-        <p>
-          Standardized visualizations that are presentation-ready with a few
-          lines of code. Waterfall, Venn, heatmap, time series, and more.
-        </p>
-        <a href="{{ 'gallery/' | url }}">Browse Plot Gallery &rarr;</a>
-      </div>
-      <div class="feature-image">
-        <img src="{{ 'assets/images/features/charts.png' | url }}" alt="Waterfall chart showing store cannibalization" loading="lazy" />
-      </div>
-    </div>
-
-    <div class="feature">
-      <div class="feature-content">
-        <h3>Automate Repetitive Tasks, Focus on Insights</h3>
-        <p>
-          Loop analyses over different dimensions. Use the output of one analysis
-          as input for another. Spend less time on data manipulation.
-        </p>
-        <a href="{{ 'examples/gain_loss/' | url }}">See Examples &rarr;</a>
-      </div>
-      <div class="feature-image">
-        <div class="code-window">
-          <div class="code-titlebar">
-            <span class="code-dot code-dot--red"></span>
-            <span class="code-dot code-dot--yellow"></span>
-            <span class="code-dot code-dot--green"></span>
-            <span class="code-filename">workflow.py</span>
-          </div>
-          <pre class="code-body"><code><span class="cmt"># Do our analysis</span>
-dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
-<span class="cmt"># Define the churn period as the 80th percentile</span>
-churn_period = dbp.purchases_percentile(<span class="num">0.8</span>)
-<span class="cmt"># Use that in our plot title</span>
-plot_title = <span class="str">f"Customers churn within <span class="expr">{round(churn_period)}</span> Days"</span>
-<span class="cmt"># Plot our chart</span>
-dbp.plot(title=plot_title)</code></pre>
+      <div class="ds-grid-right">
+        <div class="ds-card-bordered">
+          <h3 class="ds-card-heading">Your cloud, your data</h3>
+          <p class="ds-card-body">
+            Runs in your database. No data leaves your environment. Works with ~20 backends from Snowflake to SQL Server, Databricks to BigQuery.
+          </p>
+        </div>
+        <div class="ds-card-bordered">
+          <h3 class="ds-card-heading">Value in days, not years</h3>
+          <p class="ds-card-body">
+            Pre-built modules for the analyses retailers rebuild over and over: churn, gain-loss, cross-shop, segmentation, revenue trees, and more.
+          </p>
+        </div>
+        <div class="ds-card-bordered">
+          <h3 class="ds-card-heading">Own your KPIs</h3>
+          <p class="ds-card-body">
+            No black boxes. Every calculation is open source, auditable, and yours to extend. No vendor lock-in, no dependency on a third party's roadmap.
+          </p>
+        </div>
+        <div class="ds-card-bordered">
+          <h3 class="ds-card-heading">Built for scale</h3>
+          <p class="ds-card-body">
+            The heavy lifting happens in your database. Python handles orchestration. Tested with retailers running billions of rows of transaction data.
+          </p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Get Started -->
-<section class="get-started">
-  <div class="get-started-inner">
-    <h2>Get started in seconds</h2>
-    <p class="get-started-subtitle">Install PyRetailScience and run your first analysis in under a minute.</p>
-    <div class="install-command">
-      <span class="install-prompt">$</span> pip install pyretailscience
-    </div>
-    <div class="code-window code-window--get-started">
-      <div class="code-titlebar">
-        <span class="code-dot code-dot--red"></span>
-        <span class="code-dot code-dot--yellow"></span>
-        <span class="code-dot code-dot--green"></span>
-        <span class="code-filename">quickstart.py</span>
+<!-- Impact Stats -->
+<section class="ds-stats">
+  <div class="ds-stats-burst"></div>
+  <div class="ds-stats-inner">
+    <h2 class="ds-stats-label">Built for production</h2>
+    <div class="ds-stats-grid">
+      <div class="ds-stat">
+        <p class="ds-stat-value">~20</p>
+        <p class="ds-stat-desc">Database backends supported &mdash; Snowflake, Databricks, BigQuery, SQL Server, and more</p>
       </div>
-      <pre class="code-body"><code><span class="kw">from</span> <span class="mod">pyretailscience.analysis.customer</span> <span class="kw">import</span> (
-    <span class="cls">PurchasesPerCustomer</span>,
-)
-
-<span class="cmt"># Analyze purchase distribution</span>
-ppc = <span class="cls">PurchasesPerCustomer</span>(df)
-ppc.plot()
-<span class="cmt"># → A publication-ready chart, instantly.</span></code></pre>
+      <div class="ds-stat">
+        <p class="ds-stat-value">Billions</p>
+        <p class="ds-stat-desc">Of rows handled. The heavy lifting happens in your database, not in Python</p>
+      </div>
+      <div class="ds-stat">
+        <p class="ds-stat-value">Days, not years</p>
+        <p class="ds-stat-desc">From data to business value. Pre-built modules for the analyses you keep rebuilding</p>
+      </div>
+      <div class="ds-stat">
+        <p class="ds-stat-value">Open Source</p>
+        <p class="ds-stat-desc">Fully open source &mdash; no vendor lock-in, no black boxes, no data leakage</p>
+      </div>
     </div>
-    <div class="get-started-actions">
-      <a href="{{ 'analysis_modules/' | url }}" class="btn btn-primary">See What's Included</a>
+  </div>
+</section>
+
+<!-- Showcase -->
+<section class="ds-section">
+  <div class="ds-container">
+    <div class="ds-showcase-header">
+      <h2 class="ds-section-heading">See it in action</h2>
+      <p class="ds-section-body">
+        From quick analyses to end-to-end workflows, see what you can build.
+      </p>
+    </div>
+    <div class="ds-showcase-grid">
+      <div class="ds-showcase-card">
+        <span class="ds-badge">Analysis</span>
+        <img src="{{ 'assets/images/features/cross_shop.png' | url }}" alt="Cross-shop Venn diagram" class="ds-showcase-img" loading="lazy" />
+        <h3 class="ds-showcase-heading">Cross-shop analysis</h3>
+        <p class="ds-showcase-body">
+          Understand how customers shop across categories, brands, or stores with automated Venn diagrams and overlap metrics.
+        </p>
+        <p class="ds-showcase-tags">Venn Diagram &middot; Customer Overlap</p>
+      </div>
+
+      <div class="ds-showcase-card">
+        <span class="ds-badge">Visualization</span>
+        <img src="{{ 'assets/images/features/charts.png' | url }}" alt="Waterfall chart" class="ds-showcase-img" loading="lazy" />
+        <h3 class="ds-showcase-heading">Professional charts</h3>
+        <p class="ds-showcase-body">
+          Waterfall, cohort, heatmap, time series, and more &mdash; all styled consistently and ready for stakeholder presentations.
+        </p>
+        <p class="ds-showcase-tags">Waterfall &middot; Cohort &middot; Heatmap</p>
+      </div>
+
+      <div class="ds-showcase-card">
+        <span class="ds-badge">Workflow</span>
+        <div class="ds-code-window">
+          <div class="ds-code-titlebar">
+            <span class="ds-code-dot ds-code-dot--red"></span>
+            <span class="ds-code-dot ds-code-dot--yellow"></span>
+            <span class="ds-code-dot ds-code-dot--green"></span>
+            <span class="ds-code-filename">workflow.py</span>
+          </div>
+          <pre class="ds-code-body"><code><span class="kw">from</span> <span class="mod">pyretailscience.analysis</span> <span class="kw">import</span> <span class="cls">customer</span>
+
+<span class="cmt"># Chain analyses together</span>
+dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
+churn = dbp.purchases_percentile(<span class="num">0.8</span>)
+dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
+        </div>
+        <h3 class="ds-showcase-heading">Composable workflows</h3>
+        <p class="ds-showcase-body">
+          Chain modules together. Use the output of one analysis as input for another to build complete analytical pipelines.
+        </p>
+        <p class="ds-showcase-tags">Automation &middot; Chaining</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="ds-cta">
+  <div class="ds-cta-burst"></div>
+  <div class="ds-cta-inner">
+    <h2 class="ds-cta-heading">Ready to stop rebuilding from scratch?</h2>
+    <p class="ds-cta-body">
+      Install OpenRetailScience and run your first analysis in under a minute.
+      Open source, well-tested, and ready for production.
+    </p>
+    <div class="ds-install-command" onclick="copyInstall(this)" title="Click to copy">
+      <span class="ds-install-prompt">$</span> pip install pyretailscience
+      <button class="ds-install-copy" aria-label="Copy to clipboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </div>
+    <script>
+    function copyInstall(el) {
+      navigator.clipboard.writeText('pip install pyretailscience');
+      var btn = el.querySelector('.ds-install-copy');
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      setTimeout(function() {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      }, 2000);
+    }
+    </script>
+    <div class="ds-cta-actions">
+      <a href="{{ 'getting_started/installation/' | url }}" class="ds-btn ds-btn-dark">
+        Read the Docs
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="https://github.com/Data-Simply/pyretailscience" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-text ds-btn-text--on-dark">
+        View on GitHub
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
     </div>
   </div>
 </section>
