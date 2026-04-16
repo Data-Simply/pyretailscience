@@ -13,16 +13,15 @@
   }
 </style>
 
+<div class="ds-page">
 <!-- Hero -->
 <section class="ds-hero">
   <div class="ds-hero-burst"></div>
   <div class="ds-hero-inner">
     <div class="ds-hero-content">
-      <h1 class="ds-hero-headline ds-text-dark">
-        Months to deploy.<br>Black box results.<br>Someone else's cloud.
-      </h1>
-      <h1 class="ds-hero-headline ds-text-primary">
-        There's a better way.
+      <h1 class="ds-hero-headline">
+        <span class="ds-text-dark">Months to deploy.<br>Black box results.<br>Someone else's cloud.</span><br>
+        <span class="ds-text-primary">There's a better way.</span>
       </h1>
       <p class="ds-hero-body">
         PyRetailScience is open source retail analytics that runs in your
@@ -194,7 +193,7 @@ dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
     </p>
     <div class="ds-install-command" onclick="copyInstall(this)" title="Click to copy">
       <span class="ds-install-prompt">$</span> pip install pyretailscience
-      <button class="ds-install-copy" aria-label="Copy to clipboard">
+      <button type="button" class="ds-install-copy" aria-label="Copy to clipboard">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
       </button>
     </div>
@@ -223,6 +222,7 @@ dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
   </div>
 </section>
 
+</div>
 {% endblock %}
 
 {% block content %}{% endblock %}

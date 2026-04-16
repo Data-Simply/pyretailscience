@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">PyRetailScience logo</title>
   <defs>
     <radialGradient id="lightGreenGrad" cx="35%" cy="35%" r="70%">
       <stop offset="0%" stop-color="#34d16e"/>
@@ -13,7 +14,7 @@
     <style>
       .light-green { fill: url(#lightGreenGrad); }
       .dark-green  { fill: url(#darkGreenGrad); }
-      .white-stroke { stroke: #fff; stroke-width: 4px; }
+      .white-stroke { stroke: #fff; stroke-width: 4; }
     </style>
   </defs>
 

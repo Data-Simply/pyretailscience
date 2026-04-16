@@ -1,16 +1,14 @@
 /* ========================================= */
 /* Design tokens — matched to datasimply.co */
 /* ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* Colors */
   --ds-primary: #22c55e;
-  --ds-primary-dark: #16a34a;
   --ds-bg: #ffffff;
   --ds-surface: #fafafa;
   --ds-dark: #0a0a0a;
-  --ds-navy: #001122;
   --ds-heading: #000000;
   --ds-body: #404040;
   --ds-subtle: #555555;
@@ -54,6 +52,11 @@ body {
   font-size: var(--ds-text-base);
   line-height: 1.5;
   color: var(--ds-heading);
+}
+
+.ds-page {
+  overflow: hidden;
+  width: 100%;
 }
 
 
@@ -111,7 +114,13 @@ body {
 .ds-btn-dark {
   background: var(--ds-dark);
   color: #fff;
-  padding: 16px 32px;
+  padding: 12px 24px;
+}
+
+@media (min-width: 48em) {
+  .ds-btn-dark {
+    padding: 16px 32px;
+  }
 }
 
 .ds-btn-dark:hover {
@@ -181,15 +190,11 @@ body {
 
 .ds-hero-headline {
   font-family: "Poppins", sans-serif;
-  font-size: clamp(26px, 5vw + 8px, 72px);
+  font-size: clamp(32px, 5vw + 8px, 72px);
   font-weight: 800;
   line-height: 1;
   letter-spacing: var(--ds-tracking-display);
   margin: 0;
-}
-
-.ds-hero-headline + .ds-hero-headline {
-  margin-top: 4px;
 }
 
 @media (min-width: 64em) {
@@ -309,14 +314,10 @@ body {
   }
 }
 
-.ds-grid-left {}
-
 .ds-sticky {
   position: sticky;
   top: 112px;
 }
-
-.ds-grid-right {}
 
 .ds-section-heading {
   font-family: "Poppins", sans-serif;
@@ -465,6 +466,7 @@ body {
 .ds-showcase-grid {
   display: grid;
   gap: 24px;
+  min-width: 0;
 }
 
 @media (min-width: 48em) {
@@ -485,6 +487,8 @@ body {
   flex-direction: column;
   background: var(--ds-bg);
   transition: all 0.2s ease;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (min-width: 48em) {
