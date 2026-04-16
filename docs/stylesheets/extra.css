@@ -627,14 +627,14 @@ body {
   font-family: inherit;
 }
 
-/* Syntax highlighting */
-.kw  { color: #cba6f7; }
-.mod { color: #89b4fa; }
-.cls { color: #a6e3a1; }
-.fn  { color: #89dceb; }
-.cmt { color: #6c7086; }
-.num { color: #fab387; }
-.str { color: #f9e2af; }
+/* Syntax highlighting — scoped to code windows */
+.ds-code-body .kw  { color: #cba6f7; }
+.ds-code-body .mod { color: #89b4fa; }
+.ds-code-body .cls { color: #a6e3a1; }
+.ds-code-body .fn  { color: #89dceb; }
+.ds-code-body .cmt { color: #6c7086; }
+.ds-code-body .num { color: #fab387; }
+.ds-code-body .str { color: #f9e2af; }
 
 
 /* ========================================= */
