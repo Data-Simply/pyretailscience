@@ -63,7 +63,7 @@ jobs:
           umask 077
           gcloud secrets versions access latest \
             --secret=snowflake-ci-private-key \
-            --project=openretailscience-infra > /tmp/snowflake_ci_key.p8
+            --project=pyretailscience-infra > /tmp/snowflake_ci_key.p8
 
       - name: Run Integration Tests
         env:
