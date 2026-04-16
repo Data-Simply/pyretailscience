@@ -1,7 +1,7 @@
 /* ========================================= */
 /* Design tokens — matched to datasimply.co */
 /* =========================================
-   Fonts loaded via <link> in overrides/partials/head.html
+   Fonts loaded via <link> in overrides/main.html
    for non-render-blocking preconnect behavior.
    ========================================= */
 
@@ -17,7 +17,7 @@
   --ds-muted: #737373;
   --ds-placeholder: #a3a3a3;
   --ds-border: #e5e5e5;
-  --ds-border-hover: var(--ds-border-hover);
+  --ds-border-hover: #d1d5db;
 
   /* Type scale — px values to avoid Material's 20px root inflation */
   --ds-text-hero: 72px;     /* 4.5rem × 16 */
@@ -696,8 +696,6 @@ body {
 }
 
 .ds-install-command {
-  position: relative;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 16px;
