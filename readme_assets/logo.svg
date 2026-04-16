@@ -21,6 +21,6 @@
 
   <!-- "OpenRetailScience" text -->
   <text x="160" y="95" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="52" fill="#1a1a1a">
-    <tspan fill="#1a1a1a">Open</tspan><tspan fill="#1bb854">Retail</tspan><tspan fill="#1a1a1a">Science</tspan>
+    OpenRetailScience
   </text>
 </svg>
