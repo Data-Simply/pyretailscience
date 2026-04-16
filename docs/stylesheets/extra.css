@@ -1,7 +1,9 @@
 /* ========================================= */
 /* Design tokens — matched to datasimply.co */
-/* ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap');
+/* =========================================
+   Fonts loaded via <link> in overrides/partials/head.html
+   for non-render-blocking preconnect behavior.
+   ========================================= */
 
 :root {
   /* Colors */
@@ -15,6 +17,7 @@
   --ds-muted: #737373;
   --ds-placeholder: #a3a3a3;
   --ds-border: #e5e5e5;
+  --ds-border-hover: var(--ds-border-hover);
 
   /* Type scale — px values to avoid Material's 20px root inflation */
   --ds-text-hero: 72px;     /* 4.5rem × 16 */
@@ -449,7 +452,7 @@ body {
 .ds-stat-desc {
   margin-top: 8px;
   font-family: "Inter", sans-serif;
-  color: #d1d5db;
+  color: var(--ds-border-hover);
   font-size: var(--ds-text-body-sm);
   line-height: var(--ds-leading-body);
 }
@@ -498,7 +501,7 @@ body {
 }
 
 .ds-showcase-card:hover {
-  border-color: #d1d5db;
+  border-color: var(--ds-border-hover);
   transform: translateY(-4px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
