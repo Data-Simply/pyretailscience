@@ -1,13 +1,13 @@
 <!-- README.md -->
-![OpenRetailScience Logo](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/logo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Data-Simply/openretailscience/main/docs/assets/images/logo.svg" alt="OpenRetailScience Logo" width="128" />
+</p>
 
-# OpenRetailScience
+<h1 align="center">OpenRetailScience</h1>
 
-⚡ Rapid bespoke and deep dive retail analytics ⚡
-
-OpenRetailScience equips you with a wide array of retail analytical capabilities,
-from segmentations to gain-loss analysis. Leave the mundane to us and elevate your role
-from data janitor to insights virtuoso.
+<p align="center">
+  Open source retail analytics that runs in your database, handles billions of rows, and gives you back control of your KPIs.
+</p>
 
 ## Installation
 
