@@ -159,7 +159,8 @@ Please see [this site](https://openretailscience.datasimply.co/) for full docume
 
 ## Contributing
 
-We welcome contributions from the community to enhance and improve OpenRetailScience. To contribute, please follow these steps:
+We welcome contributions from the community to enhance and improve OpenRetailScience. To contribute,
+please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.
