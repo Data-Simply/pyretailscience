@@ -67,16 +67,29 @@ body {
 .ds-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0;
 }
 
 .ds-section {
-  padding: 80px 24px;
+  padding: 64px 24px;
 }
 
 @media (min-width: 48em) {
   .ds-section {
     padding: 80px 40px;
+  }
+}
+
+/* Tighter rhythm for features (grouped with hero) */
+.ds-section.ds-bg-surface {
+  padding-top: 56px;
+  padding-bottom: 64px;
+}
+
+@media (min-width: 48em) {
+  .ds-section.ds-bg-surface {
+    padding-top: 72px;
+    padding-bottom: 80px;
   }
 }
 
@@ -130,12 +143,12 @@ body {
 .ds-hero {
   position: relative;
   overflow: hidden;
-  padding: 40px 24px 56px;
+  padding: 40px 24px 40px;
 }
 
 @media (min-width: 48em) {
   .ds-hero {
-    padding: 48px 40px 80px;
+    padding: 48px 40px 56px;
   }
 }
 
@@ -168,7 +181,7 @@ body {
 
 .ds-hero-headline {
   font-family: "Poppins", sans-serif;
-  font-size: 30px;
+  font-size: clamp(26px, 5vw + 8px, 72px);
   font-weight: 800;
   line-height: 1;
   letter-spacing: var(--ds-tracking-display);
@@ -179,15 +192,8 @@ body {
   margin-top: 4px;
 }
 
-@media (min-width: 48em) {
-  .ds-hero-headline {
-    font-size: 48px;
-  }
-}
-
 @media (min-width: 64em) {
   .ds-hero-headline {
-    font-size: var(--ds-text-hero);
     letter-spacing: var(--ds-tracking-hero);
   }
 }
@@ -208,6 +214,17 @@ body {
   align-items: center;
   gap: 16px;
   margin-top: 32px;
+}
+
+@media (max-width: 25em) {
+  .ds-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ds-hero-actions .ds-btn {
+    justify-content: center;
+  }
 }
 
 
@@ -305,7 +322,7 @@ body {
   font-family: "Poppins", sans-serif;
   font-weight: 700;
   color: var(--ds-heading);
-  font-size: var(--ds-text-section);
+  font-size: clamp(28px, 3vw + 8px, 42px);
   line-height: var(--ds-leading-heading);
   letter-spacing: var(--ds-tracking-section);
   margin: 0;
@@ -353,12 +370,12 @@ body {
   position: relative;
   overflow: hidden;
   background: var(--ds-dark);
-  padding: 80px 32px;
+  padding: 56px 32px;
 }
 
 @media (min-width: 64em) {
   .ds-stats {
-    padding: 80px 64px;
+    padding: 64px 64px;
   }
 }
 
@@ -381,7 +398,7 @@ body {
 
 .ds-stats-label {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 32px;
   font-family: "Poppins", sans-serif;
   font-weight: 600;
   color: var(--ds-primary);
@@ -408,11 +425,18 @@ body {
 
 .ds-stat-value {
   font-family: "Poppins", sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #fff;
   letter-spacing: var(--ds-tracking-stat);
   margin: 0;
+  white-space: nowrap;
+}
+
+@media (min-width: 25em) {
+  .ds-stat-value {
+    font-size: 24px;
+  }
 }
 
 @media (min-width: 48em) {
@@ -445,24 +469,55 @@ body {
 
 @media (min-width: 48em) {
   .ds-showcase-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ds-showcase-card--wide {
+    grid-column: 1 / -1;
   }
 }
 
 .ds-showcase-card {
   border: 1px solid var(--ds-border);
   border-radius: 16px;
-  padding: 32px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   background: var(--ds-bg);
   transition: all 0.2s ease;
 }
 
+@media (min-width: 48em) {
+  .ds-showcase-card {
+    padding: 32px;
+  }
+}
+
 .ds-showcase-card:hover {
   border-color: #d1d5db;
   transform: translateY(-4px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+@media (min-width: 48em) {
+  .ds-showcase-card--wide {
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .ds-showcase-card--wide .ds-code-window {
+    flex: 0 0 45%;
+    margin-bottom: 0;
+  }
+
+  .ds-showcase-card--wide .ds-showcase-card__text {
+    flex: 1;
+  }
+
+  .ds-showcase-card--wide .ds-showcase-body {
+    flex: initial;
+  }
 }
 
 .ds-badge {
@@ -634,12 +689,14 @@ body {
 }
 
 .ds-install-command {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
   margin-top: 32px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  padding: 12px 40px 12px 24px;
+  padding: 12px 24px;
   font-family: "Roboto Mono", monospace;
   font-size: var(--ds-text-sm);
   color: rgba(255, 255, 255, 0.85);
@@ -657,6 +714,17 @@ body {
   align-items: center;
   gap: 16px;
   margin-top: 32px;
+}
+
+@media (max-width: 25em) {
+  .ds-cta-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ds-cta-actions .ds-btn {
+    justify-content: center;
+  }
 }
 
 
@@ -825,18 +893,15 @@ body {
 }
 
 .ds-install-copy {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
   transition: color 0.2s;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .ds-install-copy:hover {
