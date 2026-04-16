@@ -10,19 +10,13 @@
       <stop offset="0%" stop-color="#1a8c42"/>
       <stop offset="100%" stop-color="#127035"/>
     </linearGradient>
-
-    <style>
-      .light-green { fill: url(#lightGreenGrad); }
-      .dark-green  { fill: url(#darkGreenGrad); }
-      .white-stroke { stroke: #fff; stroke-width: 4; }
-    </style>
   </defs>
 
   <g transform="translate(256 256)">
-    <path d="M0-192A192 192 0 1 1-192 0A192 192 0 0 1 0-192M0-144A144 144 0 1 0 144 0A144 144 0 0 0 0-144" class="light-green white-stroke"/>
-    <path d="M136.95-44.50A144 144 0 0 0 44.50-136.95L59.33-182.60A192 192 0 0 1 182.60-59.33Z" class="dark-green white-stroke"/>
+    <path d="M0-192A192 192 0 1 1-192 0A192 192 0 0 1 0-192M0-144A144 144 0 1 0 144 0A144 144 0 0 0 0-144" style="fill: url(#lightGreenGrad); stroke: #fff; stroke-width: 4;"/>
+    <path d="M136.95-44.50A144 144 0 0 0 44.50-136.95L59.33-182.60A192 192 0 0 1 182.60-59.33Z" style="fill: url(#darkGreenGrad); stroke: #fff; stroke-width: 4;"/>
 
-    <path d="M0-144A144 144 0 1 1-144 0A144 144 0 0 1 0-144M0-96A96 96 0 1 0 96 0A96 96 0 0 0 0-96" class="light-green white-stroke"/>
-    <path d="M91.30-29.67A96 96 0 0 0 29.67-91.30L44.50-136.95A144 144 0 0 1 136.95-44.50Z" class="dark-green white-stroke"/>
+    <path d="M0-144A144 144 0 1 1-144 0A144 144 0 0 1 0-144M0-96A96 96 0 1 0 96 0A96 96 0 0 0 0-96" style="fill: url(#lightGreenGrad); stroke: #fff; stroke-width: 4;"/>
+    <path d="M91.30-29.67A96 96 0 0 0 29.67-91.30L44.50-136.95A144 144 0 0 1 136.95-44.50Z" style="fill: url(#darkGreenGrad); stroke: #fff; stroke-width: 4;"/>
   </g>
 </svg>
