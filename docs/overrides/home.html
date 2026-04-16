@@ -155,8 +155,7 @@
         <p class="ds-showcase-tags">Waterfall &middot; Cohort &middot; Heatmap</p>
       </div>
 
-      <div class="ds-showcase-card">
-        <span class="ds-badge">Workflow</span>
+      <div class="ds-showcase-card ds-showcase-card--wide">
         <div class="ds-code-window">
           <div class="ds-code-titlebar">
             <span class="ds-code-dot ds-code-dot--red"></span>
@@ -171,11 +170,14 @@ dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
 churn = dbp.purchases_percentile(<span class="num">0.8</span>)
 dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
         </div>
-        <h3 class="ds-showcase-heading">Composable workflows</h3>
-        <p class="ds-showcase-body">
-          Chain modules together. Use the output of one analysis as input for another to build complete analytical pipelines.
-        </p>
-        <p class="ds-showcase-tags">Automation &middot; Chaining</p>
+        <div class="ds-showcase-card__text">
+          <span class="ds-badge">Workflow</span>
+          <h3 class="ds-showcase-heading">Composable workflows</h3>
+          <p class="ds-showcase-body">
+            Chain modules together. Use the output of one analysis as input for another to build complete analytical pipelines.
+          </p>
+          <p class="ds-showcase-tags">Automation &middot; Chaining</p>
+        </div>
       </div>
     </div>
   </div>
@@ -185,9 +187,9 @@ dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
 <section class="ds-cta">
   <div class="ds-cta-burst"></div>
   <div class="ds-cta-inner">
-    <h2 class="ds-cta-heading">Ready to stop rebuilding from scratch?</h2>
+    <h2 class="ds-cta-heading">Your database. Your analytics. Get started.</h2>
     <p class="ds-cta-body">
-      Install OpenRetailScience and run your first analysis in under a minute.
+      Install OpenRetailScience and run your first analysis in minutes.
       Open source, well-tested, and ready for production.
     </p>
     <div class="ds-install-command" onclick="copyInstall(this)" title="Click to copy">
