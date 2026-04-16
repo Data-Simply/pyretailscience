@@ -1,3 +1,3 @@
 # Threshold Segmentation
 
-::: pyretailscience.segmentation.threshold
+::: openretailscience.segmentation.threshold

@@ -1,4 +1,4 @@
-"""Tests for the time_plot function in the pyretailscience.plots.time module.
+"""Tests for the time_plot function in the openretailscience.plots.time module.
 
 This module contains unit tests that validate the behavior of the time_plot
 function. The tests cover different scenarios, such as plotting with
@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.plots.time import plot
+from openretailscience.plots.time import plot
 
 
 class TestTimePlot:

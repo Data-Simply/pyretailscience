@@ -1,3 +1,3 @@
 # Cohort Analysis
 
-::: pyretailscience.analysis.cohort
+::: openretailscience.analysis.cohort

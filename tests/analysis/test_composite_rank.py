@@ -4,7 +4,7 @@ import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.composite_rank import CompositeRank
+from openretailscience.analysis.composite_rank import CompositeRank
 
 
 class TestCompositeRank:

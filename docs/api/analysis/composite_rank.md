@@ -1,3 +1,3 @@
 # Composite Rank
 
-::: pyretailscience.analysis.composite_rank
+::: openretailscience.analysis.composite_rank

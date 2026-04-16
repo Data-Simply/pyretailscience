@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import pyretailscience.analysis.customer_decision_hierarchy as rp
-from pyretailscience.options import ColumnHelper, option_context
+import openretailscience.analysis.customer_decision_hierarchy as rp
+from openretailscience.options import ColumnHelper, option_context
 
 cols = ColumnHelper()
 

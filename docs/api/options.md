@@ -1,3 +1,3 @@
 # Options Analysis
 
-::: pyretailscience.options
+::: openretailscience.options

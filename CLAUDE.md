@@ -1,4 +1,4 @@
-# PyRetailScience Development Guide
+# OpenRetailScience Development Guide
 
 ## Build & Test Commands
 
@@ -6,7 +6,7 @@
 - Run all tests: `uv run pytest`
 - Run specific test: `uv run pytest tests/test_file.py::test_function_name`
 - Run tests with pattern: `uv run pytest -k "pattern"`
-- Run tests with coverage: `uv run pytest --cov=pyretailscience`
+- Run tests with coverage: `uv run pytest --cov=openretailscience`
 - Lint code: `uv run ruff check .`
 - Format code: `uv run ruff format .`
 - Run Python scripts: `uv run python script.py`
@@ -58,7 +58,7 @@
 - In LaTeX math blocks (`$$ ... $$`), do not escape underscores inside `\text{}` commands. Use `\text{unit_spend}`,
   not `\text{unit\_spend}` — the backslash-escaped form renders a visible backslash in the output.
 - Shared validation functions (e.g., `ensure_ibis_table`, `validate_columns`) belong in
-  `pyretailscience/utils/validation.py`. Do not place validation helpers in metric-specific modules.
+  `openretailscience/utils/validation.py`. Do not place validation helpers in metric-specific modules.
 
 ## Test Writing Guidelines
 
@@ -79,7 +79,7 @@ fails at runtime, and only "green" when it passes at runtime.
 
 ### Core Principles
 
-- **Test package functionality, not libraries**: Every test must import and exercise PyRetailScience code. Do not test
+- **Test package functionality, not libraries**: Every test must import and exercise OpenRetailScience code. Do not test
   pandas, Python built-ins, or third-party libraries in isolation.
 - **Verify behavior, not execution**: Tests must have meaningful assertions that validate the actual behavior claimed by
   the test name. Checking return types or "not None" is insufficient.
@@ -108,9 +108,9 @@ fails at runtime, and only "green" when it passes at runtime.
 
 ### Anti-Patterns to Avoid
 
-- **Don't test without package imports**: If no PyRetailScience code is imported, the test is invalid
+- **Don't test without package imports**: If no OpenRetailScience code is imported, the test is invalid
 - **Don't test Python/library basics**: Avoid tests that verify fundamental Python or standard library behavior (set
-  operations, dict.get(), list methods, string operations) without exercising PyRetailScience functionality. These tests
+  operations, dict.get(), list methods, string operations) without exercising OpenRetailScience functionality. These tests
   belong in Python's own test suite.
 - **Don't write assertion-free tests**: Every test must have assertions that can actually fail. Avoid:
     - Tests with no assertions at all
@@ -126,7 +126,7 @@ fails at runtime, and only "green" when it passes at runtime.
   add a `pytest.mark.parametrize` entry to the existing method instead. This applies even when the methods test
   "different parameters" — if the structure is identical, they belong in one parametrized test.
 - **Don't over-mock**: Mock external dependencies only (databases, APIs, file I/O, network calls). Never mock internal
-  PyRetailScience logic or calculations. Test real package behavior.
+  OpenRetailScience logic or calculations. Test real package behavior.
 - **Don't write trivial tests**: Avoid testing constants equal their definitions, class names, or tautological
   assertions (True == True)
 - **Don't test implementation details**: Avoid asserting internal state values or data structures. Testing private
@@ -143,7 +143,7 @@ fails at runtime, and only "green" when it passes at runtime.
 
 Before committing test code, verify each test meets these criteria:
 
-1. **Imports PyRetailScience code**: At least one import from `pyretailscience.*`
+1. **Imports OpenRetailScience code**: At least one import from `openretailscience.*`
 2. **Calls package functionality**: Test actually invokes package functions/classes/methods
 3. **Has meaningful assertions**: Assertions verify actual behavior, not just types or existence
 4. **Test name matches behavior**: Assertions validate what the test name claims to test

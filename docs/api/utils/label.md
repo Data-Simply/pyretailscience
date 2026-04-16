@@ -1,3 +1,3 @@
 # Label Utils
 
-::: pyretailscience.utils.label
+::: openretailscience.utils.label

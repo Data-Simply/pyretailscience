@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyretailscience.analysis.product_association import ProductAssociation
+from openretailscience.analysis.product_association import ProductAssociation
 
 
 @pytest.mark.parametrize(

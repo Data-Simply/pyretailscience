@@ -50,7 +50,7 @@ repos:
       - id: pytest
         name: pytest
         language: system
-        entry: uv run pytest --cov=pyretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration
+        entry: uv run pytest --cov=openretailscience --cov-report=xml --cov-branch tests --ignore=tests/integration
         types: [python]
         pass_filenames: false
-        files: ^pyretailscience/
+        files: ^openretailscience/

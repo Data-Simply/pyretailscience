@@ -1,3 +1,3 @@
 # Price Plot
 
-::: pyretailscience.plots.price
+::: openretailscience.plots.price

@@ -1,3 +1,3 @@
 # Broken Timeline Plot
 
-::: pyretailscience.plots.broken_timeline
+::: openretailscience.plots.broken_timeline

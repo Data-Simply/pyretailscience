@@ -3,7 +3,7 @@
 import ibis
 import pytest
 
-from pyretailscience.analysis.haversine import haversine_distance
+from openretailscience.analysis.haversine import haversine_distance
 
 
 def test_haversine_integration():

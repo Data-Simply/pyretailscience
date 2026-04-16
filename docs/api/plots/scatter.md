@@ -1,3 +1,3 @@
 # Scatter Plot
 
-::: pyretailscience.plots.scatter
+::: openretailscience.plots.scatter

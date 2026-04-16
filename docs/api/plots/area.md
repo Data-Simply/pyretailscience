@@ -1,3 +1,3 @@
 # Area Plot
 
-::: pyretailscience.plots.area
+::: openretailscience.plots.area

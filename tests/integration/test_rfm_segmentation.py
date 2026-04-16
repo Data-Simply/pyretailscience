@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 
-from pyretailscience.segmentation.rfm import RFMSegmentation
+from openretailscience.segmentation.rfm import RFMSegmentation
 
 
 @pytest.mark.parametrize(

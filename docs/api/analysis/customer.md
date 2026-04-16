@@ -1,3 +1,3 @@
 # Customer Analysis
 
-::: pyretailscience.analysis.customer
+::: openretailscience.analysis.customer

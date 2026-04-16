@@ -1,3 +1,3 @@
 # Venn Plot
 
-::: pyretailscience.plots.venn
+::: openretailscience.plots.venn

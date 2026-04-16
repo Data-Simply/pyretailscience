@@ -1,4 +1,4 @@
-"""Tests for pyretailscience.metrics.distribution.acv."""
+"""Tests for openretailscience.metrics.distribution.acv."""
 
 import ibis
 import numpy as np
@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from pyretailscience.metrics.distribution.acv import Acv
-from pyretailscience.options import ColumnHelper
+from openretailscience.metrics.distribution.acv import Acv
+from openretailscience.options import ColumnHelper
 
 cols = ColumnHelper()
 

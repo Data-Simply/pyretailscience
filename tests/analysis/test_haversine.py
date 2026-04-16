@@ -4,7 +4,7 @@ import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.haversine import haversine_distance
+from openretailscience.analysis.haversine import haversine_distance
 
 
 @pytest.fixture

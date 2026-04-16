@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
-from pyretailscience.analysis.revenue_tree import RevenueTree, calc_tree_kpis
-from pyretailscience.options import ColumnHelper, option_context
+from openretailscience.analysis.revenue_tree import RevenueTree, calc_tree_kpis
+from openretailscience.options import ColumnHelper, option_context
 
 
 class TestRevenueTree:

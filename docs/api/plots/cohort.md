@@ -1,3 +1,3 @@
 # Cohort Plot
 
-::: pyretailscience.plots.cohort
+::: openretailscience.plots.cohort

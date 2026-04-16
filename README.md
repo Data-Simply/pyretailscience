@@ -1,11 +1,11 @@
 <!-- README.md -->
-![PyRetailScience Logo](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/logo.png)
+![OpenRetailScience Logo](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/logo.png)
 
-# PyRetailScience
+# OpenRetailScience
 
 ⚡ Rapid bespoke and deep dive retail analytics ⚡
 
-PyRetailScience equips you with a wide array of retail analytical capabilities,
+OpenRetailScience equips you with a wide array of retail analytical capabilities,
 from segmentations to gain-loss analysis. Leave the mundane to us and elevate your role
 from data janitor to insights virtuoso.
 
@@ -14,34 +14,34 @@ from data janitor to insights virtuoso.
 To get the latest release:
 
 ```bash
-pip install pyretailscience
+pip install openretailscience
 ```
 
 Alternatively, if you want the very latest version of the package you can install it from GitHub:
 
 ```bash
-pip install git+https://github.com/Data-Simply/pyretailscience.git
+pip install git+https://github.com/Data-Simply/openretailscience.git
 ```
 
 ## Features
 
 - **Tailored for Retail**: Leverage pre-built functions designed specifically for retail analytics. From customer
-  segmentations to gains loss analysis, PyRetailScience provides over a dozen building blocks you need to tackle
+  segmentations to gains loss analysis, OpenRetailScience provides over a dozen building blocks you need to tackle
   retail-specific challenges efficiently and effectively.
 
-![New Store Cannibalization Analysis](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/new_store_cannibalization.png)
+![New Store Cannibalization Analysis](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/new_store_cannibalization.png)
 
-- **Reliable Results**: Built with extensive unit testing and best practices, PyRetailScience ensures the accuracy
+- **Reliable Results**: Built with extensive unit testing and best practices, OpenRetailScience ensures the accuracy
   and reliability of your analyses. Confidently present your findings, knowing they're backed by a robust,
   well-tested framework.
 
-- **Professional Charts**: Say goodbye to hours of tweaking chart styles. PyRetailScience delivers beautifully
+- **Professional Charts**: Say goodbye to hours of tweaking chart styles. OpenRetailScience delivers beautifully
   standardized visualizations that are presentation-ready with just a few lines of code. Impress stakeholders and
   save time with our pre-built, customizable chart templates.
 
-![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/cross_shop_chart.png)
+![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/cross_shop_chart.png)
 
-- **Workflow Automation**: PyRetailScience streamlines your workflow by automating common retail analytics tasks.
+- **Workflow Automation**: OpenRetailScience streamlines your workflow by automating common retail analytics tasks.
   Easily loop analyses over different dimensions like product categories or countries, and seamlessly use the output
   of one analysis as input for another. Spend less time on data manipulation and more on generating valuable insights.
 
@@ -49,10 +49,10 @@ pip install git+https://github.com/Data-Simply/pyretailscience.git
 
 ### Gains Loss Analysis
 
-Here is an excerpt from the gain loss analysis example [notebook](https://pyretailscience.datasimply.co/examples/gain_loss/)
+Here is an excerpt from the gain loss analysis example [notebook](https://openretailscience.datasimply.co/examples/gain_loss/)
 
 ```python
-from pyretailscience.analysis.gain_loss import GainLoss
+from openretailscience.analysis.gain_loss import GainLoss
 
 gl = GainLoss(
     df,
@@ -81,14 +81,14 @@ gl.plot(
 plt.show()
 ```
 
-![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/gain_loss_chart.png)
+![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/gain_loss_chart.png)
 
 ### Cross Shop Analysis
 
-Here is an excerpt from the cross shop analysis example [notebook](https://pyretailscience.datasimply.co/examples/cross_shop/)
+Here is an excerpt from the cross shop analysis example [notebook](https://openretailscience.datasimply.co/examples/cross_shop/)
 
 ```python
-from pyretailscience.analysis import cross_shop
+from openretailscience.analysis import cross_shop
 
 cs = cross_shop.CrossShop(
     df,
@@ -112,11 +112,11 @@ display(cs.cross_shop_df.head())
 display(cs.cross_shop_table_df)
 ```
 
-![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/cross_shop_chart.png)
+![Cross Shop Analysis Chart](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/cross_shop_chart.png)
 
 ### Customer Retention Analysis
 
-Here is an excerpt from the customer retention analysis example [notebook](https://pyretailscience.datasimply.co/examples/retention/)
+Here is an excerpt from the customer retention analysis example [notebook](https://openretailscience.datasimply.co/examples/retention/)
 
 ```python
 ax = dbp.plot(
@@ -144,22 +144,22 @@ ax.legend().set_visible(False)
 plt.show()
 ```
 
-![Cumulative Next Purchase Chart](https://raw.githubusercontent.com/Data-Simply/pyretailscience/main/readme_assets/days_until_next_purchase.png)
+![Cumulative Next Purchase Chart](https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/days_until_next_purchase.png)
 
 ## Documentation
 
-Please see [this site](https://pyretailscience.datasimply.co/) for full documentation, which includes:
+Please see [this site](https://openretailscience.datasimply.co/) for full documentation, which includes:
 
-- [Analysis Modules](https://pyretailscience.datasimply.co/analysis_modules/): Overview of the framework and the
+- [Analysis Modules](https://openretailscience.datasimply.co/analysis_modules/): Overview of the framework and the
   structure of the docs.
-- [Examples](https://pyretailscience.datasimply.co/examples/retention/): If you're looking to build something
+- [Examples](https://openretailscience.datasimply.co/examples/retention/): If you're looking to build something
   specific or are more of a hands-on learner, check out our examples. This is the best place to get started.
-- [API Reference](https://pyretailscience.datasimply.co/api/gain_loss/): Thorough documentation of every class
+- [API Reference](https://openretailscience.datasimply.co/api/gain_loss/): Thorough documentation of every class
   and method.
 
 ## Contributing
 
-We welcome contributions from the community to enhance and improve PyRetailScience. To contribute, please follow these steps:
+We welcome contributions from the community to enhance and improve OpenRetailScience. To contribute, please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.
@@ -179,8 +179,8 @@ data and retail analytics sophistication, to help them build, scale or streamlin
 
 ## Contributors
 
-<a href="https://github.com/Data-Simply/pyretailscience/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Data-Simply/pyretailscience" alt="Contributors" />
+<a href="https://github.com/Data-Simply/openretailscience/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=Data-Simply/openretailscience" alt="Contributors" />
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
@@ -206,7 +206,7 @@ Built with expertise doing analytics and data science for scale-ups to multi-nat
 
 ## Testing
 
-PyRetailScience includes comprehensive unit and integration tests to ensure reliability across different backends.
+OpenRetailScience includes comprehensive unit and integration tests to ensure reliability across different backends.
 
 ### Unit Tests
 
@@ -223,12 +223,12 @@ uv run pytest
 uv run pytest tests/test_file.py
 
 # Run with coverage
-uv run pytest --cov=pyretailscience
+uv run pytest --cov=openretailscience
 ```
 
 ### Multi-Python Version Testing
 
-PyRetailScience supports Python 3.10, 3.11, 3.12, and 3.13. You can test across all supported versions locally using tox:
+OpenRetailScience supports Python 3.10, 3.11, 3.12, and 3.13. You can test across all supported versions locally using tox:
 
 ```bash
 # Test all supported Python versions

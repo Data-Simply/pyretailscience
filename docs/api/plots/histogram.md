@@ -1,3 +1,3 @@
 # Histogram Plot
 
-::: pyretailscience.plots.histogram
+::: openretailscience.plots.histogram

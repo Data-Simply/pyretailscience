@@ -4,7 +4,7 @@ import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.utils.label import label_by_condition
+from openretailscience.utils.label import label_by_condition
 
 
 class TestLabelByCondition:

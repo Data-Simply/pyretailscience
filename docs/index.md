@@ -1,9 +1,9 @@
 ---
 template: home.html
-title: PyRetailScience
+title: OpenRetailScience
 social:
   cards_layout_options:
-    title: PyRetailScience | Retail Analytics Toolbox
+    title: OpenRetailScience | Retail Analytics Toolbox
 ---
 
-Welcome to PyRetailScience.
+Welcome to OpenRetailScience.

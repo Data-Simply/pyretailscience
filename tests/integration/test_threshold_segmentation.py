@@ -2,8 +2,8 @@
 
 import pytest
 
-from pyretailscience.options import ColumnHelper
-from pyretailscience.segmentation.threshold import ThresholdSegmentation
+from openretailscience.options import ColumnHelper
+from openretailscience.segmentation.threshold import ThresholdSegmentation
 
 cols = ColumnHelper()
 

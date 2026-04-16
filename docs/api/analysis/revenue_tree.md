@@ -1,3 +1,3 @@
 # Customer Analysis
 
-::: pyretailscience.analysis.revenue_tree
+::: openretailscience.analysis.revenue_tree

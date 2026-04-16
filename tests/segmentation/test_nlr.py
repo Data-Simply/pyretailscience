@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from pyretailscience.options import ColumnHelper
-from pyretailscience.segmentation.nlr import (
+from openretailscience.options import ColumnHelper
+from openretailscience.segmentation.nlr import (
     SEGMENT_LAPSED,
     SEGMENT_NEW,
     SEGMENT_REPEATING,

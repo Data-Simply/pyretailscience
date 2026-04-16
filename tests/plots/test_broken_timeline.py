@@ -7,8 +7,8 @@ import pytest
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from pyretailscience.options import get_option
-from pyretailscience.plots import broken_timeline
+from openretailscience.options import get_option
+from openretailscience.plots import broken_timeline
 
 
 @pytest.fixture(autouse=True)

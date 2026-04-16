@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from matplotlib.colors import to_hex
 
-from pyretailscience.plots.index import (
+from openretailscience.plots.index import (
     BASELINE_INDEX,
     filter_by_groups,
     filter_by_value_thresholds,
@@ -15,7 +15,7 @@ from pyretailscience.plots.index import (
     get_indexes,
     plot,
 )
-from pyretailscience.plots.styles.colors import get_named_color
+from openretailscience.plots.styles.colors import get_named_color
 
 OFFSET_THRESHOLD = 5
 

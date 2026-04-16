@@ -1,3 +1,3 @@
 # Gain Loss Analysis
 
-::: pyretailscience.analysis.gain_loss
+::: openretailscience.analysis.gain_loss

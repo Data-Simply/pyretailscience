@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 from matplotlib.text import Text
 
-from pyretailscience.options import option_context
-from pyretailscience.plots import scatter
+from openretailscience.options import option_context
+from openretailscience.plots import scatter
 
 TEST_TITLE_SIZE = 24.0
 TEST_LABEL_SIZE = 14.0

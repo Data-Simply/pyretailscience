@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
-from pyretailscience.plots.period_on_period import plot
-from pyretailscience.plots.styles import graph_utils as gu
+from openretailscience.plots.period_on_period import plot
+from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -31,14 +31,16 @@ def sample_dataframe():
 @pytest.fixture
 def _mock_color_generators(mocker):
     """Mock single color generator."""
-    mocker.patch("pyretailscience.plots.styles.colors.get_single_color_cmap", return_value=cycle(["#FF0000"]))
+    mocker.patch("openretailscience.plots.styles.colors.get_single_color_cmap", return_value=cycle(["#FF0000"]))
 
 
 @pytest.fixture
 def _mock_gu_functions(mocker):
     """Mock graph utility functions."""
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+    mocker.patch(
+        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
+    )
+    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")

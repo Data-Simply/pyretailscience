@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 import toml
 
-import pyretailscience.options as opt
+import openretailscience.options as opt
 
 
 class TestOptions:
@@ -192,10 +192,10 @@ class TestOptions:
     @patch("pathlib.Path.is_dir")
     @patch("pathlib.Path.is_file")
     def test_find_project_root_toml_found(self, mock_is_file, mock_is_dir, mock_cwd):
-        """Test finding the project root when the pyretailscience.toml file is found."""
+        """Test finding the project root when the openretailscience.toml file is found."""
         mock_cwd.return_value = Path("/home/user/project")
         mock_is_dir.side_effect = [False]  # .git directory doesn't exist
-        mock_is_file.side_effect = [True]  # pyretailscience.toml file exists
+        mock_is_file.side_effect = [True]  # openretailscience.toml file exists
         assert opt.find_project_root() == Path("/home/user/project")
 
     @pytest.mark.usefixtures("_reset_lru_cache")
@@ -207,7 +207,7 @@ class TestOptions:
         """Test finding the project root when no project root is found."""
         mock_cwd.return_value = Path("/")
         mock_is_dir.side_effect = [False, False]  # No .git directory
-        mock_is_file.side_effect = [False, False]  # No pyretailscience.toml file
+        mock_is_file.side_effect = [False, False]  # No openretailscience.toml file
         mock_parent.return_value = Path("/")
         assert opt.find_project_root() is None
 
@@ -219,7 +219,7 @@ class TestOptions:
         """Test finding the project root when the project root is found in a parent directory."""
         mock_cwd.return_value = Path("/home/user/project/subdir")
         mock_is_dir.side_effect = [False, True]  # .git directory in parent
-        mock_is_file.side_effect = [False]  # No pyretailscience.toml file
+        mock_is_file.side_effect = [False]  # No openretailscience.toml file
         assert opt.find_project_root() == Path("/home/user/project")
 
     def test_load_option_toml(self):

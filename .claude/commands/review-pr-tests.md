@@ -4,7 +4,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-You are reviewing all Python tests in PR #$1 for the PyRetailScience package.
+You are reviewing all Python tests in PR #$1 for the OpenRetailScience package.
 
 ## Initial Analysis Steps:
 1. **First, check the PR using `gh pr view $1` and `gh pr diff $1`** to see the changes
@@ -15,7 +15,7 @@ You are reviewing all Python tests in PR #$1 for the PyRetailScience package.
    gh pr checkout $1
    ```
 3. **Check if there are any Python test files** in the PR (files matching `test_*.py` or `*_test.py`). If no test files exist, provide a brief note about missing tests
-4. **Identify which PyRetailScience module is being tested** by analyzing the imports and function calls in the code
+4. **Identify which OpenRetailScience module is being tested** by analyzing the imports and function calls in the code
 
 If there are no test files in the PR, respond with:
 ```
@@ -78,7 +78,7 @@ def test_pandas_dataframe():
 
 # GOOD: Tests package's use of the library
 def test_crossshop_analysis():
-    from pyretailscience.crossshop import CrossShop
+    from openretailscience.crossshop import CrossShop
     analyzer = CrossShop(store_col="store_id")
     result = analyzer.fit(df)
     assert result.shape[0] > 0  # Tests that package processes data
@@ -134,7 +134,7 @@ def test_add_positive_numbers(a, b, expected):
 ```
 
 ## 4. Tests That Cover Only Basic Language/Library Features
-Tests that verify fundamental Python or standard library behavior without meaningful connection to PyRetailScience's functionality. These tests essentially verify that Python works as expected.
+Tests that verify fundamental Python or standard library behavior without meaningful connection to OpenRetailScience's functionality. These tests essentially verify that Python works as expected.
 
 **Red Flags:**
 - Tests basic Python operations (list, dict, set operations)
@@ -176,9 +176,9 @@ Tests that assert obvious truths, constants equal themselves, or test definition
 
 **Example:**
 ```python
-# Assuming MAX_STORES = 100 in pyretailscience.config
+# Assuming MAX_STORES = 100 in openretailscience.config
 def test_constant():
-    from pyretailscience.config import MAX_STORES
+    from openretailscience.config import MAX_STORES
     # BAD: Just tests that 100 == 100
     assert MAX_STORES == 100
 
@@ -188,14 +188,14 @@ def test_true_is_true():
     assert 1 == 1
 
 def test_class_name():
-    from pyretailscience.style import BaseStyle
+    from openretailscience.style import BaseStyle
     # BAD: Tests Python's class system, not package behavior
     obj = BaseStyle()
     assert obj.__class__.__name__ == "BaseStyle"
 
 def test_config_values():
     # BAD if CONFIG is just {"debug": False}
-    from pyretailscience import CONFIG
+    from openretailscience import CONFIG
     assert CONFIG["debug"] == False  # Just repeating the definition
 ```
 
@@ -211,34 +211,34 @@ Tests that either have no assertions, only assert True, or have assertions that 
 **Example:**
 ```python
 def test_function_runs():
-    from pyretailscience.segmentation import RFM
+    from openretailscience.segmentation import RFM
     # BAD: No assertions
     rfm = RFM()
     rfm.fit(df)
     # Test passes even if function does nothing or fails silently
 
 def test_function_exists():
-    import pyretailscience.style
+    import openretailscience.style
     # BAD: Only tests existence, not behavior
-    assert hasattr(pyretailscience.style, 'apply_style')
-    assert callable(pyretailscience.style.apply_style)
+    assert hasattr(openretailscience.style, 'apply_style')
+    assert callable(openretailscience.style.apply_style)
 
 def test_always_passes():
-    from pyretailscience.customer_choice import ProductAssociation
+    from openretailscience.customer_choice import ProductAssociation
     # BAD: Assertion can never fail
     pa = ProductAssociation()
     confidence = pa.get_confidence()
     assert confidence >= 0 or confidence < 0  # Always true for any number
 
 def test_object_creation():
-    from pyretailscience.pricing import PriceElasticity
+    from openretailscience.pricing import PriceElasticity
     # BAD: Only tests that no exception is raised
     obj = PriceElasticity()
     assert obj is not None  # Objects are never None after creation
 
 # GOOD: Test actual behavior
 def test_rfm_segmentation():
-    from pyretailscience.segmentation import RFM
+    from openretailscience.segmentation import RFM
     rfm = RFM()
     result = rfm.fit_predict(df)
     assert 'segment' in result.columns  # Verifies actual output
@@ -258,33 +258,33 @@ Tests that mock so extensively that they don't actually test real behavior or in
 **Example:**
 ```python
 def test_crossshop_analysis(mocker):
-    from pyretailscience.crossshop import CrossShop
+    from openretailscience.crossshop import CrossShop
     # BAD: Mocks everything, tests nothing real
-    mocker.patch('pyretailscience.crossshop._validate_data', return_value=True)
-    mocker.patch('pyretailscience.crossshop._calculate_matrix', return_value=pd.DataFrame())
-    mocker.patch('pyretailscience.crossshop._apply_filters', return_value=pd.DataFrame())
-    mocker.patch('pyretailscience.crossshop._format_output', return_value={'result': 'done'})
+    mocker.patch('openretailscience.crossshop._validate_data', return_value=True)
+    mocker.patch('openretailscience.crossshop._calculate_matrix', return_value=pd.DataFrame())
+    mocker.patch('openretailscience.crossshop._apply_filters', return_value=pd.DataFrame())
+    mocker.patch('openretailscience.crossshop._format_output', return_value={'result': 'done'})
 
     cs = CrossShop()
     result = cs.fit(df)
     assert result == {'result': 'done'}  # Only tests that mock returns 'done'
 
 def test_pricing_optimization(mocker):
-    from pyretailscience.pricing import optimize_prices
+    from openretailscience.pricing import optimize_prices
     # BAD: Nothing real is tested
-    mocker.patch('pyretailscience.pricing.validate_input', return_value=True)
-    mocker.patch('pyretailscience.pricing.calculate_elasticity', return_value=1.5)
-    mocker.patch('pyretailscience.pricing.find_optimal', return_value=99.99)
-    mocker.patch('pyretailscience.pricing.apply_constraints', return_value=95.00)
+    mocker.patch('openretailscience.pricing.validate_input', return_value=True)
+    mocker.patch('openretailscience.pricing.calculate_elasticity', return_value=1.5)
+    mocker.patch('openretailscience.pricing.find_optimal', return_value=99.99)
+    mocker.patch('openretailscience.pricing.apply_constraints', return_value=95.00)
 
     result = optimize_prices(product_data)
     assert result == 95.00  # Just testing mock configuration
 
 # GOOD: Mock external dependencies but test real logic
 def test_rfm_with_real_calculation(mocker):
-    from pyretailscience.segmentation import RFM
+    from openretailscience.segmentation import RFM
     # Mock only data loading, not the actual RFM logic
-    mocker.patch('pyretailscience.segmentation.load_data', return_value=test_df)
+    mocker.patch('openretailscience.segmentation.load_data', return_value=test_df)
 
     # Test real RFM calculation logic
     rfm = RFM()
@@ -309,7 +309,7 @@ Tests that check internal data structures, state, or "how" something works rathe
 **Example:**
 ```python
 def test_internal_cache_structure():
-    from pyretailscience.style import StyleCache
+    from openretailscience.style import StyleCache
     # BAD: Tests internal data structure/state
     cache = StyleCache()
     cache.add_style("retail", {"color": "blue"})
@@ -321,7 +321,7 @@ def test_internal_cache_structure():
     assert cache._styles['retail']['format'] == 'processed'
 
 def test_rfm_algorithm_internals():
-    from pyretailscience.segmentation import RFM
+    from openretailscience.segmentation import RFM
     # BAD: Tests HOW algorithm works internally
     rfm = RFM()
     rfm.fit(customer_data)
@@ -332,7 +332,7 @@ def test_rfm_algorithm_internals():
     assert rfm._calculation_order == ['R', 'F', 'M']
 
 def test_internal_validation_calls(mocker):
-    from pyretailscience.crossshop import CrossShop
+    from openretailscience.crossshop import CrossShop
     # BAD: Tests exact execution path
     cs = CrossShop()
     spy = mocker.spy(cs, '_validate_columns')
@@ -342,14 +342,14 @@ def test_internal_validation_calls(mocker):
 
 # GOOD: Test behavior/output, even of private methods
 def test_elasticity_calculation():
-    from pyretailscience.pricing import PriceElasticity
+    from openretailscience.pricing import PriceElasticity
     # GOOD: Testing WHAT a private method produces
     pe = PriceElasticity(base_price=100)
     elasticity = pe._calculate_point_elasticity(95, 1000, 105, 900)
     assert abs(elasticity + 2.0) < 0.01  # Tests mathematical correctness
 
 def test_crossshop_matrix_output():
-    from pyretailscience.crossshop import CrossShop
+    from openretailscience.crossshop import CrossShop
     # GOOD: Tests public behavior
     cs = CrossShop(store_col="store_id")
     result = cs.create_matrix(transaction_data)
@@ -559,7 +559,7 @@ def test_filters_inactive_customers():
 1. **View the PR** using `gh pr view $1` and `gh pr diff $1` to understand the changes
 2. **Optionally checkout the PR** if local examination is needed using `gh pr checkout $1` (this fetches if necessary)
 3. **Check for Python test files** - if none exist, provide guidance on what should be tested based on the PR changes
-4. **Identify the PyRetailScience module under test** by analyzing imports and function calls in the test code
+4. **Identify the OpenRetailScience module under test** by analyzing imports and function calls in the test code
 5. Review each test function in the provided PR
 6. Categorize any problematic tests using the categories above (1-11)
 7. **Highlight the specific problematic code** from each test function
@@ -571,7 +571,7 @@ def test_filters_inactive_customers():
 ## Output Format:
 ```
 ## LANGUAGE: Python
-## PACKAGE UNDER TEST: pyretailscience.[module_name]
+## PACKAGE UNDER TEST: openretailscience.[module_name]
 
 PROBLEMATIC TESTS IDENTIFIED:
 
@@ -597,7 +597,7 @@ The following tests are well-structured and properly test the package functional
 
 SUMMARY:
 - Language: Python
-- Package analyzed: pyretailscience.[module_name]
+- Package analyzed: openretailscience.[module_name]
 - Total tests reviewed: [X]
 - Problematic tests found: [X]
 

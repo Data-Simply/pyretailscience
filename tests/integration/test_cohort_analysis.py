@@ -1,6 +1,6 @@
 """Unified integration tests for Cohort Analysis with multiple database backends."""
 
-from pyretailscience.analysis.cohort import CohortAnalysis
+from openretailscience.analysis.cohort import CohortAnalysis
 
 
 def test_cohort_analysis_integration(transactions_table):

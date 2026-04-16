@@ -7,8 +7,8 @@ import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.options import option_context
-from pyretailscience.utils.date import filter_and_label_by_periods, find_overlapping_periods
+from openretailscience.options import option_context
+from openretailscience.utils.date import filter_and_label_by_periods, find_overlapping_periods
 
 
 class TestFilterAndLabelByPeriods:

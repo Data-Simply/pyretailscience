@@ -2,8 +2,8 @@
 
 import pytest
 
-from pyretailscience.options import get_option, option_context
-from pyretailscience.plots.styles.colors import (
+from openretailscience.options import get_option, option_context
+from openretailscience.plots.styles.colors import (
     get_heatmap_cmap,
     get_named_color,
     get_plot_colors,

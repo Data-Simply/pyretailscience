@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyretailscience.segmentation.segstats import SegTransactionStats
+from openretailscience.segmentation.segstats import SegTransactionStats
 
 
 @pytest.mark.parametrize(

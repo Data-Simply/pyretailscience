@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from pyretailscience.options import ColumnHelper, option_context
-from pyretailscience.segmentation.rfm import RFMSegmentation
+from openretailscience.options import ColumnHelper, option_context
+from openretailscience.segmentation.rfm import RFMSegmentation
 
 cols = ColumnHelper()
 MIN_MONETARY = 500.0

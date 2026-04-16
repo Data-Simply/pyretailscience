@@ -1,6 +1,6 @@
 """Unified integration tests for filter_and_label_by_condition function with multiple database backends."""
 
-from pyretailscience.utils.filter_and_label import filter_and_label_by_condition
+from openretailscience.utils.filter_and_label import filter_and_label_by_condition
 
 SPEND_VALUE = 100
 

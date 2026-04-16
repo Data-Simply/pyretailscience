@@ -1,6 +1,6 @@
 # Welcome Contributors
 
-Hi there! Thank you for even being interested in contributing to PyRetailScience.
+Hi there! Thank you for even being interested in contributing to OpenRetailScience.
 As an open-source project in a rapidly developing field, we are extremely open to contributions—
 whether they involve new features, improved infrastructure, better documentation, or bug fixes.
 
@@ -8,7 +8,7 @@ whether they involve new features, improved infrastructure, better documentation
 
 ### Ways to contribute
 
-There are many ways to contribute to PyRetailScience. Here are some common ways people contribute:
+There are many ways to contribute to OpenRetailScience. Here are some common ways people contribute:
 
 * Documentation: Help improve our docs, including this one!
 * Code: Help us write code, fix bugs, or improve our infrastructure.
@@ -30,7 +30,7 @@ If you notice this happening, please let us know.
 
 ### GitHub Discussions
 
-We have a [discussions](https://github.com/Data-Simply/pyretailscience/discussions) page
+We have a [discussions](https://github.com/Data-Simply/openretailscience/discussions) page
 where users can ask usage questions, discuss design decisions, and propose new features.
 
 If you are able to help answer questions, please do so!

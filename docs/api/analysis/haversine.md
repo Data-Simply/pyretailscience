@@ -1,3 +1,3 @@
 # Haversine Distance
 
-::: pyretailscience.analysis.haversine
+::: openretailscience.analysis.haversine

@@ -4,7 +4,7 @@ import types
 
 import pytest
 
-from pyretailscience.plugin import ExtensibleFunctionResult, PluginManager, plugin_manager
+from openretailscience.plugin import ExtensibleFunctionResult, PluginManager, plugin_manager
 
 
 @plugin_manager.extensible
@@ -26,7 +26,7 @@ def test_extensible_class(monkeypatch):
         pm.register_method(MyClass, "greet", greet)
 
     monkeypatch.setattr(
-        "pyretailscience.plugin.entry_points",
+        "openretailscience.plugin.entry_points",
         lambda group=None: [types.SimpleNamespace(load=lambda: plugin)],
     )
     plugin_manager._plugin_loaded = False
@@ -54,7 +54,7 @@ def test_extensible_function(monkeypatch):
         pm.register_function_extension(get_number, "double", double)
 
     monkeypatch.setattr(
-        "pyretailscience.plugin.entry_points",
+        "openretailscience.plugin.entry_points",
         lambda group=None: [types.SimpleNamespace(load=lambda: plugin)],
     )
     plugin_manager._functions.clear()
@@ -140,7 +140,7 @@ def test_load_all_plugins(monkeypatch):
         pm.register_method(MyClass, "greet", greet)
 
     monkeypatch.setattr(
-        "pyretailscience.plugin.entry_points",
+        "openretailscience.plugin.entry_points",
         lambda group=None: [types.SimpleNamespace(load=lambda: plugin)],
     )
 
@@ -180,7 +180,7 @@ def test_extensible_function_result_getitem():
 def test_plugin_manager_load_plugins_no_plugins(monkeypatch):
     """Ensure _load_all_plugins handles the case of no entry points gracefully."""
     monkeypatch.setattr(
-        "pyretailscience.plugin.entry_points",
+        "openretailscience.plugin.entry_points",
         lambda group=None: [],
     )
     plugin_manager._plugin_loaded = False
@@ -202,7 +202,7 @@ def test_plugin_load_failure(monkeypatch, capsys):
         raise RuntimeError("Boom!")
 
     monkeypatch.setattr(
-        "pyretailscience.plugin.entry_points",
+        "openretailscience.plugin.entry_points",
         lambda group=None: [
             types.SimpleNamespace(name="broken_plugin", load=lambda: broken_plugin),
         ],
@@ -340,7 +340,7 @@ def test_load_all_plugins_general_exception(monkeypatch, capsys):
     def mock_entry_points_error(*args, **kwargs):
         raise ValueError("General error in entry_points")
 
-    monkeypatch.setattr("pyretailscience.plugin.entry_points", mock_entry_points_error)
+    monkeypatch.setattr("openretailscience.plugin.entry_points", mock_entry_points_error)
 
     plugin_manager._plugin_loaded = False
 

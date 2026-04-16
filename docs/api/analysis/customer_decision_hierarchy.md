@@ -1,3 +1,3 @@
 # Customer Decision Hierarchy
 
-::: pyretailscience.analysis.customer_decision_hierarchy
+::: openretailscience.analysis.customer_decision_hierarchy

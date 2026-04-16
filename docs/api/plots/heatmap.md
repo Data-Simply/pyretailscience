@@ -1,3 +1,3 @@
 # Heatmap Plot
 
-::: pyretailscience.plots.heatmap
+::: openretailscience.plots.heatmap

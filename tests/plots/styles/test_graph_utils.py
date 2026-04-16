@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from pyretailscience.plots.styles import graph_utils as gu
+from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)

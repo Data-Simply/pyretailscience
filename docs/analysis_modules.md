@@ -2,7 +2,7 @@
 title: Analysis Modules
 social:
   cards_layout_options:
-    title: PyRetailScience | Retail Analytics Toolbox
+    title: OpenRetailScience | Retail Analytics Toolbox
 ---
 
 ## Plots
@@ -32,7 +32,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.plots import line
+from openretailscience.plots import line
 
 df = pd.DataFrame({
     "months_since_event": range(-5, 6),
@@ -48,7 +48,7 @@ line.plot(
     title="Revenue Trends across Categories",
     x_col="months_since_event",
     group_col=None,
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     move_legend_outside=True,
 )
 ```
@@ -73,7 +73,7 @@ so all lines start at the same x=0 point, regardless of calendar time.
 
 ```python
 import pandas as pd
-from pyretailscience.plots.period_on_period import plot
+from openretailscience.plots.period_on_period import plot
 
 periods = [
     ("2022-01-01", "2022-04-01"),
@@ -105,7 +105,7 @@ plot(
     y_label="Sales",
     title="Period on Period Comparison",
     legend_title="Periods",
-    source_text="Source: PyRetailScience - Sales FY2024",
+    source_text="Source: OpenRetailScience - Sales FY2024",
     move_legend_outside=True,
 )
 ```
@@ -133,7 +133,7 @@ Example:
 ```python
 import pandas as pd
 import numpy as np
-from pyretailscience.plots import area
+from openretailscience.plots import area
 
 periods = 6
 rng = np.random.default_rng(42)
@@ -152,7 +152,7 @@ area.plot(
     y_label="Sales",
     title="Sales Trends by Product Category",
     x_col="transaction_date",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     move_legend_outside=True,
     alpha=0.5,
 )
@@ -181,7 +181,7 @@ Example:
 ```python
 import random
 import pandas as pd
-from pyretailscience.plots import scatter
+from openretailscience.plots import scatter
 
 months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -206,7 +206,7 @@ scatter.plot(
     x_label="",
     y_label="Sales",
     title="Sales, Profit & Expenses Scatter Plot",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     move_legend_outside=True,
     alpha=0.8,
 )
@@ -234,7 +234,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.plots import venn
+from openretailscience.plots import venn
 
 df =  pd.DataFrame({
     "groups": [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (1, 1, 1)],
@@ -246,7 +246,7 @@ venn.plot(
     df,
     labels=labels,
     title="E-commerce Customer Segmentation",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     vary_size=False,
     subset_label_formatter=lambda v: f"{v:.1%}"
 )
@@ -281,7 +281,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from pyretailscience.plots import histogram
+from openretailscience.plots import histogram
 
 df = pd.DataFrame({
     'first_purchase_revenue': np.concatenate([
@@ -298,7 +298,7 @@ histogram.plot(
     title="First Purchase Revenue by Product (£)",
     x_label="Revenue (£)",
     y_label="Number of Customers",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     move_legend_outside=True,
     use_hatch=True
 )
@@ -330,7 +330,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.plots import bar
+from openretailscience.plots import bar
 
 # Example DataFrame with sales data for different product categories
 df = pd.DataFrame({
@@ -348,7 +348,7 @@ bar.plot(
     x_label="Product",
     y_label="Sales (£)",
     data_label_format="percentage_by_bar_group",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     move_legend_outside=True,
     num_digits=3
 )
@@ -375,7 +375,7 @@ complex data stories to stakeholders in an intuitive manner.
 Example:
 
 ```python
-from pyretailscience.plots import waterfall
+from openretailscience.plots import waterfall
 
 labels = ["New", "Continuning", "Churned"]
 amounts = [660000, 420000, -382000]
@@ -384,7 +384,7 @@ waterfall.plot(
     labels=labels,
     amounts=amounts,
     title="New customer growth hiding churn issue",
-    source_text="Source: PyRetailScience - Sales FY2024 vs FY2023",
+    source_text="Source: OpenRetailScience - Sales FY2024 vs FY2023",
     display_net_bar=True,
     rot=0,
 )
@@ -419,7 +419,7 @@ deviations from expected performance, supporting more informed decision-making i
 Example:
 
 ```python
-from pyretailscience.plots import index
+from openretailscience.plots import index
 import pandas as pd
 import numpy as np
 
@@ -482,7 +482,7 @@ Example:
 ```python
 import pandas as pd
 import numpy as np
-from pyretailscience.plots import cohort
+from openretailscience.plots import cohort
 
 cohort_start_dates = [
     "2022-12", "2023-01", "2023-02", "2023-03", "2023-04",
@@ -510,7 +510,7 @@ cohort.plot(
     x_label="Months Since Initial Purchase",
     y_label="Cohort Start Date",
     title="Customer Retention Cohort Analysis",
-    source_text="Source: PyRetailScience - 2024",
+    source_text="Source: OpenRetailScience - 2024",
     cbar_label="Number of Retained Customers",
     percentage=True,
     figsize=(8,8),
@@ -534,7 +534,7 @@ assumptions. They are particularly useful for:
 - **Any 2D Data**: Generic support for visualizing tabular data with automatic label handling
 
 Key features include automatic label rotation for long text, auto-contrast cell text, and consistent styling with
-other PyRetailScience plots. Values are displayed exactly as provided in the DataFrame without formatting assumptions.
+other OpenRetailScience plots. Values are displayed exactly as provided in the DataFrame without formatting assumptions.
 
 </div>
 
@@ -542,7 +542,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.plots import heatmap
+from openretailscience.plots import heatmap
 
 df = pd.DataFrame({
     'Champions': [0.65, 0.25, 0.18, 0.12, 0.08, 0.15, 0.03, 0.02],
@@ -565,7 +565,7 @@ heatmap.plot(
     y_label="Previous Quarter Segment",
     title="Customer Segment Migration Analysis (Quarterly)",
     figsize=(12, 8),
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
 )
 ```
 
@@ -593,7 +593,7 @@ Example:
 import numpy as np
 import pandas as pd
 
-from pyretailscience.plots import time
+from openretailscience.plots import time
 
 # Create a sample DataFrame with 3 groups
 rng = np.random.default_rng(42)
@@ -618,7 +618,7 @@ time.plot(
     title="Monthly Sales by Customer Group",
     y_label="Sales",
     legend_title="Customer Group",
-    source_text="Source: PyRetailScience - Sales FY2024",
+    source_text="Source: OpenRetailScience - Sales FY2024",
     move_legend_outside=True,
 )
 ```
@@ -651,7 +651,7 @@ Example:
 ```python
 import pandas as pd
 import numpy as np
-from pyretailscience.plots import price
+from openretailscience.plots import price
 
 np.random.seed(42)
 df = pd.DataFrame({
@@ -669,7 +669,7 @@ price.plot(
     x_label="Retailers",
     y_label="Price Bands",
     legend_title="Retailers",
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
     move_legend_outside=True,
 )
 ```
@@ -698,7 +698,7 @@ Example:
 ```python
 import pandas as pd
 import numpy as np
-from pyretailscience.plots import broken_timeline
+from openretailscience.plots import broken_timeline
 
 np.random.seed(42)
 
@@ -755,7 +755,7 @@ Example:
 ```python
 import pandas as pd
 import datetime
-from pyretailscience.analysis.cohort import CohortAnalysis
+from openretailscience.analysis.cohort import CohortAnalysis
 
 data = {
     "transaction_id": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -831,7 +831,7 @@ or stock out on associated items when promoting a product.
 Example:
 
 ```python
-from pyretailscience.analysis.product_association import ProductAssociation
+from openretailscience.analysis.product_association import ProductAssociation
 
 pa = ProductAssociation(
     df,
@@ -880,7 +880,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.analysis import cross_shop
+from openretailscience.analysis import cross_shop
 
 data = {
     "customer_id": [1, 2, 3, 4, 5, 5, 6, 9, 7, 7, 8, 9, 5, 8],
@@ -904,7 +904,7 @@ cs_customers = cross_shop.CrossShop(
 
 cs_customers.plot(
     title="Customer Spend Overlap Across Categories",
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
 )
 ```
 
@@ -936,7 +936,7 @@ Example:
 ```python
 import pandas as pd
 import numpy as np
-from pyretailscience.analysis.gain_loss import GainLoss
+from openretailscience.analysis.gain_loss import GainLoss
 
 np.random.seed(42)
 n_customers = 30
@@ -961,7 +961,7 @@ gain_loss = GainLoss(
 gain_loss.plot(
     title="Brand A vs Brand B: Customer Movement Analysis",
     x_label="Revenue Change",
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
     move_legend_outside=True,
 )
 ```
@@ -1005,7 +1005,7 @@ identify true substitutability.
 Example:
 
 ```python
-from pyretailscience.analysis.customer_decision_hierarchy import CustomerDecisionHierarchy
+from openretailscience.analysis.customer_decision_hierarchy import CustomerDecisionHierarchy
 
 cdh = CustomerDecisionHierarchy(df)
 ax = cdh.plot(
@@ -1047,7 +1047,7 @@ Example:
 ```python
 import pandas as pd
 import numpy as np
-from pyretailscience.analysis import revenue_tree
+from openretailscience.analysis import revenue_tree
 
 np.random.seed(42)
 
@@ -1098,15 +1098,15 @@ entirely, or place them in a separate "Zero" segment.
 Example:
 
 ```python
-from pyretailscience.plots import bar
-from pyretailscience.segmentation.hml import HMLSegmentation
+from openretailscience.plots import bar
+from openretailscience.segmentation.hml import HMLSegmentation
 
 seg = HMLSegmentation(df, zero_value_customers="include_with_light")
 
 bar.plot(
     seg.df.groupby("segment_name")["unit_spend"].sum(),
     value_col="unit_spend",
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
     sort_order="descending",
     x_label="",
     y_label="Segment Spend",
@@ -1141,8 +1141,8 @@ them with the lowest segment, exclude them entirely, or place them in a separate
 Example:
 
 ```python
-from pyretailscience.plots import bar
-from pyretailscience.segmentation.threshold import ThresholdSegmentation
+from openretailscience.plots import bar
+from openretailscience.segmentation.threshold import ThresholdSegmentation
 
 # Create custom segmentation with quartiles
 # Define thresholds at 25%, 50%, 75%, and 100% (quartiles)
@@ -1159,7 +1159,7 @@ seg = ThresholdSegmentation(
 bar.plot(
     seg.df.groupby("segment_name")["unit_spend"].sum(),
     value_col="unit_spend",
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
     sort_order="descending",
     x_label="",
     y_label="Segment Spend",
@@ -1184,8 +1184,8 @@ segmentation.
 Example:
 
 ```python
-from pyretailscience.segmentation.segstats import SegTransactionStats
-from pyretailscience.segmentation.hml import HMLSegmentation
+from openretailscience.segmentation.segstats import SegTransactionStats
+from openretailscience.segmentation.hml import HMLSegmentation
 
 # First, segment customers using HML segmentation
 segmentation = HMLSegmentation(my_table, zero_value_customers="include_with_light")
@@ -1237,7 +1237,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.segmentation.nlr import NLRSegmentation
+from openretailscience.segmentation.nlr import NLRSegmentation
 
 data = pd.DataFrame({
     "customer_id": [1, 1, 2, 2, 3, 4, 4, 5],
@@ -1288,7 +1288,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.segmentation.rfm import RFMSegmentation
+from openretailscience.segmentation.rfm import RFMSegmentation
 
 data = pd.DataFrame({
     "customer_id": [1, 1, 2, 2, 3, 3, 3],
@@ -1327,14 +1327,14 @@ like your churn window.
 Example:
 
 ```python
-from pyretailscience.analysis.customer import PurchasesPerCustomer
+from openretailscience.analysis.customer import PurchasesPerCustomer
 
 ppc = PurchasesPerCustomer(transactions)
 
 ppc.plot(
     title="Purchases per Customer",
     percentile_line=0.8,
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
 )
 ```
 
@@ -1386,14 +1386,14 @@ made. This helps reveal critical retention thresholds in the customer lifecycle 
 Example:
 
 ```python
-from pyretailscience.analysis.customer import TransactionChurn
+from openretailscience.analysis.customer import TransactionChurn
 
 tc = TransactionChurn(transactions, churn_period=churn_period)
 
 tc.plot(
     title="Churn Rate by Number of Purchases",
     cumulative=True,
-    source_text="Source: PyRetailScience",
+    source_text="Source: OpenRetailScience",
 )
 ```
 
@@ -1441,7 +1441,7 @@ Example:
 
 ```python
 import pandas as pd
-from pyretailscience.analysis.composite_rank import CompositeRank
+from openretailscience.analysis.composite_rank import CompositeRank
 
 # Create sample data for products with categories
 df = pd.DataFrame({
@@ -1505,7 +1505,7 @@ Example:
 ```python
 import pandas as pd
 import ibis
-from pyretailscience.utils.date import filter_and_label_by_periods
+from openretailscience.utils.date import filter_and_label_by_periods
 
 # Create a sample transactions table
 data = pd.DataFrame({
@@ -1564,7 +1564,7 @@ Example:
 
 ```python
 from datetime import datetime
-from pyretailscience.utils.date import find_overlapping_periods
+from openretailscience.utils.date import find_overlapping_periods
 
 # Example with string input
 overlapping_periods = find_overlapping_periods("2022-06-15", "2025-03-10")
@@ -1602,7 +1602,7 @@ Example:
 ```python
 import pandas as pd
 import ibis
-from pyretailscience.utils.filter_and_label import filter_and_label_by_condition
+from openretailscience.utils.filter_and_label import filter_and_label_by_condition
 
 # Sample product table
 df = pd.DataFrame({
@@ -1662,7 +1662,7 @@ Example:
 ```python
 import pandas as pd
 import ibis
-from pyretailscience.utils.label import label_by_condition
+from openretailscience.utils.label import label_by_condition
 
 # Sample transaction data
 df = pd.DataFrame({

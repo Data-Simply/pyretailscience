@@ -3,7 +3,7 @@
 import ibis
 import pandas as pd
 
-from pyretailscience.utils.filter_and_label import filter_and_label_by_condition
+from openretailscience.utils.filter_and_label import filter_and_label_by_condition
 
 
 def test_filter_and_label_by_condition():

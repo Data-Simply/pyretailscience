@@ -199,7 +199,7 @@ jobs:
     needs: build
     environment:
       name: production
-      url: "https://pypi.org/project/pyretailscience"
+      url: "https://pypi.org/project/openretailscience"
     permissions:
       id-token: write
     steps:
