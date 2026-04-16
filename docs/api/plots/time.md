@@ -1,3 +1,3 @@
 # Time Plot
 
-::: pyretailscience.plots.time
+::: openretailscience.plots.time

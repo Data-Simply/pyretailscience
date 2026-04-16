@@ -1,3 +1,3 @@
 # Waterfall Plot
 
-::: pyretailscience.plots.waterfall
+::: openretailscience.plots.waterfall

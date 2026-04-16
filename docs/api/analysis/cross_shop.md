@@ -1,3 +1,3 @@
 # Cross Shop Analysis
 
-::: pyretailscience.analysis.cross_shop
+::: openretailscience.analysis.cross_shop

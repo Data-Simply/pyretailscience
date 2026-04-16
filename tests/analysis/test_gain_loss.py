@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
-from pyretailscience.analysis.gain_loss import GainLoss
-from pyretailscience.options import option_context
+from openretailscience.analysis.gain_loss import GainLoss
+from openretailscience.options import option_context
 
 
 @pytest.fixture(autouse=True)

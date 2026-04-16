@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from matplotlib.colors import to_hex
 
-from pyretailscience.plots.styles.colors import COLORS
-from pyretailscience.plots.waterfall import format_data_labels, plot
+from openretailscience.plots.styles.colors import COLORS
+from openretailscience.plots.waterfall import format_data_labels, plot
 
 
 class TestWaterfallPlot:

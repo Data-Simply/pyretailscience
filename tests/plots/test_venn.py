@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
-from pyretailscience.plots import venn
-from pyretailscience.plots.styles import graph_utils as gu
+from openretailscience.plots import venn
+from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +29,7 @@ def sample_venn_dataframe():
 @pytest.fixture
 def _mock_gu_functions(mocker):
     mocker.patch(
-        "pyretailscience.plots.styles.graph_utils.add_source_text",
+        "openretailscience.plots.styles.graph_utils.add_source_text",
         side_effect=lambda ax, source_text, is_venn_diagram=False: ax,
     )
 

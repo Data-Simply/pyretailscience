@@ -3,8 +3,8 @@
 import pytest
 from matplotlib import pyplot as plt
 
-from pyretailscience.options import get_option
-from pyretailscience.plots.styles.styling_helpers import PlotStyler
+from openretailscience.options import get_option
+from openretailscience.plots.styles.styling_helpers import PlotStyler
 
 
 class TestPlotStyler:

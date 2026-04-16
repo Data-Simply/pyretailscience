@@ -3,7 +3,7 @@
 import matplotlib.font_manager as fm
 import pytest
 
-from pyretailscience.plots.styles.font_utils import get_font_properties
+from openretailscience.plots.styles.font_utils import get_font_properties
 
 
 class TestFontProperties:

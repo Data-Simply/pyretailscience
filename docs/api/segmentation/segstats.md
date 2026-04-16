@@ -1,3 +1,3 @@
 # SegTransactionStats Segmentation
 
-::: pyretailscience.segmentation.segstats
+::: openretailscience.segmentation.segstats

@@ -8,8 +8,8 @@ import pytest
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from pyretailscience.plots import price
-from pyretailscience.plots.styles import graph_utils as gu
+from openretailscience.plots import price
+from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -55,16 +55,18 @@ def _mock_color_generators(mocker):
     """Mock the color generators for single and multi color maps."""
     single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF", "#FFFF00"])  # Mocked multi-color generator
-    mocker.patch("pyretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("pyretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("openretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
+    mocker.patch("openretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture
 def _mock_gu_functions(mocker):
     """Mock the standard graph utilities functions."""
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+    mocker.patch(
+        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
+    )
+    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
+    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
 
 
 def test_plot_with_empty_dataframe():
@@ -286,7 +288,7 @@ def test_plot_with_bins(simple_price_dataframe, bins):
 def test_plot_basic_functionality(sample_price_dataframe, mocker):
     """Test basic price architecture plot functionality with labels and titles."""
     # Mock standard_graph_styles to capture title and label parameters
-    mock_standard_styles = mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles")
+    mock_standard_styles = mocker.patch("openretailscience.plots.styles.graph_utils.standard_graph_styles")
     mock_standard_styles.side_effect = lambda ax, **kwargs: ax
 
     result_ax = price.plot(

@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyretailscience.options import ColumnHelper, get_option, option_context
-from pyretailscience.segmentation.segstats import SegTransactionStats, cube, rollup
+from openretailscience.options import ColumnHelper, get_option, option_context
+from openretailscience.segmentation.segstats import SegTransactionStats, cube, rollup
 
 cols = ColumnHelper()
 

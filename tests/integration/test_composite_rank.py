@@ -1,6 +1,6 @@
 """Unified integration tests for Composite Rank with multiple database backends."""
 
-from pyretailscience.analysis.composite_rank import CompositeRank
+from openretailscience.analysis.composite_rank import CompositeRank
 
 
 def test_composite_rank_integration(transactions_table):

@@ -3,8 +3,8 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from pyretailscience.options import get_option
-from pyretailscience.plots.tree_diagram import BaseRoundedBox, DetailedTreeNode, SimpleTreeNode, TreeGrid, TreeNode
+from openretailscience.options import get_option
+from openretailscience.plots.tree_diagram import BaseRoundedBox, DetailedTreeNode, SimpleTreeNode, TreeGrid, TreeNode
 
 
 @pytest.fixture(autouse=True)

@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyretailscience.analysis.customer_decision_hierarchy import CustomerDecisionHierarchy
+from openretailscience.analysis.customer_decision_hierarchy import CustomerDecisionHierarchy
 
 
 @pytest.mark.parametrize(

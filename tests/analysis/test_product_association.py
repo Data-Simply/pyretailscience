@@ -3,8 +3,8 @@
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.product_association import ProductAssociation
-from pyretailscience.options import ColumnHelper, option_context
+from openretailscience.analysis.product_association import ProductAssociation
+from openretailscience.options import ColumnHelper, option_context
 
 cols = ColumnHelper()
 

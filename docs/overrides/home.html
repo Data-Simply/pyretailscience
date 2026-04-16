@@ -24,7 +24,7 @@
         <span class="ds-text-primary">There's a better way.</span>
       </h1>
       <p class="ds-hero-body">
-        PyRetailScience is open source retail analytics that runs in your
+        OpenRetailScience is open source retail analytics that runs in your
         database, handles billions of rows, and gives you back control of
         your KPIs.
       </p>
@@ -162,7 +162,7 @@
             <span class="ds-code-dot ds-code-dot--green"></span>
             <span class="ds-code-filename">workflow.py</span>
           </div>
-          <pre class="ds-code-body"><code><span class="kw">from</span> <span class="mod">pyretailscience.analysis</span> <span class="kw">import</span> <span class="cls">customer</span>
+          <pre class="ds-code-body"><code><span class="kw">from</span> <span class="mod">openretailscience.analysis</span> <span class="kw">import</span> <span class="cls">customer</span>
 
 <span class="cmt"># Chain analyses together</span>
 dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
@@ -192,14 +192,14 @@ dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
       Open source, well-tested, and ready for production.
     </p>
     <div class="ds-install-command">
-      <span class="ds-install-prompt">$</span> pip install pyretailscience
+      <span class="ds-install-prompt">$</span> pip install openretailscience
       <button type="button" class="ds-install-copy" aria-label="Copy to clipboard" onclick="copyInstall(this.closest('.ds-install-command'))">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
       </button>
     </div>
     <script>
     function copyInstall(el) {
-      navigator.clipboard.writeText('pip install pyretailscience');
+      navigator.clipboard.writeText('pip install openretailscience');
       var btn = el.querySelector('.ds-install-copy');
       btn.classList.add('copied');
       btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -214,7 +214,7 @@ dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
         Read the Docs
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
       </a>
-      <a href="https://github.com/Data-Simply/pyretailscience" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-text ds-btn-text--on-dark">
+      <a href="https://github.com/Data-Simply/openretailscience" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-text ds-btn-text--on-dark">
         View on GitHub
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
       </a>

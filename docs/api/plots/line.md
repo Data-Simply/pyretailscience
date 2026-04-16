@@ -1,3 +1,3 @@
 # Line Plot
 
-::: pyretailscience.plots.line
+::: openretailscience.plots.line

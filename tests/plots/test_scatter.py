@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
-from pyretailscience.plots import scatter
+from openretailscience.plots import scatter
 
 PERIODS = 6
 RNG = np.random.default_rng(42)
@@ -183,7 +183,7 @@ def test_plot_single_column_series(sample_sales_dataframe):
 
 def test_plot_with_labels_single_series(sample_product_dataframe, mocker):
     """Test scatter plot with labels on single series."""
-    mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
     result_ax = scatter.plot(
         df=sample_product_dataframe,
@@ -245,7 +245,7 @@ def test_plot_with_labels_single_series(sample_product_dataframe, mocker):
 
 def test_plot_with_labels_grouped_series(sample_store_dataframe, mocker):
     """Test scatter plot with labels on grouped series."""
-    mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
     result_ax = scatter.plot(
         df=sample_store_dataframe,
@@ -305,7 +305,7 @@ def test_plot_with_labels_grouped_series(sample_store_dataframe, mocker):
 
 def test_plot_with_labels_custom_kwargs(sample_product_dataframe, mocker):
     """Test scatter plot with custom label_kwargs passed to textalloc."""
-    mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
     custom_kwargs = {
         "nbr_candidates": 100,
@@ -386,7 +386,7 @@ def test_plot_label_validation_errors(sample_product_dataframe, value_col, label
 
 def test_plot_labels_with_nan_values(sample_product_dataframe, mocker):
     """Test scatter plot with labels when data contains NaN values."""
-    mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
     # Add some NaN values to test filtering
     df_with_nan = sample_product_dataframe.copy()
@@ -412,7 +412,7 @@ def test_plot_labels_with_nan_values(sample_product_dataframe, mocker):
 
 def test_plot_labels_using_index_as_x(sample_product_dataframe, mocker):
     """Test scatter plot with labels using index as x-axis."""
-    mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
     result_ax = scatter.plot(
         df=sample_product_dataframe,
@@ -443,7 +443,7 @@ def test_plot_labels_using_index_as_x(sample_product_dataframe, mocker):
 
 def test_plot_without_labels_no_textalloc_called(sample_product_dataframe, mocker):
     """Test that textalloc is not called when no labels are specified."""
-    mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
     result_ax = scatter.plot(
         df=sample_product_dataframe,
@@ -715,7 +715,7 @@ class TestBubbleChartFeature:
 
     def test_bubble_chart_with_labels(self, bubble_chart_dataframe, mocker):
         """Test bubble chart works correctly with point labels."""
-        mock_textalloc = mocker.patch("pyretailscience.plots.scatter.ta.allocate")
+        mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
 
         result_ax = scatter.plot(
             df=bubble_chart_dataframe,

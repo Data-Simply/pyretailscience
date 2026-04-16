@@ -1,12 +1,12 @@
-"""Tests for pyretailscience.metrics.distribution.pct_of_stores."""
+"""Tests for openretailscience.metrics.distribution.pct_of_stores."""
 
 import ibis
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from pyretailscience.metrics.distribution.pct_of_stores import PctOfStores
-from pyretailscience.options import ColumnHelper, get_option
+from openretailscience.metrics.distribution.pct_of_stores import PctOfStores
+from openretailscience.options import ColumnHelper, get_option
 
 cols = ColumnHelper()
 stores_col = get_option("column.agg.store_id")

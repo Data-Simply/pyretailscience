@@ -1,10 +1,10 @@
-"""Tests for pyretailscience.utils.validation."""
+"""Tests for openretailscience.utils.validation."""
 
 import ibis
 import pandas as pd
 import pytest
 
-from pyretailscience.utils.validation import ensure_ibis_table, validate_columns
+from openretailscience.utils.validation import ensure_ibis_table, validate_columns
 
 
 class TestValidateColumns:

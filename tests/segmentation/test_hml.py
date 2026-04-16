@@ -3,8 +3,8 @@
 import pandas as pd
 import pytest
 
-from pyretailscience.options import ColumnHelper, get_option
-from pyretailscience.segmentation.hml import HMLSegmentation
+from openretailscience.options import ColumnHelper, get_option
+from openretailscience.segmentation.hml import HMLSegmentation
 
 cols = ColumnHelper()
 

@@ -1,6 +1,6 @@
 # Plot Gallery
 
-PyRetailScience provides a comprehensive set of plotting functions designed specifically for retail analytics. All plots
+OpenRetailScience provides a comprehensive set of plotting functions designed specifically for retail analytics. All plots
 use a consistent API and come pre-styled with retail-friendly color schemes and professional styling.
 
 ## Plot Types

@@ -2,8 +2,8 @@
 
 import pytest
 
-from pyretailscience.analysis.revenue_tree import RevenueTree
-from pyretailscience.options import ColumnHelper
+from openretailscience.analysis.revenue_tree import RevenueTree
+from openretailscience.options import ColumnHelper
 
 cols = ColumnHelper()
 

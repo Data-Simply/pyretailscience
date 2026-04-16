@@ -7,13 +7,13 @@ Different retailers call the same thing by different names. A customer identifie
 `basket_value`, and so on. Additionally, the metrics created could also have different names. Revenue per transaction
 may be called `AOV` or `average_order_value` in one retailer and `spend_per_basket` in another.
 
-PyRetailScience solves this by using **standard internal names that are overridable** through an options system.
+OpenRetailScience solves this by using **standard internal names that are overridable** through an options system.
 This allows the same analysis code to run on many different retailers' data without modification - you simply
 configure the options to match your column names.
 
 Options can be set:
 
-- **Globally** for an entire run using a `pyretailscience.toml` file
+- **Globally** for an entire run using a `openretailscience.toml` file
 - **Temporarily** using the `option_context()` context manager
 
 ## Three Solutions
@@ -62,12 +62,12 @@ df = df.rename(columns={
 !!! info "Best for"
     Scripts where you want to keep your original column names throughout.
 
-Tell PyRetailScience what your column names are using `option_context()`. This doesn't rename your columns - it
-configures PyRetailScience's internal settings to look for your column names instead of the defaults:
+Tell OpenRetailScience what your column names are using `option_context()`. This doesn't rename your columns - it
+configures OpenRetailScience's internal settings to look for your column names instead of the defaults:
 
 ```python
-from pyretailscience.options import option_context
-from pyretailscience.analysis.gain_loss import GainLoss
+from openretailscience.options import option_context
+from openretailscience.analysis.gain_loss import GainLoss
 
 # Your data has different column names - no need to rename!
 with option_context(
@@ -76,7 +76,7 @@ with option_context(
     "column.unit_spend", "revenue",
     "column.transaction_date", "trans_dt"
 ):
-    # PyRetailScience uses your column names within this block
+    # OpenRetailScience uses your column names within this block
     gl = GainLoss(
         df,
         p1_index=period_1,
@@ -101,12 +101,12 @@ with option_context(
 !!! success "Best for"
     Projects with consistent column naming, team collaboration, and avoiding repetitive configuration.
 
-Create a `pyretailscience.toml` file in your project root to tell PyRetailScience what your column names are. This
-doesn't rename your columns - it configures PyRetailScience's internal settings to automatically use your column names
+Create a `openretailscience.toml` file in your project root to tell OpenRetailScience what your column names are. This
+doesn't rename your columns - it configures OpenRetailScience's internal settings to automatically use your column names
 throughout the project:
 
 ```toml
-# pyretailscience.toml
+# openretailscience.toml
 [column]
 customer_id = "cust_id"
 product_id = "SKU"
@@ -123,11 +123,11 @@ percent = "pct"
 difference = "diff"
 ```
 
-PyRetailScience **automatically loads this configuration** when imported:
+OpenRetailScience **automatically loads this configuration** when imported:
 
 ```python
-# No configuration needed - loads from pyretailscience.toml automatically!
-from pyretailscience.analysis.gain_loss import GainLoss
+# No configuration needed - loads from openretailscience.toml automatically!
+from openretailscience.analysis.gain_loss import GainLoss
 
 # Works directly with your column names
 gl = GainLoss(
@@ -144,11 +144,11 @@ gl = GainLoss(
 
 ## TOML Configuration
 
-For persistent configuration across your project, use a `pyretailscience.toml` file.
+For persistent configuration across your project, use a `openretailscience.toml` file.
 
 ### Creating a Configuration File
 
-Create a file named `pyretailscience.toml` in your project root (same directory as `.git`):
+Create a file named `openretailscience.toml` in your project root (same directory as `.git`):
 
 ```toml
 [column]
@@ -183,18 +183,18 @@ The configuration uses nested sections that reflect the structure of the option 
 
 ### How TOML Loading Works
 
-PyRetailScience automatically searches for `pyretailscience.toml`:
+OpenRetailScience automatically searches for `openretailscience.toml`:
 
 1. Starts in current working directory
 2. Walks up the directory tree
-3. Stops when it finds `.git` directory or `pyretailscience.toml`
+3. Stops when it finds `.git` directory or `openretailscience.toml`
 4. Loads configuration if found
 
 **No manual loading required** - it happens automatically on import!
 
 ### Template File
 
-Use `options_template.toml` in the [PyRetailScience repository](https://github.com/Data-Simply/pyretailscience/blob/main/options_template.toml)
+Use `options_template.toml` in the [OpenRetailScience repository](https://github.com/Data-Simply/openretailscience/blob/main/options_template.toml)
 as a starting point. It shows all available options with their default values.
 
 ## Available Option Categories
@@ -262,14 +262,14 @@ Standard suffixes for period comparisons and calculations:
 ### ColumnHelper
 
 !!! warning "Internal API"
-    The `ColumnHelper` class is designed for **internal use within PyRetailScience modules**. End users
+    The `ColumnHelper` class is designed for **internal use within OpenRetailScience modules**. End users
     shouldn't use it directly.
 
-The `ColumnHelper` class is used internally by PyRetailScience modules to construct consistent column names in a less
+The `ColumnHelper` class is used internally by OpenRetailScience modules to construct consistent column names in a less
 verbose way than combining many `get_option` calls:
 
 ```python
-from pyretailscience.options import ColumnHelper
+from openretailscience.options import ColumnHelper
 
 # Internal usage example (you typically won't need this)
 cols = ColumnHelper()
@@ -303,14 +303,14 @@ The nested structure mirrors the configuration hierarchy:
 - Aggregation columns: Nested access (`cols.agg.customer_id`)
 - Calculated columns: Nested access (`cols.calc.spend_per_cust`)
 
-This ensures that all PyRetailScience functions use the same column naming conventions you've configured.
+This ensures that all OpenRetailScience functions use the same column naming conventions you've configured.
 
 ### get_option()
 
-Retrieve the current value of an option. This is used internally throughout PyRetailScience.
+Retrieve the current value of an option. This is used internally throughout OpenRetailScience.
 
 ```python
-from pyretailscience.options import get_option
+from openretailscience.options import get_option
 
 # Get current column name mapping
 customer_col = get_option("column.customer_id")
@@ -324,12 +324,12 @@ print(customer_col)  # Output: customer_id (or your configured value)
 Permanently set an option value (until reset or script ends).
 
 ```python
-from pyretailscience.options import set_option
+from openretailscience.options import set_option
 
 # Change customer ID column globally
 set_option("column.customer_id", "cust_id")
 
-# All subsequent PyRetailScience calls use "cust_id"
+# All subsequent OpenRetailScience calls use "cust_id"
 ```
 
 **When you might use this:** Quick experiments in notebooks. For production code, use `option_context()` or TOML instead.
@@ -339,7 +339,7 @@ set_option("column.customer_id", "cust_id")
 Reset an option back to its default value.
 
 ```python
-from pyretailscience.options import reset_option
+from openretailscience.options import reset_option
 
 # Restore default
 reset_option("column.customer_id")  # Back to "customer_id"
@@ -352,7 +352,7 @@ reset_option("column.customer_id")  # Back to "customer_id"
 List all available option names.
 
 ```python
-from pyretailscience.options import list_options
+from openretailscience.options import list_options
 
 # See all configurable options
 all_options = list_options()
@@ -366,7 +366,7 @@ print(all_options)
 Get detailed information about a specific option.
 
 ```python
-from pyretailscience.options import describe_option
+from openretailscience.options import describe_option
 
 # Get description and current value
 info = describe_option("column.customer_id")
@@ -390,11 +390,11 @@ ValueError: Unknown option: column.custom_field
 
 ### TOML Not Loading
 
-If changes in `pyretailscience.toml` are not taking effect:
+If changes in `openretailscience.toml` are not taking effect:
 
 1. Ensure file is in project root (same directory as `.git`)
 2. Restart Python kernel/session (options load on import)
-3. Clear LRU cache: `from pyretailscience.options import find_project_root; find_project_root.cache_clear()`
+3. Clear LRU cache: `from openretailscience.options import find_project_root; find_project_root.cache_clear()`
 
 ### Column Not Found in Data
 

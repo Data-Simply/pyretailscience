@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyretailscience.analysis.cross_shop import CrossShop
+from openretailscience.analysis.cross_shop import CrossShop
 
 
 @pytest.mark.parametrize(

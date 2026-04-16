@@ -1,3 +1,3 @@
 # Product Associations
 
-::: pyretailscience.analysis.product_association
+::: openretailscience.analysis.product_association

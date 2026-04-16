@@ -1,3 +1,3 @@
 # Bar Plot
 
-::: pyretailscience.plots.bar
+::: openretailscience.plots.bar

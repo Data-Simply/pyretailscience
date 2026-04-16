@@ -1,3 +1,3 @@
 # Styling Helpers
 
-::: pyretailscience.plots.styles.styling_helpers
+::: openretailscience.plots.styles.styling_helpers

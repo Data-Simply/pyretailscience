@@ -1,3 +1,3 @@
 # Index Plot
 
-::: pyretailscience.plots.index
+::: openretailscience.plots.index

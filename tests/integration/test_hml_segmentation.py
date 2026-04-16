@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyretailscience.segmentation.hml import HMLSegmentation
+from openretailscience.segmentation.hml import HMLSegmentation
 
 
 @pytest.mark.parametrize(

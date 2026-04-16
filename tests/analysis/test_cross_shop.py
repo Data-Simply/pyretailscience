@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.cross_shop import CrossShop
-from pyretailscience.options import ColumnHelper, option_context
+from openretailscience.analysis.cross_shop import CrossShop
+from openretailscience.options import ColumnHelper, option_context
 
 # Test constants
 TWO_GROUPS = 2
@@ -297,7 +297,7 @@ def test_group_3_only_one_side_provided(sample_data):
         )
 
 
-@patch("pyretailscience.plots.venn.plot")
+@patch("openretailscience.plots.venn.plot")
 def test_plot_passes_parameters_correctly(mock_venn_plot, sample_data):
     """Test that the plot method passes parameters correctly to venn.plot."""
     cross_shop = CrossShop(
@@ -344,7 +344,7 @@ def test_plot_passes_parameters_correctly(mock_venn_plot, sample_data):
 
 def test_plot_with_default_labels(sample_data):
     """Test that plot generates default alphabetical labels when none are provided."""
-    with patch("pyretailscience.plots.venn.plot") as mock_venn_plot:
+    with patch("openretailscience.plots.venn.plot") as mock_venn_plot:
         cross_shop = CrossShop(
             df=sample_data,
             group_1_col="category_1_name",
@@ -361,7 +361,7 @@ def test_plot_with_default_labels(sample_data):
 
 def test_plot_with_default_labels_three_groups(sample_data):
     """Test that plot generates default alphabetical labels for three groups."""
-    with patch("pyretailscience.plots.venn.plot") as mock_venn_plot:
+    with patch("openretailscience.plots.venn.plot") as mock_venn_plot:
         cross_shop = CrossShop(
             df=sample_data,
             group_1_col="category_1_name",
@@ -444,7 +444,7 @@ def test_cross_shop_with_custom_value_col_and_agg_func(sample_data):
 
 def test_plot_with_additional_kwargs(sample_data):
     """Test plot method passing through additional kwargs to venn.plot."""
-    with patch("pyretailscience.plots.venn.plot") as mock_venn_plot:
+    with patch("openretailscience.plots.venn.plot") as mock_venn_plot:
         cross_shop = CrossShop(
             df=sample_data,
             group_1_col="category_1_name",

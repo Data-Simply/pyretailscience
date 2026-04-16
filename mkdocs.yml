@@ -1,7 +1,7 @@
-site_name: PyRetailScience
-site_url: https://pyretailscience.datasimply.co
-repo_url: https://github.com/Data-Simply/pyretailscience
-repo_name: Data-Simply/pyretailscience
+site_name: OpenRetailScience
+site_url: https://openretailscience.datasimply.co
+repo_url: https://github.com/Data-Simply/openretailscience
+repo_name: Data-Simply/openretailscience
 
 nav:
   - Home: index.md
@@ -143,8 +143,8 @@ extra:
       make our documentation better.
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/Data-Simply/pyretailscience
-      name: PyRetailScience on GitHub
+      link: https://github.com/Data-Simply/openretailscience
+      name: OpenRetailScience on GitHub
 
 copyright: |
   &copy; 2025 <a href="https://datasimply.co"  target="_blank" rel="noopener">Murray Vanwyk</a> -

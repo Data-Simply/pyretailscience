@@ -1,5 +1,5 @@
 # Distribution Metrics
 
-::: pyretailscience.metrics.distribution.acv
+::: openretailscience.metrics.distribution.acv
 
-::: pyretailscience.metrics.distribution.pct_of_stores
+::: openretailscience.metrics.distribution.pct_of_stores

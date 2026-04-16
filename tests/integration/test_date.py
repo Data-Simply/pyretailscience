@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from pyretailscience.utils.date import filter_and_label_by_periods
+from openretailscience.utils.date import filter_and_label_by_periods
 
 
 def test_filter_and_label_by_periods_integration(transactions_table):

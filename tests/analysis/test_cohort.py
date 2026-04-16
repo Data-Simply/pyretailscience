@@ -6,8 +6,8 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-from pyretailscience.analysis.cohort import CohortAnalysis
-from pyretailscience.options import option_context
+from openretailscience.analysis.cohort import CohortAnalysis
+from openretailscience.options import option_context
 
 
 class TestCohortAnalysis:

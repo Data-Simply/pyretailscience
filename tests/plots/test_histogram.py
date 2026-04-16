@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
-from pyretailscience.plots import histogram
-from pyretailscience.plots.styles import graph_utils as gu
+from openretailscience.plots import histogram
+from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -40,16 +40,18 @@ def sample_series():
 def _mock_color_generators(mocker):
     """Mock the color generator for multi color maps."""
     multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator
-    mocker.patch("pyretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
+    mocker.patch("openretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
 
 
 @pytest.fixture
 def _mock_gu_functions(mocker):
     """Mock standard graph utilities functions."""
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-    mocker.patch("pyretailscience.plots.styles.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
+    mocker.patch(
+        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
+    )
+    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
+    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
+    mocker.patch("openretailscience.plots.styles.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
 
 
 @pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")

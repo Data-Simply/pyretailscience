@@ -5,8 +5,8 @@ import datetime
 import pandas as pd
 import pytest
 
-from pyretailscience.analysis.customer import DaysBetweenPurchases, PurchasesPerCustomer, TransactionChurn
-from pyretailscience.options import option_context
+from openretailscience.analysis.customer import DaysBetweenPurchases, PurchasesPerCustomer, TransactionChurn
+from openretailscience.options import option_context
 
 
 @pytest.fixture

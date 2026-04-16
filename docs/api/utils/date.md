@@ -1,3 +1,3 @@
 # Date Utils
 
-::: pyretailscience.utils.date
+::: openretailscience.utils.date
