@@ -1,5 +1,13 @@
 name: Page Deploy
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "openretailscience/**"
+      - "CNAME"
   workflow_call:
   workflow_dispatch:
 
