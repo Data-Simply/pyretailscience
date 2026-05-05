@@ -38,211 +38,182 @@ def _extract_r2_from_plot(ax: plt.Axes) -> float:
     pytest.fail("R² text not found in plot annotations")
 
 
-def test_human_format_basic():
-    """Test basic human_format functionality."""
-    assert gu.human_format(500) == "500"  # No suffix
-    assert gu.human_format(1500) == "2K"  # Rounds to nearest thousand
-    assert gu.human_format(1500000) == "2M"  # Rounds to nearest million
+@pytest.mark.parametrize(
+    ("num", "decimals", "prefix", "expected"),
+    [
+        # Sub-thousand values get no suffix.
+        (0, 0, "", "0"),
+        (0.001, 0, "", "0"),
+        (500, 0, "", "500"),
+        (999, 0, "", "999"),
+        # Magnitude suffixes (K/M/B/T) at exact boundaries and rounded values.
+        (1000, 0, "", "1K"),
+        (1500, 0, "", "2K"),
+        (1500000, 0, "", "2M"),
+        (1000000, 0, "", "1M"),
+        (1000000000, 0, "", "1B"),
+        (1000000000000, 0, "", "1T"),
+        # Decimals control precision and trailing-zero stripping.
+        (1000, 2, "", "1K"),
+        (1500, 2, "", "1.5K"),
+        (1500000, 1, "", "1.5M"),
+        (1500000, 3, "", "1.5M"),
+        (1234567, 0, "", "1M"),
+        (1234567, 2, "", "1.23M"),
+        (1234567, 3, "", "1.235M"),
+        (1234567, 4, "", "1.2346M"),
+        # Prefixes prepend to the formatted number.
+        (500, 0, "¥", "¥500"),
+        (1500, 0, "$", "$2K"),
+        (1500000, 0, "€", "€2M"),
+        # Negative numbers preserve sign through formatting.
+        (-1000, 0, "", "-1K"),
+        (-1500, 0, "", "-2K"),
+        (-1000000, 0, "", "-1M"),
+        (-1500000, 1, "", "-1.5M"),
+        (-1234567, 3, "", "-1.235M"),
+        (-1000000000, 0, "", "-1B"),
+        (-1000000000, 2, "", "-1B"),
+        # Values that round up to the next magnitude get promoted.
+        (999.999, 0, "", "1K"),
+        (999.999, 2, "", "1K"),
+        (999999.999, 0, "", "1M"),
+        (1000.0, 0, "", "1K"),
+        # Within the predefined suffix range; "P" is the last predefined suffix.
+        (10**15, 0, "", "1P"),
+        (10**16, 0, "", "10P"),
+        (10**17, 0, "", "100P"),
+        # Beyond the predefined suffixes, the number keeps growing under the "P" suffix.
+        (10**18, 0, "", "1000P"),
+        (10**19, 0, "", "10000P"),
+        (-(10**18), 0, "", "-1000P"),
+    ],
+)
+def test_format_shorthand(num, decimals, prefix, expected):
+    """format_shorthand renders numbers with K/M/B/T/P suffixes, decimals, prefixes, and sign handling."""
+    assert gu.format_shorthand(num, decimals=decimals, prefix=prefix) == expected
 
 
-def test_human_format_with_decimals():
-    """Test human_format with decimals."""
-    assert gu.human_format(1500, decimals=2) == "1.5K"
-    assert gu.human_format(1500000, decimals=1) == "1.5M"
-    assert gu.human_format(1500000, decimals=3) == "1.5M"
-    assert gu.human_format(1234567, decimals=3) == "1.235M"
-    assert gu.human_format(1234567, decimals=4) == "1.2346M"
+@pytest.mark.parametrize(
+    ("num_str", "digits", "expected"),
+    [
+        # No truncation needed: input already fits within the digit budget.
+        ("1.5K", 2, "1.5K"),
+        ("1.25M", 3, "1.25M"),
+        ("1M", 1, "1M"),
+        ("10.25M", 4, "10.25M"),
+        ("123", 3, "123"),
+        ("12.345", 5, "12.345"),
+        ("999", 3, "999"),
+        ("1.234M", 4, "1.234M"),
+        ("1.234B", 4, "1.234B"),
+        # Truncation drops trailing decimal digits while preserving suffix.
+        ("10.25M", 3, "10.2M"),
+        ("10.99M", 3, "10.9M"),
+        ("1.234K", 2, "1.2K"),
+        ("5.678M", 3, "5.67M"),
+        ("9.999B", 2, "9.9B"),
+        ("1.234P", 2, "1.2P"),
+        ("0.9999", 3, "0.99"),
+        ("999.999K", 4, "999.9K"),
+        ("100.0001M", 4, "100M"),
+        # Trailing zeros are stripped after truncation.
+        ("1.500", 3, "1.5"),
+        ("1.230K", 4, "1.23K"),
+        ("10.000", 2, "10"),
+        # Integer parts longer than the digit budget are returned untouched.
+        ("500", 2, "500"),
+        ("12345", 3, "12345"),
+        # Zero values pass through unchanged.
+        ("0", 2, "0"),
+        ("0K", 2, "0K"),
+        # Negative numbers preserve sign.
+        ("-1.5K", 2, "-1.5K"),
+        ("-1.234M", 3, "-1.23M"),
+        # Very small numbers truncate to zero or retain precision when budget allows.
+        ("0.001", 2, "0"),
+        ("0.000009", 7, "0.000009"),
+    ],
+)
+def test_truncate_to_x_digits(num_str, digits, expected):
+    """truncate_to_x_digits keeps the first `digits` significant digits of a formatted number."""
+    assert gu.truncate_to_x_digits(num_str, digits) == expected
 
 
-def test_human_format_with_prefix():
-    """Test human_format with a prefix."""
-    assert gu.human_format(1500, prefix="$") == "$2K"
-    assert gu.human_format(1500000, prefix="€") == "€2M"
-    assert gu.human_format(500, prefix="¥") == "¥500"
-
-
-def test_human_format_magnitude_promotion():
-    """Test human_format with magnitude promotion."""
-    assert gu.human_format(1000000) == "1M"
-    assert gu.human_format(1000000000) == "1B"
-    assert gu.human_format(1000, decimals=2) == "1K"  # Does not promote when unnecessary
-
-
-def test_human_format_edge_zero():
-    """Test human_format with edge cases involving zero."""
-    assert gu.human_format(0) == "0"
-
-
-def test_human_format_negative_numbers():
-    """Test human_format with negative numbers."""
-    assert gu.human_format(-1500) == "-2K"
-    assert gu.human_format(-1500000, decimals=1) == "-1.5M"
-    assert gu.human_format(-1234567, decimals=3) == "-1.235M"
-    assert gu.human_format(-1000000000, decimals=2) == "-1B"
-
-
-def test_human_format_very_small_numbers():
-    """Test human_format with very small numbers."""
-    assert gu.human_format(0.001) == "0"  # No suffix, rounds to 0
-    assert gu.human_format(999.999, decimals=2) == "1K"  # Just below 1000 but rounds up
-
-
-def test_human_format_large_numbers():
-    """Test human_format with very large numbers."""
-    assert gu.human_format(10**15) == "1P"  # P for petabyte scale numbers
-    assert gu.human_format(10**17) == "100P"  # Even larger, stays in petabyte scale
-
-
-def test_human_format_no_suffix_needed():
-    """Test human_format with numbers that don't need a suffix."""
-    assert gu.human_format(999) == "999"
-    assert gu.human_format(500) == "500"
-
-
-def test_human_format_exactly_1000():
-    """Test human_format with numbers that are exactly multiples of 1000."""
-    assert gu.human_format(1000) == "1K"
-    assert gu.human_format(1000000) == "1M"
-    assert gu.human_format(1000000000) == "1B"
-
-
-def test_human_format_multiple_promotions():
-    """Test human_format with multiple magnitude promotions."""
-    assert gu.human_format(1000000000) == "1B"  # 1,000,000,000 -> 1B
-    assert gu.human_format(1000000000000) == "1T"  # 1,000,000,000,000 -> 1T
-
-
-def test_human_format_decimal_rounding():
-    """Test human_format with decimal rounding."""
-    assert gu.human_format(1234567, decimals=4) == "1.2346M"  # Rounding to four decimals
-    assert gu.human_format(1234567, decimals=2) == "1.23M"  # Rounding to two decimals
-    assert gu.human_format(1234567, decimals=0) == "1M"  # No decimals
-
-
-def test_human_format_suffix_upper_bound():
-    """Test human_format with the largest suffix provided."""
-    assert gu.human_format(10**15) == "1P"  # Largest suffix provided is "P"
-    assert gu.human_format(10**16) == "10P"  # Stay in P range
-
-
-def test_human_format_negative_magnitude_promotion():
-    """Test human_format with negative numbers that promote magnitude."""
-    assert gu.human_format(-1000000) == "-1M"
-    assert gu.human_format(-1000000000) == "-1B"
-    assert gu.human_format(-1000) == "-1K"
-
-
-def test_human_format_decimal_edge_cases():
-    """Test human_format with edge cases involving decimals."""
-    assert gu.human_format(999.999, decimals=0) == "1K"  # Rounds up to 1000
-    assert gu.human_format(999999.999, decimals=0) == "1M"  # Rounds to next magnitude
-    assert gu.human_format(1000.0, decimals=0) == "1K"  # Exactly at boundary
-
-
-def test_truncate_to_x_digits_basic():
-    """Test basic truncate_to_x_digits functionality."""
-    assert gu.truncate_to_x_digits("1.5K", 2) == "1.5K"
-    assert gu.truncate_to_x_digits("1.25M", 3) == "1.25M"
-    assert gu.truncate_to_x_digits("1M", 1) == "1M"
-    assert gu.truncate_to_x_digits("10.25M", 3) == "10.2M"
-    assert gu.truncate_to_x_digits("10.25M", 4) == "10.25M"
-    assert gu.truncate_to_x_digits("10.99M", 3) == "10.9M"
-    assert gu.truncate_to_x_digits("1.234K", 2) == "1.2K"
-    assert gu.truncate_to_x_digits("5.678M", 3) == "5.67M"
-    assert gu.truncate_to_x_digits("9.999B", 2) == "9.9B"
-
-
-def test_truncate_to_x_digits_number_greater_than_digits():
-    """Test truncate_to_x_digits with number greater than digits."""
-    assert gu.truncate_to_x_digits("500", 2) == "500"
-    assert gu.truncate_to_x_digits("12345", 3) == "12345"
-
-
-def test_truncate_to_x_digits_edge_zero():
-    """Test truncate_to_x_digits with edge cases involving zero."""
-    assert gu.truncate_to_x_digits("0", 2) == "0"
-    assert gu.truncate_to_x_digits("0K", 2) == "0K"
-
-
-def test_truncate_to_x_digits_negative_numbers():
-    """Test truncate_to_x_digits with negative numbers."""
-    assert gu.truncate_to_x_digits("-1.5K", 2) == "-1.5K"
-    assert gu.truncate_to_x_digits("-1.234M", 3) == "-1.23M"
-
-
-def test_truncate_to_x_digits_very_small_numbers():
-    """Test truncate_to_x_digits with very small numbers."""
-    assert gu.truncate_to_x_digits("0.001", 2) == "0"
-    assert gu.truncate_to_x_digits("0.000009", 7) == "0.000009"
-
-
-def test_truncate_to_x_digits_large_numbers():
-    """Test truncate_to_x_digits with very large numbers."""
-    assert gu.truncate_to_x_digits("1.234B", 4) == "1.234B"  # Truncate large numbers
-    assert gu.truncate_to_x_digits("1.234P", 2) == "1.2P"  # Truncate large numbers with suffix
-
-
-def test_truncate_to_x_digits_no_truncation_needed():
-    """Test truncate_to_x_digits with no truncation needed."""
-    assert gu.truncate_to_x_digits("123", 3) == "123"
-    assert gu.truncate_to_x_digits("12.345", 5) == "12.345"
-
-
-def test_truncate_to_x_digits_exact_digits():
-    """Test truncate_to_x_digits with exact number of digits."""
-    assert gu.truncate_to_x_digits("999", 3) == "999"
-    assert gu.truncate_to_x_digits("1.234M", 4) == "1.234M"
-
-
-def test_truncate_to_x_digits_trailing_zeros():
-    """Test truncate_to_x_digits with trailing zeros."""
-    assert gu.truncate_to_x_digits("1.500", 3) == "1.5"
-    assert gu.truncate_to_x_digits("1.230K", 4) == "1.23K"  # Removes trailing zero
-    assert gu.truncate_to_x_digits("10.000", 2) == "10"
-
-
-def test_truncate_to_x_digits_decimal_edge_cases():
-    """Test truncate_to_x_digits with edge cases involving decimals."""
-    assert gu.truncate_to_x_digits("0.9999", 3) == "0.99"
-    assert gu.truncate_to_x_digits("999.999K", 4) == "999.9K"
-    assert gu.truncate_to_x_digits("100.0001M", 4) == "100M"
-
-
-def test_set_axis_percent():
-    """Test set_axis_percent function formats axis correctly."""
-    # Create a test plot
+@pytest.mark.parametrize(
+    ("kwargs", "expected_xmax", "expected_decimals", "expected_symbol"),
+    [
+        ({}, 1, None, "%"),
+        ({"xmax": 100, "decimals": 2, "symbol": "pct"}, 100, 2, "pct"),
+    ],
+    ids=["defaults", "custom_options"],
+)
+def test_set_axis_format_percent(kwargs, expected_xmax, expected_decimals, expected_symbol):
+    """set_axis_format(axis, "percent") applies PercentFormatter with the given options."""
     _, ax = plt.subplots()
     ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
 
-    # Apply our function to the y-axis
-    gu.set_axis_percent(ax.yaxis)
+    gu.set_axis_format(ax.yaxis, "percent", **kwargs)
 
-    # Check that the formatter is properly applied
-    assert isinstance(ax.yaxis.get_major_formatter(), mtick.PercentFormatter)
-
-    # Check default parameters
     formatter = ax.yaxis.get_major_formatter()
-    assert formatter.xmax == 1
-    assert formatter._symbol == "%"
-
-    # Test with custom parameters
-    _, ax = plt.subplots()
-    ax.plot([0, 25, 50, 75, 100], [0, 30, 50, 70, 100])
-
-    # Define test values
-    test_xmax = 100
-    test_decimals = 2
-    test_symbol = "pct"
-
-    # Apply with custom parameters
-    gu.set_axis_percent(ax.xaxis, xmax=test_xmax, decimals=test_decimals, symbol=test_symbol)
-
-    # Check that the formatter is properly applied with custom params
-    formatter = ax.xaxis.get_major_formatter()
     assert isinstance(formatter, mtick.PercentFormatter)
-    assert formatter.xmax == test_xmax
-    assert formatter.decimals == test_decimals
-    assert formatter._symbol == test_symbol
+    assert formatter.xmax == expected_xmax
+    assert formatter.decimals == expected_decimals
+    sample_value = expected_xmax / 2
+    assert formatter(sample_value).endswith(expected_symbol)
+
+
+def test_set_axis_format_shorthand_renders_tick_labels():
+    """set_axis_format(axis, "shorthand") produces shorthand tick labels (1500 → '2K')."""
+    _, ax = plt.subplots()
+    ax.plot([0, 1, 2], [0, 1500, 3000])
+
+    gu.set_axis_format(ax.yaxis, "shorthand", decimals=0)
+
+    formatter = ax.yaxis.get_major_formatter()
+    assert formatter(1500) == "2K"
+    assert formatter(3_700_000) == "4M"
+
+
+def test_set_axis_format_shorthand_honours_prefix():
+    """set_axis_format(axis, "shorthand", prefix="$") prepends the currency symbol."""
+    _, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1500])
+
+    gu.set_axis_format(ax.yaxis, "shorthand", decimals=1, prefix="$")
+
+    assert ax.yaxis.get_major_formatter()(1500) == "$1.5K"
+
+
+@pytest.mark.parametrize("axis_name", ["xaxis", "yaxis"])
+def test_set_axis_format_shorthand_auto_decimals(axis_name):
+    """When decimals is None, set_axis_format derives decimals from the matching axis's own ticks."""
+    _, ax = plt.subplots()
+    # Asymmetric ranges so xaxis and yaxis require different decimal counts.
+    # The yaxis range (~1.234M..1.26M) needs several decimals to keep shorthand labels
+    # distinct, while the xaxis range (0..3) needs none.
+    ax.plot([0, 1, 2, 3], [1_234_567, 1_240_000, 1_250_000, 1_260_000])
+    fmt_axis = getattr(ax, axis_name)
+
+    if axis_name == "xaxis":
+        expected_decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
+    else:
+        expected_decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
+
+    gu.set_axis_format(fmt_axis, "shorthand")
+
+    formatter = fmt_axis.get_major_formatter()
+    sample = 1_234_567
+    assert formatter(sample) == gu.format_shorthand(sample, decimals=expected_decimals)
+
+
+def test_set_axis_format_rejects_unknown_type():
+    """An unknown format_type raises ValueError listing the valid options."""
+    _, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+
+    with pytest.raises(ValueError, match="Unsupported format_type"):
+        gu.set_axis_format(ax.yaxis, "ratio")  # type: ignore[arg-type]
 
 
 class TestRegressionLine:

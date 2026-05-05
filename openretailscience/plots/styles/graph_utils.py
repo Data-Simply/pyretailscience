@@ -22,6 +22,7 @@ from openretailscience.plots.styles.styling_helpers import PlotStyler
 
 ASSETS_PATH = pkg_resources.files("openretailscience").joinpath("assets")
 _MAGNITUDE_SUFFIXES = ["", "K", "M", "B", "T", "P"]
+_MAGNITUDE_BASE = 1000
 
 _MIN_LINE_POINTS = 50
 _MAX_LINE_POINTS = 500
@@ -48,44 +49,46 @@ def _hatches_gen() -> Generator[str, None, None]:
     return cycle(_hatches)
 
 
-def human_format(
+def format_shorthand(
     num: float,
-    pos: int | None = None,  # noqa: ARG001 (pos is only used for Matplotlib compatibility)
     decimals: int = 0,
     prefix: str = "",
 ) -> str:
-    """Format a number in a human-readable format for Matplotlib, discarding trailing zeros.
+    """Format a number the way a person would write it, with K/M/B/T/P magnitude suffixes.
+
+    Examples:
+        ``500000 → "500K"``, ``1.4e7 → "14M"``, ``1500 → "2K"`` (zero decimals),
+        ``1500 → "1.5K"`` (one decimal). Trailing zeros are dropped.
 
     Args:
         num (float): The number to format.
-        pos (int, optional): The position. Defaults to None. Only used for Matplotlib compatibility.
         decimals (int, optional): The number of decimals. Defaults to 0.
         prefix (str, optional): The prefix of the returned string, eg '$'. Defaults to "".
 
     Returns:
         str: The formatted number, with trailing zeros removed.
     """
-    # The minimum difference between two numbers to receive a different suffix
-    minimum_magnitude_difference = 1000.0
     magnitude = 0
 
-    # Keep dividing by 1000 until the number is small enough
-    while abs(num) >= minimum_magnitude_difference:
+    while abs(num) >= _MAGNITUDE_BASE:
         magnitude += 1
-        num /= minimum_magnitude_difference
+        num /= _MAGNITUDE_BASE
 
-    # Check if the number rounds to exactly 1000 at the current magnitude
-    if round(abs(num), decimals) == minimum_magnitude_difference:
-        num /= minimum_magnitude_difference
+    # Check if the number rounds to exactly the next magnitude boundary at the current magnitude
+    if round(abs(num), decimals) == _MAGNITUDE_BASE:
+        num /= _MAGNITUDE_BASE
         magnitude += 1
 
-    # If magnitude exceeds the predefined suffixes, continue with multiples of "P"
+    # If magnitude exceeds the predefined suffixes, cap at the largest suffix
+    # and let the formatted number grow instead. Concatenating a synthesised
+    # numeric multiplier (e.g. "1000P") would visually fuse with the formatted
+    # number's leading digits and misrepresent the value.
     if magnitude < len(_MAGNITUDE_SUFFIXES):
         suffix = _MAGNITUDE_SUFFIXES[magnitude]
     else:
-        # Calculate how many times beyond "P" we've gone and append that to "P"
-        extra_magnitude = magnitude - (len(_MAGNITUDE_SUFFIXES) - 1)
-        suffix = f"{1000**extra_magnitude}P"
+        overflow = magnitude - (len(_MAGNITUDE_SUFFIXES) - 1)
+        num *= _MAGNITUDE_BASE**overflow
+        suffix = _MAGNITUDE_SUFFIXES[-1]
 
     # Format the number and remove trailing zeros
     formatted_num = f"{prefix}%.{decimals}f" % num
@@ -95,7 +98,7 @@ def human_format(
 
 
 def truncate_to_x_digits(num_str: str, digits: int) -> str:
-    """Truncate a human-formatted number to the first `num_digits` significant digits.
+    """Truncate a shorthand-formatted number to the first `digits` significant digits.
 
     Args:
         num_str (str): The formatted number (e.g., '999.999K').
@@ -262,12 +265,15 @@ def not_none(value1: Any, value2: Any) -> Any:  # noqa: ANN401
     return value1
 
 
-def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decimals: int = 10) -> int:
-    """Helper function for the `human_format` function that determines the number of decimals to use for the y-axis.
+def get_decimals(axis_limits: tuple[float, float], tick_values: list[float], max_decimals: int = 10) -> int:
+    """Pick the smallest decimal count that keeps `format_shorthand` tick labels distinct.
+
+    Used by `set_axis_format` when shorthand decimals are auto-derived for either
+    the x-axis or the y-axis.
 
     Args:
-        ylim (tuple[float, float]): The y-axis limits.
-        tick_values (list[float]): The y-axis tick values.
+        axis_limits (tuple[float, float]): The axis limits (xlim or ylim).
+        tick_values (list[float]): The tick values on the same axis.
         max_decimals (int, optional): The maximum number of decimals to use. Defaults to 10.
 
     Returns:
@@ -275,7 +281,9 @@ def get_decimals(ylim: tuple[float, float], tick_values: list[float], max_decima
     """
     decimals = 0
     while decimals < max_decimals:
-        tick_labels = [human_format(t, 0, decimals=decimals) for t in tick_values if t >= ylim[0] and t <= ylim[1]]
+        tick_labels = [
+            format_shorthand(t, decimals=decimals) for t in tick_values if t >= axis_limits[0] and t <= axis_limits[1]
+        ]
         # Ensure no duplicate labels
         if len(tick_labels) == len(set(tick_labels)):
             break
@@ -314,40 +322,54 @@ def add_source_text(
     )
 
 
-def set_axis_percent(
+def set_axis_format(
     fmt_axis: YAxis | XAxis,
-    xmax: float = 1,
+    format_type: Literal["shorthand", "percent"],
     decimals: int | None = None,
+    prefix: str = "",
+    xmax: float = 1,
     symbol: str | None = "%",
 ) -> None:
-    """Format an axis to display values as percentages.
-
-    This function configures a matplotlib axis to display its tick labels as percentages
-    using matplotlib's PercentFormatter.
+    """Apply a named numeric format to a matplotlib axis.
 
     Args:
-        fmt_axis (YAxis | XAxis): The axis to format (either ax.yaxis or ax.xaxis).
-        xmax (float, optional): The value that represents 100%. Defaults to 1.
-        decimals (int | None, optional): Number of decimal places to include. If None,
-            automatically selects based on data range. Defaults to None.
-        symbol (str | None, optional): The symbol to use for percentage. If None,
-            no symbol is displayed. Defaults to "%".
+        fmt_axis (YAxis | XAxis): The axis to format (e.g. ``ax.xaxis`` or ``ax.yaxis``).
+        format_type (Literal["shorthand", "percent"]): Which formatter to apply:
 
-    Returns:
-        None: The function modifies the axis formatter in place.
+            - ``"shorthand"``: render numbers the way a person would write them, with
+              K/M/B/T/P magnitude suffixes (``500000 → "500K"``, ``1.4e7 → "14M"``).
+              Honours ``decimals`` and ``prefix``.
+            - ``"percent"``: render numbers as percentages using matplotlib's
+              ``PercentFormatter``. Honours ``decimals``, ``xmax``, and ``symbol``.
+        decimals (int | None, optional): Number of decimal places to display. ``None``
+            lets the formatter pick automatically — for ``"shorthand"`` the count is
+            derived from the current tick range so labels stay distinct; for ``"percent"``
+            matplotlib chooses based on the displayed values.
+        prefix (str, optional): Prepended to shorthand output (e.g. ``"$"``).
+            Ignored for ``"percent"``. Defaults to ``""``.
+        xmax (float, optional): Percent-only. The value that maps to 100%. Defaults to 1.
+        symbol (str | None, optional): Percent-only. The symbol shown after the number;
+            pass ``None`` for no symbol. Defaults to ``"%"``.
 
-    Example:
-        ```python
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
-        ax.plot([0, 0.25, 0.5, 0.75, 1.0], [0, 0.3, 0.5, 0.7, 1.0])
-        # Format y-axis as percentage
-        set_axis_percent(ax.yaxis)
-        # Format x-axis as percentage with 1 decimal place
-        set_axis_percent(ax.xaxis, decimals=1)
-        ```
+    Raises:
+        ValueError: If ``format_type`` is not ``"shorthand"`` or ``"percent"``.
     """
-    return fmt_axis.set_major_formatter(mtick.PercentFormatter(xmax=xmax, decimals=decimals, symbol=symbol))
+    if format_type == "percent":
+        fmt_axis.set_major_formatter(mtick.PercentFormatter(xmax=xmax, decimals=decimals, symbol=symbol))
+        return
+    if format_type == "shorthand":
+        if decimals is None:
+            parent_ax = fmt_axis.axes
+            is_xaxis = fmt_axis is parent_ax.xaxis
+            limits = parent_ax.get_xlim() if is_xaxis else parent_ax.get_ylim()
+            ticks = parent_ax.get_xticks() if is_xaxis else parent_ax.get_yticks()
+            decimals = get_decimals(limits, ticks)
+        fmt_axis.set_major_formatter(
+            lambda value, _pos=None: format_shorthand(value, decimals=decimals, prefix=prefix),
+        )
+        return
+    msg = f"Unsupported format_type {format_type!r}; must be 'shorthand' or 'percent'."
+    raise ValueError(msg)
 
 
 def _calculate_r_squared_original_space(y_actual: np.ndarray, y_predicted: np.ndarray) -> float:

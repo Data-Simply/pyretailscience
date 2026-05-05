@@ -41,14 +41,13 @@ patterns and guide strategic retention decisions.
 
 import operator
 
-import matplotlib.ticker as mtick
 import pandas as pd
 from matplotlib.axes import Axes, SubplotBase
 
 import openretailscience.plots.styles.graph_utils as gu
 from openretailscience.options import ColumnHelper
 from openretailscience.plots.styles.colors import COLORS
-from openretailscience.plots.styles.graph_utils import human_format, standard_graph_styles
+from openretailscience.plots.styles.graph_utils import set_axis_format, standard_graph_styles
 
 
 class PurchasesPerCustomer:
@@ -124,17 +123,17 @@ class PurchasesPerCustomer:
             **kwargs,
         )
 
-        ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
+        set_axis_format(ax.xaxis, "shorthand", decimals=0)
 
         if cumulative:
             default_title = "Number of Purchases cumulative Distribution"
             default_y_label = "Percentage of customers"
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
+            set_axis_format(ax.yaxis, "percent", decimals=0)
 
         else:
             default_title = "Number of Purchases Distribution"
             default_y_label = "Number of customers"
-            ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
+            set_axis_format(ax.yaxis, "shorthand", decimals=0)
 
         ax = standard_graph_styles(
             ax,
@@ -297,19 +296,19 @@ class DaysBetweenPurchases:
             **kwargs,
         )
 
-        ax.xaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
+        set_axis_format(ax.xaxis, "shorthand", decimals=0)
 
         ax = standard_graph_styles(ax)
 
         if cumulative:
             default_title = "Average Days Between Purchases cumulative Distribution"
             default_y_label = "Percentage of Customers"
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
+            set_axis_format(ax.yaxis, "percent", decimals=0)
 
         else:
             default_title = "Average Days Between Purchases Distribution"
             default_y_label = "Number of Customers"
-            ax.yaxis.set_major_formatter(lambda x, pos: human_format(x, pos, decimals=0))
+            set_axis_format(ax.yaxis, "shorthand", decimals=0)
 
         ax = gu.standard_graph_styles(
             ax,
@@ -451,7 +450,7 @@ class TransactionChurn:
             y_label=gu.not_none(y_label, "% Churned"),
         )
 
-        ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+        set_axis_format(ax.yaxis, "percent", xmax=1.0)
 
         if source_text:
             gu.add_source_text(ax=ax, source_text=source_text)

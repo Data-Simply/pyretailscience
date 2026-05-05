@@ -331,8 +331,7 @@ class GainLoss:
 
         ax.axvline(0, color="black", linewidth=0.5)
 
-        decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
-        ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
+        gu.set_axis_format(ax.xaxis, "shorthand")
         ax.grid(axis="x", linestyle="--", alpha=0.7)
 
         gu.standard_tick_styles(ax)

@@ -1154,13 +1154,11 @@ class SegTransactionStats:
         if orientation == "vertical":
             plot_y_label = gu.not_none(y_label, value_col.title())
             plot_x_label = gu.not_none(x_label, "")
-            decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
-            ax.yaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
+            gu.set_axis_format(ax.yaxis, "shorthand")
         else:
             plot_y_label = gu.not_none(y_label, "")
             plot_x_label = gu.not_none(x_label, value_col.title())
-            decimals = gu.get_decimals(ax.get_xlim(), ax.get_xticks())
-            ax.xaxis.set_major_formatter(lambda x, pos: gu.human_format(x, pos, decimals=decimals))
+            gu.set_axis_format(ax.xaxis, "shorthand")
 
         ax = gu.standard_graph_styles(
             ax,
