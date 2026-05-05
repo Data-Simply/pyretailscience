@@ -35,23 +35,19 @@ identify high-potential segments for targeted retention efforts.
 - Monitor the health of customer acquisition versus retention balance
 - Identify shifts in customer behavior that may indicate market changes
 
-This module visualizes purchase frequency distribution to reveal customer behavior
-patterns and guide strategic retention decisions.
+This module computes purchase-frequency statistics that can be visualized with
+the plotting helpers in `openretailscience.plots`.
 """
 
 import operator
 
 import pandas as pd
-from matplotlib.axes import Axes, SubplotBase
 
-import openretailscience.plots.styles.graph_utils as gu
 from openretailscience.options import ColumnHelper
-from openretailscience.plots.styles.colors import COLORS
-from openretailscience.plots.styles.graph_utils import set_axis_format, standard_graph_styles
 
 
 class PurchasesPerCustomer:
-    """A class to plot the distribution of the number of purchases per customer.
+    """Computes the number of purchases per customer.
 
     Attributes:
         cust_purchases_s (pd.Series): The number of purchases per customer.
@@ -77,87 +73,6 @@ class PurchasesPerCustomer:
             raise ValueError(msg)
 
         self.cust_purchases_s = df.groupby(cols.customer_id)[cols.transaction_id].nunique()
-
-    def plot(
-        self,
-        bins: int = 10,
-        cumulative: bool = False,
-        ax: Axes | None = None,
-        percentile_line: float | None = None,
-        source_text: str | None = None,
-        title: str | None = None,
-        x_label: str | None = None,
-        y_label: str | None = None,
-        **kwargs: dict[str, any],
-    ) -> SubplotBase:
-        """Plot the distribution of the number of purchases per customer.
-
-        Args:
-            bins (int, optional): The number of bins to plot. Defaults to 10.
-            cumulative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
-            ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
-            percentile_line (float, optional): The percentile to draw a line at. Defaults to None. When None then no
-                line is drawn.
-            source_text (str, optional): The source text to add to the plot. Defaults to None.
-            title (str, optional): The title of the plot. Defaults to None.
-            x_label (str, optional): The x-axis label. Defaults to None.
-            y_label (str, optional): The y-axis label. Defaults to None.
-            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot function.
-
-        Returns:
-            SubplotBase: The Matplotlib axes of the plot
-        """
-        density = False
-        if cumulative:
-            density = True
-
-        if x_label is None:
-            x_label = "Number of purchases"
-
-        ax = self.cust_purchases_s.hist(
-            bins=bins,
-            cumulative=cumulative,
-            ax=ax,
-            density=density,
-            color=COLORS["green"][500],
-            **kwargs,
-        )
-
-        set_axis_format(ax.xaxis, "shorthand", decimals=0)
-
-        if cumulative:
-            default_title = "Number of Purchases cumulative Distribution"
-            default_y_label = "Percentage of customers"
-            set_axis_format(ax.yaxis, "percent", decimals=0)
-
-        else:
-            default_title = "Number of Purchases Distribution"
-            default_y_label = "Number of customers"
-            set_axis_format(ax.yaxis, "shorthand", decimals=0)
-
-        ax = standard_graph_styles(
-            ax,
-            title=gu.not_none(title, default_title),
-            x_label=x_label,
-            y_label=gu.not_none(y_label, default_y_label),
-        )
-
-        if percentile_line is not None:
-            if percentile_line > 1 or percentile_line < 0:
-                raise ValueError("Percentile line must be between 0 and 1")
-            ax.axvline(
-                x=self.purchases_percentile(percentile_line),
-                color=COLORS["red"][500],
-                linestyle="--",
-                lw=2,
-                label=f"{percentile_line:.1%} of customers",
-            )
-            ax.legend(frameon=False)
-
-        if source_text:
-            gu.add_source_text(ax=ax, source_text=source_text)
-
-        return ax
 
     def purchases_percentile(self, percentile: float = 0.5) -> float:
         """Get the number of purchases at a given percentile.
@@ -200,7 +115,7 @@ class PurchasesPerCustomer:
 
 
 class DaysBetweenPurchases:
-    """A class to plot the distribution of the average number of days between purchases per customer.
+    """Computes the average number of days between purchases per customer.
 
     Attributes:
         purchase_dist_s (pd.Series): The average number of days between purchases per customer.
@@ -254,89 +169,6 @@ class DaysBetweenPurchases:
         purchase_dist_df["diff"] = purchase_dist_df["diff"].dt.days
         return purchase_dist_df.groupby(cols.customer_id)["diff"].mean()
 
-    def plot(
-        self,
-        bins: int = 10,
-        cumulative: bool = False,
-        ax: Axes | None = None,
-        percentile_line: float | None = None,
-        title: str | None = None,
-        x_label: str | None = None,
-        y_label: str | None = None,
-        source_text: str | None = None,
-        **kwargs: dict[str, any],
-    ) -> SubplotBase:
-        """Plot the distribution of the average number of days between purchases per customer.
-
-        Args:
-            bins (int, optional): The number of bins to plot. Defaults to 10.
-            cumulative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
-            ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
-            percentile_line (float, optional): The percentile to draw a line at. Defaults to None. When None then no
-                line is drawn.
-            title (str, optional): The title of the plot. Defaults to None.
-            x_label (str, optional): The x-axis label. Defaults to None.
-            y_label (str, optional): The y-axis label. Defaults to None.
-            source_text (str, optional): The source text to add to the plot. Defaults to None.
-            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot
-
-        Returns:
-            SubplotBase: The Matplotlib axes of the plot
-        """
-        density = False
-        if cumulative:
-            density = True
-
-        ax = self.purchase_dist_s.hist(
-            bins=bins,
-            cumulative=cumulative,
-            ax=ax,
-            density=density,
-            color=COLORS["green"][500],
-            **kwargs,
-        )
-
-        set_axis_format(ax.xaxis, "shorthand", decimals=0)
-
-        ax = standard_graph_styles(ax)
-
-        if cumulative:
-            default_title = "Average Days Between Purchases cumulative Distribution"
-            default_y_label = "Percentage of Customers"
-            set_axis_format(ax.yaxis, "percent", decimals=0)
-
-        else:
-            default_title = "Average Days Between Purchases Distribution"
-            default_y_label = "Number of Customers"
-            set_axis_format(ax.yaxis, "shorthand", decimals=0)
-
-        ax = gu.standard_graph_styles(
-            ax,
-            title=gu.not_none(title, default_title),
-            y_label=gu.not_none(y_label, default_y_label),
-            x_label=gu.not_none(x_label, "Average Number of Days Between Purchases"),
-        )
-
-        if percentile_line is not None:
-            if percentile_line > 1 or percentile_line < 0:
-                raise ValueError("Percentile line must be between 0 and 1")
-            ax.axvline(
-                x=self.purchases_percentile(percentile_line),
-                color=COLORS["red"][500],
-                linestyle="--",
-                lw=2,
-                label=f"{percentile_line:.1%} of customers",
-                ymax=0.96,
-            )
-            ax.legend(frameon=False)
-
-        if source_text:
-            gu.add_source_text(ax=ax, source_text=source_text)
-
-        gu.standard_tick_styles(ax)
-
-        return ax
-
     def purchases_percentile(self, percentile: float = 0.5) -> float:
         """Get the average number of days between purchases at a given percentile.
 
@@ -350,7 +182,7 @@ class DaysBetweenPurchases:
 
 
 class TransactionChurn:
-    """A class to plot the churn rate by number of purchases.
+    """Computes the churn rate by number of purchases.
 
     Attributes:
         purchase_dist_df (pd.DataFrame): The churn rate by number of purchases.
@@ -403,56 +235,3 @@ class TransactionChurn:
         self.purchase_dist_df = purchase_dist_df
 
         self.n_unique_customers = df[cols.customer_id].nunique()
-
-    def plot(
-        self,
-        cumulative: bool = False,
-        ax: Axes | None = None,
-        title: str | None = None,
-        x_label: str | None = None,
-        y_label: str | None = None,
-        source_text: str | None = None,
-        **kwargs: dict[str, any],
-    ) -> SubplotBase:
-        """Plot the churn rate by number of purchases.
-
-        Args:
-            cumulative (bool, optional): Whether to plot the cumulative distribution. Defaults to False.
-            ax (Axes, optional): The Matplotlib axes to plot the graph on. Defaults to None.
-            title (str, optional): The title of the plot. Defaults to None.
-            x_label (str, optional): The x-axis label. Defaults to None.
-            y_label (str, optional): The y-axis label. Defaults to None.
-            source_text (str, optional): The source text to add to the plot. Defaults to None.
-            kwargs (dict[str, any]): Additional keyword arguments to pass to the plot function.
-
-        Returns:
-            SubplotBase: The Matplotlib axes of the plot
-        """
-        if cumulative:
-            cumulative_churn_rate_s = self.purchase_dist_df["churned"].cumsum().div(self.n_unique_customers)
-            ax = cumulative_churn_rate_s.plot.area(
-                color=COLORS["green"][500],
-                **kwargs,
-            )
-            ax.set_xlim(self.purchase_dist_df.index.min(), self.purchase_dist_df.index.max())
-        else:
-            ax = self.purchase_dist_df["churned_pct"].plot.bar(
-                rot=0,
-                color=COLORS["green"][500],
-                width=0.8,
-                **kwargs,
-            )
-
-        standard_graph_styles(
-            ax,
-            title=gu.not_none(title, "Churn Rate by Number of Purchases"),
-            x_label=gu.not_none(x_label, "Number of Purchases"),
-            y_label=gu.not_none(y_label, "% Churned"),
-        )
-
-        set_axis_format(ax.yaxis, "percent", xmax=1.0)
-
-        if source_text:
-            gu.add_source_text(ax=ax, source_text=source_text)
-
-        return ax

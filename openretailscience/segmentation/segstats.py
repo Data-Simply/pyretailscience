@@ -51,11 +51,8 @@ from typing import Any, Literal
 
 import ibis
 import pandas as pd
-from matplotlib.axes import Axes, SubplotBase
 
-import openretailscience.plots.styles.graph_utils as gu
 from openretailscience.options import ColumnHelper, get_option
-from openretailscience.plots.styles.colors import COLORS
 
 __all__ = ["SegTransactionStats", "cube", "rollup"]
 
@@ -1070,106 +1067,3 @@ class SegTransactionStats:
 
             self._df = self.table.execute()[col_order]
         return self._df
-
-    def plot(
-        self,
-        value_col: str,
-        title: str | None = None,
-        x_label: str | None = None,
-        y_label: str | None = None,
-        ax: Axes | None = None,
-        orientation: Literal["vertical", "horizontal"] = "vertical",
-        sort_order: Literal["ascending", "descending"] | None = None,
-        source_text: str | None = None,
-        hide_total: bool = True,
-        **kwargs: dict[str, Any],
-    ) -> SubplotBase:
-        """Plots the value_col by segment.
-
-        .. deprecated::
-            This method is deprecated. Use :func:`openretailscience.plots.bar.py` instead.
-
-        Args:
-            value_col (str): The column to plot.
-            title (str, optional): The title of the plot. Defaults to None.
-            x_label (str, optional): The x-axis label. Defaults to None. When None the x-axis label is blank when the
-                orientation is horizontal. When the orientation is vertical it is set to the `value_col` in title case.
-            y_label (str, optional): The y-axis label. Defaults to None. When None the y-axis label is set to the
-                `value_col` in title case when the orientation is horizontal. Then the orientation is vertical it is
-                set to blank
-            ax (Axes, optional): The matplotlib axes object to plot on. Defaults to None.
-            orientation (Literal["vertical", "horizontal"], optional): The orientation of the plot. Defaults to
-                "vertical".
-            sort_order (Literal["ascending", "descending", None], optional): The sort order of the segments.
-                Defaults to None. If None, the segments are plotted in the order they appear in the dataframe.
-            source_text (str, optional): The source text to add to the plot. Defaults to None.
-            hide_total (bool, optional): Whether to hide the total row. Defaults to True.
-            **kwargs: Additional keyword arguments to pass to the Pandas plot function.
-
-        Returns:
-            SubplotBase: The matplotlib axes object.
-
-        Raises:
-            ValueError: If the sort_order is not "ascending", "descending" or None.
-            ValueError: If the orientation is not "vertical" or "horizontal".
-            ValueError: If multiple segment columns are used, as plotting is only supported for a single segment column.
-        """
-        warnings.warn(
-            "SegTransactionStats.plot() is deprecated and will be removed in a future version. "
-            "Use openretailscience.plots.bar instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        if sort_order not in ["ascending", "descending", None]:
-            raise ValueError("sort_order must be either 'ascending' or 'descending' or None")
-        if orientation not in ["vertical", "horizontal"]:
-            raise ValueError("orientation must be either 'vertical' or 'horizontal'")
-        if len(self.segment_col) > 1:
-            raise ValueError("Plotting is only supported for a single segment column")
-
-        default_title = f"{value_col.title()} by Segment"
-        kind = "bar"
-        if orientation == "horizontal":
-            kind = "barh"
-
-        # Use the first segment column for plotting
-        plot_segment_col = self.segment_col[0]
-        val_s = self.df.set_index(plot_segment_col)[value_col]
-        if hide_total:
-            val_s = val_s[val_s.index != "Total"]
-
-        if sort_order is not None:
-            ascending = sort_order == "ascending"
-            val_s = val_s.sort_values(ascending=ascending)
-
-        ax = val_s.plot(
-            kind=kind,
-            color=COLORS["green"][500],
-            legend=False,
-            ax=ax,
-            **kwargs,
-        )
-
-        if orientation == "vertical":
-            plot_y_label = gu.not_none(y_label, value_col.title())
-            plot_x_label = gu.not_none(x_label, "")
-            gu.set_axis_format(ax.yaxis, "shorthand")
-        else:
-            plot_y_label = gu.not_none(y_label, "")
-            plot_x_label = gu.not_none(x_label, value_col.title())
-            gu.set_axis_format(ax.xaxis, "shorthand")
-
-        ax = gu.standard_graph_styles(
-            ax,
-            title=gu.not_none(title, default_title),
-            x_label=plot_x_label,
-            y_label=plot_y_label,
-        )
-
-        if source_text is not None:
-            gu.add_source_text(ax=ax, source_text=source_text)
-
-        gu.standard_tick_styles(ax)
-
-        return ax
