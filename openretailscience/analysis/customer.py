@@ -129,7 +129,7 @@ class DaysBetweenPurchases:
                 and transaction_date, which must be non-null.
 
         Raises:
-            ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id, or if the
+            ValueError: If the dataframe doesn't contain the columns customer_id and transaction_date, or if the
                 columns are null.
 
         """
@@ -198,7 +198,7 @@ class TransactionChurn:
             churn_period (float): The number of days to consider a customer churned.
 
         Raises:
-            ValueError: If the dataframe does doesn't contain the columns customer_id and transaction_id.
+            ValueError: If the dataframe doesn't contain the columns customer_id and transaction_date.
         """
         cols = ColumnHelper()
         required_cols = [cols.customer_id, cols.transaction_date]

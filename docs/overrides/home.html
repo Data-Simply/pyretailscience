@@ -163,11 +163,11 @@
             <span class="ds-code-filename">workflow.py</span>
           </div>
           <pre class="ds-code-body"><code><span class="kw">from</span> <span class="mod">openretailscience.analysis</span> <span class="kw">import</span> <span class="cls">customer</span>
+<span class="kw">from</span> <span class="mod">openretailscience.plots</span> <span class="kw">import</span> <span class="cls">histogram</span>
 
-<span class="cmt"># Chain analyses together</span>
 dbp = customer.<span class="cls">DaysBetweenPurchases</span>(df)
 churn = dbp.purchases_percentile(<span class="num">0.8</span>)
-dbp.plot(title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
+histogram.plot(df=dbp.purchase_dist_s, title=<span class="str">f"Churn: {round(churn)}d"</span>)</code></pre>
         </div>
         <div class="ds-showcase-card__text">
           <span class="ds-badge">Workflow</span>
