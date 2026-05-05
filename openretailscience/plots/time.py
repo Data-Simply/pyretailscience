@@ -147,10 +147,7 @@ def plot(
         show_legend=show_legend,
     )
 
-    decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
-    ax.yaxis.set_major_formatter(
-        lambda x, pos: gu.human_format(x, pos, decimals=decimals),
-    )
+    gu.set_axis_format(ax.yaxis, "shorthand")
 
     if source_text is not None:
         gu.add_source_text(ax=ax, source_text=source_text)

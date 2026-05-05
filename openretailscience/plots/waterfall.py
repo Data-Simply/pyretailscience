@@ -146,9 +146,7 @@ def plot(
     )
 
     decimals = gu.get_decimals(ax.get_ylim(), ax.get_yticks())
-    ax.yaxis.set_major_formatter(
-        lambda x, pos: gu.human_format(x, pos, decimals=decimals),
-    )
+    gu.set_axis_format(ax.yaxis, "shorthand", decimals=decimals)
 
     # Add a black line at the y=0 position
     ax.axhline(y=0, color="black", linewidth=1, zorder=-1)
@@ -199,7 +197,7 @@ def format_data_labels(
         list[str]: A list of formatted data label strings.
     """
     if label_format == "absolute":
-        return amounts.apply(lambda x: gu.human_format(x, decimals=decimals + 1)).tolist()
+        return amounts.apply(lambda x: gu.format_shorthand(x, decimals=decimals + 1)).tolist()
 
     if total_change == 0:
         warnings.warn(
@@ -209,9 +207,9 @@ def format_data_labels(
         )
         if label_format == "percentage":
             return [""] * len(amounts)
-        return [gu.human_format(x, decimals=decimals + 1) for x in amounts]
+        return [gu.format_shorthand(x, decimals=decimals + 1) for x in amounts]
 
     if label_format == "percentage":
         return amounts.apply(lambda x: f"{x / total_change:.0%}").tolist()
 
-    return [f"{gu.human_format(x, decimals=decimals + 1)} ({x / total_change:.0%})" for x in amounts]
+    return [f"{gu.format_shorthand(x, decimals=decimals + 1)} ({x / total_change:.0%})" for x in amounts]

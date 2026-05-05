@@ -274,7 +274,7 @@ def _generate_absolute_labels(
     bar_values = [_get_bar_value(v, plot_kind) for v in container]
     labels = [
         gu.truncate_to_x_digits(
-            num_str=gu.human_format(num=value, decimals=num_digits),
+            num_str=gu.format_shorthand(num=value, decimals=num_digits),
             digits=num_digits,
         )
         for value in bar_values
@@ -309,9 +309,12 @@ def _generate_percentage_by_bar_group_labels(
         else:
             bar_value = _get_bar_value(v, plot_kind)
             percentage_value = (bar_value / group_totals.iloc[i]) * 100
-            human_percentage_value: str = gu.human_format(num=percentage_value, decimals=num_digits)
-            truncated_value: str = gu.truncate_to_x_digits(num_str=human_percentage_value, digits=num_digits)
-            labels.append(truncated_value)
+            labels.append(
+                gu.truncate_to_x_digits(
+                    num_str=gu.format_shorthand(num=percentage_value, decimals=num_digits),
+                    digits=num_digits,
+                ),
+            )
     return labels
 
 
@@ -342,9 +345,12 @@ def _generate_percentage_by_series_labels(
         else:
             bar_value = _get_bar_value(v, plot_kind)
             percentage_value = (bar_value / column_total) * 100
-            human_percentage_value: str = gu.human_format(num=percentage_value, decimals=num_digits)
-            truncated_value: str = gu.truncate_to_x_digits(num_str=human_percentage_value, digits=num_digits)
-            labels.append(truncated_value)
+            labels.append(
+                gu.truncate_to_x_digits(
+                    num_str=gu.format_shorthand(num=percentage_value, decimals=num_digits),
+                    digits=num_digits,
+                ),
+            )
     return labels
 
 
