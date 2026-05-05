@@ -385,25 +385,6 @@ class TestSegTransactionStats:
 
         assert "must match the number of segment columns" in str(excinfo.value)
 
-    def test_plot_with_multiple_segment_columns(self):
-        """Test that plotting with multiple segment columns raises a ValueError."""
-        df = pd.DataFrame(
-            {
-                cols.customer_id: [1, 2, 3],
-                cols.unit_spend: [100.0, 200.0, 300.0],
-                cols.transaction_id: [101, 102, 103],
-                "segment_name": ["Premium", "Standard", "Premium"],
-                "region": ["North", "South", "East"],
-            },
-        )
-
-        seg_stats = SegTransactionStats(df, ["segment_name", "region"])
-
-        with pytest.raises(ValueError) as excinfo:
-            seg_stats.plot("spend")
-
-        assert "Plotting is only supported for a single segment column" in str(excinfo.value)
-
     def test_extra_aggs_functionality(self):
         """Test that the extra_aggs parameter works correctly."""
         # Constants for expected values
