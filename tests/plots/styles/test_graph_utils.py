@@ -170,9 +170,7 @@ def test_set_axis_format_percent_symbol_none_suppresses_symbol():
 
     gu.set_axis_format(ax.yaxis, "percent", symbol=None)
 
-    formatter = ax.yaxis.get_major_formatter()
-    assert formatter._symbol is None
-    assert "%" not in formatter(0.5)
+    assert ax.yaxis.get_major_formatter()(0.5) == "50"
 
 
 def test_set_axis_format_shorthand_renders_tick_labels():
