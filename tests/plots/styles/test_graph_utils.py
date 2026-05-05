@@ -163,6 +163,18 @@ def test_set_axis_format_percent(kwargs, expected_xmax, expected_decimals, expec
     assert formatter(sample_value).endswith(expected_symbol)
 
 
+def test_set_axis_format_percent_symbol_none_suppresses_symbol():
+    """set_axis_format(axis, "percent", symbol=None) renders values without the % suffix."""
+    _, ax = plt.subplots()
+    ax.plot([0, 0.5, 1.0], [0, 0.5, 1.0])
+
+    gu.set_axis_format(ax.yaxis, "percent", symbol=None)
+
+    formatter = ax.yaxis.get_major_formatter()
+    assert formatter._symbol is None
+    assert "%" not in formatter(0.5)
+
+
 def test_set_axis_format_shorthand_renders_tick_labels():
     """set_axis_format(axis, "shorthand") produces shorthand tick labels (1500 → '2K')."""
     _, ax = plt.subplots()
