@@ -1,7 +1,5 @@
 """Tests for the plots.area module."""
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,7 +7,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from openretailscience.plots import area
-from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -34,26 +31,6 @@ def sample_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock the color generators for single and multi color maps."""
-    single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
-    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator (red, green, blue)
-
-    mocker.patch("openretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("openretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_column(sample_dataframe):
     """Test the plot function with a single value column."""
     result_ax = area.plot(
@@ -69,7 +46,6 @@ def test_plot_single_column(sample_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_group_col(sample_dataframe):
     """Test the plot function with a group column (stacked area chart)."""
     result_ax = area.plot(
@@ -86,7 +62,6 @@ def test_plot_with_group_col(sample_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_columns(sample_dataframe):
     """Test the plot function with multiple columns as a stacked area chart."""
     sample_dataframe["additional_spend"] = RNG.integers(1, 6, size=3 * PERIODS)
@@ -104,7 +79,6 @@ def test_plot_multiple_columns(sample_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_columns_with_group_col(sample_dataframe):
     """Test the plot function when using multiple columns along with a group column."""
     sample_dataframe["additional_spend"] = RNG.integers(1, 6, size=3 * PERIODS)
@@ -120,9 +94,8 @@ def test_plot_multiple_columns_with_group_col(sample_dataframe):
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_adds_source_text(sample_dataframe):
-    """Test the plot function adds source text to the plot."""
+    """The area plot renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
 
     result_ax = area.plot(
@@ -135,10 +108,10 @@ def test_plot_adds_source_text(sample_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_column_series(sample_dataframe):
     """Test the plot function with a single value as a Pandas Series."""
     result_ax = area.plot(

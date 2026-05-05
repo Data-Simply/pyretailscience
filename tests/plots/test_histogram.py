@@ -1,15 +1,13 @@
 """Tests for the histograms plot module."""
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
+from openretailscience.options import PlotStyleHelper
 from openretailscience.plots import histogram
-from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -36,25 +34,6 @@ def sample_series():
     return pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
 
-@pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock the color generator for multi color maps."""
-    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator
-    mocker.patch("openretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    """Mock standard graph utilities functions."""
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-    mocker.patch("openretailscience.plots.styles.graph_utils.apply_hatches", side_effect=lambda ax, num_segments: ax)
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_histogram(sample_dataframe):
     """Test the plot function with a single histogram."""
     result_ax = histogram.plot(
@@ -67,7 +46,6 @@ def test_plot_single_histogram(sample_dataframe):
     assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_grouped_histogram(sample_dataframe):
     """Test the plot function with grouped histograms."""
     result_ax = histogram.plot(
@@ -81,7 +59,6 @@ def test_plot_grouped_histogram(sample_dataframe):
     assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_enforces_range_clipping(sample_dataframe):
     """Test that the plot function enforces range clipping through the Axes limits and print the min/max values."""
     range_lower = 2
@@ -105,7 +82,6 @@ def test_plot_enforces_range_clipping(sample_dataframe):
     assert all(range_lower <= val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_range_fillna(sample_dataframe):
     """Test the plot function with range fillna."""
     range_lower = 3
@@ -129,7 +105,6 @@ def test_plot_with_range_fillna(sample_dataframe):
     assert all(range_lower <= val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_range_lower_none(sample_dataframe):
     """Test the plot function with range_lower=None (no lower bound) and a specific upper bound."""
     range_upper = 8  # No lower bound
@@ -151,7 +126,6 @@ def test_plot_with_range_lower_none(sample_dataframe):
     assert all(val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_range_upper_none(sample_dataframe):
     """Test the plot function with range_upper=None (no upper bound) and a specific lower bound."""
     range_lower = 3  # No upper bound
@@ -173,7 +147,6 @@ def test_plot_with_range_upper_none(sample_dataframe):
     assert all(range_lower <= val + np.finfo(np.float64).eps for val in clipped_values)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_fillna_outside_range(sample_dataframe):
     """Test the fillna method, ensuring values outside the range are replaced by NaN."""
     range_lower = 3
@@ -196,7 +169,6 @@ def test_plot_fillna_outside_range(sample_dataframe):
     assert all(range_lower <= val + np.finfo(np.float64).eps <= range_upper for val in clipped_values)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_single_histogram_series(sample_series):
     """Test the plot function with a pandas series."""
     result_ax = histogram.plot(
@@ -208,9 +180,8 @@ def test_plot_single_histogram_series(sample_series):
     assert len(result_ax.patches) > 0  # Ensure that some bars were plotted
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_histogram_with_hatch(sample_dataframe):
-    """Test the plot function with hatching."""
+    """use_hatch=True applies a hatch pattern to every histogram patch."""
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
@@ -218,10 +189,11 @@ def test_plot_histogram_with_hatch(sample_dataframe):
         use_hatch=True,
     )
 
-    gu.apply_hatches.assert_called_once_with(ax=result_ax, num_segments=1)
+    hatches = [p.get_hatch() for p in result_ax.patches]
+    assert len(hatches) > 0
+    assert all(h is not None for h in hatches)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_invalid_value_col_with_group_col(sample_dataframe):
     """Test the plot function raises an error when both `value_col` is a list and `group_col` is provided."""
     with pytest.raises(ValueError, match="`value_col` cannot be a list when `group_col` is provided"):
@@ -233,9 +205,8 @@ def test_plot_invalid_value_col_with_group_col(sample_dataframe):
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_legend_outside(sample_dataframe):
-    """Test the plot function moves the legend outside the plot."""
+    """move_legend_outside=True anchors the legend at the configured outside position."""
     result_ax = histogram.plot(
         df=sample_dataframe,
         value_col="value_1",
@@ -244,19 +215,16 @@ def test_plot_legend_outside(sample_dataframe):
         move_legend_outside=True,
     )
 
-    gu.standard_graph_styles.assert_called_once_with(
-        ax=result_ax,
-        title="Test Legend Outside",
-        x_label=None,
-        y_label=None,
-        legend_title=None,
-        move_legend_outside=True,
-    )
+    legend = result_ax.get_legend()
+    assert legend is not None
+    anchor = legend.get_bbox_to_anchor().transformed(result_ax.transAxes.inverted())
+    expected_x, expected_y = PlotStyleHelper().legend_bbox_to_anchor
+    assert anchor.x0 == pytest.approx(expected_x)
+    assert anchor.y0 == pytest.approx(expected_y)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_adds_source_text(sample_dataframe):
-    """Test the plot function adds source text to the plot."""
+    """The histogram renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
     result_ax = histogram.plot(
         df=sample_dataframe,
@@ -265,10 +233,10 @@ def test_plot_adds_source_text(sample_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_multiple_histograms(sample_dataframe):
     """Test the plot function with multiple histograms."""
     result_ax = histogram.plot(
@@ -281,63 +249,23 @@ def test_plot_multiple_histograms(sample_dataframe):
     assert len(result_ax.patches) > 0  # Ensure that bars were plotted for both histograms
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_single_histogram_calls_dataframe_plot(mocker, sample_dataframe):
-    """Test that pandas.DataFrame.plot is called with correct arguments when group_col is None."""
-    # Spy on DataFrame.plot
-    mock_df_plot = mocker.patch("pandas.DataFrame.plot")
-
-    # Prepare input
-    value_col = "value_1"
-    range_lower = 2
-    range_upper = 8
-
-    # Call the histogram plot function without a group column (single histogram)
-    histogram.plot(
+@pytest.mark.parametrize(
+    ("group_col", "expected_legend", "expected_alpha"),
+    [
+        (None, False, None),
+        ("group", True, 0.7),
+    ],
+)
+def test_histogram_legend_and_alpha_by_grouping(sample_dataframe, group_col, expected_legend, expected_alpha):
+    """Single histograms render without a legend/alpha; grouped histograms render with both."""
+    result_ax = histogram.plot(
         df=sample_dataframe,
-        value_col=value_col,
-        range_lower=range_lower,
-        range_upper=range_upper,
-        title="Test Single Histogram",
-    )
-
-    # Check the arguments passed to DataFrame.plot for single histogram
-    mock_df_plot.assert_called_once_with(
-        kind="hist",
-        ax=mocker.ANY,
-        legend=False,  # No grouping, so no need for a legend
-        color=mocker.ANY,
-        alpha=None,  # Since it's a single histogram
-    )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_grouped_histogram_calls_dataframe_plot(mocker, sample_dataframe):
-    """Test that pandas.DataFrame.plot is called with correct arguments when group_col is provided."""
-    # Spy on DataFrame.plot
-    mock_df_plot = mocker.patch("pandas.DataFrame.plot")
-
-    # Prepare input
-    value_col = "value_1"
-    group_col = "group"
-    range_lower = 2
-    range_upper = 8
-
-    # Call the histogram plot function with a group column (multiple histograms)
-    histogram.plot(
-        df=sample_dataframe,
-        value_col=value_col,
+        value_col="value_1",
         group_col=group_col,
-        range_lower=range_lower,
-        range_upper=range_upper,
-        title="Test Grouped Histogram",
+        title="Histogram grouping",
     )
 
-    # Check the arguments passed to DataFrame.plot for grouped histogram
-    mock_df_plot.assert_called_once_with(
-        kind="hist",
-        ax=mocker.ANY,
-        legend=True,  # Multiple histograms should have a legend
-        color=mocker.ANY,
-        alpha=0.7,  # Alpha is set to 0.7 for grouped histograms
-    )
+    assert (result_ax.get_legend() is not None) is expected_legend
+
+    patch_alphas = {p.get_alpha() for p in result_ax.patches}
+    assert patch_alphas == {expected_alpha}

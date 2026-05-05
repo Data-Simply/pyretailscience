@@ -7,7 +7,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from openretailscience.plots import heatmap
-from openretailscience.plots.styles import graph_utils as gu
 
 RNG = np.random.default_rng(42)
 
@@ -30,16 +29,6 @@ def sample_heatmap_dataframe():
     )
 
 
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    """Mocks graph utility functions to avoid modifying global styles."""
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-
-
 def test_plot_basic_heatmap(sample_heatmap_dataframe):
     """Test basic heatmap creation with required parameters."""
     result_ax = heatmap.plot(
@@ -56,9 +45,8 @@ def test_plot_basic_heatmap(sample_heatmap_dataframe):
     assert len(result_ax.texts) == sample_heatmap_dataframe.size
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_with_source_text(sample_heatmap_dataframe):
-    """Test heatmap with source text annotation."""
+    """The heatmap renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
     result_ax = heatmap.plot(
         df=sample_heatmap_dataframe,
@@ -66,7 +54,8 @@ def test_plot_with_source_text(sample_heatmap_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
 def test_plot_with_figsize(sample_heatmap_dataframe):

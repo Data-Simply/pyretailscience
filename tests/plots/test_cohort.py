@@ -7,7 +7,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from openretailscience.plots import cohort
-from openretailscience.plots.styles import graph_utils as gu
 
 RNG = np.random.default_rng(42)
 
@@ -26,20 +25,6 @@ def sample_cohort_dataframe():
     return pd.DataFrame(data, columns=[f"Month {i + 1}" for i in range(6)], index=[f"Cohort {i + 1}" for i in range(6)])
 
 
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    """Mocks graph utility functions to avoid modifying global styles."""
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.add_source_text",
-        side_effect=lambda ax, source_text: ax,
-    )
-
-
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_cohort(sample_cohort_dataframe):
     """Test cohort plot with a standard DataFrame."""
     result_ax = cohort.plot(
@@ -54,9 +39,8 @@ def test_plot_cohort(sample_cohort_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_cohort_with_source_text(sample_cohort_dataframe):
-    """Test cohort plot with source text annotation."""
+    """The cohort plot renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
 
     result_ax = cohort.plot(
@@ -65,10 +49,10 @@ def test_plot_cohort_with_source_text(sample_cohort_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_cohort_with_percentage(sample_cohort_dataframe):
     """Test cohort plot with percentage formatting enabled."""
     result_ax = cohort.plot(
@@ -81,7 +65,6 @@ def test_plot_cohort_with_percentage(sample_cohort_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_cohort_with_ax_none(sample_cohort_dataframe):
     """Test cohort plot when ax is None (should create a new figure)."""
     result_ax = cohort.plot(
@@ -95,7 +78,6 @@ def test_plot_cohort_with_ax_none(sample_cohort_dataframe):
     assert result_ax.figure is not None
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_cohort_with_figsize(sample_cohort_dataframe):
     """Test cohort plot with a specified figsize."""
     width = 14
