@@ -1,15 +1,13 @@
 """Tests for the plots.line module."""
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
+from openretailscience.options import PlotStyleHelper
 from openretailscience.plots import line
-from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -57,26 +55,6 @@ def retail_sales_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock the color generators for single and multi color maps."""
-    single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
-    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF"])  # Mocked multi-color generator (red, green, blue)
-
-    mocker.patch("openretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("openretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_with_group_col(sample_dataframe):
     """Test the plot function with a group column."""
     result_ax = line.plot(
@@ -94,7 +72,6 @@ def test_plot_with_group_col(sample_dataframe):
     assert len(result_ax.get_lines()) == expected_num_lines, "Should have one line for each group"
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_without_group_col(sample_dataframe):
     """Test the plot function without a group column."""
     result_ax = line.plot(
@@ -111,143 +88,95 @@ def test_plot_without_group_col(sample_dataframe):
     assert len(result_ax.get_lines()) == expected_num_lines, "Should have only one line"
 
 
-@pytest.mark.parametrize(
-    ("move_legend_outside", "expected_title"),
-    [
-        (True, "Test Plot Legend Outside"),
-        (False, "Test Plot Legend Inside"),
-    ],
-)
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_legend_positioning(sample_dataframe, move_legend_outside, expected_title):
-    """Test the plot function legend positioning (inside vs outside)."""
+@pytest.mark.parametrize("move_legend_outside", [True, False])
+def test_plot_legend_positioning(sample_dataframe, move_legend_outside):
+    """move_legend_outside controls whether the legend is anchored outside the axes."""
     result_ax = line.plot(
         df=sample_dataframe,
         value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
-        title=expected_title,
+        title="Legend positioning",
         x_col="x",
         group_col="group",
         move_legend_outside=move_legend_outside,
     )
 
-    # Assert that standard_graph_styles was called with the correct move_legend_outside value
-    gu.standard_graph_styles.assert_called_once_with(
-        ax=result_ax,
-        title=expected_title,
-        x_label="X Axis",
-        y_label="Y Axis",
-        legend_title=None,
-        move_legend_outside=move_legend_outside,
-    )
+    legend = result_ax.get_legend()
+    assert legend is not None
+    anchor = legend.get_bbox_to_anchor().transformed(result_ax.transAxes.inverted())
+    if move_legend_outside:
+        expected_x, expected_y = PlotStyleHelper().legend_bbox_to_anchor
+        assert anchor.x0 == pytest.approx(expected_x)
+        assert anchor.y0 == pytest.approx(expected_y)
+    else:
+        # Inside: legend anchored to the axes bbox.
+        assert anchor.x0 == pytest.approx(0.0)
+        assert anchor.y0 == pytest.approx(0.0)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_adds_source_text(sample_dataframe):
-    """Test the plot function adds source text to the plot."""
+    """The line plot renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
 
     result_ax = line.plot(
         df=sample_dataframe,
         value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
         title="Test Plot Source Text",
         x_col="x",
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_legend_title(sample_dataframe):
-    """Test the plot function with a legend title."""
-    # Create the plot with a legend title
+@pytest.mark.parametrize("move_legend_outside", [True, False])
+def test_plot_with_legend_title(sample_dataframe, move_legend_outside):
+    """legend_title is rendered as the legend's title regardless of position."""
     legend_title = "Test Legend"
     result_ax = line.plot(
         df=sample_dataframe,
         value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
         title="Test Plot with Legend Title",
         x_col="x",
         group_col="group",
         legend_title=legend_title,
+        move_legend_outside=move_legend_outside,
     )
 
-    # Assert that standard_graph_styles was called with the provided legend title
-    gu.standard_graph_styles.assert_called_once_with(
-        ax=result_ax,
-        title="Test Plot with Legend Title",
-        x_label="X Axis",
-        y_label="Y Axis",
-        legend_title=legend_title,
-        move_legend_outside=False,
-    )
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_plot_with_legend_title_and_move_outside(sample_dataframe):
-    """Test the plot function with both move_legend_outside=True and legend_title."""
-    # Create the plot with both options
-    legend_title = "Test Legend"
-    result_ax = line.plot(
-        df=sample_dataframe,
-        value_col="y",
-        x_label="X Axis",
-        y_label="Y Axis",
-        title="Test Plot Legend Outside with Title",
-        x_col="x",
-        group_col="group",
-        move_legend_outside=True,
-        legend_title=legend_title,
-    )
-
-    # Assert that standard_graph_styles was called with both options
-    gu.standard_graph_styles.assert_called_once_with(
-        ax=result_ax,
-        title="Test Plot Legend Outside with Title",
-        x_label="X Axis",
-        y_label="Y Axis",
-        legend_title=legend_title,
-        move_legend_outside=True,
-    )
+    legend = result_ax.get_legend()
+    assert legend is not None
+    assert legend.get_title().get_text() == legend_title
 
 
 @pytest.mark.parametrize(
-    ("group_col", "expected_legend", "plot_title"),
+    ("group_col", "expected_legend"),
     [
-        (None, False, "Test Single Line Plot"),
-        ("group", True, "Test Grouped Line Plot"),
+        (None, False),
+        ("group", True),
     ],
 )
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
-def test_line_plot_calls_dataframe_plot(mocker, sample_dataframe, group_col, expected_legend, plot_title):
-    """Test that pandas.DataFrame.plot is called with correct arguments for single vs grouped plots."""
-    # Mock DataFrame's plot method
-    mock_df_plot = mocker.patch("pandas.DataFrame.plot")
+def test_default_line_styling(sample_dataframe, group_col, expected_legend):
+    """Default lines render with the documented linewidth, alpha, and zorder; legend visibility tracks group_col."""
+    default_linewidth = 3
+    default_alpha = 1.0
+    default_zorder = 2
 
-    # Call the line plot function
-    line.plot(
+    result_ax = line.plot(
         df=sample_dataframe,
         value_col="y",
         group_col=group_col,
         x_col="x",
-        title=plot_title,
+        title="Default styling",
     )
 
-    # Check that DataFrame.plot was called with the correct arguments
-    # Since we added highlight functionality, we expect additional parameters
-    mock_df_plot.assert_called_once_with(
-        ax=mocker.ANY,
-        linewidth=3,
-        color=mocker.ANY,  # Dynamic color generation
-        alpha=1.0,  # New parameter added for highlight functionality
-        legend=expected_legend,
-        zorder=2,  # New parameter added for highlight functionality
-    )
+    plotted_lines = result_ax.get_lines()
+    assert len(plotted_lines) > 0
+    for plot_line in plotted_lines:
+        assert plot_line.get_linewidth() == default_linewidth
+        assert plot_line.get_alpha() == default_alpha
+        assert plot_line.get_zorder() == default_zorder
+
+    assert (result_ax.get_legend() is not None) is expected_legend
 
 
 @pytest.mark.parametrize(
@@ -271,7 +200,6 @@ def test_dataframe_error_conditions(sample_dataframe, value_col, group_col, expe
         )
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_fill_na_value_fills_missing_pivot_values(retail_sales_dataframe):
     """Test that fill_na_value fills NaN values for Store_North but not Store_South."""
     result_ax = line.plot(
@@ -303,7 +231,6 @@ def test_fill_na_value_fills_missing_pivot_values(retail_sales_dataframe):
     assert 0.0 not in south_data, "Store_South should not have any 0.0 values"
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_fill_na_value_none_preserves_nan_values(retail_sales_dataframe):
     """Test that when fill_na_value is None, NaN exists in Store_North but not Store_South."""
     result_ax = line.plot(

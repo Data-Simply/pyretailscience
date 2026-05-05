@@ -1,7 +1,5 @@
 """Tests for the price architecture bubble plot module."""
 
-from itertools import cycle
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,7 +7,6 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from openretailscience.plots import price
-from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -48,25 +45,6 @@ def simple_price_dataframe():
         "retailer": ["Walmart", "Walmart", "Target", "Target", "Amazon", "Amazon"],
     }
     return pd.DataFrame(data)
-
-
-@pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock the color generators for single and multi color maps."""
-    single_color_gen = cycle(["#FF0000"])  # Mocked single-color generator (e.g., red)
-    multi_color_gen = cycle(["#FF0000", "#00FF00", "#0000FF", "#FFFF00"])  # Mocked multi-color generator
-    mocker.patch("openretailscience.plots.styles.colors.get_single_color_cmap", return_value=single_color_gen)
-    mocker.patch("openretailscience.plots.styles.colors.get_multi_color_cmap", return_value=multi_color_gen)
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    """Mock the standard graph utilities functions."""
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.standard_tick_styles", side_effect=lambda ax: ax)
-    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
 
 
 def test_plot_with_empty_dataframe():
@@ -334,9 +312,8 @@ def test_plot_with_country_grouping(sample_price_dataframe):
     assert len(result_ax.get_xticks()) == expected_countries
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_calls_standard_styling(simple_price_dataframe):
-    """Test that standard graph styling functions are called."""
+    """Title, axis labels and the supplied legend_title are rendered on the axes."""
     title = "Test Title"
     x_label = "Test X Label"
     y_label = "Test Y Label"
@@ -354,22 +331,16 @@ def test_plot_calls_standard_styling(simple_price_dataframe):
         move_legend_outside=True,
     )
 
-    gu.standard_graph_styles.assert_called_once_with(
-        ax=result_ax,
-        title=title,
-        x_label=x_label,
-        y_label=y_label,
-        legend_title=None,
-        move_legend_outside=False,
-        show_legend=False,
-    )
-
-    gu.standard_tick_styles.assert_called_once_with(ax=result_ax)
+    assert result_ax.get_title() == title
+    assert result_ax.get_xlabel() == x_label
+    assert result_ax.get_ylabel() == y_label
+    legend = result_ax.get_legend()
+    assert legend is not None
+    assert legend.get_title().get_text() == legend_title
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_plot_adds_source_text(simple_price_dataframe):
-    """Test that source text is added when provided."""
+    """The price plot renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
 
     result_ax = price.plot(
@@ -380,7 +351,8 @@ def test_plot_adds_source_text(simple_price_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
 def test_plot_with_kwargs(simple_price_dataframe, mocker):

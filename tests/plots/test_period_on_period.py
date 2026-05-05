@@ -1,14 +1,12 @@
 """Tests for the period_on_period overlapping_periods function."""
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
+from openretailscience.options import PlotStyleHelper
 from openretailscience.plots.period_on_period import plot
-from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -28,22 +26,6 @@ def sample_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture
-def _mock_color_generators(mocker):
-    """Mock single color generator."""
-    mocker.patch("openretailscience.plots.styles.colors.get_single_color_cmap", return_value=cycle(["#FF0000"]))
-
-
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    """Mock graph utility functions."""
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.standard_graph_styles", side_effect=lambda ax, **kwargs: ax
-    )
-    mocker.patch("openretailscience.plots.styles.graph_utils.add_source_text", side_effect=lambda ax, source_text: ax)
-
-
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_basic(sample_dataframe):
     """Test basic overlapping periods plot."""
     periods = [("2023-01-01", "2023-01-05"), ("2023-01-06", "2023-01-10")]
@@ -59,9 +41,8 @@ def test_overlapping_periods_basic(sample_dataframe):
     assert len(ax.get_lines()) == expected_lines_count
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_with_labels_and_title(sample_dataframe):
-    """Test overlapping periods with axis labels and title."""
+    """The plot renders the supplied title and axis labels on the axes."""
     periods = [("2023-01-01", "2023-01-05"), ("2023-01-06", "2023-01-10")]
     title = "Overlapping Periods Test"
     ax = plot(
@@ -74,20 +55,13 @@ def test_overlapping_periods_with_labels_and_title(sample_dataframe):
         title=title,
     )
 
-    assert isinstance(ax, Axes)
-    gu.standard_graph_styles.assert_any_call(
-        ax=ax,
-        title=title,
-        x_label="Time",
-        y_label="Sales",
-        legend_title=None,
-        move_legend_outside=False,
-    )
+    assert ax.get_title() == title
+    assert ax.get_xlabel() == "Time"
+    assert ax.get_ylabel() == "Sales"
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_with_source_text(sample_dataframe):
-    """Test overlapping periods with source text added."""
+    """The plot renders source_text as a figure-level text element."""
     periods = [("2023-01-01", "2023-01-05"), ("2023-01-06", "2023-01-10")]
     source_text = "Source: Sales Data"
 
@@ -99,13 +73,12 @@ def test_overlapping_periods_with_source_text(sample_dataframe):
         source_text=source_text,
     )
 
-    gu.add_source_text.assert_called_once_with(ax=ax, source_text=source_text)
-    assert isinstance(ax, Axes)
+    rendered = [t.get_text() for t in ax.figure.texts]
+    assert source_text in rendered
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_with_legend_title_and_outside(sample_dataframe):
-    """Test overlapping periods with legend title and moved legend."""
+    """move_legend_outside=True anchors the legend outside, with the supplied title."""
     periods = [("2023-01-01", "2023-01-05"), ("2023-01-06", "2023-01-10")]
     legend_title = "Periods"
 
@@ -118,20 +91,17 @@ def test_overlapping_periods_with_legend_title_and_outside(sample_dataframe):
         legend_title=legend_title,
     )
 
-    gu.standard_graph_styles.assert_any_call(
-        ax=ax,
-        title=None,
-        x_label="date",
-        y_label="value",
-        legend_title=legend_title,
-        move_legend_outside=True,
-    )
-    assert isinstance(ax, Axes)
+    legend = ax.get_legend()
+    assert legend is not None
+    assert legend.get_title().get_text() == legend_title
+    anchor = legend.get_bbox_to_anchor().transformed(ax.transAxes.inverted())
+    expected_x, expected_y = PlotStyleHelper().legend_bbox_to_anchor
+    assert anchor.x0 == pytest.approx(expected_x)
+    assert anchor.y0 == pytest.approx(expected_y)
 
 
-@pytest.mark.usefixtures("_mock_color_generators", "_mock_gu_functions")
 def test_overlapping_periods_raises_on_empty_periods(sample_dataframe):
-    """Test overlapping periods with a ValueError is raised if an empty list of periods is passed."""
+    """Test overlapping periods raises a ValueError when an empty list is passed."""
     with pytest.raises(
         ValueError,
         match=r"The 'periods' list must contain at least two \(start, end\) tuples for comparison",

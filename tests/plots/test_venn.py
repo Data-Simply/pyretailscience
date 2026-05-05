@@ -6,7 +6,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from openretailscience.plots import venn
-from openretailscience.plots.styles import graph_utils as gu
 
 
 @pytest.fixture(autouse=True)
@@ -26,15 +25,6 @@ def sample_venn_dataframe():
     return pd.DataFrame(data)
 
 
-@pytest.fixture
-def _mock_gu_functions(mocker):
-    mocker.patch(
-        "openretailscience.plots.styles.graph_utils.add_source_text",
-        side_effect=lambda ax, source_text, is_venn_diagram=False: ax,
-    )
-
-
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_two_set_venn(sample_venn_dataframe):
     """Test Venn diagram plotting with two sets."""
     result_ax = venn.plot(
@@ -46,7 +36,6 @@ def test_plot_two_set_venn(sample_venn_dataframe):
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_three_set_venn():
     """Test Venn diagram plotting with three sets."""
     df = pd.DataFrame(
@@ -64,7 +53,6 @@ def test_plot_three_set_venn():
     assert len(result_ax.get_children()) > 0
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_invalid_sets():
     """Test Venn plot with invalid number of sets (should raise ValueError)."""
     df = pd.DataFrame({"groups": [(1,)], "percent": [1.0]})
@@ -72,9 +60,8 @@ def test_plot_invalid_sets():
         venn.plot(df=df, labels=["Set A"])
 
 
-@pytest.mark.usefixtures("_mock_gu_functions")
 def test_plot_adds_source_text(sample_venn_dataframe):
-    """Test Venn diagram adds source text."""
+    """The Venn diagram renders source_text as a figure-level text element."""
     source_text = "Source: Test Data"
     result_ax = venn.plot(
         df=sample_venn_dataframe,
@@ -82,7 +69,8 @@ def test_plot_adds_source_text(sample_venn_dataframe):
         title="Test Venn Diagram with Source",
         source_text=source_text,
     )
-    gu.add_source_text.assert_called_once_with(ax=result_ax, source_text=source_text, is_venn_diagram=True)
+    rendered = [t.get_text() for t in result_ax.figure.texts]
+    assert source_text in rendered
 
 
 def test_venn_default_ax(sample_venn_dataframe):
