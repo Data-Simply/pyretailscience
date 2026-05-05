@@ -1,11 +1,15 @@
 <!-- README.md -->
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/logo.svg" alt="OpenRetailScience" width="580" />
-</p>
+<div align="center">
+  <img
+    src="https://raw.githubusercontent.com/Data-Simply/openretailscience/main/readme_assets/logo.svg"
+    alt="OpenRetailScience"
+    width="580"
+  />
+</div>
 
-<p align="center">
+<div align="center">
   Open source retail analytics that runs in your database, handles billions of rows, and gives you back control of your KPIs.
-</p>
+</div>
 
 ## Installation
 
