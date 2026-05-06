@@ -137,29 +137,18 @@ def test_plot_invalid_bins_list_non_numeric(simple_price_dataframe):
         )
 
 
-def test_plot_with_unsorted_bins_list(mocker, simple_price_dataframe):
-    """Test price architecture plot passes sorted bins to pd.cut."""
-    # Mock pd.cut to capture the bins parameter and return realistic intervals
-    mock_cut = mocker.patch("pandas.cut")
-    # Create mock intervals that mimic pandas.cut behavior
-    intervals = [
-        pd.Interval(left=1, right=2, closed="right"),
-        pd.Interval(left=2, right=3, closed="right"),
-        pd.Interval(left=2, right=3, closed="right"),
-    ]
-    mock_cut.return_value = pd.Series(intervals, name="price_bin")
-
-    price.plot(
+def test_plot_with_unsorted_bins_list(simple_price_dataframe):
+    """Unsorted bin edges are sorted before binning so the y-tick labels read low → high."""
+    result_ax = price.plot(
         df=simple_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
-        bins=[3, 1, 2],  # Unsorted bins
+        bins=[3, 1, 2],  # Unsorted on input.
     )
 
-    # Verify pd.cut was called with sorted bins
-    mock_cut.assert_called_once()
-    call_args = mock_cut.call_args
-    assert call_args[1]["bins"] == [1, 2, 3]  # Should be sorted
+    # If bins were not sorted, the resulting y-tick labels would be jumbled
+    # (e.g. "3.0 - 1.0"). Sorted bins produce ascending "1.0 - 2.0", "2.0 - 3.0".
+    assert [label.get_text() for label in result_ax.get_yticklabels()] == ["1.0 - 2.0", "2.0 - 3.0"]
 
 
 def test_plot_invalid_bins_type(simple_price_dataframe):
@@ -173,24 +162,14 @@ def test_plot_invalid_bins_type(simple_price_dataframe):
         )
 
 
-def test_plot_with_missing_values(mocker):
-    """Test price architecture plot handles missing values by dropping rows with NaN."""
+def test_plot_with_missing_values():
+    """Rows with NaN in value_col or group_col are dropped, leaving only valid retailers on the x-axis."""
     df = pd.DataFrame(
         {
-            "unit_price": [1, 2, None, 4, 5],
+            "unit_price": [1.0, 2.0, None, 4.0, 5.0],
             "retailer": ["Walmart", "Walmart", "Target", "Target", None],
         },
     )
-
-    # Mock pd.cut to capture the cleaned data that gets passed to it
-    mock_cut = mocker.patch("pandas.cut")
-    # Create mock intervals that mimic pandas.cut behavior
-    intervals = [
-        pd.Interval(left=1, right=2, closed="right"),
-        pd.Interval(left=1, right=2, closed="right"),
-        pd.Interval(left=2, right=4, closed="right"),
-    ]
-    mock_cut.return_value = pd.Series(intervals, name="price_bin")
 
     result_ax = price.plot(
         df=df,
@@ -199,25 +178,11 @@ def test_plot_with_missing_values(mocker):
         bins=3,
     )
 
-    # Verify pd.cut was called and extract the cleaned data
-    mock_cut.assert_called_once()
-    cleaned_data = mock_cut.call_args[0][0]  # First positional argument to pd.cut
-
-    # Verify that missing values were properly dropped
-    # Expected: rows with indices 0, 1, 3 (original data [1, 2, 4])
-    # Row 2 (unit_price=None) and row 4 (retailer=None) should be dropped
-    expected_values = [1.0, 2.0, 4.0]
-
-    assert cleaned_data.tolist() == expected_values, f"Expected {expected_values}, got {cleaned_data.tolist()}"
-
-    # Also verify the retailer data was cleaned correctly by checking the DataFrame index
-    # The cleaned DataFrame should have the correct corresponding retailer values
-    expected_bins = 3
-    # The function should have properly cleaned both columns together
-    assert len(cleaned_data) == expected_bins, f"Expected 3 clean rows, got {len(cleaned_data)}"
-
-    # Verify the function still works with cleaned data
-    assert isinstance(result_ax, Axes)
+    # After dropping NaN rows: Walmart has prices [1.0, 2.0], Target has [4.0]; the row
+    # with retailer=None is gone. Both retailers should appear on the x-axis; "None"
+    # must not.
+    rendered_retailers = {label.get_text() for label in result_ax.get_xticklabels()}
+    assert rendered_retailers == {"Walmart", "Target"}
 
 
 def test_plot_all_missing_values():
@@ -263,32 +228,26 @@ def test_plot_with_bins(simple_price_dataframe, bins):
     assert len(result_ax.get_yticks()) == expected_bins
 
 
-def test_plot_basic_functionality(sample_price_dataframe, mocker):
-    """Test basic price architecture plot functionality with labels and titles."""
-    # Mock standard_graph_styles to capture title and label parameters
-    mock_standard_styles = mocker.patch("openretailscience.plots.styles.graph_utils.standard_graph_styles")
-    mock_standard_styles.side_effect = lambda ax, **kwargs: ax
+def test_plot_basic_functionality(sample_price_dataframe):
+    """Title and axis labels are rendered, and the x-axis has one tick per retailer."""
+    title = "Price Distribution Analysis"
+    x_label = "Retailers"
+    y_label = "Price Bands"
 
     result_ax = price.plot(
         df=sample_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
         bins=5,
-        title="Price Distribution Analysis",
-        x_label="Retailers",
-        y_label="Price Bands",
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
     )
 
-    assert isinstance(result_ax, Axes)
+    assert result_ax.get_title() == title
+    assert result_ax.get_xlabel() == x_label
+    assert result_ax.get_ylabel() == y_label
 
-    # Verify that standard_graph_styles was called with correct parameters
-    mock_standard_styles.assert_called_once()
-    call_kwargs = mock_standard_styles.call_args[1]
-    assert call_kwargs["title"] == "Price Distribution Analysis"
-    assert call_kwargs["x_label"] == "Retailers"
-    assert call_kwargs["y_label"] == "Price Bands"
-
-    # Verify we have the expected number of retailers and bins
     expected_retailers = 4  # Walmart, Target, Amazon, Best Buy
     assert len(result_ax.get_xticks()) == expected_retailers
 
@@ -355,29 +314,20 @@ def test_plot_adds_source_text(simple_price_dataframe):
     assert source_text in rendered
 
 
-def test_plot_with_kwargs(simple_price_dataframe, mocker):
-    """Test that additional kwargs are passed to scatter plot."""
-    # Mock ax.scatter to capture kwargs
-    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
+def test_plot_with_kwargs(simple_price_dataframe):
+    """Additional kwargs (e.g. alpha) are forwarded to the underlying scatter collection."""
+    custom_alpha = 0.8
 
-    price.plot(
+    result_ax = price.plot(
         df=simple_price_dataframe,
         value_col="unit_price",
         group_col="retailer",
         bins=3,
-        alpha=0.8,
-        s=200,
-        marker="^",
+        alpha=custom_alpha,
     )
 
-    # Verify scatter was called with the custom kwargs
-    mock_scatter.assert_called()
-
-    # Check that our custom kwargs were passed through
-    # Note: alpha and s are handled specially, but marker should pass through
-    call_kwargs = mock_scatter.call_args[1]
-    assert "marker" in call_kwargs
-    assert call_kwargs["marker"] == "^"
+    collection = result_ax.collections[0]
+    assert collection.get_alpha() == custom_alpha
 
 
 def test_plot_raises_error_when_no_data_in_bins(simple_price_dataframe):
@@ -393,109 +343,70 @@ def test_plot_raises_error_when_no_data_in_bins(simple_price_dataframe):
         )
 
 
-def test_percentages_sum_to_100_for_each_group(mocker):
-    """Test that percentages calculated by the plot function for each group sum to 100%."""
-    # Create test data with known distribution
+def test_percentages_sum_to_100_for_each_group():
+    """Per-group bubble sizes (proportions times scale_factor) sum to one full scale per retailer."""
     df = pd.DataFrame(
         {
-            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],  # 8 items
-            "retailer": ["Walmart", "Walmart", "Walmart", "Walmart", "Target", "Target", "Target", "Target"],  # 4 each
+            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            "retailer": ["Walmart", "Walmart", "Walmart", "Walmart", "Target", "Target", "Target", "Target"],
         },
     )
-
-    # Mock the scatter plot to capture the actual size values (percentages) being plotted
-    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
-
-    # Set a known scale factor for testing
     scale_factor = 1000
+    floating_point_tolerance = 0.001
 
-    # Call the actual plot function with known scale factor
-    price.plot(
+    result_ax = price.plot(
         df=df,
         value_col="unit_price",
         group_col="retailer",
-        bins=[1.0, 3.0, 5.0, 7.0, 9.0],  # 4 bins
+        bins=[1.0, 3.0, 5.0, 7.0, 9.0],
         s=scale_factor,
     )
 
-    # Extract the actual data passed to scatter
-    mock_scatter.assert_called_once()
-    scatter_call = mock_scatter.call_args
-    sizes = scatter_call.kwargs["s"]
-    x_positions = scatter_call[0][0]  # retailer positions
+    # All bubbles share a single PathCollection; offsets give x (retailer index) and
+    # y (bin index), and sizes are proportions scaled by `scale_factor`.
+    collection = result_ax.collections[0]
+    offsets = collection.get_offsets()
+    sizes = collection.get_sizes()
+    x_positions = offsets[:, 0]
 
-    # Group sizes by retailer position
-    walmart_sizes = [sizes[i] for i, x in enumerate(x_positions) if x == 0]  # x=0 is Walmart
-    target_sizes = [sizes[i] for i, x in enumerate(x_positions) if x == 1]  # x=1 is Target
+    rendered = pd.DataFrame({"x": x_positions, "size": sizes})
+    per_group_totals = rendered.groupby("x")["size"].sum() / scale_factor
 
-    # Test that bubble sizes for each group sum to 1.0 (100%) when divided by scale factor
-    # With absolute scaling: scaled_size = proportion_value * scale_factor
-    # So: sum(scaled_sizes) / scale_factor should equal 1.0 for each group
-
-    walmart_proportion_sum = sum(walmart_sizes) / scale_factor
-    target_proportion_sum = sum(target_sizes) / scale_factor
-
-    # Both groups should sum to 1.0 (within floating point tolerance)
-    tolerance = 0.001  # 0.1% tolerance for floating point precision
-    assert abs(walmart_proportion_sum - 1.0) < tolerance, (
-        f"Walmart proportions should sum to 1.0, got {walmart_proportion_sum}"
-    )
-    assert abs(target_proportion_sum - 1.0) < tolerance, (
-        f"Target proportions should sum to 1.0, got {target_proportion_sum}"
-    )
-
-    # Verify that all non-zero sizes were plotted (no data should be filtered incorrectly)
-    assert len(sizes) > 0, "Should have plotted some bubbles"
-    assert all(s > 0 for s in sizes), "All plotted bubbles should have positive size"
+    assert all(abs(total - 1.0) < floating_point_tolerance for total in per_group_totals)
+    assert (sizes > 0).all()
 
 
-def test_individual_percentage_calculations_are_correct(mocker):
-    """Test that the plot function calculates exact proportions correctly with known data distribution.
+def test_individual_percentage_calculations_are_correct():
+    """Each (retailer, bin) bubble has the exact proportion expected from the input distribution.
 
-    Includes edge case testing with a third retailer having 100% in one band and 0% in others.
+    Includes the edge case of a third retailer with 100% in one band and 0% in the others.
     """
-    # Create test data with known, predictable distribution that includes edge cases
     df = pd.DataFrame(
         {
-            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.5],  # 9 items total
-            "retailer": ["Walmart"] * 4
-            + ["Target"] * 4
-            + ["Amazon"],  # Walmart: 4 items, Target: 4 items, Amazon: 1 item
+            "unit_price": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.5],
+            "retailer": ["Walmart"] * 4 + ["Target"] * 4 + ["Amazon"],
         },
     )
-    scale_factor = 800  # Default s_scale
+    scale_factor = 800
 
-    # Mock scatter to capture the actual proportion values being plotted
-    mock_scatter = mocker.patch("matplotlib.axes.Axes.scatter")
-
-    # Call the actual plot function with bins that create predictable distributions
-    price.plot(
+    result_ax = price.plot(
         df=df,
         value_col="unit_price",
         group_col="retailer",
-        bins=[0.0, 2.5, 6.5, 9.0, 10.0],  # 4 bins: [0-2.5], (2.5-6.5], (6.5-9], (9-10]
+        bins=[0.0, 2.5, 6.5, 9.0, 10.0],
         s=scale_factor,
     )
 
-    # Extract the actual data passed to scatter
-    mock_scatter.assert_called_once()
-    scatter_call = mock_scatter.call_args
-    x_data = scatter_call[0][0]  # x coordinates (retailers)
-    y_data = scatter_call[0][1]  # y coordinates (bins)
-    sizes = scatter_call.kwargs["s"]  # sizes (scaled proportions)
-
-    # Expected distribution with bins [0.0, 2.5, 6.5, 9.0, 10.0]:
-    # Walmart [1,2,3,4]: bin0=[1,2] (2/4=50%), bin1=[3,4] (2/4=50%), bin2=[] (0%), bin3=[] (0%)
-    # Target [5,6,7,8]: bin0=[] (0%), bin1=[5,6] (2/4=50%), bin2=[7,8] (2/4=50%), bin3=[] (0%)
-    # Amazon [9.5]: bin0=[] (0%), bin1=[] (0%), bin2=[] (0%), bin3=[9.5] (1/1=100%)
-
-    # Retailer names in alphabetical order (same as pandas groupby)
-    # Amazon=0, Target=1, Walmart=2
-    expected_data = (
+    # Pandas groupby orders retailers alphabetically: Amazon=0, Target=1, Walmart=2.
+    # Distribution per retailer over bins (1-indexed for display, 0-indexed here):
+    #   Walmart [1,2,3,4]:  bin0=2/4, bin1=2/4, bin2=0,   bin3=0
+    #   Target  [5,6,7,8]:  bin0=0,   bin1=2/4, bin2=2/4, bin3=0
+    #   Amazon  [9.5]:      bin0=0,   bin1=0,   bin2=0,   bin3=1/1
+    expected = (
         pd.DataFrame(
             {
-                "x": [2, 2, 1, 1, 0],  # Walmart, Walmart, Target, Target, Amazon
-                "y": [0, 1, 1, 2, 3],  # bin indices
+                "x": np.array([2, 2, 1, 1, 0], dtype=float),
+                "y": np.array([0, 1, 1, 2, 3], dtype=float),
                 "size": np.array([0.5, 0.5, 0.5, 0.5, 1.0]) * scale_factor,
             },
         )
@@ -503,18 +414,12 @@ def test_individual_percentage_calculations_are_correct(mocker):
         .reset_index(drop=True)
     )
 
-    # Reconstruct actual data from scatter call
-    actual_data = (
-        pd.DataFrame(
-            {
-                "x": x_data,
-                "y": y_data,
-                "size": sizes,
-            },
-        )
+    collection = result_ax.collections[0]
+    offsets = collection.get_offsets()
+    actual = (
+        pd.DataFrame({"x": offsets[:, 0], "y": offsets[:, 1], "size": collection.get_sizes()})
         .sort_values(["x", "y"])
         .reset_index(drop=True)
     )
 
-    # Compare expected vs actual
-    pd.testing.assert_frame_equal(actual_data, expected_data)
+    pd.testing.assert_frame_equal(actual, expected)

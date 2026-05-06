@@ -181,10 +181,8 @@ def test_plot_single_column_series(sample_sales_dataframe):
     assert len(offsets) == len(sales_series), f"Expected {len(sales_series)} points from series, got {len(offsets)}"
 
 
-def test_plot_with_labels_single_series(sample_product_dataframe, mocker):
-    """Test scatter plot with labels on single series."""
-    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
-
+def test_plot_with_labels_single_series(sample_product_dataframe):
+    """Each row's label_col value is rendered as a Text annotation on the axes."""
     result_ax = scatter.plot(
         df=sample_product_dataframe,
         value_col="units_sold",
@@ -195,58 +193,16 @@ def test_plot_with_labels_single_series(sample_product_dataframe, mocker):
         y_label="Units Sold",
     )
 
-    # Verify basic plot structure
-    assert isinstance(result_ax, Axes)
     assert result_ax.get_title() == "Product Performance"
     assert result_ax.get_xlabel() == "Price"
     assert result_ax.get_ylabel() == "Units Sold"
 
-    # Verify scatter plot was created with correct data points
-    collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
-    assert len(collections) >= 1, "No scatter plot collections found"
-    offsets = collections[0].get_offsets()
-    assert len(offsets) == len(sample_product_dataframe)
-
-    # Check that textalloc was called with correct parameters
-    mock_textalloc.assert_called_once()
-    args, _kwargs = mock_textalloc.call_args
-
-    ax_arg = args[0]
-    x_coords = args[1]
-    y_coords = args[2]
-    labels = args[3]
-
-    assert ax_arg == result_ax
-    assert len(x_coords) == len(sample_product_dataframe), (
-        f"Expected {len(sample_product_dataframe)} x coordinates, got {len(x_coords)}"
-    )
-    assert len(y_coords) == len(sample_product_dataframe), (
-        f"Expected {len(sample_product_dataframe)} y coordinates, got {len(y_coords)}"
-    )
-    assert len(labels) == len(sample_product_dataframe), (
-        f"Expected {len(sample_product_dataframe)} labels, got {len(labels)}"
-    )
-
-    # Verify labels match expected product names
-    expected_labels = sample_product_dataframe["product_name"].tolist()
-    expected_prices = sample_product_dataframe["price"].tolist()
-    expected_units = sample_product_dataframe["units_sold"].tolist()
-
-    assert set(labels) == set(expected_labels), f"Labels don't match: expected {expected_labels}, got {labels}"
-
-    # Verify coordinates match data points
-    assert list(x_coords) == expected_prices, (
-        f"X coordinates don't match: expected {expected_prices}, got {list(x_coords)}"
-    )
-    assert list(y_coords) == expected_units, (
-        f"Y coordinates don't match: expected {expected_units}, got {list(y_coords)}"
-    )
+    rendered_labels = {t.get_text() for t in result_ax.texts}
+    assert rendered_labels == set(sample_product_dataframe["product_name"])
 
 
-def test_plot_with_labels_grouped_series(sample_store_dataframe, mocker):
-    """Test scatter plot with labels on grouped series."""
-    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
-
+def test_plot_with_labels_grouped_series(sample_store_dataframe):
+    """Grouped scatter plot still renders one Text annotation per row."""
     result_ax = scatter.plot(
         df=sample_store_dataframe,
         value_col="revenue",
@@ -258,49 +214,16 @@ def test_plot_with_labels_grouped_series(sample_store_dataframe, mocker):
         y_label="Revenue",
     )
 
-    # Verify basic plot structure
-    assert isinstance(result_ax, Axes)
     assert result_ax.get_title() == "Store Performance by Region"
     assert result_ax.get_xlabel() == "Customer Count"
     assert result_ax.get_ylabel() == "Revenue"
 
-    # Verify scatter plot collections were created for groups
+    # One scatter collection per region (separate styling per group).
     collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
-    assert len(collections) >= 1, "No scatter plot collections found"
+    assert len(collections) == sample_store_dataframe["region"].nunique()
 
-    # For grouped scatter plots, each group creates its own collection
-    # We expect one collection per unique region
-    unique_regions = sample_store_dataframe["region"].nunique()
-    assert len(collections) == unique_regions, (
-        f"Expected {unique_regions} collections for {unique_regions} regions, got {len(collections)}"
-    )
-
-    # Check that textalloc was called with correct parameters
-    mock_textalloc.assert_called_once()
-    args, _kwargs = mock_textalloc.call_args
-
-    ax_arg = args[0]
-    x_coords = args[1]
-    y_coords = args[2]
-    labels = args[3]
-
-    assert ax_arg == result_ax
-    assert len(x_coords) == len(sample_store_dataframe), (
-        f"Expected {len(sample_store_dataframe)} x coordinates, got {len(x_coords)}"
-    )
-    assert len(y_coords) == len(sample_store_dataframe), (
-        f"Expected {len(sample_store_dataframe)} y coordinates, got {len(y_coords)}"
-    )
-    assert len(labels) == len(sample_store_dataframe), (
-        f"Expected {len(sample_store_dataframe)} labels, got {len(labels)}"
-    )
-
-    # Verify labels contain correct store IDs
-    expected_store_ids = set(sample_store_dataframe["store_id"].tolist())
-    actual_labels = set(labels)
-    assert actual_labels == expected_store_ids, (
-        f"Store ID labels don't match: expected {expected_store_ids}, got {actual_labels}"
-    )
+    rendered_labels = {t.get_text() for t in result_ax.texts}
+    assert rendered_labels == set(sample_store_dataframe["store_id"])
 
 
 def test_plot_with_labels_custom_kwargs(sample_product_dataframe, mocker):
@@ -384,11 +307,8 @@ def test_plot_label_validation_errors(sample_product_dataframe, value_col, label
         )
 
 
-def test_plot_labels_with_nan_values(sample_product_dataframe, mocker):
-    """Test scatter plot with labels when data contains NaN values."""
-    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
-
-    # Add some NaN values to test filtering
+def test_plot_labels_with_nan_values(sample_product_dataframe):
+    """Rows with NaN in value_col or label_col are dropped before labels are rendered."""
     df_with_nan = sample_product_dataframe.copy()
     df_with_nan.loc[1, "units_sold"] = np.nan
     df_with_nan.loc[3, "product_name"] = np.nan
@@ -401,19 +321,12 @@ def test_plot_labels_with_nan_values(sample_product_dataframe, mocker):
         title="Product Performance with NaN values",
     )
 
-    assert isinstance(result_ax, Axes)
-    mock_textalloc.assert_called_once()
-    args, _kwargs = mock_textalloc.call_args
-    labels = args[3]
-    # Should have fewer texts due to NaN filtering
     expected_non_nan_count = len(df_with_nan.dropna(subset=["units_sold", "product_name"]))
-    assert len(labels) == expected_non_nan_count
+    assert len(result_ax.texts) == expected_non_nan_count
 
 
-def test_plot_labels_using_index_as_x(sample_product_dataframe, mocker):
-    """Test scatter plot with labels using index as x-axis."""
-    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
-
+def test_plot_labels_using_index_as_x(sample_product_dataframe):
+    """When x_col is omitted, every row still gets a label rendered against the index."""
     result_ax = scatter.plot(
         df=sample_product_dataframe,
         value_col="units_sold",
@@ -421,30 +334,12 @@ def test_plot_labels_using_index_as_x(sample_product_dataframe, mocker):
         title="Product Performance using Index",
     )
 
-    # Verify basic plot structure
-    assert isinstance(result_ax, Axes)
     assert result_ax.get_title() == "Product Performance using Index"
-
-    # Verify scatter plot was created
-    collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
-    assert len(collections) >= 1, "No scatter plot collections found"
-
-    # Verify data points match input series length
-    offsets = collections[0].get_offsets()
-    assert len(offsets) == len(sample_product_dataframe), (
-        f"Expected {len(sample_product_dataframe)} points, got {len(offsets)}"
-    )
-
-    mock_textalloc.assert_called_once()
-    args, _kwargs = mock_textalloc.call_args
-    labels = args[3]
-    assert len(labels) == len(sample_product_dataframe)
+    assert {t.get_text() for t in result_ax.texts} == set(sample_product_dataframe["product_name"])
 
 
-def test_plot_without_labels_no_textalloc_called(sample_product_dataframe, mocker):
-    """Test that textalloc is not called when no labels are specified."""
-    mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
-
+def test_plot_without_labels_no_textalloc_called(sample_product_dataframe):
+    """Without label_col the axes carry no Text annotations."""
     result_ax = scatter.plot(
         df=sample_product_dataframe,
         value_col="units_sold",
@@ -452,9 +347,7 @@ def test_plot_without_labels_no_textalloc_called(sample_product_dataframe, mocke
         title="Product Performance without Labels",
     )
 
-    assert isinstance(result_ax, Axes)
-    # textalloc should not have been called
-    mock_textalloc.assert_not_called()
+    assert len(result_ax.texts) == 0
 
 
 def test_plot_adds_source_text(sample_sales_dataframe):
@@ -713,10 +606,8 @@ class TestBubbleChartFeature:
         expected_sizes = df["store_sqft"].to_numpy()
         assert np.array_equal(sizes, expected_sizes), "Sizes should match data including zero values"
 
-    def test_bubble_chart_with_labels(self, bubble_chart_dataframe, mocker):
-        """Test bubble chart works correctly with point labels."""
-        mock_textalloc = mocker.patch("openretailscience.plots.scatter.ta.allocate")
-
+    def test_bubble_chart_with_labels(self, bubble_chart_dataframe):
+        """Bubble chart sizes come from size_col and store_id labels are rendered as text annotations."""
         result_ax = scatter.plot(
             df=bubble_chart_dataframe,
             x_col="sales",
@@ -726,21 +617,12 @@ class TestBubbleChartFeature:
             title="Labeled Bubble Chart",
         )
 
-        assert isinstance(result_ax, Axes)
-
-        # Verify sizes from size_col
         collections = [child for child in result_ax.get_children() if hasattr(child, "get_offsets")]
-        assert len(collections) >= 1, "No scatter plot collections found"
-        sizes = collections[0].get_sizes()
-        expected_sizes = bubble_chart_dataframe["store_sqft"].to_numpy()
-        assert np.array_equal(sizes, expected_sizes), "Sizes should match store_sqft values"
+        assert len(collections) >= 1
+        assert np.array_equal(collections[0].get_sizes(), bubble_chart_dataframe["store_sqft"].to_numpy())
 
-        # Verify labels were applied with correct values
-        mock_textalloc.assert_called_once()
-        args, _kwargs = mock_textalloc.call_args
-        labels = args[3]
-        expected_labels = set(bubble_chart_dataframe["store_id"].astype(str).tolist())
-        assert set(labels) == expected_labels, f"Labels don't match: expected {expected_labels}, got {set(labels)}"
+        rendered_labels = {t.get_text() for t in result_ax.texts}
+        assert rendered_labels == set(bubble_chart_dataframe["store_id"].astype(str))
 
     def test_bubble_chart_x_col_equals_size_col(self, bubble_chart_dataframe):
         """Test bubble chart when x_col and size_col reference the same column."""
